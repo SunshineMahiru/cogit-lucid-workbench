@@ -1,30 +1,25 @@
-# cogit-lucid-workbench
+<h1 align="center">cogit-lucid-workbench</h1>
+<p align="center"><strong>An externalized-metacognition workbench</strong></p>
+<p align="center">Turn the self-reflection loop — capture, analysis, calibration, anchor reference — into a local-first mobile tool.</p>
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg" alt="License: AGPL-3.0"></a>
+</p>
 
-**此在**（中文名待定）—— 一个把个人复盘方法论外部化的元认知工作台。
+## Highlights
 
-> **cogit** — 拉丁语 *cogito*（我思），出自「Cogito, ergo sum」（我思故我在）；
-> **lucid** — 清醒、澄明（lucid dream 清醒梦）；
-> **workbench** — 工作台。
+- **Metacognition externalized** — the record → analyze → calibrate → anchor-check loop you already run by hand, now on software.
+- **Prediction log** — commit a judgment before the outcome, forbid later edits, settle on the due date, and track your hit rate.
+- **Local-first** — raw records stay on your device; LLM calls are ephemeral and opt-in.
 
-## 定位
+## Quick Start
 
-元认知外化（externalized metacognition）：把「记录 → 分析 → 校准 → 锚点对照」的自我分析循环，做成本地优先的移动工作台。
+> Development in progress — no runnable build yet. Setup and first-use instructions will land with the first working release.
 
-核心功能：
-- 全场景速记 + 三类实体（事件 / 决策 / 关系）
-- 复盘 Agent（矛盾分析四步 + 价值锚点对照，LLM 开关）
-- 预测日志（事前落盘 → 禁改 → 到期结算 → 命中率）
-- 价值锚点层、状态监测面板、关系层 CRM
-
-## 技术栈
+## Tech Stack
 
 - HarmonyOS / ArkTS
-- 状态管理 V2、Navigation 路由、relationalStore 本地存储
+- State management V2, Navigation routing, relationalStore
 
-## 许可证
+## License
 
-AGPL-3.0（详见 [LICENSE](LICENSE)）
-
-## 状态
-
-移动应用开发课程设计，进行中。
+[AGPL-3.0](LICENSE)
