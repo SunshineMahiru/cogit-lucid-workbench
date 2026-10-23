@@ -1,11 +1,9 @@
-/**
- * 关系信任分层三级：对应「对所有人友善，对少数人真诚，对极少数人完全透明」。
- */
+/** Trust tier of a relationship: friendly / sincere / transparent. */
 export enum TrustLevel {
-  /** 友善：对所有人 */
+  /** Friendly, toward everyone */
   FRIENDLY = 'friendly',
-  /** 真诚：对少数人 */
+  /** Sincere, toward a few */
   SINCERE = 'sincere',
-  /** 透明：对极少数人 */
+  /** Transparent, toward very few */
   TRANSPARENT = 'transparent'
 }
