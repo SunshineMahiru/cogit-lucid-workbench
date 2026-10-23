@@ -38,7 +38,7 @@ struct Index {
       // 标题栏
       Row() {
         Column({ space: 4 }) {
-          Text('此在')
+          Text('cogit-lucid-workbench')
             .fontSize(24)
             .fontWeight(FontWeight.Medium)
             .fontColor('#1F2329')
