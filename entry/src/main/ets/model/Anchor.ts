@@ -1,13 +1,10 @@
-/**
- * 价值锚点（Anchor）。
- * 用户预置的「北极星句段库」，只读；复盘分析必须对照锚点。
- */
+/** A preset value anchor; read-only, referenced by review analysis. */
 export interface Anchor {
   id: string;
-  /** 北极星句段 */
+  /** Anchor sentence */
   text: string;
-  /** 出处 */
+  /** Source */
   source: string;
-  /** 排序（只读区） */
+  /** Order in the read-only list */
   order: number;
 }
