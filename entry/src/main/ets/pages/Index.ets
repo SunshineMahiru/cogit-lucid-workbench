@@ -1,17 +1,121 @@
+import { BodyReading, PredictionItem, MOCK_PREDICTIONS, MOCK_READINGS, todayLabel } from '../model/HomeModel';
+import { PredictionCard } from '../components/PredictionCard';
+
 @Entry
-@Component
+@ComponentV2
 struct Index {
-  build() {
-    Column({ space: 12 }) {
-      Text('此在')
-        .fontSize(32)
+  @Local today: string = todayLabel();
+  @Local readings: BodyReading[] = MOCK_READINGS;
+  @Local predictions: PredictionItem[] = MOCK_PREDICTIONS;
+
+  @Builder
+  readingBlock(reading: BodyReading) {
+    Column({ space: 6 }) {
+      Text(reading.value + reading.unit)
+        .fontSize(22)
         .fontWeight(FontWeight.Medium)
-      Text('元认知外化工作台')
-        .fontSize(14)
-        .fontColor('#999999')
+        .fontColor('#1F2329')
+      Text(reading.label)
+        .fontSize(12)
+        .fontColor('#8A8F99')
+    }
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  entryChip(label: string) {
+    Text(label)
+      .fontSize(13)
+      .fontColor('#1F2329')
+      .padding({ left: 14, right: 14, top: 8, bottom: 8 })
+      .backgroundColor(Color.White)
+      .borderRadius(16)
+  }
+
+  build() {
+    Column() {
+      // 标题栏
+      Row() {
+        Column({ space: 4 }) {
+          Text('此在')
+            .fontSize(24)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#1F2329')
+          Text(this.today)
+            .fontSize(12)
+            .fontColor('#8A8F99')
+        }
+        .alignItems(HorizontalAlign.Start)
+
+        Blank()
+
+        Text(`${this.predictions.length} 条待结算`)
+          .fontSize(12)
+          .fontColor('#4A6FA5')
+      }
+      .width('100%')
+      .padding({ left: 20, right: 20, top: 16, bottom: 12 })
+
+      Column({ space: 16 }) {
+        // 读数区
+        Row() {
+          ForEach(this.readings, (reading: BodyReading) => {
+            this.readingBlock(reading)
+          }, (reading: BodyReading) => reading.label)
+        }
+        .width('100%')
+        .padding(16)
+        .backgroundColor(Color.White)
+        .borderRadius(14)
+
+        // 快捷入口
+        Column({ space: 10 }) {
+          Text('快捷入口')
+            .fontSize(12)
+            .fontColor('#8A8F99')
+            .width('100%')
+            .textAlign(TextAlign.Start)
+          Row({ space: 10 }) {
+            this.entryChip('速记')
+            this.entryChip('预测')
+            this.entryChip('复盘')
+            this.entryChip('锚点')
+          }
+          .width('100%')
+        }
+
+        // 列表标题
+        Row() {
+          Text('今日待结算')
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#1F2329')
+          Blank()
+          Text('全部')
+            .fontSize(12)
+            .fontColor('#8A8F99')
+        }
+        .width('100%')
+
+        // 待结算列表
+        List({ space: 10 }) {
+          ForEach(this.predictions, (item: PredictionItem) => {
+            ListItem() {
+              PredictionCard({ item: item })
+            }
+          }, (item: PredictionItem) => item.id)
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+      }
+      .width('100%')
+      .layoutWeight(1)
+      .padding({ left: 20, right: 20, bottom: 16 })
     }
     .width('100%')
     .height('100%')
-    .justifyContent(FlexAlign.Center)
+    .backgroundColor('#F5F6F8')
   }
 }
