@@ -1,7 +1,4 @@
-/**
- * 首页展示用的数据结构与示例数据。
- * 记录层与网络层接入前，页面先用这里的合成数据把结构立起来。
- */
+/** Display data structures and sample data for the home page. */
 
 export interface BodyReading {
   label: string;
