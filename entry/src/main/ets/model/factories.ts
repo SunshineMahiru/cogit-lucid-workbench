@@ -15,6 +15,7 @@ function newId(prefix: string): string {
   return `${prefix}_${Date.now()}_${seq}`;
 }
 
+/** Creates a default Event. */
 export function createEvent(): Event {
   return {
     id: newId('ev'),
@@ -29,6 +30,7 @@ export function createEvent(): Event {
   };
 }
 
+/** Creates a default Decision. */
 export function createDecision(): Decision {
   return {
     id: newId('dc'),
@@ -45,6 +47,7 @@ export function createDecision(): Decision {
   };
 }
 
+/** Creates a default Relation. */
 export function createRelation(): Relation {
   return {
     id: newId('rl'),
@@ -58,6 +61,7 @@ export function createRelation(): Relation {
   };
 }
 
+/** Creates a default Prediction. */
 export function createPrediction(): Prediction {
   return {
     id: newId('pr'),
@@ -74,6 +78,7 @@ export function createPrediction(): Prediction {
   };
 }
 
+/** Creates a default Anchor. */
 export function createAnchor(): Anchor {
   return {
     id: newId('an'),
@@ -83,6 +88,7 @@ export function createAnchor(): Anchor {
   };
 }
 
+/** Creates a default StatusRecord. */
 export function createStatusRecord(): StatusRecord {
   return {
     id: newId('st'),
