@@ -1,7 +1,4 @@
-/**
- * 实体 ID 与引用类型别名。
- * 用语义化别名区分不同实体的 ID，避免裸 string 混用。
- */
+/** Semantic ID aliases distinguishing entity kinds from bare strings. */
 export type EntityId = string;
 
 export type EventId = EntityId;
