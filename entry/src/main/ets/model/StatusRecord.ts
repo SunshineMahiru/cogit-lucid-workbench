@@ -1,16 +1,13 @@
-/**
- * 状态记录（StatusRecord）。
- * 状态监测面板的数据源：睡眠、运动、凌晨报警；生理读数优先展示。
- */
+/** A status record for the monitoring panel: sleep, exercise and late-night alerts. */
 export interface StatusRecord {
   id: string;
-  /** 日期，格式 YYYY-MM-DD */
+  /** Date in YYYY-MM-DD */
   date: string;
-  /** 睡眠时长（小时） */
+  /** Sleep hours */
   sleepHours: number;
-  /** 运动次数 */
+  /** Exercise count */
   exerciseCount: number;
-  /** 凌晨报警记录数（01:00 后触发） */
+  /** Late-night alert count (after 01:00) */
   alertCount: number;
   note: string;
 }
