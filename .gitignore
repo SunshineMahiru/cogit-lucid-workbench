@@ -9,6 +9,10 @@ node_modules/
 .test/
 *.log
 
+# User
+.privacy-guard.md
+AGENTS.md
+docs/PROJECT.md
 # OS
 .DS_Store
 Thumbs.db
