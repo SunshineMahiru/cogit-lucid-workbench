@@ -9,8 +9,8 @@ import { Anchor } from './Anchor';
 import { StatusRecord } from './StatusRecord';
 
 /**
- * 合成示例数据（100% 脱敏）。
- * 用于页面与功能演示，不含任何真实人名、真实记录、真实锚点文本。
+ * Synthetic sample data (fully sanitized).
+ * For page and feature demos; contains no real names, records or anchor text.
  */
 
 export const MOCK_EVENTS: Event[] = [
