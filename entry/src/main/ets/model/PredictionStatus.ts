@@ -1,9 +1,7 @@
-/**
- * 预测日志状态：未结算 → 已结算。
- */
+/** Prediction log status: pending → settled. */
 export enum PredictionStatus {
-  /** 未结算：判断已落盘，尚未到期对账 */
+  /** Pending: judgment committed, not yet settled */
   PENDING = 'pending',
-  /** 已结算：到期已对账，记录了实际结果与命中与否 */
+  /** Settled: outcome recorded and hit/miss marked */
   SETTLED = 'settled'
 }
