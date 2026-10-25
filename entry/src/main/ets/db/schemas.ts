@@ -35,5 +35,18 @@ export const TABLE_CREATE_SQLS: string[] = [
     forbid_analysis INTEGER NOT NULL,
     level TEXT NOT NULL,
     notes TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PREDICTION} (
+    id TEXT PRIMARY KEY,
+    target TEXT NOT NULL,
+    judgment TEXT NOT NULL,
+    confidence INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    settlement_date TEXT NOT NULL,
+    status TEXT NOT NULL,
+    actual_result TEXT NOT NULL,
+    hit INTEGER,
+    version INTEGER NOT NULL,
+    created_at INTEGER NOT NULL
   )`
 ];
