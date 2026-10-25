@@ -48,5 +48,11 @@ export const TABLE_CREATE_SQLS: string[] = [
     hit INTEGER,
     version INTEGER NOT NULL,
     created_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.ANCHOR} (
+    id TEXT PRIMARY KEY,
+    text TEXT NOT NULL,
+    source TEXT NOT NULL,
+    "order" INTEGER NOT NULL
   )`
 ];
