@@ -25,5 +25,15 @@ export const TABLE_CREATE_SQLS: string[] = [
     related_relation_ids TEXT NOT NULL,
     level TEXT NOT NULL,
     reviewed INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.RELATION} (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    trust_level TEXT NOT NULL,
+    interaction_log TEXT NOT NULL,
+    raw_material_test INTEGER NOT NULL,
+    forbid_analysis INTEGER NOT NULL,
+    level TEXT NOT NULL,
+    notes TEXT NOT NULL
   )`
 ];
