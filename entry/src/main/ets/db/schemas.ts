@@ -54,5 +54,13 @@ export const TABLE_CREATE_SQLS: string[] = [
     text TEXT NOT NULL,
     source TEXT NOT NULL,
     "order" INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.STATUS_RECORD} (
+    id TEXT PRIMARY KEY,
+    date TEXT NOT NULL,
+    sleep_hours REAL NOT NULL,
+    exercise_count INTEGER NOT NULL,
+    alert_count INTEGER NOT NULL,
+    note TEXT NOT NULL
   )`
 ];
