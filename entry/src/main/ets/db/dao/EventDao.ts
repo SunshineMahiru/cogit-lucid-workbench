@@ -32,6 +32,13 @@ export class EventDao {
     return this.queryWith(new relationalStore.RdbPredicates(DB_TABLES.EVENT));
   }
 
+  /** Returns the newest events first, capped at limit. */
+  async queryRecent(limit: number): Promise<Event[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.orderByDesc(EVENT_COLS.TIMESTAMP).limitAs(limit);
+    return this.queryWith(predicates);
+  }
+
   private async queryWith(predicates: relationalStore.RdbPredicates): Promise<Event[]> {
     const resultSet = await this.store.query(predicates);
     const events: Event[] = [];
