@@ -39,6 +39,13 @@ export class EventDao {
     return this.queryWith(predicates);
   }
 
+  /** Returns events of one type, newest first, capped at limit. */
+  async queryByType(type: string, limit: number): Promise<Event[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.TYPE, type).orderByDesc(EVENT_COLS.TIMESTAMP).limitAs(limit);
+    return this.queryWith(predicates);
+  }
+
   private async queryWith(predicates: relationalStore.RdbPredicates): Promise<Event[]> {
     const resultSet = await this.store.query(predicates);
     const events: Event[] = [];
