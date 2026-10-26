@@ -1,6 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
-import { Decision } from '../model/Decision';
-import { SecurityLevel } from '../model/SecurityLevel';
+import { Decision } from '../../model/Decision';
+import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, DECISION_COLS } from '../DbConstants';
 
 /** Data access for the decision table. */

@@ -1,5 +1,5 @@
 import { relationalStore } from '@kit.ArkData';
-import { Anchor } from '../model/Anchor';
+import { Anchor } from '../../model/Anchor';
 import { DB_TABLES, ANCHOR_COLS } from '../DbConstants';
 
 /** Data access for the anchor table. */

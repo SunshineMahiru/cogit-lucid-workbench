@@ -1,6 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
-import { Event } from '../model/Event';
-import { SecurityLevel } from '../model/SecurityLevel';
+import { Event } from '../../model/Event';
+import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, EVENT_COLS } from '../DbConstants';
 
 /** Data access for the event table. */

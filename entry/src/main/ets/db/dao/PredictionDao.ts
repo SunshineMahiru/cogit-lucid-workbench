@@ -1,6 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
-import { Prediction } from '../model/Prediction';
-import { PredictionStatus } from '../model/PredictionStatus';
+import { Prediction } from '../../model/Prediction';
+import { PredictionStatus } from '../../model/PredictionStatus';
 import { DB_TABLES, PREDICTION_COLS } from '../DbConstants';
 
 /** Data access for the prediction table. */

@@ -1,5 +1,5 @@
 import { relationalStore } from '@kit.ArkData';
-import { StatusRecord } from '../model/StatusRecord';
+import { StatusRecord } from '../../model/StatusRecord';
 import { DB_TABLES, STATUS_RECORD_COLS } from '../DbConstants';
 
 /** Data access for the status record table. */

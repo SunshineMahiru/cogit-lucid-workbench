@@ -1,7 +1,7 @@
 import { relationalStore } from '@kit.ArkData';
-import { InteractionLog, Relation } from '../model/Relation';
-import { SecurityLevel } from '../model/SecurityLevel';
-import { TrustLevel } from '../model/TrustLevel';
+import { InteractionLog, Relation } from '../../model/Relation';
+import { SecurityLevel } from '../../model/SecurityLevel';
+import { TrustLevel } from '../../model/TrustLevel';
 import { DB_TABLES, RELATION_COLS } from '../DbConstants';
 
 /** Data access for the relation table. */
