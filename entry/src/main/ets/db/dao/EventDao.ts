@@ -29,7 +29,10 @@ export class EventDao {
 
   /** Returns all events. */
   async queryAll(): Promise<Event[]> {
-    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    return this.queryWith(new relationalStore.RdbPredicates(DB_TABLES.EVENT));
+  }
+
+  private async queryWith(predicates: relationalStore.RdbPredicates): Promise<Event[]> {
     const resultSet = await this.store.query(predicates);
     const events: Event[] = [];
     while (resultSet.goToNextRow()) {
