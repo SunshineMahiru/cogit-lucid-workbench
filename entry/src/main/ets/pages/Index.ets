@@ -1,8 +1,9 @@
-import { BodyReading, PredictionItem, todayLabel } from '../model/HomeModel';
+import { BodyReading, Prediction2, PredictionItem, todayLabel } from '../model/HomeModel';
 import { HomeDataService } from '../model/HomeDataService';
 import { PredictionCard } from '../components/PredictionCard';
 import { ReadingCard } from '../components/ReadingCard';
 import { EntryChip } from '../components/EntryChip';
+import { NoteCard } from '../components/NoteCard';
 import { NoteListItem } from '../note/NoteListItem';
 import { promptAction } from '@kit.ArkUI';
 
@@ -175,30 +176,7 @@ struct Index {
                 List({ space: 8 }) {
                   ForEach(this.recentNotes, (note: NoteListItem) => {
                     ListItem() {
-                      Row({ space: 10 }) {
-                        Column({ space: 4 }) {
-                          Text(note.title)
-                            .fontSize(14)
-                            .fontColor('#1F2329')
-                            .maxLines(1)
-                            .textOverflow({ overflow: TextOverflow.Ellipsis })
-                          Text(note.summary)
-                            .fontSize(12)
-                            .fontColor('#8A8F99')
-                            .maxLines(1)
-                            .textOverflow({ overflow: TextOverflow.Ellipsis })
-                        }
-                        .layoutWeight(1)
-                        .alignItems(HorizontalAlign.Start)
-
-                        Text(note.timeLabel)
-                          .fontSize(12)
-                          .fontColor('#B0B4BE')
-                      }
-                      .width('100%')
-                      .padding(12)
-                      .backgroundColor(Color.White)
-                      .borderRadius(10)
+                      NoteCard({ note: note })
                     }
                   }, (note: NoteListItem) => note.id)
                 }
