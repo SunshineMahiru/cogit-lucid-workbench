@@ -155,7 +155,9 @@ export struct DashboardView {
       this.openPredictionList();
       return;
     }
-    this.pathStack.pushPathByName(route, null);
+    this.pathStack.pushPathByName(route, null, () => {
+      this.refresh();
+    });
   }
 
   @Builder
