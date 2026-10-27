@@ -4,15 +4,31 @@ export struct EntryChip {
   @Param label: string = '';
   @Event onTap: () => void = () => {};
 
+  private iconForLabel(label: string): string {
+    const icons: Record<string, string> = {
+      '速记': '📝',
+      '预测': '🔮',
+      '复盘': '🔄',
+      '锚点': '⭐',
+      '状态': '📊',
+      '关系': '🔗'
+    };
+    return icons[label] ?? '📌';
+  }
+
   build() {
-    Text(this.label)
-      .fontSize(13)
-      .fontColor('#1F2329')
-      .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-      .backgroundColor(Color.White)
-      .borderRadius(16)
-      .onClick(() => {
-        this.onTap();
-      })
+    Row({ space: 4 }) {
+      Text(this.iconForLabel(this.label))
+        .fontSize(14)
+      Text(this.label)
+        .fontSize(13)
+        .fontColor('#1F2329')
+    }
+    .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+    .backgroundColor(Color.White)
+    .borderRadius(16)
+    .onClick(() => {
+      this.onTap();
+    })
   }
 }
