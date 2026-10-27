@@ -1,5 +1,6 @@
 import { DashboardView } from '../views/DashboardView';
 import { ROUTES } from '../navigation/Routes';
+import { PlaceholderPage } from './PlaceholderPage';
 import { NoteEditPage } from './NoteEditPage';
 import { NoteListPage } from './NoteListPage';
 import { NoteDetailPage } from './NoteDetailPage';
@@ -44,6 +45,8 @@ struct Index {
       StatusHistoryPage()
     } else if (name === ROUTES.SETTINGS) {
       SettingsPage()
+    } else {
+      PlaceholderPage({ title: '页面未实现', hint: name })
     }
   }
 
