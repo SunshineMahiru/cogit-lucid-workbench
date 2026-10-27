@@ -1,12 +1,27 @@
-import { BodyReading, PredictionItem, MOCK_PREDICTIONS, MOCK_READINGS, todayLabel } from '../model/HomeModel';
+import { BodyReading, PredictionItem, todayLabel } from '../model/HomeModel';
+import { HomeDataService } from '../model/HomeDataService';
 import { PredictionCard } from '../components/PredictionCard';
 
 @Entry
 @ComponentV2
 struct Index {
   @Local today: string = todayLabel();
-  @Local readings: BodyReading[] = MOCK_READINGS;
-  @Local predictions: PredictionItem[] = MOCK_PREDICTIONS;
+  @Local readings: BodyReading[] = [];
+  @Local predictions: PredictionItem[] = [];
+  @Local dataService: HomeDataService | null = null;
+
+  async aboutToAppear(): Promise<void> {
+    this.dataService = await HomeDataService.open(getContext(this));
+    await this.refresh();
+  }
+
+  async refresh(): Promise<void> {
+    if (this.dataService === null) {
+      return;
+    }
+    this.readings = await this.dataService.loadReadings();
+    this.predictions = await this.dataService.loadPendingPredictions();
+  }
 
   @Builder
   readingBlock(reading: BodyReading) {
