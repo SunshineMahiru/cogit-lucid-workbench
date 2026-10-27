@@ -251,7 +251,12 @@ struct Index {
                 List({ space: 8 }) {
                   ForEach(this.recentNotes, (note: NoteListItem) => {
                     ListItem() {
-                      NoteCard({ note: note })
+                      NoteCard({
+                        note: note,
+                        onTap: () => {
+                          promptAction.showToast({ message: `速记: ${note.title}` });
+                        }
+                      })
                     }
                   }, (note: NoteListItem) => note.id)
                 }
@@ -279,7 +284,12 @@ struct Index {
                 List({ space: 10 }) {
                   ForEach(this.predictions, (item: PredictionItem) => {
                     ListItem() {
-                      PredictionCard({ item: item })
+                      PredictionCard({
+                        item: item,
+                        onTap: () => {
+                          promptAction.showToast({ message: `预测: ${item.title}` });
+                        }
+                      })
                     }
                   }, (item: PredictionItem) => item.id)
                 }
@@ -288,7 +298,7 @@ struct Index {
             }
           }
           .width('100%')
-          .padding({ left: 20, right: 20, bottom: 16 })
+          .padding({ left: 20, right: 20, bottom: 34 })
         }
         .width('100%')
         .layoutWeight(1)
