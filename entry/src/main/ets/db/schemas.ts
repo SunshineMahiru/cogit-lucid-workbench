@@ -62,5 +62,16 @@ export const TABLE_CREATE_SQLS: string[] = [
     exercise_count INTEGER NOT NULL,
     alert_count INTEGER NOT NULL,
     note TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.REVIEW_RESULT} (
+    id TEXT PRIMARY KEY,
+    period TEXT NOT NULL,
+    range_label TEXT NOT NULL,
+    facts TEXT NOT NULL,
+    interpretation TEXT NOT NULL,
+    contradiction TEXT NOT NULL,
+    action TEXT NOT NULL,
+    anchor_ids TEXT NOT NULL,
+    created_at INTEGER NOT NULL
   )`
 ];

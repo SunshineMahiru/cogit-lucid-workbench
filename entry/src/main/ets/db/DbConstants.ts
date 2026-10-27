@@ -5,7 +5,8 @@ export const DB_TABLES = {
   RELATION: 'relation',
   PREDICTION: 'prediction',
   ANCHOR: 'anchor',
-  STATUS_RECORD: 'status_record'
+  STATUS_RECORD: 'status_record',
+  REVIEW_RESULT: 'review_result'
 } as const;
 
 /** Column names for the event table. */
@@ -79,4 +80,17 @@ export const STATUS_RECORD_COLS = {
   EXERCISE_COUNT: 'exercise_count',
   ALERT_COUNT: 'alert_count',
   NOTE: 'note'
+} as const;
+
+/** Column names for the review result table. */
+export const REVIEW_COLS = {
+  ID: 'id',
+  PERIOD: 'period',
+  RANGE_LABEL: 'range_label',
+  FACTS: 'facts',
+  INTERPRETATION: 'interpretation',
+  CONTRADICTION: 'contradiction',
+  ACTION: 'action',
+  ANCHOR_IDS: 'anchor_ids',
+  CREATED_AT: 'created_at'
 } as const;

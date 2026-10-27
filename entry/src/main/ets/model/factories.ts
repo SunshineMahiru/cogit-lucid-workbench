@@ -7,6 +7,8 @@ import { Prediction } from './Prediction';
 import { PredictionStatus } from './PredictionStatus';
 import { Anchor } from './Anchor';
 import { StatusRecord } from './StatusRecord';
+import { ReviewPeriod } from './ReviewPeriod';
+import { ReviewResult } from './ReviewResult';
 
 let seq = 0;
 
@@ -97,5 +99,20 @@ export function createStatusRecord(): StatusRecord {
     exerciseCount: 0,
     alertCount: 0,
     note: ''
+  };
+}
+
+/** Creates a default ReviewResult. */
+export function createReviewResult(): ReviewResult {
+  return {
+    id: newId('rv'),
+    period: ReviewPeriod.WEEK,
+    rangeLabel: '',
+    facts: '',
+    interpretation: '',
+    contradiction: '',
+    action: '',
+    anchorIds: [],
+    createdAt: Date.now()
   };
 }
