@@ -1,4 +1,4 @@
-import { PredictionListItem } from '../prediction';
+import { PredictionListItem, predictionStatusLabel } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 
 /** Prediction row for the log list, covering both pending and settled states. */
@@ -18,10 +18,7 @@ export struct PredictionListCard {
   @Event onTap: () => void = () => {};
 
   private tagLabel(): string {
-    if (this.item.status === PredictionStatus.PENDING) {
-      return '待结算';
-    }
-    return this.item.hit === true ? '命中' : '未命中';
+    return predictionStatusLabel(this.item);
   }
 
   private tagColor(): string {
