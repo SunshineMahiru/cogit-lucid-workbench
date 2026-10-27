@@ -28,6 +28,11 @@ export class DbHelper {
       await store.executeSql(`ALTER TABLE anchor RENAME COLUMN "order" TO sort_order`);
     } catch (error) {
     }
+    // "action" is also reserved; older review tables still use it.
+    try {
+      await store.executeSql(`ALTER TABLE review_result RENAME COLUMN action TO next_action`);
+    } catch (error) {
+    }
     return store;
   }
 }

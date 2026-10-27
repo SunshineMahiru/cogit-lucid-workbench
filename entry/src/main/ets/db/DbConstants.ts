@@ -90,7 +90,7 @@ export const REVIEW_COLS = {
   FACTS: 'facts',
   INTERPRETATION: 'interpretation',
   CONTRADICTION: 'contradiction',
-  ACTION: 'action',
+  ACTION: 'next_action',
   ANCHOR_IDS: 'anchor_ids',
   CREATED_AT: 'created_at'
 } as const;

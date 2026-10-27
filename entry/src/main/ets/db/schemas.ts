@@ -70,7 +70,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     facts TEXT NOT NULL,
     interpretation TEXT NOT NULL,
     contradiction TEXT NOT NULL,
-    action TEXT NOT NULL,
+    next_action TEXT NOT NULL,
     anchor_ids TEXT NOT NULL,
     created_at INTEGER NOT NULL
   )`
