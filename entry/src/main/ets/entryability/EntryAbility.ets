@@ -1,6 +1,7 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { DbHelper } from '../db/DbHelper';
 
 const DOMAIN = 0x0000;
 const TAG = 'CogitLucid';
@@ -8,6 +9,9 @@ const TAG = 'CogitLucid';
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onCreate');
+    DbHelper.init(this.context).catch((error: Error) => {
+      hilog.error(DOMAIN, TAG, 'DbHelper.init failed: %{public}s', error.message);
+    });
   }
 
   onDestroy(): void {
