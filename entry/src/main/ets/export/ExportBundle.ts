@@ -3,6 +3,7 @@ import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
 import { Prediction } from '../model/Prediction';
 import { Relation } from '../model/Relation';
+import { ReviewResult } from '../model/ReviewResult';
 import { StatusRecord } from '../model/StatusRecord';
 
 /** All records collected for one Markdown export. */
@@ -13,6 +14,7 @@ export interface ExportBundle {
   predictions: Prediction[];
   anchors: Anchor[];
   statusRecords: StatusRecord[];
+  reviews: ReviewResult[];
   /** Export time in milliseconds */
   exportedAt: number;
 }
@@ -25,6 +27,7 @@ export interface ExportCounts {
   predictions: number;
   anchors: number;
   statusRecords: number;
+  reviews: number;
 }
 
 /** Counts every section of the bundle. */
@@ -35,12 +38,13 @@ export function countExportBundle(bundle: ExportBundle): ExportCounts {
     relations: bundle.relations.length,
     predictions: bundle.predictions.length,
     anchors: bundle.anchors.length,
-    statusRecords: bundle.statusRecords.length
+    statusRecords: bundle.statusRecords.length,
+    reviews: bundle.reviews.length
   };
 }
 
 /** Sums the counts into the number shown as the record total. */
 export function totalExportRecords(counts: ExportCounts): number {
   return counts.events + counts.decisions + counts.relations + counts.predictions + counts.anchors +
-    counts.statusRecords;
+    counts.statusRecords + counts.reviews;
 }

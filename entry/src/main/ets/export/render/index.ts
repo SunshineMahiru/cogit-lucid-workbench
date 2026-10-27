@@ -6,6 +6,7 @@ import { renderRelationSection } from './RelationSection';
 import { renderPredictionSection } from './PredictionSection';
 import { renderAnchorSection } from './AnchorSection';
 import { renderStatusSection } from './StatusSection';
+import { renderReviewSection } from './ReviewSection';
 
 export {
   renderDocumentHeader,
@@ -14,7 +15,8 @@ export {
   renderRelationSection,
   renderPredictionSection,
   renderAnchorSection,
-  renderStatusSection
+  renderStatusSection,
+  renderReviewSection
 };
 
 /** Renders the whole Markdown document from a prepared bundle; empty sections are skipped. */
@@ -26,7 +28,8 @@ export function renderExportDocument(bundle: ExportBundle): string {
     renderRelationSection(bundle.relations),
     renderPredictionSection(bundle.predictions),
     renderAnchorSection(bundle.anchors),
-    renderStatusSection(bundle.statusRecords)
+    renderStatusSection(bundle.statusRecords),
+    renderReviewSection(bundle.reviews, bundle.anchors)
   ];
   const blocks: string[] = [];
   for (const section of sections) {

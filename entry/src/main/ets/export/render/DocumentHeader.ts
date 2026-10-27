@@ -5,7 +5,7 @@ import { formatExportTime } from '../MarkdownText';
 export function renderDocumentHeader(bundle: ExportBundle): string {
   const counts = countExportBundle(bundle);
   const summary = `事件 ${counts.events} · 决策 ${counts.decisions} · 关系 ${counts.relations} · ` +
-    `预测 ${counts.predictions} · 锚点 ${counts.anchors} · 状态 ${counts.statusRecords}`;
+    `预测 ${counts.predictions} · 锚点 ${counts.anchors} · 状态 ${counts.statusRecords} · 复盘 ${counts.reviews}`;
   return [
     '# 元认知外化工作台 · 数据导出',
     '',

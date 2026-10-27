@@ -5,6 +5,7 @@ import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
 import { RelationDao } from '../db/dao/RelationDao';
+import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
 import { DbHelper } from '../db/DbHelper';
 import { countExportBundle, ExportBundle, ExportCounts } from './ExportBundle';
@@ -29,6 +30,7 @@ export class ExportService {
   private predictionDao: PredictionDao;
   private anchorDao: AnchorDao;
   private statusRecordDao: StatusRecordDao;
+  private reviewDao: ReviewResultDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.eventDao = new EventDao(store);
@@ -37,6 +39,7 @@ export class ExportService {
     this.predictionDao = new PredictionDao(store);
     this.anchorDao = new AnchorDao(store);
     this.statusRecordDao = new StatusRecordDao(store);
+    this.reviewDao = new ReviewResultDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -73,6 +76,7 @@ export class ExportService {
       predictions: await this.predictionDao.queryAll(),
       anchors: await this.anchorDao.queryAll(),
       statusRecords: await this.statusRecordDao.queryAll(),
+      reviews: await this.reviewDao.queryRecent(1000),
       exportedAt: exportedAt
     };
     return prepareExportBundle(bundle);

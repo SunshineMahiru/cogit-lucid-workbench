@@ -3,6 +3,7 @@ import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
 import { Prediction } from '../model/Prediction';
 import { Relation } from '../model/Relation';
+import { ReviewResult } from '../model/ReviewResult';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { StatusRecord } from '../model/StatusRecord';
 import { ExportBundle } from './ExportBundle';
@@ -21,6 +22,7 @@ export function prepareExportBundle(bundle: ExportBundle): ExportBundle {
     predictions: preparePredictions(bundle.predictions),
     anchors: prepareAnchors(bundle.anchors),
     statusRecords: prepareStatusRecords(bundle.statusRecords),
+    reviews: prepareReviews(bundle.reviews),
     exportedAt: bundle.exportedAt
   };
 }
@@ -72,6 +74,12 @@ function prepareAnchors(anchors: Anchor[]): Anchor[] {
 function prepareStatusRecords(records: StatusRecord[]): StatusRecord[] {
   const items: StatusRecord[] = records.slice();
   items.sort((left, right) => compareDateDesc(left.date, right.date));
+  return items;
+}
+
+function prepareReviews(reviews: ReviewResult[]): ReviewResult[] {
+  const items: ReviewResult[] = reviews.slice();
+  items.sort((left, right) => right.createdAt - left.createdAt);
   return items;
 }
 
