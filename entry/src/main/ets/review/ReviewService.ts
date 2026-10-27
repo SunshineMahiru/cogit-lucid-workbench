@@ -46,7 +46,12 @@ export class ReviewService {
 
   /** Returns the counts for the week or month containing now. */
   async loadStats(period: ReviewPeriod): Promise<ReviewStats> {
-    const range = rangeFor(period, Date.now());
+    return this.loadStatsFor(period, Date.now());
+  }
+
+  /** Returns the counts for the period containing the given anchor time. */
+  async loadStatsFor(period: ReviewPeriod, now: number): Promise<ReviewStats> {
+    const range = rangeFor(period, now);
     const events = await this.eventDao.queryAll();
     const decisions = await this.decisionDao.queryAll();
     const predictions = await this.predictionDao.queryAll();
