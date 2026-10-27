@@ -3,6 +3,9 @@
   "name": "cogit-lucid-workbench",
   "version": "1.0.0",
   "description": "元认知外化工作台 · HarmonyOS 客户端",
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "@ohos/mpchart": "3.1.0-rc.0"
+  },
+  "devDependencies": {},
+  "dynamicDependencies": {}
 }
