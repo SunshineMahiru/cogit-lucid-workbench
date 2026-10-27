@@ -1,4 +1,4 @@
-export type { AppSettings } from './AppSettings';
+export type { AppSettings, LlmProvider } from './AppSettings';
 export {
   DEFAULT_SETTINGS,
   MAX_MONTHLY_BUDGET,

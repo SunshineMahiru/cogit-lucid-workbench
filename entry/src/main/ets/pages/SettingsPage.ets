@@ -3,6 +3,7 @@ import { AppTheme } from '../theme/AppTheme';
 import { SectionCard } from '../components/SectionCard';
 import {
   AppSettings,
+  LlmProvider,
   MAX_MONTHLY_BUDGET,
   SettingsStore,
   defaultAppSettings,
@@ -53,44 +54,53 @@ export struct SettingsPage {
     }
   }
 
-  private withLlm(enabled: boolean): void {
-    this.settings = {
-      llmEnabled: enabled,
-      llmModel: this.settings.llmModel,
-      llmMonthlyBudget: this.settings.llmMonthlyBudget,
-      defaultLevel: this.settings.defaultLevel
-    };
+  private withProvider(provider: LlmProvider): void {
+    this.settings = this.copySettings(provider, this.settings.llmModel, this.settings.llmMonthlyBudget,
+      this.settings.defaultLevel, this.settings.llmBaseUrl, this.settings.llmApiKey);
     this.isDirty = true;
   }
 
   private withModel(model: string): void {
-    this.settings = {
-      llmEnabled: this.settings.llmEnabled,
-      llmModel: model,
-      llmMonthlyBudget: this.settings.llmMonthlyBudget,
-      defaultLevel: this.settings.defaultLevel
-    };
+    this.settings = this.copySettings(this.settings.llmProvider, model, this.settings.llmMonthlyBudget,
+      this.settings.defaultLevel, this.settings.llmBaseUrl, this.settings.llmApiKey);
     this.isDirty = true;
   }
 
   private withBudget(budget: number): void {
-    this.settings = {
-      llmEnabled: this.settings.llmEnabled,
-      llmModel: this.settings.llmModel,
-      llmMonthlyBudget: Math.round(budget),
-      defaultLevel: this.settings.defaultLevel
-    };
+    this.settings = this.copySettings(this.settings.llmProvider, this.settings.llmModel, Math.round(budget),
+      this.settings.defaultLevel, this.settings.llmBaseUrl, this.settings.llmApiKey);
     this.isDirty = true;
   }
 
   private withLevel(level: SecurityLevel): void {
-    this.settings = {
-      llmEnabled: this.settings.llmEnabled,
-      llmModel: this.settings.llmModel,
-      llmMonthlyBudget: this.settings.llmMonthlyBudget,
+    this.settings = this.copySettings(this.settings.llmProvider, this.settings.llmModel,
+      this.settings.llmMonthlyBudget, level, this.settings.llmBaseUrl, this.settings.llmApiKey);
+    this.isDirty = true;
+  }
+
+  private withBaseUrl(baseUrl: string): void {
+    this.settings = this.copySettings(this.settings.llmProvider, this.settings.llmModel,
+      this.settings.llmMonthlyBudget, this.settings.defaultLevel, baseUrl, this.settings.llmApiKey);
+    this.isDirty = true;
+  }
+
+  private withApiKey(apiKey: string): void {
+    this.settings = this.copySettings(this.settings.llmProvider, this.settings.llmModel,
+      this.settings.llmMonthlyBudget, this.settings.defaultLevel, this.settings.llmBaseUrl, apiKey);
+    this.isDirty = true;
+  }
+
+  private copySettings(provider: LlmProvider, model: string, budget: number, level: SecurityLevel,
+    baseUrl: string, apiKey: string): AppSettings {
+    return {
+      llmEnabled: provider !== 'template',
+      llmProvider: provider,
+      llmBaseUrl: baseUrl,
+      llmApiKey: apiKey,
+      llmModel: model,
+      llmMonthlyBudget: budget,
       defaultLevel: level
     };
-    this.isDirty = true;
   }
 
   private async save(): Promise<void> {
@@ -135,6 +145,19 @@ export struct SettingsPage {
     } finally {
       this.isExporting = false;
     }
+  }
+
+  @Builder
+  providerChip(label: string, provider: LlmProvider) {
+    Text(label)
+      .fontSize(12)
+      .fontColor(this.settings.llmProvider === provider ? Color.White : AppTheme.color.text)
+      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .backgroundColor(this.settings.llmProvider === provider ? AppTheme.color.primary : '#F1EFE8')
+      .borderRadius(14)
+      .onClick(() => {
+        this.withProvider(provider);
+      })
   }
 
   @Builder
@@ -184,26 +207,26 @@ export struct SettingsPage {
                 Column({ space: 10 }) {
                   Row() {
                     Column({ space: 2 }) {
-                      Text('复盘 LLM')
+                      Text('复盘 Agent 模式')
                         .fontSize(14)
                         .fontWeight(FontWeight.Medium)
                         .fontColor(AppTheme.color.text)
-                      Text('关闭时使用离线模板，开启后调用所选模型')
+                      Text('模板离线可用；本地模拟走 mock-server；模型端点走 OpenAI 兼容接口')
                         .fontSize(11)
                         .fontColor(AppTheme.color.textSecondary)
                     }
                     .layoutWeight(1)
                     .alignItems(HorizontalAlign.Start)
-
-                    Toggle({ type: ToggleType.Switch, isOn: this.settings.llmEnabled })
-                      .selectedColor(AppTheme.color.primary)
-                      .onChange((isOn: boolean) => {
-                        this.withLlm(isOn);
-                      })
                   }
                   .width('100%')
 
-                  if (this.settings.llmEnabled) {
+                  Row({ space: 6 }) {
+                    this.providerChip('模板', 'template')
+                    this.providerChip('本地模拟', 'mock')
+                    this.providerChip('模型', 'model')
+                  }
+
+                  if (this.settings.llmProvider !== 'template') {
                     Text('模型')
                       .fontSize(11)
                       .fontColor(AppTheme.color.textSecondary)
@@ -238,11 +261,46 @@ export struct SettingsPage {
                         this.withBudget(value);
                       })
 
-                    Text('上限 500 元；0 表示不进行付费调用')
+                    Text('上限 500 元；0 表示不进行付费调用，预算暂未做用量扣减')
                       .fontSize(10)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
+
+                  if (this.settings.llmProvider === 'model') {
+                    Text('接口地址')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.textSecondary)
+                      .width('100%')
+                    TextInput({ text: this.settings.llmBaseUrl, placeholder: 'http://127.0.0.1:4523/v1' })
+                      .backgroundColor('#F7F6F2')
+                      .onChange((value: string) => {
+                        this.withBaseUrl(value);
+                      })
+
+                    Text('API Key（可空，仅存本机）')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.textSecondary)
+                      .width('100%')
+                    TextInput({ text: this.settings.llmApiKey, placeholder: 'sk-...' })
+                      .type(InputType.Password)
+                      .backgroundColor('#F7F6F2')
+                      .onChange((value: string) => {
+                        this.withApiKey(value);
+                      })
+
+                    Text('开启模型模式后，事实、解释与锚点会发往该地址；Key 只保存在本机，不进导出。')
+                      .fontSize(10)
+                      .lineHeight(16)
+                      .fontColor(AppTheme.color.textMuted)
+                      .width('100%')
+                  }
+
+                  Text('小艺接入需要 HarmonyOS 7 与已发布智能体，当前 SDK 不提供，暂不开放。')
+                    .fontSize(10)
+                    .lineHeight(16)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)
