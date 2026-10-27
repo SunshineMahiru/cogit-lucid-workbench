@@ -3,8 +3,8 @@ import { common } from '@kit.AbilityKit';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { DbHelper } from '../db/DbHelper';
 import { PredictionDao } from '../db/dao/PredictionDao';
-import { PredictionListItem, PredictionSummary } from './PredictionListItem';
-import { summarizePredictions, toPredictionListItems } from './PredictionListMapper';
+import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
+import { summarizePredictions, toPredictionDetail, toPredictionListItems } from './PredictionListMapper';
 
 /** Reads predictions for the list page. */
 export class PredictionService {
@@ -32,5 +32,14 @@ export class PredictionService {
   async summary(): Promise<PredictionSummary> {
     const predictions = await this.predictionDao.queryAll();
     return summarizePredictions(predictions);
+  }
+
+  /** Returns one prediction for the detail page, or null when it is gone. */
+  async find(id: string): Promise<PredictionDetail | null> {
+    const prediction = await this.predictionDao.queryById(id);
+    if (prediction === null) {
+      return null;
+    }
+    return toPredictionDetail(prediction);
   }
 }
