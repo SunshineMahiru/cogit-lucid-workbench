@@ -1,6 +1,7 @@
 import { Anchor } from '../model/Anchor';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { formatHitRate } from '../model/HomeModel';
+import { ReviewPromptPanel } from './ReviewPromptPanel';
 import {
   ReviewDraft,
   ReviewService,
@@ -241,6 +242,10 @@ export struct ReviewForm {
             .borderRadius(12)
 
             this.stepDots()
+
+            if (this.step === 0) {
+              ReviewPromptPanel({ period: this.period })
+            }
 
             Text(`${this.step + 1}. ${STEP_LABELS[this.step]}`)
               .fontSize(16)
