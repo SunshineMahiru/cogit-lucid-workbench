@@ -1,14 +1,14 @@
-import { BodyReading, PredictionItem, HomeSummary, todayLabel } from '../model/HomeModel';
+import { BodyReading, HomeModule, HomeSummary, PredictionItem, todayLabel } from '../model/HomeModel';
 import { HomeDataService } from '../model/HomeDataService';
+import { ModuleCard } from '../components/ModuleCard';
 import { PredictionCard } from '../components/PredictionCard';
 import { ReadingCard } from '../components/ReadingCard';
-import { EntryChip } from '../components/EntryChip';
 import { NoteCard } from '../components/NoteCard';
 import { NoteListItem } from '../note/NoteListItem';
 import { NoteEditParams, PredictionDetailParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 
-/** Dashboard content: readings first, then module entries and the two recent lists. */
+/** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
 export struct DashboardView {
   @Require @Param pathStack: NavPathStack;
@@ -40,6 +40,48 @@ export struct DashboardView {
     this.isLoading = false;
   }
 
+  private modules(): HomeModule[] {
+    const sleep = this.readings.length > 0 ? this.readings[0].value : '--';
+    return [
+      {
+        route: ROUTES.NOTE_EDIT,
+        icon: '📝',
+        title: '速记',
+        summary: `共 ${this.summary.totalNotes} 条`
+      },
+      {
+        route: ROUTES.PREDICTION_LIST,
+        icon: '🔮',
+        title: '预测',
+        summary: `待结算 ${this.summary.pendingPredictions} · 命中 ${this.summary.hitRate}%`
+      },
+      {
+        route: ROUTES.REVIEW,
+        icon: '🔄',
+        title: '复盘',
+        summary: `待复盘 ${this.summary.unreviewedDecisions} 条`
+      },
+      {
+        route: ROUTES.ANCHOR,
+        icon: '⭐',
+        title: '锚点',
+        summary: `共 ${this.summary.totalAnchors} 条`
+      },
+      {
+        route: ROUTES.STATUS,
+        icon: '📊',
+        title: '状态',
+        summary: `睡眠 ${sleep} 小时`
+      },
+      {
+        route: ROUTES.RELATION,
+        icon: '🔗',
+        title: '关系',
+        summary: `共 ${this.summary.totalRelations} 人`
+      }
+    ];
+  }
+
   private openNoteEditor(): void {
     const params: NoteEditParams = { templateId: null };
     this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params);
@@ -48,6 +90,14 @@ export struct DashboardView {
   private openPredictionDetail(predictionId: string): void {
     const params: PredictionDetailParams = { predictionId: predictionId };
     this.pathStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params);
+  }
+
+  private openModule(route: string): void {
+    if (route === ROUTES.NOTE_EDIT) {
+      this.openNoteEditor();
+      return;
+    }
+    this.pathStack.pushPathByName(route, null);
   }
 
   @Builder
@@ -72,7 +122,7 @@ export struct DashboardView {
       Text('暂无待结算预测')
         .fontSize(14)
         .fontColor('#8A8F99')
-      Text('点击「预测」快捷入口创建一条')
+      Text('点击「预测」模块创建一条')
         .fontSize(12)
         .fontColor('#B0B4BE')
     }
@@ -87,7 +137,7 @@ export struct DashboardView {
       Text('暂无速记')
         .fontSize(14)
         .fontColor('#8A8F99')
-      Text('点击「速记」快捷入口开始记录')
+      Text('点击「速记」模块开始记录')
         .fontSize(12)
         .fontColor('#B0B4BE')
     }
@@ -193,55 +243,32 @@ export struct DashboardView {
             .backgroundColor(Color.White)
             .borderRadius(14)
 
-            // 快捷入口
+            // 模块入口
             Column({ space: 10 }) {
-              Text('快捷入口')
+              Text('模块入口')
                 .fontSize(12)
                 .fontColor('#8A8F99')
                 .width('100%')
                 .textAlign(TextAlign.Start)
-              Row({ space: 10 }) {
-                EntryChip({
-                  label: '速记',
-                  onTap: () => {
-                    this.openNoteEditor();
+              Grid() {
+                ForEach(this.modules(), (module: HomeModule) => {
+                  GridItem() {
+                    ModuleCard({
+                      icon: module.icon,
+                      title: module.title,
+                      summary: module.summary,
+                      onTap: () => {
+                        this.openModule(module.route);
+                      }
+                    })
                   }
-                })
-                EntryChip({
-                  label: '预测',
-                  onTap: () => {
-                    this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, null);
-                  }
-                })
-                EntryChip({
-                  label: '复盘',
-                  onTap: () => {
-                    this.pathStack.pushPathByName(ROUTES.REVIEW, null);
-                  }
-                })
-                EntryChip({
-                  label: '锚点',
-                  onTap: () => {
-                    this.pathStack.pushPathByName(ROUTES.ANCHOR, null);
-                  }
-                })
+                }, (module: HomeModule) => module.route)
               }
+              .columnsTemplate('1fr 1fr')
+              .columnsGap(10)
+              .rowsGap(10)
               .width('100%')
-              Row({ space: 10 }) {
-                EntryChip({
-                  label: '状态',
-                  onTap: () => {
-                    this.pathStack.pushPathByName(ROUTES.STATUS, null);
-                  }
-                }).layoutWeight(1)
-                EntryChip({
-                  label: '关系',
-                  onTap: () => {
-                    this.pathStack.pushPathByName(ROUTES.RELATION, null);
-                  }
-                }).layoutWeight(1)
-              }
-              .width('100%')
+              .height(266)
             }
             .width('100%')
             .padding(16)
