@@ -38,6 +38,7 @@ export struct ReviewForm {
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
   @Local saved: boolean = false;
+  @Local selectedAnchorIds: string[] = [];
   private service: ReviewService | null = null;
 
   aboutToAppear(): void {
@@ -54,6 +55,7 @@ export struct ReviewForm {
       this.service = await ReviewService.open(hostContext);
       this.stats = await this.service.loadStats(this.period);
       this.anchors = await this.service.loadAnchors(3);
+      this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
       this.isLoading = false;
     } catch (error) {
       this.isLoading = false;
@@ -91,6 +93,18 @@ export struct ReviewForm {
     this.contradiction = current.length > 0 ? `${current}\n${text}` : text;
   }
 
+  private isAnchorSelected(id: string): boolean {
+    return this.selectedAnchorIds.includes(id);
+  }
+
+  private toggleAnchor(id: string): void {
+    if (this.isAnchorSelected(id)) {
+      this.selectedAnchorIds = this.selectedAnchorIds.filter((item: string) => item !== id);
+    } else {
+      this.selectedAnchorIds = this.selectedAnchorIds.concat([id]);
+    }
+  }
+
   private async complete(): Promise<void> {
     if (this.isSaving) {
       return;
@@ -116,7 +130,7 @@ export struct ReviewForm {
         interpretation: this.interpretation,
         contradiction: this.contradiction,
         action: this.action,
-        anchorIds: this.anchors.map((anchor: Anchor) => anchor.id)
+        anchorIds: this.selectedAnchorIds.slice()
       };
       await this.service.save(this.period, draft, this.stats.rangeLabel);
       this.saved = true;
@@ -266,23 +280,44 @@ export struct ReviewForm {
 
             if (this.step === 2 && this.anchors.length > 0) {
               Column({ space: 8 }) {
-                Text('对照锚点')
+                Text('对照锚点 · 点击选择本次真正用到的')
                   .fontSize(11)
                   .fontColor('#8A8F99')
                   .width('100%')
                 ForEach(this.anchors, (anchor: Anchor) => {
-                  Column({ space: 2 }) {
-                    Text(anchor.text)
-                      .fontSize(13)
-                      .lineHeight(20)
-                      .fontColor('#1F2329')
-                      .width('100%')
+                  Column({ space: 4 }) {
+                    Row() {
+                      Text(anchor.text)
+                        .fontSize(13)
+                        .lineHeight(20)
+                        .fontColor('#1F2329')
+                        .layoutWeight(1)
+                      if (this.isAnchorSelected(anchor.id)) {
+                        Text('已对照')
+                          .fontSize(9)
+                          .fontColor('#4A6FA5')
+                          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                          .backgroundColor('#E8EFF7')
+                          .borderRadius(6)
+                      }
+                    }
+                    .width('100%')
                     Text(anchor.source)
                       .fontSize(10)
                       .fontColor('#B0B4BE')
                       .width('100%')
                   }
                   .width('100%')
+                  .padding(10)
+                  .backgroundColor(this.isAnchorSelected(anchor.id) ? '#F3F7FC' : '#FFFDF5')
+                  .borderRadius(8)
+                  .border({
+                    width: this.isAnchorSelected(anchor.id) ? 1 : 0,
+                    color: '#B7CDE8'
+                  })
+                  .onClick(() => {
+                    this.toggleAnchor(anchor.id);
+                  })
                 }, (anchor: Anchor) => anchor.id)
               }
               .width('100%')
