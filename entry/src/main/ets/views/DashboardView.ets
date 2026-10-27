@@ -16,6 +16,7 @@ import { NoteCard } from '../components/NoteCard';
 import { NoteListItem } from '../note/NoteListItem';
 import { NoteEditParams, NoteListParams, PredictionDetailParams, PredictionListParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
+import { APP_DISPLAY_NAME } from '../theme/AppIdentity';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -113,6 +114,10 @@ export struct DashboardView {
     ];
   }
 
+  private openSettings(): void {
+    this.pathStack.pushPathByName(ROUTES.SETTINGS, null);
+  }
+
   private openNoteEditor(): void {
     const params: NoteEditParams = { templateId: null };
     this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params, () => {
@@ -204,7 +209,7 @@ export struct DashboardView {
       // Title bar
       Row() {
         Column({ space: 4 }) {
-          Text('此在')
+          Text(APP_DISPLAY_NAME)
             .fontSize(22)
             .fontWeight(FontWeight.Bold)
             .fontColor('#1F2329')
@@ -220,6 +225,12 @@ export struct DashboardView {
           Text(`${this.predictions.length} 条待结算`)
             .fontSize(12)
             .fontColor('#4A6FA5')
+          Text('设置')
+            .fontSize(12)
+            .fontColor('#4A6FA5')
+            .onClick(() => {
+              this.openSettings();
+            })
           Text('↻ 刷新')
             .fontSize(12)
             .fontColor('#4A6FA5')
