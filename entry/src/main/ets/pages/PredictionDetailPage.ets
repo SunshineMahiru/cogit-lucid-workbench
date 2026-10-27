@@ -2,7 +2,8 @@ import {
   PredictionDetail,
   PredictionService,
   predictionHitText,
-  predictionStatusText
+  predictionStatusText,
+  todayDateString
 } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { PredictionDetailParams, PredictionSettleParams } from '../navigation/RouteParams';
@@ -187,17 +188,25 @@ export struct PredictionDetailPage {
             }
 
             if (this.detail.status === PredictionStatus.PENDING) {
-              Text('结算这条预测')
-                .fontSize(13)
-                .fontColor(AppTheme.color.primary)
-                .width('100%')
-                .textAlign(TextAlign.Center)
-                .padding({ top: 10, bottom: 10 })
-                .backgroundColor(AppTheme.color.tint)
-                .borderRadius(10)
-                .onClick(() => {
-                  this.openSettle();
-                })
+              if (todayDateString() >= this.detail.settlementDate) {
+                Text('结算这条预测')
+                  .fontSize(13)
+                  .fontColor(AppTheme.color.primary)
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+                  .padding({ top: 10, bottom: 10 })
+                  .backgroundColor(AppTheme.color.tint)
+                  .borderRadius(10)
+                  .onClick(() => {
+                    this.openSettle();
+                  })
+              } else {
+                Text(`到期后可结算 · ${this.detail.settlementDate}`)
+                  .fontSize(10)
+                  .fontColor('#B0B4BE')
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+              }
             } else {
               Text('已结算，结果不可修改')
                 .fontSize(10)

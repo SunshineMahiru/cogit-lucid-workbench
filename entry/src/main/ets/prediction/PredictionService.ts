@@ -10,6 +10,7 @@ import { PredictionStats, buildPredictionStats } from './PredictionStats';
 import {
   PredictionDraft,
   hasPredictionErrors,
+  todayDateString,
   validatePredictionDraft
 } from './PredictionValidation';
 import { createPrediction } from '../model/factories';
@@ -74,16 +75,20 @@ export class PredictionService {
   }
 
   /**
-   * Settles a pending prediction once. Returns null when it is gone and
-   * throws when it was already settled or the result is empty.
+   * Settles a pending prediction once, on or after its due date.
+   * Returns null when it is gone and throws when it is not due, already settled
+   * or the result is empty.
    */
-  async settle(id: string, actualResult: string, hit: boolean): Promise<PredictionDetail | null> {
+  async settle(id: string, actualResult: string, hit: boolean, now: number = Date.now()): Promise<PredictionDetail | null> {
     const existing = await this.predictionDao.queryById(id);
     if (existing === null) {
       return null;
     }
     if (existing.status !== PredictionStatus.PENDING) {
       throw new Error('prediction already settled');
+    }
+    if (todayDateString(now) < existing.settlementDate) {
+      throw new Error('prediction not due');
     }
     const result = actualResult.trim();
     if (result.length === 0) {

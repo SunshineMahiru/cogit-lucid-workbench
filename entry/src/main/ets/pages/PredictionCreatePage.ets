@@ -212,7 +212,7 @@ export struct PredictionCreatePage {
               .alignItems(HorizontalAlign.Start)
             }
 
-            Text('提交后不可修改，也不能提前结算；到期日只用于排序与提醒。')
+            Text('提交后不可修改；到期后才能结算，结算日用于排序与提醒。')
               .fontSize(10)
               .lineHeight(17)
               .fontColor(AppTheme.color.textMuted)

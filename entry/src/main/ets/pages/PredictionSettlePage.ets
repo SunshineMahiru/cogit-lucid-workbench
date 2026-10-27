@@ -1,7 +1,7 @@
 import { AppTheme } from '../theme/AppTheme';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
-import { PredictionDetail, PredictionService } from '../prediction';
+import { PredictionDetail, PredictionService, todayDateString } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { PredictionSettleParams } from '../navigation/RouteParams';
 
@@ -26,6 +26,7 @@ export struct PredictionSettlePage {
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   @Local alreadySettled: boolean = false;
+  @Local isDue: boolean = true;
   @Local isSaving: boolean = false;
   @Local errorText: string = '';
   private predictionId: string = '';
@@ -47,6 +48,7 @@ export struct PredictionSettlePage {
       } else {
         this.detail = detail;
         this.alreadySettled = detail.status !== PredictionStatus.PENDING;
+        this.isDue = todayDateString() >= detail.settlementDate;
       }
     } catch (error) {
       this.missing = true;
@@ -143,6 +145,23 @@ export struct PredictionSettlePage {
           NoteEmptyState({
             title: '这条预测已结算',
             hint: '结算结果不可修改',
+            actionLabel: '返回',
+            onAction: () => {
+              if (this.navStack !== null) {
+                this.navStack.pop();
+              }
+            }
+          })
+        }
+        .width('100%')
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor(AppTheme.color.page)
+      } else if (!this.isDue) {
+        Column() {
+          NoteEmptyState({
+            title: '还没到结算日',
+            hint: `到期日 ${this.detail.settlementDate}，到期后再结算`,
             actionLabel: '返回',
             onAction: () => {
               if (this.navStack !== null) {
