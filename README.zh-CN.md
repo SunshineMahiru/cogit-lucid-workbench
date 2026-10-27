@@ -99,7 +99,7 @@ hdc rport tcp:4523 tcp:4523
 | 项 | 值 |
 |---|---|
 | IDE | DevEco Studio 26.0 |
-| 设备 | Mate 70 Pro 模拟器，1260 × 2720 |
+| 设备 | Mate 70 Pro 模拟器，1316 × 2832 |
 | SDK | target 26.0.0，compatible 6.1.1（API 24） |
 | 本地服务 | Node.js Mock，端口 4523 |
 

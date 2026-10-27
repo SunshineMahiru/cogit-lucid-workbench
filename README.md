@@ -99,7 +99,7 @@ Model mode uses the same OpenAI-compatible base URL (`http://127.0.0.1:4523/v1` 
 | Item | Value |
 |---|---|
 | IDE | DevEco Studio 26.0 |
-| Device | Mate 70 Pro emulator, 1260 × 2720 |
+| Device | Mate 70 Pro emulator, 1316 × 2832 |
 | SDK | target 26.0.0, compatible 6.1.1 (API 24) |
 | Local server | Node.js mock on port 4523 |
 
