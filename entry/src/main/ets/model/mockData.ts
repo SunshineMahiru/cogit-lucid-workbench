@@ -55,6 +55,31 @@ export const MOCK_RELATIONS: Relation[] = [
     forbidAnalysis: false,
     level: SecurityLevel.LOCAL_ONLY,
     notes: '示例关系，用于演示信任分层。'
+  },
+  {
+    id: 'rl_demo_2',
+    name: '同事 B',
+    trustLevel: TrustLevel.FRIENDLY,
+    interactionLog: [
+      { timestamp: 1759900000000, content: '项目协作中的一次交接。' },
+      { timestamp: 1759950000000, content: '会后同步了进度。' }
+    ],
+    rawMaterialTest: false,
+    forbidAnalysis: false,
+    level: SecurityLevel.LOCAL_ONLY,
+    notes: '示例关系，仅用于演示友好层级。'
+  },
+  {
+    id: 'rl_demo_3',
+    name: '家人 C',
+    trustLevel: TrustLevel.TRANSPARENT,
+    interactionLog: [
+      { timestamp: 1759800000000, content: '聊到最近的作息调整。' }
+    ],
+    rawMaterialTest: true,
+    forbidAnalysis: true,
+    level: SecurityLevel.LOCAL_ONLY,
+    notes: '示例关系，演示「禁分析」标记。'
   }
 ];
 
