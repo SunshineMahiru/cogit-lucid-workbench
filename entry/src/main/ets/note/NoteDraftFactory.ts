@@ -19,6 +19,7 @@ export function createNoteDraft(templateId: NoteTemplateId | null): NoteDraft {
     content: '',
     entries: entries,
     tags: template.defaultTags.slice(),
+    relatedRelationIds: [],
     level: SecurityLevel.LOCAL_ONLY,
     timestamp: Date.now()
   };
@@ -32,6 +33,7 @@ export function createFreeformNoteDraft(): NoteDraft {
     content: '',
     entries: [],
     tags: [],
+    relatedRelationIds: [],
     level: SecurityLevel.LOCAL_ONLY,
     timestamp: Date.now()
   };

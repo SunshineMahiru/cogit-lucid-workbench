@@ -14,6 +14,7 @@ export function mergeDraftEntries(draft: NoteDraft, templateId: NoteTemplateId |
       content: draft.content,
       entries: [],
       tags: [],
+      relatedRelationIds: draft.relatedRelationIds.slice(),
       level: draft.level,
       timestamp: draft.timestamp
     };
@@ -29,6 +30,7 @@ export function mergeDraftEntries(draft: NoteDraft, templateId: NoteTemplateId |
     content: draft.content,
     entries: entries,
     tags: template.defaultTags.slice(),
+    relatedRelationIds: draft.relatedRelationIds.slice(),
     level: draft.level,
     timestamp: draft.timestamp
   };

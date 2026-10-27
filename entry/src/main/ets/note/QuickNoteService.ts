@@ -111,6 +111,7 @@ function buildEvent(draft: NoteDraft): Event {
   event.type = draft.templateId === null ? FREE_NOTE_TYPE : findNoteTemplate(draft.templateId).label;
   event.timestamp = draft.timestamp > 0 ? draft.timestamp : Date.now();
   event.tags = normalizeTags(draft.tags);
+  event.relatedRelationIds = (draft.relatedRelationIds ?? []).slice();
   event.level = draft.level;
   return event;
 }

@@ -19,6 +19,8 @@ export interface NoteDraft {
   /** Template answers in field order; empty for free-form notes */
   entries: NoteEntry[];
   tags: string[];
+  /** Relations this note refers to; empty when none */
+  relatedRelationIds: string[];
   /** Security level copied onto the saved event */
   level: SecurityLevel;
   /** Capture time in milliseconds */

@@ -18,6 +18,7 @@ export function buildDecisionFromNote(draft: NoteDraft, eventId: string): Decisi
   decision.expectedOutcome = readNoteEntry(draft, NoteFieldKey.EXPECTED_OUTCOME).trim();
   decision.timestamp = draft.timestamp;
   decision.relatedEventIds = [eventId];
+  decision.relatedRelationIds = (draft.relatedRelationIds ?? []).slice();
   decision.level = draft.level;
   return decision;
 }

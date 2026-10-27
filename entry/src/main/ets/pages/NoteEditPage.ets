@@ -19,6 +19,7 @@ import { NoteFieldEditor } from '../components/NoteFieldEditor';
 import { NoteSaveBar } from '../components/NoteSaveBar';
 import { NoteTagEditor } from '../components/NoteTagEditor';
 import { NoteTemplatePicker } from '../components/NoteTemplatePicker';
+import { RelationListItem, RelationService } from '../relation';
 
 /** Quick capture editor: template picker, dynamic fields, tags and save. */
 @ComponentV2
@@ -28,6 +29,7 @@ export struct NoteEditPage {
   @Local isSaving: boolean = false;
   @Local isDirty: boolean = false;
   @Local service: QuickNoteService | null = null;
+  @Local relations: RelationListItem[] = [];
   private navStack: NavPathStack | null = null;
 
   async aboutToAppear(): Promise<void> {
@@ -40,6 +42,8 @@ export struct NoteEditPage {
       const values = await settings.load();
       this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags, values.defaultLevel);
       this.service = await QuickNoteService.open(hostContext);
+      const relationService = await RelationService.open(hostContext);
+      this.relations = await relationService.list(null);
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '初始化失败，请重试' });
     }
@@ -52,6 +56,7 @@ export struct NoteEditPage {
       content: content,
       entries: entries,
       tags: tags,
+      relatedRelationIds: this.draft.relatedRelationIds.slice(),
       level: level,
       timestamp: this.draft.timestamp
     };
@@ -130,6 +135,33 @@ export struct NoteEditPage {
       }
     }
     this.draft = this.rebuild(this.draft.content, this.draft.entries, tags, this.draft.level);
+    this.isDirty = true;
+  }
+
+  private toggleRelation(relationId: string): void {
+    const ids: string[] = this.draft.relatedRelationIds.slice();
+    const next: string[] = [];
+    let removed = false;
+    for (const id of ids) {
+      if (id === relationId) {
+        removed = true;
+      } else {
+        next.push(id);
+      }
+    }
+    if (!removed) {
+      next.push(relationId);
+    }
+    this.draft = {
+      templateId: this.draft.templateId,
+      title: this.draft.title,
+      content: this.draft.content,
+      entries: this.draft.entries,
+      tags: this.draft.tags,
+      relatedRelationIds: next,
+      level: this.draft.level,
+      timestamp: this.draft.timestamp
+    };
     this.isDirty = true;
   }
 
@@ -247,6 +279,37 @@ export struct NoteEditPage {
                 this.removeTag(tag);
               }
             })
+
+            Column({ space: 8 }) {
+              Text('关联关系（可选）')
+                .fontSize(12)
+                .fontColor('#8A8F99')
+                .width('100%')
+              if (this.relations.length === 0) {
+                Text('关系层还没有记录，可先去载入示例关系')
+                  .fontSize(10)
+                  .fontColor('#B0B4BE')
+                  .width('100%')
+              } else {
+                Flex({ wrap: FlexWrap.Wrap }) {
+                  ForEach(this.relations, (relation: RelationListItem) => {
+                    Text(relation.name)
+                      .fontSize(11)
+                      .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? Color.White : '#5F5E5A')
+                      .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                      .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? '#4A6FA5' : '#F1EFE8')
+                      .borderRadius(12)
+                      .margin({ right: 6, bottom: 6 })
+                      .onClick(() => {
+                        this.toggleRelation(relation.id);
+                      })
+                  }, (relation: RelationListItem) => relation.id)
+                }
+                .width('100%')
+              }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
 
             Row() {
               Text('密级')
