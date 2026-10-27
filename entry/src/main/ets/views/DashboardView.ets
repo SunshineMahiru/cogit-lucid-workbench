@@ -182,185 +182,202 @@ export struct DashboardView {
       if (this.isLoading) {
         this.loadingView()
       } else {
-        Scroll() {
-          Column({ space: 16 }) {
-            // 读数区
-            Grid() {
-              ForEach(this.readings, (reading: BodyReading) => {
-                GridItem() {
-                  ReadingCard({ reading: reading })
-                }
-              }, (reading: BodyReading) => reading.label)
-            }
-            .columnsTemplate('1fr 1fr 1fr')
-            .rowsGap(0)
-            .columnsGap(0)
-            .width('100%')
-            .padding(16)
-            .backgroundColor(Color.White)
-            .borderRadius(14)
-
-            // 统计摘要
-            Row() {
-              Column({ space: 4 }) {
-                Text(String(this.summary.totalNotes))
-                  .fontSize(18)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#1F2329')
-                Text('总速记')
-                  .fontSize(11)
-                  .fontColor('#8A8F99')
-              }
-              .layoutWeight(1)
-              .alignItems(HorizontalAlign.Center)
-
-              Column({ space: 4 }) {
-                Text(String(this.summary.pendingPredictions))
-                  .fontSize(18)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#1F2329')
-                Text('待结算')
-                  .fontSize(11)
-                  .fontColor('#8A8F99')
-              }
-              .layoutWeight(1)
-              .alignItems(HorizontalAlign.Center)
-
-              Column({ space: 4 }) {
-                Text(`${this.summary.hitRate}%`)
-                  .fontSize(18)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#4A6FA5')
-                Text('命中率')
-                  .fontSize(11)
-                  .fontColor('#8A8F99')
-              }
-              .layoutWeight(1)
-              .alignItems(HorizontalAlign.Center)
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor(Color.White)
-            .borderRadius(14)
-
-            // 模块入口
-            Column({ space: 10 }) {
-              Text('模块入口')
-                .fontSize(12)
-                .fontColor('#8A8F99')
-                .width('100%')
-                .textAlign(TextAlign.Start)
+        Stack({ alignContent: Alignment.BottomEnd }) {
+          Scroll() {
+            Column({ space: 16 }) {
+              // 读数区
               Grid() {
-                ForEach(this.modules(), (module: HomeModule) => {
+                ForEach(this.readings, (reading: BodyReading) => {
                   GridItem() {
-                    ModuleCard({
-                      icon: module.icon,
-                      title: module.title,
-                      summary: module.summary,
-                      onTap: () => {
-                        this.openModule(module.route);
-                      }
-                    })
+                    ReadingCard({ reading: reading })
                   }
-                }, (module: HomeModule) => module.route)
+                }, (reading: BodyReading) => reading.label)
               }
-              .columnsTemplate('1fr 1fr')
-              .columnsGap(10)
-              .rowsGap(10)
+              .columnsTemplate('1fr 1fr 1fr')
+              .rowsGap(0)
+              .columnsGap(0)
               .width('100%')
-              .height(266)
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor(Color.White)
-            .borderRadius(14)
+              .padding(16)
+              .backgroundColor(Color.White)
+              .borderRadius(14)
 
-            // 最近速记
-            Column({ space: 10 }) {
+              // 统计摘要
               Row() {
-                Text('最近速记')
-                  .fontSize(14)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#1F2329')
-                Blank()
-                Text('全部')
+                Column({ space: 4 }) {
+                  Text(String(this.summary.totalNotes))
+                    .fontSize(18)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#1F2329')
+                  Text('总速记')
+                    .fontSize(11)
+                    .fontColor('#8A8F99')
+                }
+                .layoutWeight(1)
+                .alignItems(HorizontalAlign.Center)
+
+                Column({ space: 4 }) {
+                  Text(String(this.summary.pendingPredictions))
+                    .fontSize(18)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#1F2329')
+                  Text('待结算')
+                    .fontSize(11)
+                    .fontColor('#8A8F99')
+                }
+                .layoutWeight(1)
+                .alignItems(HorizontalAlign.Center)
+
+                Column({ space: 4 }) {
+                  Text(`${this.summary.hitRate}%`)
+                    .fontSize(18)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#4A6FA5')
+                  Text('命中率')
+                    .fontSize(11)
+                    .fontColor('#8A8F99')
+                }
+                .layoutWeight(1)
+                .alignItems(HorizontalAlign.Center)
+              }
+              .width('100%')
+              .padding(16)
+              .backgroundColor(Color.White)
+              .borderRadius(14)
+
+              // 模块入口
+              Column({ space: 10 }) {
+                Text('模块入口')
                   .fontSize(12)
                   .fontColor('#8A8F99')
-                  .onClick(() => {
-                    this.pathStack.pushPathByName(ROUTES.NOTE_LIST, null);
-                  })
-              }
-              .width('100%')
-
-              if (this.recentNotes.length === 0) {
-                this.emptyNotesView()
-              } else {
-                List({ space: 8 }) {
-                  ForEach(this.recentNotes, (note: NoteListItem) => {
-                    ListItem() {
-                      NoteCard({
-                        note: note,
+                  .width('100%')
+                  .textAlign(TextAlign.Start)
+                Grid() {
+                  ForEach(this.modules(), (module: HomeModule) => {
+                    GridItem() {
+                      ModuleCard({
+                        icon: module.icon,
+                        title: module.title,
+                        summary: module.summary,
                         onTap: () => {
-                          this.pathStack.pushPathByName(ROUTES.NOTE_LIST, null);
+                          this.openModule(module.route);
                         }
                       })
                     }
-                  }, (note: NoteListItem) => note.id)
+                  }, (module: HomeModule) => module.route)
                 }
+                .columnsTemplate('1fr 1fr')
+                .columnsGap(10)
+                .rowsGap(10)
                 .width('100%')
-              }
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor(Color.White)
-            .borderRadius(14)
-
-            // 待结算预测
-            Column({ space: 10 }) {
-              Row() {
-                Text('今日待结算')
-                  .fontSize(14)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor('#1F2329')
-                Blank()
-                Text('全部')
-                  .fontSize(12)
-                  .fontColor('#8A8F99')
-                  .onClick(() => {
-                    this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, null);
-                  })
+                .height(266)
               }
               .width('100%')
+              .padding(16)
+              .backgroundColor(Color.White)
+              .borderRadius(14)
 
-              if (this.predictions.length === 0) {
-                this.emptyPredictionsView()
-              } else {
-                List({ space: 10 }) {
-                  ForEach(this.predictions, (item: PredictionItem) => {
-                    ListItem() {
-                      PredictionCard({
-                        item: item,
-                        onTap: () => {
-                          this.openPredictionDetail(item.id);
-                        }
-                      })
-                    }
-                  }, (item: PredictionItem) => item.id)
+              // 最近速记
+              Column({ space: 10 }) {
+                Row() {
+                  Text('最近速记')
+                    .fontSize(14)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#1F2329')
+                  Blank()
+                  Text('全部')
+                    .fontSize(12)
+                    .fontColor('#8A8F99')
+                    .onClick(() => {
+                      this.pathStack.pushPathByName(ROUTES.NOTE_LIST, null);
+                    })
                 }
                 .width('100%')
+
+                if (this.recentNotes.length === 0) {
+                  this.emptyNotesView()
+                } else {
+                  List({ space: 8 }) {
+                    ForEach(this.recentNotes, (note: NoteListItem) => {
+                      ListItem() {
+                        NoteCard({
+                          note: note,
+                          onTap: () => {
+                            this.pathStack.pushPathByName(ROUTES.NOTE_LIST, null);
+                          }
+                        })
+                      }
+                    }, (note: NoteListItem) => note.id)
+                  }
+                  .width('100%')
+                }
               }
+              .width('100%')
+              .padding(16)
+              .backgroundColor(Color.White)
+              .borderRadius(14)
+
+              // 待结算预测
+              Column({ space: 10 }) {
+                Row() {
+                  Text('今日待结算')
+                    .fontSize(14)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor('#1F2329')
+                  Blank()
+                  Text('全部')
+                    .fontSize(12)
+                    .fontColor('#8A8F99')
+                    .onClick(() => {
+                      this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, null);
+                    })
+                }
+                .width('100%')
+
+                if (this.predictions.length === 0) {
+                  this.emptyPredictionsView()
+                } else {
+                  List({ space: 10 }) {
+                    ForEach(this.predictions, (item: PredictionItem) => {
+                      ListItem() {
+                        PredictionCard({
+                          item: item,
+                          onTap: () => {
+                            this.openPredictionDetail(item.id);
+                          }
+                        })
+                      }
+                    }, (item: PredictionItem) => item.id)
+                  }
+                  .width('100%')
+                }
+              }
+              .width('100%')
+              .padding(16)
+              .backgroundColor(Color.White)
+              .borderRadius(14)
             }
             .width('100%')
-            .padding(16)
-            .backgroundColor(Color.White)
-            .borderRadius(14)
+            .padding({ left: 20, right: 20, bottom: 96 })
           }
           .width('100%')
-          .padding({ left: 20, right: 20, bottom: 34 })
+          .height('100%')
+          .scrollBar(BarState.Auto)
+
+          // 常驻速记入口，保证任何位置都能一条点击进入编辑
+          Text('＋ 速记')
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Color.White)
+            .padding({ left: 20, right: 20, top: 12, bottom: 12 })
+            .backgroundColor('#4A6FA5')
+            .borderRadius(24)
+            .margin({ right: 20, bottom: 24 })
+            .onClick(() => {
+              this.openNoteEditor();
+            })
         }
         .width('100%')
         .layoutWeight(1)
-        .scrollBar(BarState.Auto)
       }
     }
     .width('100%')
