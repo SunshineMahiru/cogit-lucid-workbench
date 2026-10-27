@@ -10,6 +10,7 @@ export const ROUTES = {
   PREDICTION_SETTLE: 'prediction_settle',
   REVIEW: 'review',
   REVIEW_AGENT: 'review_agent',
+  REVIEW_WEEKLY: 'review_weekly',
   REVIEW_HISTORY: 'review_history',
   REVIEW_DETAIL: 'review_detail',
   ANCHOR: 'anchor',
