@@ -12,6 +12,8 @@ import {
 import { LocalMockLlmClient } from '../network/LocalMockLlmClient';
 import { OpenAiCompatibleClient } from '../network/OpenAiCompatibleClient';
 import { AppSettings, LlmProvider, defaultAppSettings } from '../settings/AppSettings';
+import { estimateCostYuan } from '../settings/LlmBudget';
+import { LlmSpendStore } from '../settings/LlmSpendStore';
 import { SettingsStore } from '../settings/SettingsStore';
 
 /** Candidates plus which provider actually answered. */
@@ -26,18 +28,27 @@ export interface AgentOutcome {
 export class ReviewAgent {
   private settings: AppSettings;
   private template: TemplateContradictionAnalyzer = new TemplateContradictionAnalyzer();
+  private spendStore: LlmSpendStore | null = null;
 
-  private constructor(settings: AppSettings) {
+  private constructor(settings: AppSettings, spendStore: LlmSpendStore | null) {
     this.settings = settings;
+    this.spendStore = spendStore;
   }
 
   /** Reads the current settings once per generation; falls back to defaults if storage is unavailable. */
   static async create(context: common.Context): Promise<ReviewAgent> {
     try {
       const store = await SettingsStore.open(context);
-      return new ReviewAgent(await store.load());
+      const settings = await store.load();
+      let spendStore: LlmSpendStore | null = null;
+      try {
+        spendStore = await LlmSpendStore.open(context);
+      } catch (error) {
+        spendStore = null;
+      }
+      return new ReviewAgent(settings, spendStore);
     } catch (error) {
-      return new ReviewAgent(defaultAppSettings());
+      return new ReviewAgent(defaultAppSettings(), null);
     }
   }
 
@@ -55,6 +66,16 @@ export class ReviewAgent {
       if (this.settings.llmMonthlyBudget <= 0) {
         throw new Error('budget is zero');
       }
+      const inputChars = this.settings.llmProvider === 'mock' ? 0 : this.inputChars(input);
+      if (this.settings.llmProvider === 'model') {
+        if (this.spendStore === null) {
+          throw new Error('budget store unavailable');
+        }
+        const estimated = estimateCostYuan(inputChars, 0);
+        if (!(await this.spendStore.canAfford(this.settings.llmMonthlyBudget, estimated, now))) {
+          throw new Error('budget exhausted');
+        }
+      }
       const client = this.settings.llmProvider === 'mock' ?
         new LocalMockLlmClient() :
         new OpenAiCompatibleClient(this.settings.llmBaseUrl, this.settings.llmApiKey);
@@ -62,6 +83,11 @@ export class ReviewAgent {
       const candidates = await analyzer.analyze(input, { now: now });
       if (candidates.length === 0) {
         throw new Error('empty candidates');
+      }
+      if (this.settings.llmProvider === 'model' && this.spendStore !== null) {
+        const outputChars = candidates.map((item) => item.gap.length + item.prompt.length)
+          .reduce((sum: number, value: number) => sum + value, 0);
+        await this.spendStore.record(estimateCostYuan(inputChars, outputChars), now);
       }
       return {
         candidates: candidates,
@@ -74,8 +100,16 @@ export class ReviewAgent {
         candidates: await this.template.analyze(input, { now: now }),
         provider: 'template',
         fellBack: true,
-        message: '模型不可用，已回退模板'
+        message: '模型或预算不可用，已回退模板'
       };
     }
+  }
+
+  private inputChars(input: ContradictionInput): number {
+    let chars = input.facts.length + input.interpretation.length + 200;
+    for (const anchor of input.anchors) {
+      chars += anchor.text.length;
+    }
+    return chars;
   }
 }

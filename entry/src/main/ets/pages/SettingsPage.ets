@@ -4,6 +4,7 @@ import { SectionCard } from '../components/SectionCard';
 import {
   AppSettings,
   LlmProvider,
+  LlmSpendStore,
   MAX_MONTHLY_BUDGET,
   SettingsStore,
   defaultAppSettings,
@@ -34,6 +35,7 @@ export struct SettingsPage {
   @Local lastExportName: string = '';
   @Local lastExportChars: number = 0;
   @Local lastExportTotal: number = 0;
+  @Local spentYuan: number = 0;
   private store: SettingsStore | null = null;
   private hostContext: common.Context | null = null;
 
@@ -47,6 +49,12 @@ export struct SettingsPage {
     try {
       this.store = await SettingsStore.open(context);
       this.settings = await this.store.load();
+      try {
+        const spend = await LlmSpendStore.open(context);
+        this.spentYuan = (await spend.load()).spentYuan;
+      } catch (error) {
+        this.spentYuan = 0;
+      }
       this.isLoading = false;
     } catch (error) {
       this.isLoading = false;
@@ -261,7 +269,12 @@ export struct SettingsPage {
                         this.withBudget(value);
                       })
 
-                    Text('上限 500 元；0 表示不进行付费调用，预算暂未做用量扣减')
+                    Text('上限 500 元；0 表示不进行付费调用；模型调用按字符估算并记账')
+                      .fontSize(10)
+                      .fontColor(AppTheme.color.textMuted)
+                      .width('100%')
+
+                    Text(`本月已记账 ¥${this.spentYuan.toFixed(2)} / 预算 ¥${this.settings.llmMonthlyBudget}`)
                       .fontSize(10)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
