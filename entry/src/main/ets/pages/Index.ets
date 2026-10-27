@@ -97,9 +97,17 @@ struct Index {
 
         Blank()
 
-        Text(`${this.predictions.length} 条待结算`)
-          .fontSize(12)
-          .fontColor('#4A6FA5')
+        Row({ space: 12 }) {
+          Text(`${this.predictions.length} 条待结算`)
+            .fontSize(12)
+            .fontColor('#4A6FA5')
+          Text('刷新')
+            .fontSize(12)
+            .fontColor('#4A6FA5')
+            .onClick(() => {
+              this.refresh();
+            })
+        }
       }
       .width('100%')
       .padding({ left: 20, right: 20, top: 16, bottom: 12 })
