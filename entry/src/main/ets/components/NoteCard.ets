@@ -10,11 +10,21 @@ export struct NoteCard {
   build() {
     Row({ space: 10 }) {
       Column({ space: 4 }) {
-        Text(this.note.title)
-          .fontSize(14)
-          .fontColor('#1F2329')
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Row({ space: 6 }) {
+          Text(this.note.type)
+            .fontSize(10)
+            .fontColor('#4A6FA5')
+            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .backgroundColor('#E8EFF7')
+            .borderRadius(8)
+          Text(this.note.title)
+            .fontSize(14)
+            .fontColor('#1F2329')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+        }
+        .width('100%')
         Text(this.note.summary)
           .fontSize(12)
           .fontColor('#8A8F99')
