@@ -25,5 +25,5 @@ export interface ContradictionCandidate {
  * in 6.2 and must stay behind this interface.
  */
 export interface ContradictionAnalyzer {
-  analyze(input: ContradictionInput, context: AnalysisContext): ContradictionCandidate[];
+  analyze(input: ContradictionInput, context: AnalysisContext): Promise<ContradictionCandidate[]>;
 }
