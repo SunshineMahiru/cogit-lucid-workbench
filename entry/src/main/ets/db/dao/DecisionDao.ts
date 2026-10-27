@@ -29,6 +29,16 @@ export class DecisionDao {
     return this.store.insert(DB_TABLES.DECISION, values);
   }
 
+  /** Marks a decision as reviewed or unreviewed. */
+  async setReviewed(id: string, reviewed: boolean): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [DECISION_COLS.REVIEWED]: reviewed ? 1 : 0
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.DECISION);
+    predicates.equalTo(DECISION_COLS.ID, id);
+    return this.store.update(values, predicates);
+  }
+
   /** Returns all decisions. */
   async queryAll(): Promise<Decision[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.DECISION);
