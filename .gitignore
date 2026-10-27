@@ -9,10 +9,15 @@ node_modules/
 .test/
 *.log
 
+# CodeArts toolchain
+.arts/
+.codeartsdoer/
+
 # User
 .privacy-guard.md
 AGENTS.md
 docs/PROJECT.md
+
 # OS
 .DS_Store
 Thumbs.db
