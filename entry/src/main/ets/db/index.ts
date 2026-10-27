@@ -5,7 +5,8 @@ export {
   RELATION_COLS,
   PREDICTION_COLS,
   ANCHOR_COLS,
-  STATUS_RECORD_COLS
+  STATUS_RECORD_COLS,
+  REVIEW_COLS
 } from './DbConstants';
 export { DB_CONFIG, DB_VERSION } from './DbConfig';
 export { DbHelper } from './DbHelper';
@@ -16,3 +17,4 @@ export { RelationDao } from './dao/RelationDao';
 export { PredictionDao } from './dao/PredictionDao';
 export { AnchorDao } from './dao/AnchorDao';
 export { StatusRecordDao } from './dao/StatusRecordDao';
+export { ReviewResultDao } from './dao/ReviewResultDao';
