@@ -23,6 +23,11 @@ export class DbHelper {
     for (const sql of TABLE_CREATE_SQLS) {
       await store.executeSql(sql);
     }
+    // Older installs used the reserved word "order"; rename once if it is still present.
+    try {
+      await store.executeSql(`ALTER TABLE anchor RENAME COLUMN "order" TO sort_order`);
+    } catch (error) {
+    }
     return store;
   }
 }

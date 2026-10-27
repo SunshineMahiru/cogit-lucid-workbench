@@ -53,7 +53,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     id TEXT PRIMARY KEY,
     text TEXT NOT NULL,
     source TEXT NOT NULL,
-    "order" INTEGER NOT NULL
+    sort_order INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.STATUS_RECORD} (
     id TEXT PRIMARY KEY,

@@ -69,7 +69,7 @@ export const ANCHOR_COLS = {
   ID: 'id',
   TEXT: 'text',
   SOURCE: 'source',
-  ORDER: 'order'
+  ORDER: 'sort_order'
 } as const;
 
 /** Column names for the status record table. */
