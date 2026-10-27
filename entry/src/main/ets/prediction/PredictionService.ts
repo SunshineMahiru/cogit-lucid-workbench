@@ -1,10 +1,12 @@
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
+import { MOCK_PREDICTIONS } from '../model/mockData';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { DbHelper } from '../db/DbHelper';
 import { PredictionDao } from '../db/dao/PredictionDao';
 import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
 import { summarizePredictions, toPredictionDetail, toPredictionListItems } from './PredictionListMapper';
+import { PredictionStats, buildPredictionStats } from './PredictionStats';
 
 /** Reads predictions for the list page. */
 export class PredictionService {
@@ -41,5 +43,26 @@ export class PredictionService {
       return null;
     }
     return toPredictionDetail(prediction);
+  }
+
+  /** Returns the settled-only aggregate used by the statistics page. */
+  async stats(): Promise<PredictionStats> {
+    const predictions = await this.predictionDao.queryAll();
+    return buildPredictionStats(predictions);
+  }
+
+  /**
+   * Inserts the synthetic demo predictions when the table is empty.
+   * Returns how many rows were added; existing data is never touched.
+   */
+  async seedDemoPredictions(): Promise<number> {
+    const existing = await this.predictionDao.queryAll();
+    if (existing.length > 0) {
+      return 0;
+    }
+    for (const prediction of MOCK_PREDICTIONS) {
+      await this.predictionDao.insert(prediction);
+    }
+    return MOCK_PREDICTIONS.length;
   }
 }
