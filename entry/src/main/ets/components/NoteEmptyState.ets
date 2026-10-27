@@ -4,6 +4,7 @@ export struct NoteEmptyState {
   @Param title: string = '';
   @Param hint: string = '';
   @Param actionLabel: string = '';
+  @Param dashed: boolean = false;
   @Event onAction: () => void = () => {};
 
   build() {
@@ -30,5 +31,7 @@ export struct NoteEmptyState {
     .width('100%')
     .padding(32)
     .justifyContent(FlexAlign.Center)
+    .border(this.dashed ? { width: 1, color: '#D3D1C7', style: BorderStyle.Dashed } : { width: 0 })
+    .borderRadius(this.dashed ? 12 : 0)
   }
 }

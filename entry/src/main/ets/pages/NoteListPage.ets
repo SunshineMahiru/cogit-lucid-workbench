@@ -83,6 +83,17 @@ export struct NoteListPage {
       })
   }
 
+  @Builder
+  addMenu() {
+    Text('＋')
+      .fontSize(20)
+      .fontColor('#4A6FA5')
+      .padding({ left: 12, right: 16 })
+      .onClick(() => {
+        this.openEditor();
+      })
+  }
+
   build() {
     NavDestination() {
       Stack({ alignContent: Alignment.BottomEnd }) {
@@ -117,6 +128,7 @@ export struct NoteListPage {
                 title: this.filter.length === 0 ? '还没有速记' : '没有匹配的速记',
                 hint: this.filter.length === 0 ? '点下面的按钮记第一条' : '换个类型看看，或者记一条新的',
                 actionLabel: '记一条',
+                dashed: true,
                 onAction: () => {
                   this.openEditor();
                 }
@@ -165,7 +177,8 @@ export struct NoteListPage {
       .height('100%')
       .backgroundColor('#F5F6F8')
     }
-    .title('速记')
+    .title('速记列表')
+    .menus(this.addMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param !== undefined) {
