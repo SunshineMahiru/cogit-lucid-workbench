@@ -43,7 +43,17 @@ export class PredictionDao {
 
   /** Returns all predictions. */
   async queryAll(): Promise<Prediction[]> {
+    return this.queryWith(new relationalStore.RdbPredicates(DB_TABLES.PREDICTION));
+  }
+
+  /** Returns predictions of one status. */
+  async queryByStatus(status: PredictionStatus): Promise<Prediction[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
+    predicates.equalTo(PREDICTION_COLS.STATUS, status);
+    return this.queryWith(predicates);
+  }
+
+  private async queryWith(predicates: relationalStore.RdbPredicates): Promise<Prediction[]> {
     const resultSet = await this.store.query(predicates);
     const predictions: Prediction[] = [];
     while (resultSet.goToNextRow()) {
