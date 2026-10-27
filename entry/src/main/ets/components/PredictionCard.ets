@@ -11,6 +11,13 @@ export struct PredictionCard {
   build() {
     Column({ space: 10 }) {
       Row() {
+        Text('待结算')
+          .fontSize(10)
+          .fontColor('#E8A93C')
+          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+          .backgroundColor('#FFF4E0')
+          .borderRadius(8)
+          .margin({ right: 6 })
         Text(this.item.title)
           .fontSize(15)
           .fontColor('#1F2329')
