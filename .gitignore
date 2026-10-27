@@ -21,7 +21,13 @@ node_modules/
 *.csr
 *.jks
 *.keystore
+*.pem
+*.key
 signing/
+
+# Local environment; never commit secrets
+.env
+.env.*
 
 # Install packages kept outside build/
 *.hap
@@ -30,8 +36,10 @@ signing/
 
 # Reports and packaging material stay outside the app repository
 *.docx
+*.pdf
 *.zip
 screenshots/
+结课设计/
 
 # IDE, OS and merge leftovers
 .vscode/
@@ -45,7 +53,8 @@ desktop.ini
 *.orig
 *.rej
 
-# User
+# Local-only files; never commit
 .privacy-guard.md
 AGENTS.md
 docs/PROJECT.md
+.workbuddy/
