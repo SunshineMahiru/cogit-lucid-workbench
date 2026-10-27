@@ -16,6 +16,7 @@ import { ReviewDetailPage } from './ReviewDetailPage';
 import { AnchorPage } from './AnchorPage';
 import { RelationListPage } from './RelationListPage';
 import { RelationDetailPage } from './RelationDetailPage';
+import { RelationGraphPage } from './RelationGraphPage';
 import { StatusPage } from './StatusPage';
 import { StatusHistoryPage } from './StatusHistoryPage';
 import { SettingsPage } from './SettingsPage';
@@ -57,6 +58,8 @@ struct Index {
       RelationListPage()
     } else if (name === ROUTES.RELATION_DETAIL) {
       RelationDetailPage()
+    } else if (name === ROUTES.RELATION_GRAPH) {
+      RelationGraphPage()
     } else if (name === ROUTES.STATUS) {
       StatusPage()
     } else if (name === ROUTES.STATUS_HISTORY) {

@@ -97,6 +97,19 @@ export struct RelationListPage {
   }
 
   @Builder
+  graphMenu() {
+    Text('图谱')
+      .fontSize(14)
+      .fontColor(AppTheme.color.primary)
+      .padding({ left: 12, right: 16 })
+      .onClick(() => {
+        if (this.navStack !== null) {
+          this.navStack.pushPathByName(ROUTES.RELATION_GRAPH, null);
+        }
+      })
+  }
+
+  @Builder
   headerCard() {
     SectionCard() {
       Column({ space: 4 }) {
@@ -196,6 +209,7 @@ export struct RelationListPage {
       .backgroundColor(AppTheme.color.page)
     }
     .title('关系层')
+    .menus(this.graphMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
     })

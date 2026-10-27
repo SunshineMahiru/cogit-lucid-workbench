@@ -15,6 +15,7 @@ export const ROUTES = {
   ANCHOR: 'anchor',
   RELATION: 'relation',
   RELATION_DETAIL: 'relation_detail',
+  RELATION_GRAPH: 'relation_graph',
   STATUS: 'status',
   STATUS_HISTORY: 'status_history',
   SETTINGS: 'settings'
