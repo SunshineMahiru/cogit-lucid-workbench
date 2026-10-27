@@ -4,3 +4,6 @@ export type { ReviewPrompt } from './ReviewPrompt';
 export { parseReviewPrompts } from './ReviewPrompt';
 export type { ReviewPromptRepository } from './ReviewPromptRepository';
 export { HttpReviewPromptRepository } from './HttpReviewPromptRepository';
+export { LocalMockLlmClient } from './LocalMockLlmClient';
+export { OpenAiCompatibleClient } from './OpenAiCompatibleClient';
+export { XiaoyiAgentClient } from './XiaoyiAgentClient';
