@@ -53,6 +53,14 @@ export class PredictionDao {
     return this.queryWith(predicates);
   }
 
+  /** Returns one prediction by id, or null when it does not exist. */
+  async queryById(id: string): Promise<Prediction | null> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
+    predicates.equalTo(PREDICTION_COLS.ID, id).limitAs(1);
+    const predictions = await this.queryWith(predicates);
+    return predictions.length > 0 ? predictions[0] : null;
+  }
+
   private async queryWith(predicates: relationalStore.RdbPredicates): Promise<Prediction[]> {
     const resultSet = await this.store.query(predicates);
     const predictions: Prediction[] = [];
