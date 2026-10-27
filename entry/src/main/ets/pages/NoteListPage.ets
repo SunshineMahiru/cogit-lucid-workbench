@@ -1,5 +1,5 @@
 import { DEFAULT_NOTE_LIST_LIMIT, NoteListItem, QuickNoteService } from '../note';
-import { NoteDetailParams, NoteEditParams } from '../navigation/RouteParams';
+import { NoteDetailParams, NoteEditParams, NoteListParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { NoteCard } from '../components/NoteCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
@@ -12,6 +12,7 @@ export struct NoteListPage {
   @Local filter: string = '';
   @Local isLoading: boolean = true;
   private navStack: NavPathStack | null = null;
+  private hasShownOnce: boolean = false;
 
   aboutToAppear(): void {
     this.openService();
@@ -144,7 +145,7 @@ export struct NoteListPage {
         }
         .width('100%')
         .height('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+        .padding({ left: 16, right: 16, top: 12, bottom: 80 })
 
         Text('＋')
           .fontSize(22)
@@ -167,9 +168,20 @@ export struct NoteListPage {
     .title('速记')
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
+      if (context.pathInfo.param !== undefined) {
+        const params = context.pathInfo.param as NoteListParams;
+        this.filter = params.filterType;
+        if (this.service !== null) {
+          this.refresh();
+        }
+      }
     })
     .onShown(() => {
-      this.refresh();
+      if (this.hasShownOnce) {
+        this.refresh();
+      } else {
+        this.hasShownOnce = true;
+      }
     })
   }
 }
