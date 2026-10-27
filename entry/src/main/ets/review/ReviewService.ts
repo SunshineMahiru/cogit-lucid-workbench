@@ -15,6 +15,12 @@ import { PredictionDao } from '../db/dao/PredictionDao';
 import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 import { ReviewDraft, ReviewStats } from './ReviewDraft';
 import { PeriodRange, rangeFor } from './ReviewRange';
+import {
+  ReviewDetailView,
+  ReviewHistoryItem,
+  toReviewDetailView,
+  toReviewHistoryItem
+} from './ReviewHistory';
 
 /** Loads review inputs and persists completed sessions. */
 export class ReviewService {
@@ -66,6 +72,21 @@ export class ReviewService {
     result.anchorIds = draft.anchorIds.slice();
     await this.reviewDao.insert(result);
     return result.id;
+  }
+
+  /** Returns saved sessions, newest first. */
+  async history(limit: number = 20): Promise<ReviewHistoryItem[]> {
+    const results = await this.reviewDao.queryRecent(limit);
+    return results.map((result) => toReviewHistoryItem(result));
+  }
+
+  /** Returns one saved session with its anchors resolved, or null when missing. */
+  async find(id: string): Promise<ReviewDetailView | null> {
+    const result = await this.reviewDao.queryById(id);
+    if (result === null) {
+      return null;
+    }
+    return toReviewDetailView(result, await this.anchorDao.queryAll());
   }
 }
 
