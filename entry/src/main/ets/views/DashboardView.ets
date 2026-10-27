@@ -32,6 +32,7 @@ export struct DashboardView {
     totalNotes: 0, todayNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0, hitRate: 0,
     unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0
   };
+  @Local moduleItems: HomeModule[] = [];
   @Local dataService: HomeDataService | null = null;
   @Local weekStats: ReviewStats = emptyReviewStats();
   @Local weekReviewed: boolean = false;
@@ -68,6 +69,7 @@ export struct DashboardView {
       this.predictions = await this.dataService.loadPendingPredictions();
       this.recentNotes = await this.dataService.loadRecentNotes();
       this.summary = await this.dataService.loadSummary();
+      this.moduleItems = this.buildModules();
       if (this.reviewService !== null) {
         this.weekStats = await this.reviewService.loadStats(ReviewPeriod.WEEK);
         const history = await this.reviewService.history(10);
@@ -83,7 +85,7 @@ export struct DashboardView {
     }
   }
 
-  private modules(): HomeModule[] {
+  private buildModules(): HomeModule[] {
     const sleep = this.readings.length > 0 ? this.readings[0].value : '--';
     return [
       {
@@ -390,7 +392,7 @@ export struct DashboardView {
                   .width('100%')
                   .textAlign(TextAlign.Start)
                 Grid() {
-                  ForEach(this.modules(), (module: HomeModule) => {
+                  ForEach(this.moduleItems, (module: HomeModule) => {
                     GridItem() {
                       ModuleCard({
                         icon: module.icon,
