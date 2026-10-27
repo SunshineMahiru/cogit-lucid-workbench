@@ -1,4 +1,5 @@
 import { preferences } from '@kit.ArkData';
+import { common } from '@kit.AbilityKit';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { AppSettings, defaultAppSettings, sanitizeAppSettings } from './AppSettings';
 import { SETTINGS_KEYS, SETTINGS_STORE_NAME } from './SettingsKeys';
@@ -12,7 +13,7 @@ export class SettingsStore {
   }
 
   /** Opens the settings store; values persist across launches. */
-  static async open(context: Context): Promise<SettingsStore> {
+  static async open(context: common.Context): Promise<SettingsStore> {
     const prefs = await preferences.getPreferences(context, { name: SETTINGS_STORE_NAME });
     return new SettingsStore(prefs);
   }

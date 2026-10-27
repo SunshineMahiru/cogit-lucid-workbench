@@ -1,4 +1,5 @@
 import { relationalStore } from '@kit.ArkData';
+import { common } from '@kit.AbilityKit';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
@@ -39,7 +40,7 @@ export class ExportService {
   }
 
   /** Opens the database and returns a service bound to it. */
-  static async open(context: Context): Promise<ExportService> {
+  static async open(context: common.Context): Promise<ExportService> {
     const store = await DbHelper.init(context);
     return new ExportService(store);
   }
@@ -51,7 +52,7 @@ export class ExportService {
   }
 
   /** Exports every exportable record and returns the file that was written. */
-  async exportMarkdown(context: Context, now: number = Date.now()): Promise<ExportResult> {
+  async exportMarkdown(context: common.Context, now: number = Date.now()): Promise<ExportResult> {
     const bundle = await this.loadPreparedBundle(now);
     const markdown = renderExportDocument(bundle);
     const fileName = buildExportFileName(now);

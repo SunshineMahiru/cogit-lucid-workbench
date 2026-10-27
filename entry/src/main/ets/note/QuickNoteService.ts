@@ -1,4 +1,5 @@
 import { relationalStore } from '@kit.ArkData';
+import { common } from '@kit.AbilityKit';
 import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
 import { createEvent } from '../model/factories';
@@ -39,7 +40,7 @@ export class QuickNoteService {
   }
 
   /** Opens the database and returns a service bound to it. */
-  static async open(context: Context): Promise<QuickNoteService> {
+  static async open(context: common.Context): Promise<QuickNoteService> {
     const store = await DbHelper.init(context);
     return new QuickNoteService(store);
   }

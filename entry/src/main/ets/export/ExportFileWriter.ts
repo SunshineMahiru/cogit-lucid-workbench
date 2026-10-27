@@ -1,4 +1,5 @@
 import { fileIo } from '@kit.CoreFileKit';
+import { common } from '@kit.AbilityKit';
 import { formatFileStamp } from './MarkdownText';
 
 /** Folder under the app sandbox that holds exported documents. */
@@ -13,7 +14,7 @@ export function buildExportFileName(timestamp: number): string {
 }
 
 /** Writes the document into the sandbox export folder and returns its absolute path. */
-export async function writeExportFile(context: Context, fileName: string, content: string): Promise<string> {
+export async function writeExportFile(context: common.Context, fileName: string, content: string): Promise<string> {
   const directory = `${context.filesDir}/${EXPORT_DIR_NAME}`;
   if (!fileIo.accessSync(directory)) {
     fileIo.mkdirSync(directory, true);

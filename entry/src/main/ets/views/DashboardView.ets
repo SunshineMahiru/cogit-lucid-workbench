@@ -24,7 +24,11 @@ export struct DashboardView {
   @Local isLoading: boolean = true;
 
   async aboutToAppear(): Promise<void> {
-    this.dataService = await HomeDataService.open(getContext(this));
+    const context = this.getUIContext().getHostContext();
+    if (context === undefined) {
+      return;
+    }
+    this.dataService = await HomeDataService.open(context);
     await this.refresh();
   }
 

@@ -1,4 +1,5 @@
 import { relationalStore } from '@kit.ArkData';
+import { common } from '@kit.AbilityKit';
 import { DbHelper } from '../db/DbHelper';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
@@ -34,7 +35,7 @@ export class HomeDataService {
   }
 
   /** Opens the database and returns a service bound to it. */
-  static async open(context: Context): Promise<HomeDataService> {
+  static async open(context: common.Context): Promise<HomeDataService> {
     const store = await DbHelper.init(context);
     return new HomeDataService(store);
   }
