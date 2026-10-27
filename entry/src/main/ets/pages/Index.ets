@@ -1,6 +1,9 @@
 import { DashboardView } from '../views/DashboardView';
 import { ROUTES } from '../navigation/Routes';
 import { PlaceholderPage } from './PlaceholderPage';
+import { NoteEditPage } from './NoteEditPage';
+import { NoteListPage } from './NoteListPage';
+import { NoteDetailPage } from './NoteDetailPage';
 
 @Entry
 @ComponentV2
@@ -10,9 +13,11 @@ struct Index {
   @Builder
   pageMap(name: string) {
     if (name === ROUTES.NOTE_EDIT) {
-      PlaceholderPage({ title: '速记', hint: '速记编辑页将在 2.2 接入' })
+      NoteEditPage()
     } else if (name === ROUTES.NOTE_LIST) {
-      PlaceholderPage({ title: '速记列表', hint: '速记列表将在 2.2 接入' })
+      NoteListPage()
+    } else if (name === ROUTES.NOTE_DETAIL) {
+      NoteDetailPage()
     } else if (name === ROUTES.PREDICTION_LIST) {
       PlaceholderPage({ title: '预测日志', hint: '预测列表将在 2.3 接入' })
     } else if (name === ROUTES.PREDICTION_DETAIL) {
