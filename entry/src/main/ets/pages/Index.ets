@@ -5,6 +5,7 @@ import { NoteEditPage } from './NoteEditPage';
 import { NoteListPage } from './NoteListPage';
 import { NoteDetailPage } from './NoteDetailPage';
 import { PredictionListPage } from './PredictionListPage';
+import { PredictionDetailPage } from './PredictionDetailPage';
 
 @Entry
 @ComponentV2
@@ -22,7 +23,7 @@ struct Index {
     } else if (name === ROUTES.PREDICTION_LIST) {
       PredictionListPage()
     } else if (name === ROUTES.PREDICTION_DETAIL) {
-      PlaceholderPage({ title: '预测详情', hint: '预测详情将在 2.4 接入' })
+      PredictionDetailPage()
     } else if (name === ROUTES.REVIEW) {
       PlaceholderPage({ title: '复盘', hint: '复盘会话将在 2.5 接入' })
     } else if (name === ROUTES.ANCHOR) {
