@@ -13,6 +13,7 @@ export struct PredictionStatsPage {
   @Local stats: PredictionStats = { settled: 0, hits: 0, misses: 0, hitRate: 0, months: [] };
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
+  @Local hasAnyPrediction: boolean = false;
   private hasShownOnce: boolean = false;
 
   aboutToAppear(): void {
@@ -28,6 +29,7 @@ export struct PredictionStatsPage {
     try {
       this.service = await PredictionService.open(hostContext);
       this.stats = await this.service.stats();
+      this.hasAnyPrediction = (await this.service.list(null)).length > 0;
       this.isLoading = false;
     } catch (error) {
       this.isLoading = false;
@@ -42,6 +44,7 @@ export struct PredictionStatsPage {
     this.isLoading = true;
     try {
       this.stats = await this.service.stats();
+      this.hasAnyPrediction = (await this.service.list(null)).length > 0;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '统计数据加载失败' });
     } finally {
@@ -82,15 +85,23 @@ export struct PredictionStatsPage {
           .justifyContent(FlexAlign.Center)
         } else if (this.stats.settled === 0) {
           Column() {
-            NoteEmptyState({
-              title: '还没有已结算的预测',
-              hint: '至少结算一条预测后才能统计命中率；示例数据仅用于演示',
-              actionLabel: this.isSeeding ? '载入中…' : '载入示例预测',
-              dashed: true,
-              onAction: () => {
-                this.seed();
-              }
-            })
+            if (this.hasAnyPrediction) {
+              NoteEmptyState({
+                title: '还没有已结算的预测',
+                hint: '统计只读取已结算结果，先到预测日志结算一条再回来',
+                dashed: true
+              })
+            } else {
+              NoteEmptyState({
+                title: '还没有已结算的预测',
+                hint: '至少结算一条预测后才能统计命中率；示例数据仅用于演示',
+                actionLabel: this.isSeeding ? '载入中…' : '载入示例预测',
+                dashed: true,
+                onAction: () => {
+                  this.seed();
+                }
+              })
+            }
           }
           .width('100%')
           .layoutWeight(1)
