@@ -10,6 +10,7 @@ import { PredictionStatsPage } from './PredictionStatsPage';
 import { PredictionCreatePage } from './PredictionCreatePage';
 import { PredictionSettlePage } from './PredictionSettlePage';
 import { ReviewPage } from './ReviewPage';
+import { ReviewAgentPage } from './ReviewAgentPage';
 import { AnchorPage } from './AnchorPage';
 import { RelationListPage } from './RelationListPage';
 import { RelationDetailPage } from './RelationDetailPage';
@@ -42,6 +43,8 @@ struct Index {
       PredictionSettlePage()
     } else if (name === ROUTES.REVIEW) {
       ReviewPage()
+    } else if (name === ROUTES.REVIEW_AGENT) {
+      ReviewAgentPage()
     } else if (name === ROUTES.ANCHOR) {
       AnchorPage()
     } else if (name === ROUTES.RELATION) {
