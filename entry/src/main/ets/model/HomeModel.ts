@@ -13,6 +13,14 @@ export interface PredictionItem {
   dueDate: string;
 }
 
+export interface HomeSummary {
+  totalNotes: number;
+  totalPredictions: number;
+  pendingPredictions: number;
+  settledPredictions: number;
+  hitRate: number;
+}
+
 const WEEK_LABELS: string[] = ['日', '一', '二', '三', '四', '五', '六'];
 
 export function todayLabel(): string {
