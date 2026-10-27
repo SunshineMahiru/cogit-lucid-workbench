@@ -8,6 +8,8 @@ import { PredictionListPage } from './PredictionListPage';
 import { PredictionDetailPage } from './PredictionDetailPage';
 import { ReviewPage } from './ReviewPage';
 import { AnchorPage } from './AnchorPage';
+import { RelationListPage } from './RelationListPage';
+import { RelationDetailPage } from './RelationDetailPage';
 
 @Entry
 @ComponentV2
@@ -31,7 +33,9 @@ struct Index {
     } else if (name === ROUTES.ANCHOR) {
       AnchorPage()
     } else if (name === ROUTES.RELATION) {
-      PlaceholderPage({ title: '关系层', hint: '关系页将在 2.7 接入' })
+      RelationListPage()
+    } else if (name === ROUTES.RELATION_DETAIL) {
+      RelationDetailPage()
     } else if (name === ROUTES.STATUS) {
       PlaceholderPage({ title: '状态面板', hint: '状态页将在 2.8 接入' })
     }
