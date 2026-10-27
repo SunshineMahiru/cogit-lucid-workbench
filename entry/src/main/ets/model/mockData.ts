@@ -130,8 +130,56 @@ export const MOCK_ANCHORS: Anchor[] = [
 export const MOCK_STATUS_RECORDS: StatusRecord[] = [
   {
     id: 'st_demo_1',
-    date: '2026-10-23',
+    date: '2026-10-21',
     sleepHours: 7.5,
+    exerciseCount: 1,
+    alertCount: 0,
+    note: '示例状态记录。'
+  },
+  {
+    id: 'st_demo_2',
+    date: '2026-10-22',
+    sleepHours: 6.8,
+    exerciseCount: 0,
+    alertCount: 1,
+    note: '示例状态记录。'
+  },
+  {
+    id: 'st_demo_3',
+    date: '2026-10-23',
+    sleepHours: 6.2,
+    exerciseCount: 1,
+    alertCount: 2,
+    note: '示例状态记录。'
+  },
+  {
+    id: 'st_demo_4',
+    date: '2026-10-24',
+    sleepHours: 7.2,
+    exerciseCount: 0,
+    alertCount: 0,
+    note: '示例状态记录。'
+  },
+  {
+    id: 'st_demo_5',
+    date: '2026-10-25',
+    sleepHours: 5.8,
+    exerciseCount: 0,
+    alertCount: 3,
+    note: '示例状态记录。'
+  },
+  {
+    id: 'st_demo_6',
+    date: '2026-10-26',
+    sleepHours: 7.0,
+    exerciseCount: 1,
+    alertCount: 1,
+    note: '示例状态记录。'
+  },
+  {
+    id: 'st_demo_7',
+    date: '2026-10-27',
+    sleepHours: 6.6,
     exerciseCount: 1,
     alertCount: 0,
     note: '示例状态记录。'
