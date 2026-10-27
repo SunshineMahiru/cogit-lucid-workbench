@@ -64,6 +64,12 @@ export struct PredictionListPage {
     this.navStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params);
   }
 
+  private openCreate(): void {
+    if (this.navStack !== null) {
+      this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, null);
+    }
+  }
+
   @Builder
   filterChip(label: string, status: PredictionStatus | null) {
     Text(label)
@@ -78,16 +84,25 @@ export struct PredictionListPage {
   }
 
   @Builder
-  statsMenu() {
-    Text('统计')
-      .fontSize(14)
-      .fontColor('#4A6FA5')
-      .padding({ left: 12, right: 16 })
-      .onClick(() => {
-        if (this.navStack !== null) {
-          this.navStack.pushPathByName(ROUTES.PREDICTION_STATS, null);
-        }
-      })
+  actionsMenu() {
+    Row({ space: 2 }) {
+      Text('统计')
+        .fontSize(14)
+        .fontColor('#4A6FA5')
+        .padding({ left: 8, right: 8 })
+        .onClick(() => {
+          if (this.navStack !== null) {
+            this.navStack.pushPathByName(ROUTES.PREDICTION_STATS, null);
+          }
+        })
+      Text('＋')
+        .fontSize(20)
+        .fontColor('#4A6FA5')
+        .padding({ left: 4, right: 14 })
+        .onClick(() => {
+          this.openCreate();
+        })
+    }
   }
 
   @Builder
@@ -198,7 +213,7 @@ export struct PredictionListPage {
       .backgroundColor('#F5F6F8')
     }
     .title('预测日志')
-    .menus(this.statsMenu)
+    .menus(this.actionsMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param !== undefined) {

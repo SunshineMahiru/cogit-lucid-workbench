@@ -5,8 +5,10 @@ import {
   predictionStatusText
 } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
-import { PredictionDetailParams } from '../navigation/RouteParams';
+import { PredictionDetailParams, PredictionSettleParams } from '../navigation/RouteParams';
+import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
+import { AppTheme } from '../theme/AppTheme';
 
 /** Read-only view of one prediction, including its settlement result. */
 @ComponentV2
@@ -27,6 +29,15 @@ export struct PredictionDetailPage {
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   private navStack: NavPathStack | null = null;
+  private hasShownOnce: boolean = false;
+
+  private openSettle(): void {
+    if (this.navStack === null) {
+      return;
+    }
+    const params: PredictionSettleParams = { predictionId: this.detail.id };
+    this.navStack.pushPathByName(ROUTES.PREDICTION_SETTLE, params);
+  }
 
   private async load(id: string): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
@@ -176,8 +187,20 @@ export struct PredictionDetailPage {
             }
 
             if (this.detail.status === PredictionStatus.PENDING) {
-              Text('结算功能将在预测日志阶段接入')
-                .fontSize(11)
+              Text('结算这条预测')
+                .fontSize(13)
+                .fontColor(AppTheme.color.primary)
+                .width('100%')
+                .textAlign(TextAlign.Center)
+                .padding({ top: 10, bottom: 10 })
+                .backgroundColor(AppTheme.color.tint)
+                .borderRadius(10)
+                .onClick(() => {
+                  this.openSettle();
+                })
+            } else {
+              Text('已结算，结果不可修改')
+                .fontSize(10)
                 .fontColor('#B0B4BE')
                 .width('100%')
                 .textAlign(TextAlign.Center)
@@ -203,6 +226,13 @@ export struct PredictionDetailPage {
       }
       const params = context.pathInfo.param as PredictionDetailParams;
       this.load(params.predictionId);
+    })
+    .onShown(() => {
+      if (this.hasShownOnce && this.detail.id.length > 0) {
+        this.load(this.detail.id);
+      } else {
+        this.hasShownOnce = true;
+      }
     })
   }
 }
