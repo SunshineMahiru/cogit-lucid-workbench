@@ -4,6 +4,7 @@
 oh_modules/
 build/
 .preview/
+.cxx/
 local.properties
 node_modules/
 .test/
@@ -13,11 +14,38 @@ node_modules/
 .arts/
 .codeartsdoer/
 
+# Signing material; never commit keys or provisioning profiles
+*.p12
+*.cer
+*.p7b
+*.csr
+*.jks
+*.keystore
+signing/
+
+# Install packages kept outside build/
+*.hap
+*.hsp
+*.app
+
+# Reports and packaging material stay outside the app repository
+*.docx
+*.zip
+screenshots/
+
+# IDE, OS and merge leftovers
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.bak
+*~
+*.orig
+*.rej
+
 # User
 .privacy-guard.md
 AGENTS.md
 docs/PROJECT.md
-
-# OS
-.DS_Store
-Thumbs.db
