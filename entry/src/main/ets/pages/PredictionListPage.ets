@@ -1,7 +1,7 @@
 import { PredictionListItem, PredictionService, PredictionSummary } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { formatHitRate, hitRateCaption } from '../model/HomeModel';
-import { PredictionDetailParams } from '../navigation/RouteParams';
+import { PredictionDetailParams, PredictionListParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { PredictionListCard } from '../components/PredictionListCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
@@ -15,6 +15,7 @@ export struct PredictionListPage {
   @Local filter: PredictionStatus | null = null;
   @Local isLoading: boolean = true;
   private navStack: NavPathStack | null = null;
+  private hasShownOnce: boolean = false;
 
   aboutToAppear(): void {
     this.openService();
@@ -151,7 +152,7 @@ export struct PredictionListPage {
           Column() {
             NoteEmptyState({
               title: this.emptyTitle(),
-              hint: '预测创建入口稍后开放',
+              hint: this.emptyHint(),
               actionLabel: '',
               onAction: () => {
               }
@@ -186,9 +187,20 @@ export struct PredictionListPage {
     .title('预测日志')
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
+      if (context.pathInfo.param !== undefined) {
+        const params = context.pathInfo.param as PredictionListParams;
+        this.filter = params.status;
+        if (this.service !== null) {
+          this.refresh();
+        }
+      }
     })
     .onShown(() => {
-      this.refresh();
+      if (this.hasShownOnce) {
+        this.refresh();
+      } else {
+        this.hasShownOnce = true;
+      }
     })
   }
 
@@ -200,5 +212,15 @@ export struct PredictionListPage {
       return '暂无已结算预测';
     }
     return '还没有预测记录';
+  }
+
+  private emptyHint(): string {
+    if (this.filter === PredictionStatus.PENDING) {
+      return '到期的判断会在这里等你结算';
+    }
+    if (this.filter === PredictionStatus.SETTLED) {
+      return '结算后的判断会保留在这里';
+    }
+    return '预测创建入口稍后开放';
   }
 }
