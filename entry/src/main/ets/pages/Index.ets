@@ -89,9 +89,9 @@ struct Index {
       // 标题栏
       Row() {
         Column({ space: 4 }) {
-          Text('cogit-lucid-workbench')
-            .fontSize(24)
-            .fontWeight(FontWeight.Medium)
+          Text('此在')
+            .fontSize(22)
+            .fontWeight(FontWeight.Bold)
             .fontColor('#1F2329')
           Text(this.today)
             .fontSize(12)
@@ -105,7 +105,7 @@ struct Index {
           Text(`${this.predictions.length} 条待结算`)
             .fontSize(12)
             .fontColor('#4A6FA5')
-          Text('刷新')
+          Text('↻ 刷新')
             .fontSize(12)
             .fontColor('#4A6FA5')
             .onClick(() => {
@@ -115,6 +115,7 @@ struct Index {
       }
       .width('100%')
       .padding({ left: 20, right: 20, top: 16, bottom: 12 })
+      .border({ width: { bottom: 0.5 }, color: '#E0E0E0' })
 
       if (this.isLoading) {
         this.loadingView()
