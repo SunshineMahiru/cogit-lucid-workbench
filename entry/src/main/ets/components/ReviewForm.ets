@@ -2,6 +2,7 @@ import { Anchor } from '../model/Anchor';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { formatHitRate } from '../model/HomeModel';
 import { ReviewPromptPanel } from './ReviewPromptPanel';
+import { ReviewAgentPanel } from './ReviewAgentPanel';
 import {
   ReviewDraft,
   ReviewService,
@@ -83,6 +84,11 @@ export struct ReviewForm {
     } else {
       this.action = value;
     }
+  }
+
+  private appendContradiction(text: string): void {
+    const current = this.contradiction.trim();
+    this.contradiction = current.length > 0 ? `${current}\n${text}` : text;
   }
 
   private async complete(): Promise<void> {
@@ -284,6 +290,17 @@ export struct ReviewForm {
               .backgroundColor('#FFFDF5')
               .borderRadius(12)
               .alignItems(HorizontalAlign.Start)
+            }
+
+            if (this.step === 2) {
+              ReviewAgentPanel({
+                facts: this.facts,
+                interpretation: this.interpretation,
+                anchors: this.anchors,
+                onInsert: (text: string) => {
+                  this.appendContradiction(text);
+                }
+              })
             }
 
             TextArea({ text: this.currentText(), placeholder: STEP_PLACEHOLDERS[this.step] })
