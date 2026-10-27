@@ -332,6 +332,7 @@ export struct NoteEditPage {
         }
         .layoutWeight(1)
         .scrollBar(BarState.Off)
+        .align(Alignment.Top)
 
         Column() {
           NoteSaveBar({

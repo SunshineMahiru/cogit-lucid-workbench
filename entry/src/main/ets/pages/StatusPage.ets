@@ -231,6 +231,7 @@ export struct StatusPage {
           }
           .layoutWeight(1)
           .scrollBar(BarState.Off)
+          .align(Alignment.Top)
         }
       }
       .width('100%')

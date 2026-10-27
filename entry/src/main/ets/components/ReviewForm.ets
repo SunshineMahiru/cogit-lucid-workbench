@@ -355,6 +355,7 @@ export struct ReviewForm {
         }
         .layoutWeight(1)
         .scrollBar(BarState.Off)
+        .align(Alignment.Top)
 
         Row({ space: 12 }) {
           if (this.step > 0) {

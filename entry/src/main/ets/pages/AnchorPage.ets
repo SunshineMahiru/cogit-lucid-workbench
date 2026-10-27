@@ -134,6 +134,7 @@ export struct AnchorPage {
           .width('100%')
           .layoutWeight(1)
           .scrollBar(BarState.Off)
+          .align(Alignment.Top)
           .padding({ left: 16, right: 16, top: 12, bottom: 12 })
 
           Column() {

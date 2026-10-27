@@ -166,6 +166,7 @@ export struct WeeklySettlementPage {
           }
           .layoutWeight(1)
           .scrollBar(BarState.Off)
+          .align(Alignment.Top)
 
           Column() {
             Text('开始周复盘')
