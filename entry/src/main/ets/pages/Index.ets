@@ -118,11 +118,16 @@ struct Index {
         Scroll() {
           Column({ space: 16 }) {
             // 读数区
-            Row() {
+            Grid() {
               ForEach(this.readings, (reading: BodyReading) => {
-                ReadingCard({ reading: reading })
+                GridItem() {
+                  ReadingCard({ reading: reading })
+                }
               }, (reading: BodyReading) => reading.label)
             }
+            .columnsTemplate('1fr 1fr 1fr')
+            .rowsGap(0)
+            .columnsGap(0)
             .width('100%')
             .padding(16)
             .backgroundColor(Color.White)
