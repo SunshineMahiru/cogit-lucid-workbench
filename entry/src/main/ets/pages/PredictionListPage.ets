@@ -250,6 +250,6 @@ export struct PredictionListPage {
     if (this.filter === PredictionStatus.SETTLED) {
       return '结算后的判断会保留在这里';
     }
-    return '预测创建入口稍后开放';
+    return '点右上角「＋」创建一条';
   }
 }
