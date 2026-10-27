@@ -1,6 +1,5 @@
 import { DashboardView } from '../views/DashboardView';
 import { ROUTES } from '../navigation/Routes';
-import { PlaceholderPage } from './PlaceholderPage';
 import { NoteEditPage } from './NoteEditPage';
 import { NoteListPage } from './NoteListPage';
 import { NoteDetailPage } from './NoteDetailPage';
@@ -10,6 +9,8 @@ import { ReviewPage } from './ReviewPage';
 import { AnchorPage } from './AnchorPage';
 import { RelationListPage } from './RelationListPage';
 import { RelationDetailPage } from './RelationDetailPage';
+import { StatusPage } from './StatusPage';
+import { StatusHistoryPage } from './StatusHistoryPage';
 
 @Entry
 @ComponentV2
@@ -37,7 +38,9 @@ struct Index {
     } else if (name === ROUTES.RELATION_DETAIL) {
       RelationDetailPage()
     } else if (name === ROUTES.STATUS) {
-      PlaceholderPage({ title: '状态面板', hint: '状态页将在 2.8 接入' })
+      StatusPage()
+    } else if (name === ROUTES.STATUS_HISTORY) {
+      StatusHistoryPage()
     }
   }
 
