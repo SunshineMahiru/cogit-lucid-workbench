@@ -7,6 +7,7 @@ import { NoteDetailPage } from './NoteDetailPage';
 import { PredictionListPage } from './PredictionListPage';
 import { PredictionDetailPage } from './PredictionDetailPage';
 import { ReviewPage } from './ReviewPage';
+import { AnchorPage } from './AnchorPage';
 
 @Entry
 @ComponentV2
@@ -28,7 +29,7 @@ struct Index {
     } else if (name === ROUTES.REVIEW) {
       ReviewPage()
     } else if (name === ROUTES.ANCHOR) {
-      PlaceholderPage({ title: '价值锚点', hint: '锚点页将在 2.6 接入' })
+      AnchorPage()
     } else if (name === ROUTES.RELATION) {
       PlaceholderPage({ title: '关系层', hint: '关系页将在 2.7 接入' })
     } else if (name === ROUTES.STATUS) {
