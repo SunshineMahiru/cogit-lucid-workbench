@@ -28,3 +28,13 @@ export interface PredictionDetailParams {
 export interface NoteDetailParams {
   noteId: string;
 }
+
+/** Parameters accepted by the review detail route. */
+export interface ReviewDetailParams {
+  reviewId: string;
+}
+
+/** Parameters accepted by the relation detail route. */
+export interface RelationDetailParams {
+  relationId: string;
+}

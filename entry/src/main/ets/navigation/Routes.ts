@@ -6,7 +6,12 @@ export const ROUTES = {
   PREDICTION_LIST: 'prediction_list',
   PREDICTION_DETAIL: 'prediction_detail',
   REVIEW: 'review',
+  REVIEW_HISTORY: 'review_history',
+  REVIEW_DETAIL: 'review_detail',
   ANCHOR: 'anchor',
   RELATION: 'relation',
-  STATUS: 'status'
+  RELATION_DETAIL: 'relation_detail',
+  STATUS: 'status',
+  STATUS_HISTORY: 'status_history',
+  SETTINGS: 'settings'
 } as const;
