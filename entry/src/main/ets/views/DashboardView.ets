@@ -5,11 +5,13 @@ import { ReadingCard } from '../components/ReadingCard';
 import { EntryChip } from '../components/EntryChip';
 import { NoteCard } from '../components/NoteCard';
 import { NoteListItem } from '../note/NoteListItem';
-import { promptAction } from '@kit.ArkUI';
+import { NoteEditParams, PredictionDetailParams } from '../navigation/RouteParams';
+import { ROUTES } from '../navigation/Routes';
 
 /** Dashboard content: readings first, then module entries and the two recent lists. */
 @ComponentV2
 export struct DashboardView {
+  @Require @Param pathStack: NavPathStack;
   @Local today: string = todayLabel();
   @Local readings: BodyReading[] = [];
   @Local predictions: PredictionItem[] = [];
@@ -35,6 +37,16 @@ export struct DashboardView {
     this.recentNotes = await this.dataService.loadRecentNotes();
     this.summary = await this.dataService.loadSummary();
     this.isLoading = false;
+  }
+
+  private openNoteEditor(): void {
+    const params: NoteEditParams = { templateId: null };
+    this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params);
+  }
+
+  private openPredictionDetail(predictionId: string): void {
+    const params: PredictionDetailParams = { predictionId: predictionId };
+    this.pathStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params);
   }
 
   @Builder
@@ -191,25 +203,25 @@ export struct DashboardView {
                 EntryChip({
                   label: '速记',
                   onTap: () => {
-                    promptAction.showToast({ message: '速记页面开发中' });
+                    this.openNoteEditor();
                   }
                 })
                 EntryChip({
                   label: '预测',
                   onTap: () => {
-                    promptAction.showToast({ message: '预测页面开发中' });
+                    this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, null);
                   }
                 })
                 EntryChip({
                   label: '复盘',
                   onTap: () => {
-                    promptAction.showToast({ message: '复盘页面开发中' });
+                    this.pathStack.pushPathByName(ROUTES.REVIEW, null);
                   }
                 })
                 EntryChip({
                   label: '锚点',
                   onTap: () => {
-                    promptAction.showToast({ message: '锚点页面开发中' });
+                    this.pathStack.pushPathByName(ROUTES.ANCHOR, null);
                   }
                 })
               }
@@ -218,13 +230,13 @@ export struct DashboardView {
                 EntryChip({
                   label: '状态',
                   onTap: () => {
-                    promptAction.showToast({ message: '状态页面开发中' });
+                    this.pathStack.pushPathByName(ROUTES.STATUS, null);
                   }
                 }).layoutWeight(1)
                 EntryChip({
                   label: '关系',
                   onTap: () => {
-                    promptAction.showToast({ message: '关系页面开发中' });
+                    this.pathStack.pushPathByName(ROUTES.RELATION, null);
                   }
                 }).layoutWeight(1)
               }
@@ -246,6 +258,9 @@ export struct DashboardView {
                 Text('全部')
                   .fontSize(12)
                   .fontColor('#8A8F99')
+                  .onClick(() => {
+                    this.pathStack.pushPathByName(ROUTES.NOTE_LIST, null);
+                  })
               }
               .width('100%')
 
@@ -258,7 +273,7 @@ export struct DashboardView {
                       NoteCard({
                         note: note,
                         onTap: () => {
-                          promptAction.showToast({ message: `速记: ${note.title}` });
+                          this.pathStack.pushPathByName(ROUTES.NOTE_LIST, null);
                         }
                       })
                     }
@@ -283,6 +298,9 @@ export struct DashboardView {
                 Text('全部')
                   .fontSize(12)
                   .fontColor('#8A8F99')
+                  .onClick(() => {
+                    this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, null);
+                  })
               }
               .width('100%')
 
@@ -295,7 +313,7 @@ export struct DashboardView {
                       PredictionCard({
                         item: item,
                         onTap: () => {
-                          promptAction.showToast({ message: `预测: ${item.title}` });
+                          this.openPredictionDetail(item.id);
                         }
                       })
                     }
