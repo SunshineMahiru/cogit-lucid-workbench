@@ -17,6 +17,8 @@ import { NoteListItem } from '../note/NoteListItem';
 import { NoteEditParams, NoteListParams, PredictionDetailParams, PredictionListParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { APP_DISPLAY_NAME } from '../theme/AppIdentity';
+import { AppTheme } from '../theme/AppTheme';
+import { ReviewPeriod, ReviewService, ReviewStats, emptyReviewStats } from '../review';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -31,8 +33,11 @@ export struct DashboardView {
     unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0
   };
   @Local dataService: HomeDataService | null = null;
+  @Local weekStats: ReviewStats = emptyReviewStats();
+  @Local weekReviewed: boolean = false;
   @Local isLoading: boolean = true;
   @Local loadFailed: boolean = false;
+  private reviewService: ReviewService | null = null;
 
   async aboutToAppear(): Promise<void> {
     const context = this.getUIContext().getHostContext();
@@ -43,6 +48,7 @@ export struct DashboardView {
     }
     try {
       this.dataService = await HomeDataService.open(context);
+      this.reviewService = await ReviewService.open(context);
       await this.refresh();
     } catch (error) {
       this.isLoading = false;
@@ -62,6 +68,12 @@ export struct DashboardView {
       this.predictions = await this.dataService.loadPendingPredictions();
       this.recentNotes = await this.dataService.loadRecentNotes();
       this.summary = await this.dataService.loadSummary();
+      if (this.reviewService !== null) {
+        this.weekStats = await this.reviewService.loadStats(ReviewPeriod.WEEK);
+        const history = await this.reviewService.history(10);
+        this.weekReviewed = history.some((item) =>
+          item.period === ReviewPeriod.WEEK && item.rangeLabel === this.weekStats.rangeLabel);
+      }
       this.loadFailed = false;
     } catch (error) {
       this.loadFailed = true;
@@ -116,6 +128,12 @@ export struct DashboardView {
 
   private openSettings(): void {
     this.pathStack.pushPathByName(ROUTES.SETTINGS, null);
+  }
+
+  private openWeeklySettlement(): void {
+    this.pathStack.pushPathByName(ROUTES.REVIEW_WEEKLY, null, () => {
+      this.refresh();
+    });
   }
 
   private openNoteEditor(): void {
@@ -318,6 +336,51 @@ export struct DashboardView {
               .padding(16)
               .backgroundColor(Color.White)
               .borderRadius(14)
+
+              // Weekly settlement
+              Column({ space: 6 }) {
+                Row() {
+                  Text('本周结算')
+                    .fontSize(13)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor(AppTheme.color.primaryDeep)
+                  Blank()
+                  Text('查看 ›')
+                    .fontSize(11)
+                    .fontColor(AppTheme.color.primary)
+                }
+                .width('100%')
+
+                Text(this.weekStats.rangeLabel)
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+
+                Row({ space: 12 }) {
+                  Text(`速记 ${this.weekStats.noteCount}`)
+                    .fontSize(11)
+                    .fontColor(AppTheme.color.textSecondary)
+                  Text(`决策 ${this.weekStats.decisionCount}`)
+                    .fontSize(11)
+                    .fontColor(AppTheme.color.textSecondary)
+                  Text(`命中率 ${formatHitRate(this.weekStats.hitRate, this.weekStats.settledPredictions)}`)
+                    .fontSize(11)
+                    .fontColor(AppTheme.color.primary)
+                  Blank()
+                  Text(this.weekReviewed ? '已复盘' : '未复盘')
+                    .fontSize(10)
+                    .fontColor(this.weekReviewed ? AppTheme.color.success : AppTheme.color.warning)
+                }
+                .width('100%')
+              }
+              .width('100%')
+              .padding(14)
+              .backgroundColor(AppTheme.color.selectedSurface)
+              .borderRadius(14)
+              .border({ width: 1, color: AppTheme.color.borderSelected })
+              .onClick(() => {
+                this.openWeeklySettlement();
+              })
 
               // Module tiles
               Column({ space: 10 }) {
