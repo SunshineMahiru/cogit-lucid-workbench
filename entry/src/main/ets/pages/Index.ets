@@ -11,6 +11,7 @@ import { PredictionCreatePage } from './PredictionCreatePage';
 import { PredictionSettlePage } from './PredictionSettlePage';
 import { ReviewPage } from './ReviewPage';
 import { ReviewAgentPage } from './ReviewAgentPage';
+import { WeeklySettlementPage } from './WeeklySettlementPage';
 import { ReviewHistoryPage } from './ReviewHistoryPage';
 import { ReviewDetailPage } from './ReviewDetailPage';
 import { AnchorPage } from './AnchorPage';
@@ -48,6 +49,8 @@ struct Index {
       ReviewPage()
     } else if (name === ROUTES.REVIEW_AGENT) {
       ReviewAgentPage()
+    } else if (name === ROUTES.REVIEW_WEEKLY) {
+      WeeklySettlementPage()
     } else if (name === ROUTES.REVIEW_HISTORY) {
       ReviewHistoryPage()
     } else if (name === ROUTES.REVIEW_DETAIL) {
