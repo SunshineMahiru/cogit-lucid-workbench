@@ -17,7 +17,8 @@ export struct DashboardView {
   @Local predictions: PredictionItem[] = [];
   @Local recentNotes: NoteListItem[] = [];
   @Local summary: HomeSummary = {
-    totalNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0, hitRate: 0
+    totalNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0, hitRate: 0,
+    unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0
   };
   @Local dataService: HomeDataService | null = null;
   @Local isLoading: boolean = true;

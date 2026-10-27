@@ -19,6 +19,18 @@ export interface HomeSummary {
   pendingPredictions: number;
   settledPredictions: number;
   hitRate: number;
+  /** Decisions captured but not reviewed yet */
+  unreviewedDecisions: number;
+  totalAnchors: number;
+  totalRelations: number;
+}
+
+/** A dashboard tile: the route it opens plus its live summary line. */
+export interface HomeModule {
+  route: string;
+  icon: string;
+  title: string;
+  summary: string;
 }
 
 const WEEK_LABELS: string[] = ['日', '一', '二', '三', '四', '五', '六'];
