@@ -1,6 +1,6 @@
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
-import { PredictionListItem, PredictionSummary } from './PredictionListItem';
+import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
 
 /** Converts one prediction into a list row. */
 export function toPredictionListItem(prediction: Prediction): PredictionListItem {
@@ -45,10 +45,40 @@ export function summarizePredictions(predictions: Prediction[]): PredictionSumma
 
 /** Tag text shown on a prediction card. */
 export function predictionStatusLabel(item: PredictionListItem): string {
-  if (item.status === PredictionStatus.PENDING) {
+  return predictionStatusText(item.status, item.hit);
+}
+
+/** Tag text for a status and hit pair, shared by the list and the detail page. */
+export function predictionStatusText(status: PredictionStatus, hit: boolean | null): string {
+  if (status === PredictionStatus.PENDING) {
     return '待结算';
   }
-  return item.hit === true ? '命中' : '未命中';
+  return hit === true ? '命中' : '未命中';
+}
+
+/** Text for the settled flag, including the not-yet-settled case. */
+export function predictionHitText(hit: boolean | null): string {
+  if (hit === null) {
+    return '未结算';
+  }
+  return hit ? '命中' : '未命中';
+}
+
+/** Projects one prediction into the read-only detail model. */
+export function toPredictionDetail(prediction: Prediction): PredictionDetail {
+  return {
+    id: prediction.id,
+    target: prediction.target,
+    judgment: prediction.judgment,
+    confidence: prediction.confidence,
+    reason: prediction.reason,
+    settlementDate: prediction.settlementDate,
+    status: prediction.status,
+    actualResult: prediction.actualResult,
+    hit: prediction.hit,
+    version: prediction.version,
+    createdAtLabel: formatDateTime(prediction.createdAt)
+  };
 }
 
 function compareRows(left: PredictionListItem, right: PredictionListItem): number {
@@ -64,4 +94,14 @@ function compareRows(left: PredictionListItem, right: PredictionListItem): numbe
     return left.settlementDate < right.settlementDate ? -1 : 1;
   }
   return right.createdAt - left.createdAt;
+}
+
+function formatDateTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ` +
+    `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+function pad2(value: number): string {
+  return value < 10 ? `0${value}` : `${value}`;
 }
