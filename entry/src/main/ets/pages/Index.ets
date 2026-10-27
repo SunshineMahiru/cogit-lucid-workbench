@@ -11,6 +11,7 @@ import { RelationListPage } from './RelationListPage';
 import { RelationDetailPage } from './RelationDetailPage';
 import { StatusPage } from './StatusPage';
 import { StatusHistoryPage } from './StatusHistoryPage';
+import { SettingsPage } from './SettingsPage';
 
 @Entry
 @ComponentV2
@@ -41,6 +42,8 @@ struct Index {
       StatusPage()
     } else if (name === ROUTES.STATUS_HISTORY) {
       StatusHistoryPage()
+    } else if (name === ROUTES.SETTINGS) {
+      SettingsPage()
     }
   }
 
