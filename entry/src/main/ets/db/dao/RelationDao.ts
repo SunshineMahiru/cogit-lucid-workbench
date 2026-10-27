@@ -27,6 +27,17 @@ export class RelationDao {
     return this.store.insert(DB_TABLES.RELATION, values);
   }
 
+  /** Updates a relation's interaction log and notes. */
+  async update(id: string, interactionLog: InteractionLog[], notes: string): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [RELATION_COLS.INTERACTION_LOG]: JSON.stringify(interactionLog),
+      [RELATION_COLS.NOTES]: notes
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.RELATION);
+    predicates.equalTo(RELATION_COLS.ID, id);
+    return this.store.update(values, predicates);
+  }
+
   /** Returns all relations. */
   async queryAll(): Promise<Relation[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.RELATION);
