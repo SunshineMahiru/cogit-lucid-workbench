@@ -1,7 +1,10 @@
 import { relationalStore } from '@kit.ArkData';
 import { DbHelper } from '../db/DbHelper';
+import { AnchorDao } from '../db/dao/AnchorDao';
+import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
+import { RelationDao } from '../db/dao/RelationDao';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
 import { Prediction } from './Prediction';
 import { PredictionStatus } from './PredictionStatus';
@@ -14,13 +17,19 @@ import { toNoteListItems } from '../note/NoteListMapper';
 export class HomeDataService {
   private store: relationalStore.RdbStore;
   private eventDao: EventDao;
+  private decisionDao: DecisionDao;
+  private relationDao: RelationDao;
   private predictionDao: PredictionDao;
+  private anchorDao: AnchorDao;
   private statusRecordDao: StatusRecordDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.store = store;
     this.eventDao = new EventDao(store);
+    this.decisionDao = new DecisionDao(store);
+    this.relationDao = new RelationDao(store);
     this.predictionDao = new PredictionDao(store);
+    this.anchorDao = new AnchorDao(store);
     this.statusRecordDao = new StatusRecordDao(store);
   }
 
@@ -66,7 +75,10 @@ export class HomeDataService {
   /** Returns summary statistics for the dashboard. */
   async loadSummary(): Promise<HomeSummary> {
     const allEvents = await this.eventDao.queryAll();
+    const allDecisions = await this.decisionDao.queryAll();
+    const allRelations = await this.relationDao.queryAll();
     const allPredictions = await this.predictionDao.queryAll();
+    const allAnchors = await this.anchorDao.queryAll();
     const pending = allPredictions.filter(p => p.status === PredictionStatus.PENDING);
     const settled = allPredictions.filter(p => p.status === PredictionStatus.SETTLED);
     const hits = settled.filter(p => p.hit === true);
@@ -76,7 +88,10 @@ export class HomeDataService {
       totalPredictions: allPredictions.length,
       pendingPredictions: pending.length,
       settledPredictions: settled.length,
-      hitRate: hitRate
+      hitRate: hitRate,
+      unreviewedDecisions: allDecisions.filter(d => !d.reviewed).length,
+      totalAnchors: allAnchors.length,
+      totalRelations: allRelations.length
     };
   }
 }
