@@ -2,6 +2,7 @@
 export const ROUTES = {
   NOTE_EDIT: 'note_edit',
   NOTE_LIST: 'note_list',
+  NOTE_DETAIL: 'note_detail',
   PREDICTION_LIST: 'prediction_list',
   PREDICTION_DETAIL: 'prediction_detail',
   REVIEW: 'review',
