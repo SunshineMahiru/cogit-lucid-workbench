@@ -2,7 +2,7 @@ import { AppTheme } from '../theme/AppTheme';
 import { SectionCard } from '../components/SectionCard';
 import { RelationTrustBadge } from '../components/RelationTrustBadge';
 import { NoteEmptyState } from '../components/NoteEmptyState';
-import { RelationDetail, RelationService, formatInteractionTime, trustLevelText } from '../relation';
+import { RelationDetail, RelationService, formatInteractionTime, trustLevelText, relationTrustDecision } from '../relation';
 import { InteractionLog } from '../model/Relation';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
@@ -27,6 +27,8 @@ export struct RelationDetailPage {
   };
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
+  @Local trustAllowed: boolean = false;
+  @Local trustReason: string = '';
   private navStack: NavPathStack | null = null;
 
   private async load(relationId: string): Promise<void> {
@@ -43,6 +45,9 @@ export struct RelationDetailPage {
         this.missing = true;
       } else {
         this.detail = detail;
+        const decision = relationTrustDecision(detail);
+        this.trustAllowed = decision.allowMotiveAnalysis;
+        this.trustReason = decision.reason;
       }
     } catch (error) {
       this.missing = true;
@@ -148,6 +153,27 @@ export struct RelationDetailPage {
                 this.infoRow('最近互动', this.detail.lastInteractionLabel)
               }
               .width('100%')
+            }
+
+            SectionCard() {
+              Column({ space: 5 }) {
+                Text('可分析边界')
+                  .fontSize(11)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                Text(this.trustAllowed ? '允许动机分析' : '仅描述，不做动机分析')
+                  .fontSize(13)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(this.trustAllowed ? AppTheme.color.success : AppTheme.color.warning)
+                  .width('100%')
+                Text(this.trustReason)
+                  .fontSize(11)
+                  .lineHeight(18)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
             }
 
             if (this.detail.notes.length > 0) {

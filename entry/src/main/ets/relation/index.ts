@@ -8,3 +8,4 @@ export {
   trustLevelText
 } from './RelationListMapper';
 export { RelationService } from './RelationService';
+export { relationTrustDecision } from './RelationTrust';
