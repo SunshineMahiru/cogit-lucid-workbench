@@ -10,6 +10,17 @@
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET"
+      }
+    ],
+    "metadata": [
+      {
+        "name": "network_security_config",
+        "resource": "$profile:network_config"
+      }
+    ],
     "abilities": [
       {
         "name": "EntryAbility",
