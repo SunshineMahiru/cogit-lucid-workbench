@@ -1,4 +1,4 @@
-import { BodyReading, Prediction2, PredictionItem, todayLabel } from '../model/HomeModel';
+import { BodyReading, PredictionItem, HomeSummary, todayLabel } from '../model/HomeModel';
 import { HomeDataService } from '../model/HomeDataService';
 import { PredictionCard } from '../components/PredictionCard';
 import { ReadingCard } from '../components/ReadingCard';
@@ -14,6 +14,9 @@ struct Index {
   @Local readings: BodyReading[] = [];
   @Local predictions: PredictionItem[] = [];
   @Local recentNotes: NoteListItem[] = [];
+  @Local summary: HomeSummary = {
+    totalNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0, hitRate: 0
+  };
   @Local dataService: HomeDataService | null = null;
   @Local isLoading: boolean = true;
 
@@ -30,6 +33,7 @@ struct Index {
     this.readings = await this.dataService.loadReadings();
     this.predictions = await this.dataService.loadPendingPredictions();
     this.recentNotes = await this.dataService.loadRecentNotes();
+    this.summary = await this.dataService.loadSummary();
     this.isLoading = false;
   }
 
@@ -128,6 +132,49 @@ struct Index {
             .columnsTemplate('1fr 1fr 1fr')
             .rowsGap(0)
             .columnsGap(0)
+            .width('100%')
+            .padding(16)
+            .backgroundColor(Color.White)
+            .borderRadius(14)
+
+            // 统计摘要
+            Row() {
+              Column({ space: 4 }) {
+                Text(String(this.summary.totalNotes))
+                  .fontSize(18)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor('#1F2329')
+                Text('总速记')
+                  .fontSize(11)
+                  .fontColor('#8A8F99')
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Center)
+
+              Column({ space: 4 }) {
+                Text(String(this.summary.pendingPredictions))
+                  .fontSize(18)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor('#1F2329')
+                Text('待结算')
+                  .fontSize(11)
+                  .fontColor('#8A8F99')
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Center)
+
+              Column({ space: 4 }) {
+                Text(`${this.summary.hitRate}%`)
+                  .fontSize(18)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor('#4A6FA5')
+                Text('命中率')
+                  .fontSize(11)
+                  .fontColor('#8A8F99')
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Center)
+            }
             .width('100%')
             .padding(16)
             .backgroundColor(Color.White)
