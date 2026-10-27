@@ -76,6 +76,8 @@ export class HomeDataService {
   /** Returns summary statistics for the dashboard. */
   async loadSummary(): Promise<HomeSummary> {
     const allEvents = await this.eventDao.queryAll();
+    const today = formatDate(new Date());
+    const todayNotes = allEvents.filter(e => formatDate(new Date(e.timestamp)) === today).length;
     const allDecisions = await this.decisionDao.queryAll();
     const allRelations = await this.relationDao.queryAll();
     const allPredictions = await this.predictionDao.queryAll();
@@ -86,6 +88,7 @@ export class HomeDataService {
     const hitRate = settled.length > 0 ? Math.round(hits.length / settled.length * 100) : 0;
     return {
       totalNotes: allEvents.length,
+      todayNotes: todayNotes,
       totalPredictions: allPredictions.length,
       pendingPredictions: pending.length,
       settledPredictions: settled.length,

@@ -15,6 +15,8 @@ export interface PredictionItem {
 
 export interface HomeSummary {
   totalNotes: number;
+  /** Notes captured today, paired with the total on the module tile */
+  todayNotes: number;
   totalPredictions: number;
   pendingPredictions: number;
   settledPredictions: number;
@@ -31,6 +33,24 @@ export interface HomeModule {
   icon: string;
   title: string;
   summary: string;
+}
+
+/** Placeholder shown when a rate has no settled records behind it. */
+export const NO_RATE_TEXT = '—';
+
+/** Formats the hit rate, falling back to a placeholder until something is settled. */
+export function formatHitRate(hitRate: number, settledCount: number): string {
+  return settledCount > 0 ? `${hitRate}%` : NO_RATE_TEXT;
+}
+
+/** Caption under the hit rate, carrying the sample size so a small sample stays visible. */
+export function hitRateCaption(settledCount: number): string {
+  return settledCount > 0 ? `命中率 · ${settledCount} 条` : '命中率';
+}
+
+/** Note tile summary: today's captures against the all-time total. */
+export function formatNoteCount(todayCount: number, totalCount: number): string {
+  return `今日 ${todayCount} · 共 ${totalCount}`;
 }
 
 const WEEK_LABELS: string[] = ['日', '一', '二', '三', '四', '五', '六'];

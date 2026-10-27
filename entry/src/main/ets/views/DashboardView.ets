@@ -1,4 +1,13 @@
-import { BodyReading, HomeModule, HomeSummary, PredictionItem, todayLabel } from '../model/HomeModel';
+import {
+  BodyReading,
+  HomeModule,
+  HomeSummary,
+  PredictionItem,
+  formatHitRate,
+  formatNoteCount,
+  hitRateCaption,
+  todayLabel
+} from '../model/HomeModel';
 import { HomeDataService } from '../model/HomeDataService';
 import { ModuleCard } from '../components/ModuleCard';
 import { PredictionCard } from '../components/PredictionCard';
@@ -17,7 +26,7 @@ export struct DashboardView {
   @Local predictions: PredictionItem[] = [];
   @Local recentNotes: NoteListItem[] = [];
   @Local summary: HomeSummary = {
-    totalNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0, hitRate: 0,
+    totalNotes: 0, todayNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0, hitRate: 0,
     unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0
   };
   @Local dataService: HomeDataService | null = null;
@@ -58,13 +67,14 @@ export struct DashboardView {
         route: ROUTES.NOTE_EDIT,
         icon: '📝',
         title: '速记',
-        summary: `共 ${this.summary.totalNotes} 条`
+        summary: formatNoteCount(this.summary.todayNotes, this.summary.totalNotes)
       },
       {
         route: ROUTES.PREDICTION_LIST,
         icon: '🔮',
         title: '预测',
-        summary: `待结算 ${this.summary.pendingPredictions} · 命中 ${this.summary.hitRate}%`
+        summary: `待结算 ${this.summary.pendingPredictions} · 命中 ` +
+          `${formatHitRate(this.summary.hitRate, this.summary.settledPredictions)}`
       },
       {
         route: ROUTES.REVIEW,
@@ -239,11 +249,11 @@ export struct DashboardView {
                 .alignItems(HorizontalAlign.Center)
 
                 Column({ space: 4 }) {
-                  Text(`${this.summary.hitRate}%`)
+                  Text(formatHitRate(this.summary.hitRate, this.summary.settledPredictions))
                     .fontSize(18)
                     .fontWeight(FontWeight.Medium)
                     .fontColor('#4A6FA5')
-                  Text('命中率')
+                  Text(hitRateCaption(this.summary.settledPredictions))
                     .fontSize(11)
                     .fontColor('#8A8F99')
                 }
