@@ -220,13 +220,13 @@ struct Index {
                   onTap: () => {
                     promptAction.showToast({ message: '状态页面开发中' });
                   }
-                })
+                }).layoutWeight(1)
                 EntryChip({
                   label: '关系',
                   onTap: () => {
                     promptAction.showToast({ message: '关系页面开发中' });
                   }
-                })
+                }).layoutWeight(1)
               }
               .width('100%')
             }
