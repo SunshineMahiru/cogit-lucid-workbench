@@ -148,7 +148,7 @@ export struct DashboardView {
 
   build() {
     Column() {
-      // 标题栏
+      // Title bar
       Row() {
         Column({ space: 4 }) {
           Text('此在')
@@ -185,7 +185,7 @@ export struct DashboardView {
         Stack({ alignContent: Alignment.BottomEnd }) {
           Scroll() {
             Column({ space: 16 }) {
-              // 读数区
+              // Body readings
               Grid() {
                 ForEach(this.readings, (reading: BodyReading) => {
                   GridItem() {
@@ -201,7 +201,7 @@ export struct DashboardView {
               .backgroundColor(Color.White)
               .borderRadius(14)
 
-              // 统计摘要
+              // Summary
               Row() {
                 Column({ space: 4 }) {
                   Text(String(this.summary.totalNotes))
@@ -244,7 +244,7 @@ export struct DashboardView {
               .backgroundColor(Color.White)
               .borderRadius(14)
 
-              // 模块入口
+              // Module tiles
               Column({ space: 10 }) {
                 Text('模块入口')
                   .fontSize(12)
@@ -276,7 +276,7 @@ export struct DashboardView {
               .backgroundColor(Color.White)
               .borderRadius(14)
 
-              // 最近速记
+              // Recent notes
               Column({ space: 10 }) {
                 Row() {
                   Text('最近速记')
@@ -316,7 +316,7 @@ export struct DashboardView {
               .backgroundColor(Color.White)
               .borderRadius(14)
 
-              // 待结算预测
+              // Pending predictions
               Column({ space: 10 }) {
                 Row() {
                   Text('今日待结算')
@@ -363,7 +363,7 @@ export struct DashboardView {
           .height('100%')
           .scrollBar(BarState.Auto)
 
-          // 常驻速记入口，保证任何位置都能一条点击进入编辑
+          // Persistent capture entry, one tap away from any scroll position
           Text('＋ 速记')
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
