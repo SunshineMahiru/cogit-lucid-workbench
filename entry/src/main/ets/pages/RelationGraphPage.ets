@@ -148,6 +148,7 @@ export struct RelationGraphPage {
           }
           .layoutWeight(1)
           .scrollBar(BarState.Off)
+          .align(Alignment.Top)
         }
       }
       .width('100%')

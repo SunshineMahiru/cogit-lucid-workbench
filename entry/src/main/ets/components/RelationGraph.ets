@@ -13,6 +13,22 @@ const MAX_NODES = 6;
 @ComponentV2
 export struct RelationGraph {
   @Param items: RelationListItem[] = [];
+  private graphContext: CanvasRenderingContext2D =
+    new CanvasRenderingContext2D(new RenderingContextSettings(true));
+
+  private drawEdges(): void {
+    const context = this.graphContext;
+    context.clearRect(0, 0, WIDTH, HEIGHT);
+    context.strokeStyle = '#D3D1C7';
+    context.lineWidth = 1;
+    const total = Math.min(this.items.length, MAX_NODES);
+    for (let index = 0; index < total; index += 1) {
+      context.beginPath();
+      context.moveTo(CENTER_X, CENTER_Y);
+      context.lineTo(this.nodeX(index), this.nodeY(index));
+      context.stroke();
+    }
+  }
 
   private nodeX(index: number): number {
     const angle = -Math.PI / 2 + index * (Math.PI * 2 / Math.max(this.items.slice(0, MAX_NODES).length, 1));
@@ -34,21 +50,16 @@ export struct RelationGraph {
     return AppTheme.color.primaryDeep;
   }
 
-  private edge(index: number): string {
-    return `M ${CENTER_X} ${CENTER_Y} L ${this.nodeX(index)} ${this.nodeY(index)}`;
-  }
-
   build() {
     Stack() {
-      ForEach(this.items.slice(0, MAX_NODES), (item: RelationListItem, index: number) => {
-        Path()
-          .commands(this.edge(index))
-          .width(WIDTH)
-          .height(HEIGHT)
-          .fill(Color.Transparent)
-          .stroke('#D3D1C7')
-          .strokeWidth(1)
+      Canvas(this.graphContext)
+        .width(WIDTH)
+        .height(HEIGHT)
+        .onReady(() => {
+          this.drawEdges();
+        })
 
+      ForEach(this.items.slice(0, MAX_NODES), (item: RelationListItem, index: number) => {
         Circle()
           .width(28)
           .height(28)
