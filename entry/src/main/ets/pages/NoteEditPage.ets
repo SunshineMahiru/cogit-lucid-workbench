@@ -163,17 +163,38 @@ export struct NoteEditPage {
     }
   }
 
+  @Builder
+  saveMenu() {
+    Text(this.isSaving ? '保存中' : '保存')
+      .fontSize(14)
+      .fontColor(this.isSaving ? '#B0B4BE' : '#4A6FA5')
+      .padding({ left: 8, right: 16 })
+      .onClick(() => {
+        if (!this.isSaving) {
+          this.save();
+        }
+      })
+  }
+
   build() {
     NavDestination() {
       Column() {
         Scroll() {
           Column({ space: 16 }) {
-            NoteTemplatePicker({
-              selected: this.draft.templateId,
-              onSelect: (templateId: NoteTemplateId | null) => {
-                this.applyTemplate(templateId);
-              }
-            })
+            Column({ space: 6 }) {
+              Text('模板')
+                .fontSize(12)
+                .fontColor('#8A8F99')
+                .width('100%')
+              NoteTemplatePicker({
+                selected: this.draft.templateId,
+                onSelect: (templateId: NoteTemplateId | null) => {
+                  this.applyTemplate(templateId);
+                }
+              })
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
 
             Column({ space: 6 }) {
               Row({ space: 4 }) {
@@ -265,6 +286,7 @@ export struct NoteEditPage {
       .backgroundColor('#F5F6F8')
     }
     .title('速记')
+    .menus(this.saveMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param !== undefined) {
