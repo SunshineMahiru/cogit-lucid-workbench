@@ -6,6 +6,8 @@ export const ROUTES = {
   PREDICTION_LIST: 'prediction_list',
   PREDICTION_DETAIL: 'prediction_detail',
   PREDICTION_STATS: 'prediction_stats',
+  PREDICTION_CREATE: 'prediction_create',
+  PREDICTION_SETTLE: 'prediction_settle',
   REVIEW: 'review',
   REVIEW_HISTORY: 'review_history',
   REVIEW_DETAIL: 'review_detail',

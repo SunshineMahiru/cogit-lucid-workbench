@@ -24,6 +24,11 @@ export interface PredictionDetailParams {
   predictionId: string;
 }
 
+/** Parameters accepted by the prediction settle route. */
+export interface PredictionSettleParams {
+  predictionId: string;
+}
+
 /** Parameters accepted by the note detail route. */
 export interface NoteDetailParams {
   noteId: string;
