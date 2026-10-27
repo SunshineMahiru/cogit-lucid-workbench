@@ -50,6 +50,19 @@ export class RelationDao {
     return relations;
   }
 
+  /** Returns one relation by id, or null when it does not exist. */
+  async queryById(id: string): Promise<Relation | null> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.RELATION);
+    predicates.equalTo(RELATION_COLS.ID, id).limitAs(1);
+    const resultSet = await this.store.query(predicates);
+    let relation: Relation | null = null;
+    if (resultSet.goToNextRow()) {
+      relation = this.mapRow(resultSet);
+    }
+    resultSet.close();
+    return relation;
+  }
+
   private mapRow(resultSet: relationalStore.ResultSet): Relation {
     return {
       id: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.ID)),
