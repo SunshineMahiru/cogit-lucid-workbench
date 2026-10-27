@@ -11,6 +11,7 @@ import { composeNoteContent, deriveNoteTitle } from './NoteContentComposer';
 import { buildDecisionFromNote } from './NoteDecisionComposer';
 import { NoteListItem } from './NoteListItem';
 import { toNoteListItems } from './NoteListMapper';
+import { NoteDetail, toNoteDetail } from './NoteDetail';
 import { findNoteTemplate } from './templates';
 import { validateNoteDraft } from './NoteValidation';
 
@@ -86,6 +87,15 @@ export class QuickNoteService {
     }
     const events = await this.eventDao.queryByType(value, normalizeLimit(limit));
     return toNoteListItems(events);
+  }
+
+  /** Returns one note for the detail page, or null when it no longer exists. */
+  async findNote(noteId: string): Promise<NoteDetail | null> {
+    const event = await this.eventDao.queryById(noteId);
+    if (event === null) {
+      return null;
+    }
+    return toNoteDetail(event);
   }
 }
 
