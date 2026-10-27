@@ -35,22 +35,22 @@ export function buildPredictionStats(predictions: Prediction[], monthLimit: numb
   let settled = 0;
   let hits = 0;
   for (const prediction of predictions) {
-    if (prediction.status !== PredictionStatus.SETTLED || prediction.hit === null) {
+    if (prediction.status !== PredictionStatus.SETTLED) {
       continue;
     }
     settled += 1;
-    if (prediction.hit) {
+    if (prediction.hit === true) {
       hits += 1;
     }
     const month = prediction.settlementDate.length >= 7 ?
-      prediction.settlementDate.slice(0, 7) : prediction.settlementDate;
+      prediction.settlementDate.slice(0, 7) : '未知';
     let bucket = buckets.get(month);
     if (bucket === undefined) {
       bucket = { month: month, settled: 0, hits: 0 };
       buckets.set(month, bucket);
     }
     bucket.settled += 1;
-    if (prediction.hit) {
+    if (prediction.hit === true) {
       bucket.hits += 1;
     }
   }

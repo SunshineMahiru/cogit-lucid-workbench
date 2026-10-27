@@ -141,7 +141,7 @@ export struct PredictionStatsPage {
 
                   PredictionTrendChart({ points: this.stats.months })
 
-                  Text(`样本 ${this.stats.settled} 条，趋势仅供参考`)
+                  Text(`整体样本 ${this.stats.settled} 条；趋势最多显示最近 6 个月`)
                     .fontSize(10)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
