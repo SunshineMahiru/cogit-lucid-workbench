@@ -1,10 +1,11 @@
-import { NoteListItem } from '../note/NoteListItem';
+import { NoteListItem, securityLevelText } from '../note';
+import { SecurityLevel } from '../model/SecurityLevel';
 
 /** Displays one recent note in the dashboard list. */
 @ComponentV2
 export struct NoteCard {
   @Param note: NoteListItem = {
-    id: '', title: '', summary: '', type: '', tags: [], timestamp: 0, timeLabel: ''
+    id: '', title: '', summary: '', type: '', tags: [], level: SecurityLevel.LOCAL_ONLY, timestamp: 0, timeLabel: ''
   };
   @Event onTap: () => void = () => {};
 
@@ -31,6 +32,9 @@ export struct NoteCard {
           .fontColor('#8A8F99')
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(`${this.note.type} · ${securityLevelText(this.note.level)}`)
+          .fontSize(10)
+          .fontColor('#B0B4BE')
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)

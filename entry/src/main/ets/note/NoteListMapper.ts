@@ -12,6 +12,7 @@ export function toNoteListItem(event: Event, now: number = Date.now()): NoteList
     summary: summarize(event.content),
     type: event.type,
     tags: event.tags.slice(),
+    level: event.level,
     timestamp: event.timestamp,
     timeLabel: formatNoteTime(event.timestamp, now)
   };
