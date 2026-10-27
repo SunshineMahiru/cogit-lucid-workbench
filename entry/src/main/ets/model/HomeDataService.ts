@@ -7,6 +7,8 @@ import { Prediction } from './Prediction';
 import { PredictionStatus } from './PredictionStatus';
 import { StatusRecord } from './StatusRecord';
 import { BodyReading, PredictionItem } from './HomeModel';
+import { NoteListItem } from '../note/NoteListItem';
+import { toNoteListItems } from '../note/NoteListMapper';
 
 /** Loads home page data from the database, replacing mock data. */
 export class HomeDataService {
@@ -53,6 +55,12 @@ export class HomeDataService {
       confidence: p.confidence,
       dueDate: p.settlementDate
     }));
+  }
+
+  /** Returns the most recent notes for the home list. */
+  async loadRecentNotes(limit: number = 5): Promise<NoteListItem[]> {
+    const events = await this.eventDao.queryRecent(limit);
+    return toNoteListItems(events);
   }
 }
 
