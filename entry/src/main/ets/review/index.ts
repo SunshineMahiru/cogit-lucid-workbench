@@ -4,3 +4,5 @@ export { rangeFor } from './ReviewRange';
 export type { ReviewDraft, ReviewStats } from './ReviewDraft';
 export { createReviewDraft, emptyReviewStats } from './ReviewDraft';
 export { ReviewService } from './ReviewService';
+export type { AgentOutcome } from './ReviewAgent';
+export { ReviewAgent } from './ReviewAgent';
