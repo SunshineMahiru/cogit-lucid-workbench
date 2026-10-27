@@ -12,6 +12,7 @@ export {
 export type { NoteEntry, NoteDraft } from './NoteDraft';
 export { readNoteEntry } from './NoteDraft';
 export { createNoteDraft, createFreeformNoteDraft } from './NoteDraftFactory';
+export { mergeDraftEntries } from './NoteDraftMerger';
 export type { NoteValidationError, NoteValidationResult } from './NoteValidation';
 export { validateNoteDraft } from './NoteValidation';
 export { NOTE_TITLE_MAX_LENGTH, composeNoteContent, deriveNoteTitle } from './NoteContentComposer';
