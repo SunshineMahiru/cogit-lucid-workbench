@@ -29,6 +29,18 @@ export class PredictionDao {
     return this.store.insert(DB_TABLES.PREDICTION, values);
   }
 
+  /** Settles a prediction: updates status, actualResult, hit. */
+  async settle(id: string, actualResult: string, hit: boolean): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [PREDICTION_COLS.STATUS]: PredictionStatus.SETTLED,
+      [PREDICTION_COLS.ACTUAL_RESULT]: actualResult,
+      [PREDICTION_COLS.HIT]: hit ? 1 : 0
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
+    predicates.equalTo(PREDICTION_COLS.ID, id);
+    return this.store.update(values, predicates);
+  }
+
   /** Returns all predictions. */
   async queryAll(): Promise<Prediction[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
