@@ -7,6 +7,12 @@ import { PredictionDao } from '../db/dao/PredictionDao';
 import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
 import { summarizePredictions, toPredictionDetail, toPredictionListItems } from './PredictionListMapper';
 import { PredictionStats, buildPredictionStats } from './PredictionStats';
+import {
+  PredictionDraft,
+  hasPredictionErrors,
+  validatePredictionDraft
+} from './PredictionValidation';
+import { createPrediction } from '../model/factories';
 
 /** Reads predictions for the list page. */
 export class PredictionService {
@@ -49,6 +55,43 @@ export class PredictionService {
   async stats(): Promise<PredictionStats> {
     const predictions = await this.predictionDao.queryAll();
     return buildPredictionStats(predictions);
+  }
+
+  /** Validates and inserts one prediction; returns the stored detail. */
+  async create(draft: PredictionDraft, now: number = Date.now()): Promise<PredictionDetail> {
+    if (hasPredictionErrors(validatePredictionDraft(draft, now))) {
+      throw new Error('invalid prediction draft');
+    }
+    const prediction = createPrediction();
+    prediction.target = draft.target.trim();
+    prediction.judgment = draft.judgment.trim();
+    prediction.confidence = Math.round(draft.confidence);
+    prediction.reason = draft.reason.trim();
+    prediction.settlementDate = draft.settlementDate.trim();
+    prediction.createdAt = now;
+    await this.predictionDao.insert(prediction);
+    return toPredictionDetail(prediction);
+  }
+
+  /**
+   * Settles a pending prediction once. Returns null when it is gone and
+   * throws when it was already settled or the result is empty.
+   */
+  async settle(id: string, actualResult: string, hit: boolean): Promise<PredictionDetail | null> {
+    const existing = await this.predictionDao.queryById(id);
+    if (existing === null) {
+      return null;
+    }
+    if (existing.status !== PredictionStatus.PENDING) {
+      throw new Error('prediction already settled');
+    }
+    const result = actualResult.trim();
+    if (result.length === 0) {
+      throw new Error('actual result required');
+    }
+    await this.predictionDao.settle(id, result, hit);
+    const updated = await this.predictionDao.queryById(id);
+    return updated === null ? null : toPredictionDetail(updated);
   }
 
   /**
