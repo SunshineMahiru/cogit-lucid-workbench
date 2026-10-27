@@ -6,7 +6,7 @@ import { StatusRecordDao } from '../db/dao/StatusRecordDao';
 import { Prediction } from './Prediction';
 import { PredictionStatus } from './PredictionStatus';
 import { StatusRecord } from './StatusRecord';
-import { BodyReading, PredictionItem } from './HomeModel';
+import { BodyReading, PredictionItem, HomeSummary } from './HomeModel';
 import { NoteListItem } from '../note/NoteListItem';
 import { toNoteListItems } from '../note/NoteListMapper';
 
@@ -61,6 +61,23 @@ export class HomeDataService {
   async loadRecentNotes(limit: number = 5): Promise<NoteListItem[]> {
     const events = await this.eventDao.queryRecent(limit);
     return toNoteListItems(events);
+  }
+
+  /** Returns summary statistics for the dashboard. */
+  async loadSummary(): Promise<HomeSummary> {
+    const allEvents = await this.eventDao.queryAll();
+    const allPredictions = await this.predictionDao.queryAll();
+    const pending = allPredictions.filter(p => p.status === PredictionStatus.PENDING);
+    const settled = allPredictions.filter(p => p.status === PredictionStatus.SETTLED);
+    const hits = settled.filter(p => p.hit === true);
+    const hitRate = settled.length > 0 ? Math.round(hits.length / settled.length * 100) : 0;
+    return {
+      totalNotes: allEvents.length,
+      totalPredictions: allPredictions.length,
+      pendingPredictions: pending.length,
+      settledPredictions: settled.length,
+      hitRate: hitRate
+    };
   }
 }
 
