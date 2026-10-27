@@ -27,6 +27,13 @@ export class EventDao {
     return this.store.insert(DB_TABLES.EVENT, values);
   }
 
+  /** Deletes an event by id. */
+  async delete(id: string): Promise<number> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.ID, id);
+    return this.store.delete(predicates);
+  }
+
   /** Returns all events. */
   async queryAll(): Promise<Event[]> {
     return this.queryWith(new relationalStore.RdbPredicates(DB_TABLES.EVENT));
