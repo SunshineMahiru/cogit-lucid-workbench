@@ -6,6 +6,7 @@ export struct NoteCard {
   @Param note: NoteListItem = {
     id: '', title: '', summary: '', type: '', tags: [], timestamp: 0, timeLabel: ''
   };
+  @Event onTap: () => void = () => {};
 
   build() {
     Row({ space: 10 }) {
@@ -42,5 +43,8 @@ export struct NoteCard {
     .padding(12)
     .backgroundColor(Color.White)
     .borderRadius(10)
+    .onClick(() => {
+      this.onTap();
+    })
   }
 }

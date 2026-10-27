@@ -7,6 +7,7 @@ import { PredictionItem } from '../model/HomeModel';
 @ComponentV2
 export struct PredictionCard {
   @Param item: PredictionItem = { id: '', title: '', confidence: 0, dueDate: '' };
+  @Event onTap: () => void = () => {};
 
   build() {
     Column({ space: 10 }) {
@@ -46,5 +47,8 @@ export struct PredictionCard {
     .padding(14)
     .backgroundColor(Color.White)
     .borderRadius(12)
+    .onClick(() => {
+      this.onTap();
+    })
   }
 }
