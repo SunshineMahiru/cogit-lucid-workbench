@@ -230,6 +230,10 @@ struct Index {
               }
               .width('100%')
             }
+            .width('100%')
+            .padding(16)
+            .backgroundColor(Color.White)
+            .borderRadius(14)
 
             // 最近速记
             Column({ space: 10 }) {
@@ -263,6 +267,10 @@ struct Index {
                 .width('100%')
               }
             }
+            .width('100%')
+            .padding(16)
+            .backgroundColor(Color.White)
+            .borderRadius(14)
 
             // 待结算预测
             Column({ space: 10 }) {
@@ -296,6 +304,10 @@ struct Index {
                 .width('100%')
               }
             }
+            .width('100%')
+            .padding(16)
+            .backgroundColor(Color.White)
+            .borderRadius(14)
           }
           .width('100%')
           .padding({ left: 20, right: 20, bottom: 34 })
