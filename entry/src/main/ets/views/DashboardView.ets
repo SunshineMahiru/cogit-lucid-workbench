@@ -7,6 +7,7 @@ import { NoteCard } from '../components/NoteCard';
 import { NoteListItem } from '../note/NoteListItem';
 import { NoteEditParams, PredictionDetailParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
+import { promptAction } from '@kit.ArkUI';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -26,6 +27,7 @@ export struct DashboardView {
   async aboutToAppear(): Promise<void> {
     const context = this.getUIContext().getHostContext();
     if (context === undefined) {
+      this.isLoading = false;
       return;
     }
     this.dataService = await HomeDataService.open(context);
@@ -34,14 +36,20 @@ export struct DashboardView {
 
   async refresh(): Promise<void> {
     if (this.dataService === null) {
+      this.isLoading = false;
       return;
     }
     this.isLoading = true;
-    this.readings = await this.dataService.loadReadings();
-    this.predictions = await this.dataService.loadPendingPredictions();
-    this.recentNotes = await this.dataService.loadRecentNotes();
-    this.summary = await this.dataService.loadSummary();
-    this.isLoading = false;
+    try {
+      this.readings = await this.dataService.loadReadings();
+      this.predictions = await this.dataService.loadPendingPredictions();
+      this.recentNotes = await this.dataService.loadRecentNotes();
+      this.summary = await this.dataService.loadSummary();
+    } catch (error) {
+      promptAction.showToast({ message: '数据加载失败，请稍后重试' });
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   private modules(): HomeModule[] {
