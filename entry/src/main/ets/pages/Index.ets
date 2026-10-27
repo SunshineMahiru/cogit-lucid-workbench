@@ -154,6 +154,21 @@ struct Index {
                 })
               }
               .width('100%')
+              Row({ space: 10 }) {
+                EntryChip({
+                  label: '状态',
+                  onTap: () => {
+                    promptAction.showToast({ message: '状态页面开发中' });
+                  }
+                })
+                EntryChip({
+                  label: '关系',
+                  onTap: () => {
+                    promptAction.showToast({ message: '关系页面开发中' });
+                  }
+                })
+              }
+              .width('100%')
             }
 
             // 最近速记
