@@ -9,16 +9,27 @@ export struct ReviewPage {
   private navStack: NavPathStack | null = null;
 
   @Builder
-  agentMenu() {
-    Text('Agent')
-      .fontSize(14)
-      .fontColor('#4A6FA5')
-      .padding({ left: 12, right: 16 })
-      .onClick(() => {
-        if (this.navStack !== null) {
-          this.navStack.pushPathByName(ROUTES.REVIEW_AGENT, null);
-        }
-      })
+  actionsMenu() {
+    Row({ space: 2 }) {
+      Text('历史')
+        .fontSize(14)
+        .fontColor('#4A6FA5')
+        .padding({ left: 8, right: 8 })
+        .onClick(() => {
+          if (this.navStack !== null) {
+            this.navStack.pushPathByName(ROUTES.REVIEW_HISTORY, null);
+          }
+        })
+      Text('Agent')
+        .fontSize(14)
+        .fontColor('#4A6FA5')
+        .padding({ left: 4, right: 14 })
+        .onClick(() => {
+          if (this.navStack !== null) {
+            this.navStack.pushPathByName(ROUTES.REVIEW_AGENT, null);
+          }
+        })
+    }
   }
 
   build() {
@@ -44,7 +55,7 @@ export struct ReviewPage {
       .backgroundColor('#F5F6F8')
     }
     .title('复盘')
-    .menus(this.agentMenu)
+    .menus(this.actionsMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
     })
