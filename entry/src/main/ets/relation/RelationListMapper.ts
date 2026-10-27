@@ -75,7 +75,9 @@ export function toRelationDetail(relation: Relation): RelationDetail {
     forbidAnalysis: relation.forbidAnalysis,
     level: relation.level,
     notes: relation.notes,
-    interactionLog: logs
+    interactionLog: logs,
+    linkedEvents: [],
+    linkedDecisions: []
   };
 }
 

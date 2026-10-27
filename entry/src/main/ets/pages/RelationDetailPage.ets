@@ -23,7 +23,9 @@ export struct RelationDetailPage {
     forbidAnalysis: false,
     level: SecurityLevel.LOCAL_ONLY,
     notes: '',
-    interactionLog: []
+    interactionLog: [],
+    linkedEvents: [],
+    linkedDecisions: []
   };
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
@@ -171,6 +173,38 @@ export struct RelationDetailPage {
                   .lineHeight(18)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
+
+            SectionCard() {
+              Column({ space: 5 }) {
+                Text('关联记录')
+                  .fontSize(11)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                if (this.detail.linkedEvents.length === 0 && this.detail.linkedDecisions.length === 0) {
+                  Text('暂无速记或决策引用这条关系')
+                    .fontSize(11)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                } else {
+                  ForEach(this.detail.linkedEvents, (title: string, index: number) => {
+                    Text(`速记 · ${title}`)
+                      .fontSize(12)
+                      .lineHeight(19)
+                      .fontColor(AppTheme.color.text)
+                      .width('100%')
+                  }, (title: string, index: number) => `ev_${index}_${title}`)
+                  ForEach(this.detail.linkedDecisions, (title: string, index: number) => {
+                    Text(`决策 · ${title}`)
+                      .fontSize(12)
+                      .lineHeight(19)
+                      .fontColor(AppTheme.color.text)
+                      .width('100%')
+                  }, (title: string, index: number) => `dc_${index}_${title}`)
+                }
               }
               .width('100%')
               .alignItems(HorizontalAlign.Start)

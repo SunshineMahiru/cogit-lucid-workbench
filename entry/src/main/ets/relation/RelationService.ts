@@ -3,6 +3,8 @@ import { common } from '@kit.AbilityKit';
 import { MOCK_RELATIONS } from '../model/mockData';
 import { TrustLevel } from '../model/TrustLevel';
 import { DbHelper } from '../db/DbHelper';
+import { DecisionDao } from '../db/dao/DecisionDao';
+import { EventDao } from '../db/dao/EventDao';
 import { RelationDao } from '../db/dao/RelationDao';
 import { RelationDetail, RelationListItem } from './RelationListItem';
 import { filterRelationItems, toRelationDetail, toRelationListItems } from './RelationListMapper';
@@ -10,9 +12,13 @@ import { filterRelationItems, toRelationDetail, toRelationListItems } from './Re
 /** Read access to relations plus an explicit demo seed; editing lands in 6.4. */
 export class RelationService {
   private relationDao: RelationDao;
+  private eventDao: EventDao;
+  private decisionDao: DecisionDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.relationDao = new RelationDao(store);
+    this.eventDao = new EventDao(store);
+    this.decisionDao = new DecisionDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -33,7 +39,16 @@ export class RelationService {
     if (relation === null) {
       return null;
     }
-    return toRelationDetail(relation);
+    const detail = toRelationDetail(relation);
+    const events = await this.eventDao.queryAll();
+    const decisions = await this.decisionDao.queryAll();
+    detail.linkedEvents = events
+      .filter((event) => event.relatedRelationIds.includes(id))
+      .map((event) => event.title);
+    detail.linkedDecisions = decisions
+      .filter((decision) => decision.relatedRelationIds.includes(id))
+      .map((decision) => decision.title);
+    return detail;
   }
 
   /**
