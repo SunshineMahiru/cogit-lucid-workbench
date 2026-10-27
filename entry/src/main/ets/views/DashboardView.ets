@@ -7,7 +7,6 @@ import { NoteCard } from '../components/NoteCard';
 import { NoteListItem } from '../note/NoteListItem';
 import { NoteEditParams, PredictionDetailParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
-import { promptAction } from '@kit.ArkUI';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -46,7 +45,7 @@ export struct DashboardView {
       this.recentNotes = await this.dataService.loadRecentNotes();
       this.summary = await this.dataService.loadSummary();
     } catch (error) {
-      promptAction.showToast({ message: '数据加载失败，请稍后重试' });
+      this.getUIContext().getPromptAction().showToast({ message: '数据加载失败，请稍后重试' });
     } finally {
       this.isLoading = false;
     }
