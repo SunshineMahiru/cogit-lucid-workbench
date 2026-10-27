@@ -117,6 +117,7 @@ export struct ReviewHistoryPage {
           }
           .layoutWeight(1)
           .scrollBar(BarState.Off)
+          .align(Alignment.Top)
         }
       }
       .width('100%')

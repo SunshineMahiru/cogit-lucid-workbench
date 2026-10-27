@@ -247,6 +247,7 @@ export struct PredictionSettlePage {
           }
           .layoutWeight(1)
           .scrollBar(BarState.Off)
+          .align(Alignment.Top)
 
           Column() {
             Text(this.isSaving ? '结算中…' : '确认结算')

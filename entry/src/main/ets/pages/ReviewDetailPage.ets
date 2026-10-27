@@ -182,6 +182,7 @@ export struct ReviewDetailPage {
         .width('100%')
         .height('100%')
         .scrollBar(BarState.Off)
+        .align(Alignment.Top)
         .backgroundColor(AppTheme.color.page)
       }
     }
