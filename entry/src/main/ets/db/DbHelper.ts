@@ -1,12 +1,13 @@
 import { relationalStore } from '@kit.ArkData';
-import { DB_CONFIG } from './DbConfig';
+import { common } from '@kit.AbilityKit';
+import { DB_CONFIG, DB_VERSION } from './DbConfig';
 import { TABLE_CREATE_SQLS } from './schemas';
 
 /** Opens and caches the relational store instance. */
 export class DbHelper {
   private static store: relationalStore.RdbStore | null = null;
 
-  static async getStore(context: Context): Promise<relationalStore.RdbStore> {
+  static async getStore(context: common.Context): Promise<relationalStore.RdbStore> {
     if (DbHelper.store !== null) {
       return DbHelper.store;
     }
@@ -15,9 +16,10 @@ export class DbHelper {
     return store;
   }
 
-  /** Opens the store and executes all create-table statements. */
-  static async init(context: Context): Promise<relationalStore.RdbStore> {
+  /** Opens the store, applies the schema version and executes all create-table statements. */
+  static async init(context: common.Context): Promise<relationalStore.RdbStore> {
     const store = await DbHelper.getStore(context);
+    store.version = DB_VERSION;
     for (const sql of TABLE_CREATE_SQLS) {
       await store.executeSql(sql);
     }
