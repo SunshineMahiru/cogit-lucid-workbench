@@ -31,15 +31,23 @@ export struct DashboardView {
   };
   @Local dataService: HomeDataService | null = null;
   @Local isLoading: boolean = true;
+  @Local loadFailed: boolean = false;
 
   async aboutToAppear(): Promise<void> {
     const context = this.getUIContext().getHostContext();
     if (context === undefined) {
       this.isLoading = false;
+      this.loadFailed = true;
       return;
     }
-    this.dataService = await HomeDataService.open(context);
-    await this.refresh();
+    try {
+      this.dataService = await HomeDataService.open(context);
+      await this.refresh();
+    } catch (error) {
+      this.isLoading = false;
+      this.loadFailed = true;
+      this.getUIContext().getPromptAction().showToast({ message: '数据加载失败，请稍后重试' });
+    }
   }
 
   async refresh(): Promise<void> {
@@ -53,7 +61,9 @@ export struct DashboardView {
       this.predictions = await this.dataService.loadPendingPredictions();
       this.recentNotes = await this.dataService.loadRecentNotes();
       this.summary = await this.dataService.loadSummary();
+      this.loadFailed = false;
     } catch (error) {
+      this.loadFailed = true;
       this.getUIContext().getPromptAction().showToast({ message: '数据加载失败，请稍后重试' });
     } finally {
       this.isLoading = false;
@@ -92,7 +102,7 @@ export struct DashboardView {
         route: ROUTES.STATUS,
         icon: '📊',
         title: '状态',
-        summary: `睡眠 ${sleep} 小时`
+        summary: sleep === '--' ? '暂无读数' : `睡眠 ${sleep} 小时`
       },
       {
         route: ROUTES.RELATION,
@@ -221,6 +231,15 @@ export struct DashboardView {
       .width('100%')
       .padding({ left: 20, right: 20, top: 16, bottom: 12 })
       .border({ width: { bottom: 0.5 }, color: '#E0E0E0' })
+
+      if (this.loadFailed) {
+        Text('本地数据暂不可用，当前仅展示界面')
+          .fontSize(11)
+          .fontColor('#B0761E')
+          .width('100%')
+          .padding({ left: 20, right: 20, top: 6, bottom: 6 })
+          .backgroundColor('#FFF4E0')
+      }
 
       if (this.isLoading) {
         this.loadingView()
