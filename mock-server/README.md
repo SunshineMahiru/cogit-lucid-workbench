@@ -17,6 +17,8 @@ The server listens on `0.0.0.0:4523` by default; override with `PORT`.
 | GET | `/health` | `{ "status": "ok" }` |
 | GET | `/review-prompts?period=week` | `{ "prompts": [...] }` |
 | GET | `/review-prompts?period=month` | `{ "prompts": [...] }` |
+| POST | `/llm/complete` | `{ "model": "mock-local", "content": "{\"candidates\":[...]}" }` |
+| POST | `/v1/chat/completions` | OpenAI-compatible `choices[0].message.content` |
 
 ## Addressing
 

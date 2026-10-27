@@ -26,6 +26,35 @@ function sendJson(response, status, payload) {
   response.end(body);
 }
 
+function readBody(request) {
+  return new Promise((resolve) => {
+    let body = '';
+    request.on('data', (chunk) => {
+      body += chunk;
+    });
+    request.on('end', () => {
+      resolve(body);
+    });
+  });
+}
+
+function mockCandidates() {
+  return {
+    candidates: [
+      {
+        anchorId: '',
+        gap: '本地模拟：解释里缺少可核对的时间点',
+        prompt: '能否补一个具体日期、次数或时长？'
+      },
+      {
+        anchorId: '',
+        gap: '本地模拟：目前只有一种解释',
+        prompt: '如果这条解释是错的，最可能错在哪一步？'
+      }
+    ]
+  };
+}
+
 const server = http.createServer((request, response) => {
   const url = new URL(request.url, `http://localhost:${PORT}`);
 
@@ -37,6 +66,26 @@ const server = http.createServer((request, response) => {
   if (url.pathname === '/review-prompts') {
     const period = url.searchParams.get('period') === 'month' ? 'month' : 'week';
     sendJson(response, 200, { prompts: PROMPTS[period] });
+    return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/llm/complete') {
+    readBody(request).then(() => {
+      sendJson(response, 200, {
+        model: 'mock-local',
+        content: JSON.stringify(mockCandidates())
+      });
+    });
+    return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/v1/chat/completions') {
+    readBody(request).then(() => {
+      sendJson(response, 200, {
+        model: 'mock-openai-compatible',
+        choices: [{ message: { content: JSON.stringify(mockCandidates()) } }]
+      });
+    });
     return;
   }
 
