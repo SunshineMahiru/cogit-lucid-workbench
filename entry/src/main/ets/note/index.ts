@@ -19,5 +19,7 @@ export { NOTE_TITLE_MAX_LENGTH, composeNoteContent, deriveNoteTitle } from './No
 export { buildDecisionFromNote, splitDecisionOptions } from './NoteDecisionComposer';
 export type { NoteListItem } from './NoteListItem';
 export { NOTE_SUMMARY_MAX_LENGTH, toNoteListItem, toNoteListItems, formatNoteTime } from './NoteListMapper';
+export type { NoteDetail } from './NoteDetail';
+export { toNoteDetail, securityLevelText } from './NoteDetail';
 export type { SavedNote } from './QuickNoteService';
 export { FREE_NOTE_TYPE, DEFAULT_NOTE_LIST_LIMIT, QuickNoteService } from './QuickNoteService';
