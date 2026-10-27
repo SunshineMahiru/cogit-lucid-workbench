@@ -6,3 +6,5 @@ export { createReviewDraft, emptyReviewStats } from './ReviewDraft';
 export { ReviewService } from './ReviewService';
 export type { AgentOutcome } from './ReviewAgent';
 export { ReviewAgent } from './ReviewAgent';
+export type { ReviewDetailView, ReviewHistoryItem } from './ReviewHistory';
+export { formatReviewTime, toReviewDetailView, toReviewHistoryItem } from './ReviewHistory';
