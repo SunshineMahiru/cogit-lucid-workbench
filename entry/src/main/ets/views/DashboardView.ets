@@ -14,7 +14,7 @@ import { PredictionCard } from '../components/PredictionCard';
 import { ReadingCard } from '../components/ReadingCard';
 import { NoteCard } from '../components/NoteCard';
 import { NoteListItem } from '../note/NoteListItem';
-import { NoteEditParams, PredictionDetailParams } from '../navigation/RouteParams';
+import { NoteEditParams, NoteListParams, PredictionDetailParams, PredictionListParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
@@ -105,17 +105,39 @@ export struct DashboardView {
 
   private openNoteEditor(): void {
     const params: NoteEditParams = { templateId: null };
-    this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params);
+    this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params, () => {
+      this.refresh();
+    });
+  }
+
+  private openNoteList(): void {
+    const params: NoteListParams = { filterType: '' };
+    this.pathStack.pushPathByName(ROUTES.NOTE_LIST, params, () => {
+      this.refresh();
+    });
+  }
+
+  private openPredictionList(): void {
+    const params: PredictionListParams = { status: null };
+    this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, params, () => {
+      this.refresh();
+    });
   }
 
   private openPredictionDetail(predictionId: string): void {
     const params: PredictionDetailParams = { predictionId: predictionId };
-    this.pathStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params);
+    this.pathStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params, () => {
+      this.refresh();
+    });
   }
 
   private openModule(route: string): void {
     if (route === ROUTES.NOTE_EDIT) {
       this.openNoteEditor();
+      return;
+    }
+    if (route === ROUTES.PREDICTION_LIST) {
+      this.openPredictionList();
       return;
     }
     this.pathStack.pushPathByName(route, null);
@@ -309,7 +331,7 @@ export struct DashboardView {
                     .fontSize(12)
                     .fontColor('#8A8F99')
                     .onClick(() => {
-                      this.pathStack.pushPathByName(ROUTES.NOTE_LIST, null);
+                      this.openNoteList();
                     })
                 }
                 .width('100%')
@@ -323,7 +345,7 @@ export struct DashboardView {
                         NoteCard({
                           note: note,
                           onTap: () => {
-                            this.pathStack.pushPathByName(ROUTES.NOTE_LIST, null);
+                            this.openNoteList();
                           }
                         })
                       }
@@ -349,7 +371,7 @@ export struct DashboardView {
                     .fontSize(12)
                     .fontColor('#8A8F99')
                     .onClick(() => {
-                      this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, null);
+                      this.openPredictionList();
                     })
                 }
                 .width('100%')
