@@ -11,6 +11,30 @@ import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { AppTheme } from '../theme/AppTheme';
 
+/** One label/value row; kept as a child component so async detail reloads re-render it. */
+@ComponentV2
+struct PredictionInfoRow {
+  @Param label: string = '';
+  @Param value: string = '';
+
+  build() {
+    Row({ space: 12 }) {
+      Text(this.label)
+        .fontSize(12)
+        .fontColor('#8A8F99')
+      Text(this.value)
+        .fontSize(12)
+        .fontColor('#1F2329')
+        .layoutWeight(1)
+        .textAlign(TextAlign.End)
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+    }
+    .width('100%')
+    .padding({ top: 7, bottom: 7 })
+  }
+}
+
 /** Read-only view of one prediction, including its settlement result. */
 @ComponentV2
 export struct PredictionDetailPage {
@@ -76,24 +100,6 @@ export struct PredictionDetailPage {
     return this.detail.hit === true ? '#E8F5E9' : '#FCEBEB';
   }
 
-  @Builder
-  infoRow(label: string, value: string) {
-    Row({ space: 12 }) {
-      Text(label)
-        .fontSize(12)
-        .fontColor('#8A8F99')
-      Text(value)
-        .fontSize(12)
-        .fontColor('#1F2329')
-        .layoutWeight(1)
-        .textAlign(TextAlign.End)
-        .maxLines(2)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-    }
-    .width('100%')
-    .padding({ top: 7, bottom: 7 })
-  }
-
   build() {
     NavDestination() {
       if (this.isLoading) {
@@ -157,11 +163,17 @@ export struct PredictionDetailPage {
               .width('100%')
 
             Column() {
-              this.infoRow('结算日', this.detail.settlementDate)
-              this.infoRow('状态', predictionStatusText(this.detail.status, this.detail.hit))
-              this.infoRow('命中', predictionHitText(this.detail.hit))
-              this.infoRow('实际结果', this.detail.actualResult.length > 0 ? this.detail.actualResult : '—')
-              this.infoRow('创建时间', this.detail.createdAtLabel)
+              PredictionInfoRow({ label: '结算日', value: this.detail.settlementDate })
+              PredictionInfoRow({
+                label: '状态',
+                value: predictionStatusText(this.detail.status, this.detail.hit)
+              })
+              PredictionInfoRow({ label: '命中', value: predictionHitText(this.detail.hit) })
+              PredictionInfoRow({
+                label: '实际结果',
+                value: this.detail.actualResult.length > 0 ? this.detail.actualResult : '—'
+              })
+              PredictionInfoRow({ label: '创建时间', value: this.detail.createdAtLabel })
             }
             .width('100%')
             .padding(16)
