@@ -1,0 +1,15 @@
+{
+  "signingConfig": {
+    "name": "default",
+    "type": "HarmonyOS",
+    "material": {
+      "certpath": "C:\\path\\to\\debug.cer",
+      "keyAlias": "debugKey",
+      "keyPassword": "<DevEco-encrypted value>",
+      "profile": "C:\\path\\to\\debug.p7b",
+      "signAlg": "SHA256withECDSA",
+      "storeFile": "C:\\path\\to\\debug.p12",
+      "storePassword": "<DevEco-encrypted value>"
+    }
+  }
+}
