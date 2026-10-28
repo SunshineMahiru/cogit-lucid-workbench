@@ -10,9 +10,12 @@ node_modules/
 .test/
 *.log
 
-# CodeArts toolchain
+# CodeArts toolchain and local build logs
 .arts/
 .codeartsdoer/
+.appanalyzer/
+build*.out
+build*.err
 
 # Signing material; never commit keys or provisioning profiles
 *.p12
