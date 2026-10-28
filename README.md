@@ -25,6 +25,10 @@ Three design choices separate it from a journal:
 
 The interface is Chinese only. The display name is set in `entry/src/main/ets/theme/AppIdentity.ts` and the launcher label in `AppScope/resources/base/element/string.json`.
 
+## Project status
+
+Course build, feature-complete for FR1–FR8. Last emulator verification on 2026-10-28 covered the HAP build, install, dashboard, notes, predictions including settlement, charts, review and agent, relations and star map, anchors, status, settings, and Markdown export. It is not an AppGallery release. Signing material is local-only; the tracked build profile contains no signing config.
+
 ## Highlights
 
 | Highlight | What it gives you |
@@ -136,7 +140,7 @@ A command line build is possible from the project root:
 node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p product=default --no-daemon
 ```
 
-`DEVECO_SDK_HOME`, `NODE_HOME`, and `JAVA_HOME` need to point at the DevEco toolchain first. No signing material is committed, so the output is an unsigned HAP.
+`DEVECO_SDK_HOME`, `NODE_HOME`, and `JAVA_HOME` need to point at the DevEco toolchain first. The tracked profile has no signing config; without a local signing file the output is an unsigned HAP.
 
 ## Quick Start
 
@@ -194,6 +198,16 @@ A monthly budget caps paid calls. Budget 0 disables them; cost is estimated from
 
 A level is set on each record. The default in settings only applies to records created after you change it.
 
+### Signing
+
+The tracked `build-profile.json5` intentionally keeps `signingConfigs` empty. At build time, `hvigorfile.ts` reads `signing/signing.local.json` when it exists and injects the `default` signing config. The local file and the `.p12`, `.cer`, and `.p7b` material are ignored, so a fresh clone builds an unsigned HAP.
+
+To sign locally:
+
+1. Copy `docs/signing.local.example.json` to `signing/signing.local.json`.
+2. Fill in the certificate, profile, keystore paths and the DevEco-encrypted `keyPassword` / `storePassword` values. The documented fields are ciphertext; do not replace them with plaintext unless the local hvigor version accepts it.
+3. Build again and check for `entry-default-signed.hap` under `entry/build/default/outputs/default/`.
+
 ### Export
 
 Settings writes a single Markdown file covering events, decisions, relations, predictions, anchors, status readings, and review results. The file stays in the app sandbox, so copying it out is a manual step.
@@ -221,7 +235,8 @@ cogit-lucid-workbench/
 │       │   └── theme/            design tokens, app identity
 │       └── resources/            strings, colours, icons, network config
 ├── mock-server/                  zero-dependency Node mock server
-├── docs/                         UI freeze record, debug screenshots
+├── signing/                      local-only signing config and material (ignored)
+├── docs/                         UI freeze record, debug screenshots, signing template
 ├── build-profile.json5           SDK versions, product, build modes
 ├── oh-package.json5              dependencies
 └── LICENSE                       AGPL-3.0
@@ -232,6 +247,7 @@ cogit-lucid-workbench/
 | Topic | What it covers | Link |
 |---|---|---|
 | Visual tokens | Locked colour, type, radius, and spacing tokens, plus the per-page visual checklist and known deviations | [docs/UI_FREEZE.md](./docs/UI_FREEZE.md) |
+| Local signing template | Placeholder signing config for `signing/signing.local.json` | [docs/signing.local.example.json](./docs/signing.local.example.json) |
 | Mock server | Endpoints, addressing, and the previewer versus emulator note | [mock-server/README.md](./mock-server/README.md) |
 
 ## FAQ
@@ -243,7 +259,7 @@ The DevEco previewer does not provide `relationalStore`, so data-backed pages fa
 `127.0.0.1` inside the emulator is the emulator itself. Set `API_BASE_URL` in `entry/src/main/ets/network/ApiConfig.ts` to the host LAN address, or run `hdc rport tcp:4523 tcp:4523` before launching.
 
 **The built HAP will not install.**
-Signing material is excluded by `.gitignore` (`*.p12`, `*.cer`, `*.p7b`), so `assembleHap` produces `entry-default-unsigned.hap`. Configure your own signing profile in DevEco Studio before installing on a device.
+Without a local signing file, `assembleHap` produces `entry-default-unsigned.hap`. Add `signing/signing.local.json` using `docs/signing.local.example.json`, or configure signing in DevEco Studio, then rebuild. The tracked `build-profile.json5` deliberately has no signing config.
 
 **The launcher name does not match the title inside the app.**
 The launcher label `cogit-lucid-workbench` comes from `AppScope/resources/base/element/string.json`; the in-app title `Cogit Lucid` comes from `theme/AppIdentity.ts`. The Chinese name is not finalised, so both are placeholders.

@@ -25,6 +25,10 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 
 界面目前只有中文。应用显示名在 `entry/src/main/ets/theme/AppIdentity.ts`，桌面标签在 `AppScope/resources/base/element/string.json`。
 
+## 项目状态
+
+课程版，FR1–FR8 已实现。最近一次模拟器验证在 2026-10-28，覆盖 HAP 构建、安装、首页、速记、预测（含结算）、图表、复盘与 Agent、关系与星图、锚点、状态、设置和 Markdown 导出。不是应用市场发布版。签名材料只留在本地，跟踪的构建配置里没有签名信息。
+
 ## 核心功能
 
 | 功能 | 作用 |
@@ -136,7 +140,7 @@ Gitee 镜像在 `git@gitee.com:theangelnextdoor/cogit-lucid-workbench.git`。
 node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p product=default --no-daemon
 ```
 
-执行前需要把 `DEVECO_SDK_HOME`、`NODE_HOME`、`JAVA_HOME` 指向 DevEco 工具链。仓库不含签名材料，产物是未签名的 HAP。
+执行前需要把 `DEVECO_SDK_HOME`、`NODE_HOME`、`JAVA_HOME` 指向 DevEco 工具链。跟踪的配置里没有签名信息；本地没有签名文件时，产物是未签名 HAP。
 
 ## 快速开始
 
@@ -194,6 +198,16 @@ node mock-server/server.js
 
 密级在每条记录上单独选。设置页里的默认值只管此后新建的记录。
 
+### 签名
+
+跟踪的 `build-profile.json5` 故意保持 `signingConfigs` 为空。构建时，`hvigorfile.ts` 会在本地存在 `signing/signing.local.json` 时读取它，并注入 `default` 签名配置。本文件以及 `.p12`、`.cer`、`.p7b` 材料都被忽略，所以新克隆的仓库构建出来是未签名 HAP。
+
+本地签名步骤：
+
+1. 把 `docs/signing.local.example.json` 复制为 `signing/signing.local.json`。
+2. 填入证书、profile、keystore 路径，以及 DevEco 生成的 `keyPassword` / `storePassword` 密文。文档里说明的是密文字段；除非本机 hvigor 版本确认接受明文，不要直接改成明文。
+3. 重新构建，确认 `entry/build/default/outputs/default/` 下出现 `entry-default-signed.hap`。
+
 ### 导出
 
 设置页把事件、决策、关系、预测、锚点、状态读数和复盘结果写成一份 Markdown。文件留在应用沙箱里，取出来需要手动操作。
@@ -221,7 +235,8 @@ cogit-lucid-workbench/
 │       │   └── theme/            设计令牌、应用标识
 │       └── resources/            字符串、颜色、图标、网络配置
 ├── mock-server/                  零依赖 Node Mock 服务
-├── docs/                         UI 冻结记录、调试截图
+├── signing/                      本地签名配置和材料（忽略）
+├── docs/                         UI 冻结记录、调试截图、签名模板
 ├── build-profile.json5           SDK 版本、产物、构建模式
 ├── oh-package.json5              依赖声明
 └── LICENSE                       AGPL-3.0
@@ -232,6 +247,7 @@ cogit-lucid-workbench/
 | 主题 | 内容 | 链接 |
 |---|---|---|
 | 视觉令牌 | 锁定的颜色、字号、圆角、间距，以及逐页目视清单和已知差异 | [docs/UI_FREEZE.md](./docs/UI_FREEZE.md) |
+| 本地签名模板 | 用于 `signing/signing.local.json` 的占位配置 | [docs/signing.local.example.json](./docs/signing.local.example.json) |
 | Mock 服务 | 端点、寻址方式，以及预览器与模拟器的区别 | [mock-server/README.md](./mock-server/README.md) |
 
 ## 常见问题
@@ -243,7 +259,7 @@ DevEco 预览器不提供 `relationalStore`，依赖数据的页面会走兜底�
 模拟器里的 `127.0.0.1` 指向模拟器自己。把 `entry/src/main/ets/network/ApiConfig.ts` 的 `API_BASE_URL` 改成宿主机局域网地址，或者在启动前执行 `hdc rport tcp:4523 tcp:4523`。
 
 **构建出来的 HAP 装不上。**
-`.gitignore` 排除了签名材料（`*.p12`、`*.cer`、`*.p7b`），`assembleHap` 产出的是 `entry-default-unsigned.hap`。装到设备前需要在 DevEco Studio 里配自己的签名。
+本地没有签名文件时，`assembleHap` 产出的是 `entry-default-unsigned.hap`。参照 `docs/signing.local.example.json` 建立 `signing/signing.local.json`，或在 DevEco Studio 里配置签名后重新构建。跟踪的 `build-profile.json5` 故意不含签名信息。
 
 **桌面名字和应用内标题不一致。**
 桌面标签 `cogit-lucid-workbench` 来自 `AppScope/resources/base/element/string.json`，应用内标题 `Cogit Lucid` 来自 `theme/AppIdentity.ts`。中文名还没定，两处都是占位。
