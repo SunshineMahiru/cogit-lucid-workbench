@@ -11,6 +11,7 @@ import {
 } from '../review';
 import { PREVIEW_ANCHORS, PREVIEW_REVIEW_STATS } from '../preview/PreviewData';
 import { previewStore } from '../preview/PreviewStore';
+import { ReviewDraftStore } from '../review/ReviewDraftStore';
 
 const STEP_LABELS: string[] = ['事实', '解释', '矛盾', '行动'];
 const STEP_HINTS: string[] = [
@@ -43,9 +44,14 @@ export struct ReviewForm {
   @Local selectedAnchorIds: string[] = [];
   @Local isPreview: boolean = false;
   private service: ReviewService | null = null;
+  private draftStore: ReviewDraftStore | null = null;
 
   aboutToAppear(): void {
     this.load();
+  }
+
+  aboutToDisappear(): void {
+    this.persistDraft();
   }
 
   private async load(): Promise<void> {
@@ -56,14 +62,40 @@ export struct ReviewForm {
     }
     try {
       this.service = await ReviewService.open(hostContext);
+      this.draftStore = await ReviewDraftStore.open(hostContext);
       this.stats = await this.service.loadStats(this.period);
       this.anchors = await this.service.loadAnchors(3);
       this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
+      const draft = await this.draftStore.load(this.period);
+      if (draft !== null) {
+        this.facts = draft.facts;
+        this.interpretation = draft.interpretation;
+        this.contradiction = draft.contradiction;
+        this.action = draft.action;
+        if (draft.anchorIds.length > 0) {
+          this.selectedAnchorIds = draft.anchorIds.slice();
+        }
+      }
       this.isLoading = false;
     } catch (error) {
       this.isLoading = false;
       this.getUIContext().getPromptAction().showToast({ message: '复盘数据加载失败' });
     }
+  }
+
+  private persistDraft(): void {
+    if (this.draftStore === null) {
+      return;
+    }
+    const draft: ReviewDraft = {
+      facts: this.facts,
+      interpretation: this.interpretation,
+      contradiction: this.contradiction,
+      action: this.action,
+      anchorIds: this.selectedAnchorIds.slice()
+    };
+    this.draftStore.save(this.period, draft).catch(() => {
+    });
   }
 
   private loadPreview(): void {
@@ -97,11 +129,13 @@ export struct ReviewForm {
     } else {
       this.action = value;
     }
+    this.persistDraft();
   }
 
   private appendContradiction(text: string): void {
     const current = this.contradiction.trim();
     this.contradiction = current.length > 0 ? `${current}\n${text}` : text;
+    this.persistDraft();
   }
 
   private isAnchorSelected(id: string): boolean {
@@ -114,6 +148,7 @@ export struct ReviewForm {
     } else {
       this.selectedAnchorIds = this.selectedAnchorIds.concat([id]);
     }
+    this.persistDraft();
   }
 
   private async complete(): Promise<void> {
@@ -157,6 +192,9 @@ export struct ReviewForm {
         anchorIds: this.selectedAnchorIds.slice()
       };
       await this.service.save(this.period, draft, this.stats.rangeLabel);
+      if (this.draftStore !== null) {
+        await this.draftStore.clear(this.period);
+      }
       this.saved = true;
       this.getUIContext().getPromptAction().showToast({ message: '复盘已保存' });
     } catch (error) {
@@ -173,6 +211,10 @@ export struct ReviewForm {
     this.contradiction = '';
     this.action = '';
     this.saved = false;
+    if (this.draftStore !== null) {
+      this.draftStore.clear(this.period).catch(() => {
+      });
+    }
     this.load();
   }
 
