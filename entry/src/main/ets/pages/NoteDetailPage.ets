@@ -1,6 +1,7 @@
 import { NoteDetail, QuickNoteService, securityLevelText } from '../note';
 import { NoteDetailParams } from '../navigation/RouteParams';
 import { NoteEmptyState } from '../components/NoteEmptyState';
+import { findPreviewNote } from '../preview/PreviewData';
 
 /** Read-only view of one stored note. */
 @ComponentV2
@@ -13,8 +14,7 @@ export struct NoteDetailPage {
   private async load(noteId: string): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
-      this.missing = true;
+      this.loadPreview(noteId);
       return;
     }
     try {
@@ -22,10 +22,16 @@ export struct NoteDetailPage {
       this.detail = await service.findNote(noteId);
       this.missing = this.detail === null;
     } catch (error) {
-      this.missing = true;
+      this.loadPreview(noteId);
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private loadPreview(noteId: string): void {
+    this.detail = findPreviewNote(noteId);
+    this.missing = this.detail === null;
+    this.isLoading = false;
   }
 
   build() {

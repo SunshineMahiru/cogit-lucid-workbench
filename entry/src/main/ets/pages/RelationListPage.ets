@@ -6,6 +6,8 @@ import { RelationListItem, RelationService, trustLevelText } from '../relation';
 import { TrustLevel } from '../model/TrustLevel';
 import { RelationDetailParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
+import { PREVIEW_RELATION_ITEMS } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 /** Read-only relation list with trust tier filters and an explicit demo seed. */
 @ComponentV2
@@ -15,6 +17,7 @@ export struct RelationListPage {
   @Local filter: TrustLevel | null = null;
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
+  @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -25,7 +28,7 @@ export struct RelationListPage {
   private async load(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
@@ -33,12 +36,23 @@ export struct RelationListPage {
       this.items = await this.service.list(this.filter);
       this.isLoading = false;
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '关系数据加载失败' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '关系数据加载失败，已切换到演示数据' });
     }
   }
 
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.items = this.filter === null ? PREVIEW_RELATION_ITEMS.slice() :
+      PREVIEW_RELATION_ITEMS.filter((item: RelationListItem) => item.trustLevel === this.filter);
+    this.isLoading = false;
+  }
+
   private async refresh(): Promise<void> {
+    if (this.isPreview) {
+      this.loadPreview();
+      return;
+    }
     if (this.service === null) {
       return;
     }
@@ -58,6 +72,10 @@ export struct RelationListPage {
   }
 
   private async seed(): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     if (this.service === null || this.isSeeding) {
       return;
     }

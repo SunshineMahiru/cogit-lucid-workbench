@@ -10,6 +10,8 @@ import { PredictionDetailParams, PredictionSettleParams } from '../navigation/Ro
 import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { AppTheme } from '../theme/AppTheme';
+import { findPreviewPrediction } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 /** One label/value row; kept as a child component so async detail reloads re-render it. */
 @ComponentV2
@@ -53,10 +55,15 @@ export struct PredictionDetailPage {
   };
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
+  @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
   private openSettle(): void {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     if (this.navStack === null) {
       return;
     }
@@ -67,8 +74,7 @@ export struct PredictionDetailPage {
   private async load(id: string): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
-      this.missing = true;
+      this.loadPreview(id);
       return;
     }
     try {
@@ -80,10 +86,21 @@ export struct PredictionDetailPage {
         this.detail = detail;
       }
     } catch (error) {
-      this.missing = true;
+      this.loadPreview(id);
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private loadPreview(id: string): void {
+    this.isPreview = true;
+    const detail = findPreviewPrediction(id);
+    if (detail === null) {
+      this.missing = true;
+    } else {
+      this.detail = detail;
+    }
+    this.isLoading = false;
   }
 
   private tagColor(): string {

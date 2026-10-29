@@ -4,6 +4,7 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewHistoryItem, ReviewService } from '../review';
 import { ReviewDetailParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
+import { PREVIEW_REVIEW_HISTORY } from '../preview/PreviewData';
 
 /** Saved review sessions, newest first; taps open the read-only detail. */
 @ComponentV2
@@ -20,6 +21,7 @@ export struct ReviewHistoryPage {
   private async load(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
+      this.items = PREVIEW_REVIEW_HISTORY.slice();
       this.isLoading = false;
       return;
     }
@@ -28,8 +30,9 @@ export struct ReviewHistoryPage {
       this.items = await service.history();
       this.isLoading = false;
     } catch (error) {
+      this.items = PREVIEW_REVIEW_HISTORY.slice();
       this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '复盘历史加载失败' });
+      this.getUIContext().getPromptAction().showToast({ message: '复盘历史加载失败，已切换到演示数据' });
     }
   }
 

@@ -5,6 +5,8 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { StatusDayRow as StatusRow, StatusOverview, StatusService } from '../status';
 import { ReadingFlag } from '../analysis/status/ReadingRules';
 import { ROUTES } from '../navigation/Routes';
+import { PREVIEW_STATUS_OVERVIEW } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 /** Physiological status panel: latest reading, seven-record summary and recent rows. */
 @ComponentV2
@@ -17,6 +19,7 @@ export struct StatusPage {
   };
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
+  @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -27,7 +30,7 @@ export struct StatusPage {
   private async load(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
@@ -35,12 +38,23 @@ export struct StatusPage {
       this.overview = await this.service.overview();
       this.isLoading = false;
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '状态数据加载失败' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '状态数据加载失败，已切换到演示数据' });
     }
   }
 
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.overview = PREVIEW_STATUS_OVERVIEW;
+    this.isLoading = false;
+  }
+
   private async refresh(): Promise<void> {
+    if (this.isPreview) {
+      this.overview = PREVIEW_STATUS_OVERVIEW;
+      this.isLoading = false;
+      return;
+    }
     if (this.service === null) {
       return;
     }
@@ -55,6 +69,10 @@ export struct StatusPage {
   }
 
   private async seed(): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     if (this.service === null || this.isSeeding) {
       return;
     }

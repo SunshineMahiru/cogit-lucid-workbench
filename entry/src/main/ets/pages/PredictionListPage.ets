@@ -5,6 +5,8 @@ import { PredictionDetailParams, PredictionListParams } from '../navigation/Rout
 import { ROUTES } from '../navigation/Routes';
 import { PredictionListCard } from '../components/PredictionListCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
+import { PREVIEW_PREDICTION_ITEMS, PREVIEW_PREDICTION_SUMMARY } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 /** Prediction log: summary counts, status filters and the row list. */
 @ComponentV2
@@ -14,6 +16,7 @@ export struct PredictionListPage {
   @Local summary: PredictionSummary = { total: 0, pending: 0, settled: 0, hits: 0, hitRate: 0 };
   @Local filter: PredictionStatus | null = null;
   @Local isLoading: boolean = true;
+  @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -24,19 +27,32 @@ export struct PredictionListPage {
   private async openService(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
       this.service = await PredictionService.open(hostContext);
       await this.refresh();
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '加载失败，请重试' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '加载失败，已切换到演示数据' });
     }
   }
 
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.items = PREVIEW_PREDICTION_ITEMS.slice();
+    this.summary = PREVIEW_PREDICTION_SUMMARY;
+    this.isLoading = false;
+  }
+
   async refresh(): Promise<void> {
+    if (this.isPreview) {
+      this.items = this.filter === null ? PREVIEW_PREDICTION_ITEMS.slice() :
+        PREVIEW_PREDICTION_ITEMS.filter((item: PredictionListItem) => item.status === this.filter);
+      this.isLoading = false;
+      return;
+    }
     if (this.service === null) {
       return;
     }
@@ -65,6 +81,10 @@ export struct PredictionListPage {
   }
 
   private openCreate(): void {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     if (this.navStack !== null) {
       this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, null);
     }

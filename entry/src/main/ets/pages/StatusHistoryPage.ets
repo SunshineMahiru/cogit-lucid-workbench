@@ -3,6 +3,8 @@ import { SectionCard } from '../components/SectionCard';
 import { StatusDayRow } from '../components/StatusDayRow';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { StatusDayRow as StatusRow, StatusService } from '../status';
+import { PREVIEW_STATUS_ROWS } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 /** Full status history, newest first. */
 @ComponentV2
@@ -11,6 +13,7 @@ export struct StatusHistoryPage {
   @Local rows: StatusRow[] = [];
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
+  @Local isPreview: boolean = false;
   private hasShownOnce: boolean = false;
 
   aboutToAppear(): void {
@@ -20,7 +23,7 @@ export struct StatusHistoryPage {
   private async load(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
@@ -28,12 +31,23 @@ export struct StatusHistoryPage {
       this.rows = await this.service.history();
       this.isLoading = false;
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '历史读数加载失败' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '历史读数加载失败，已切换到演示数据' });
     }
   }
 
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.rows = PREVIEW_STATUS_ROWS.slice();
+    this.isLoading = false;
+  }
+
   private async refresh(): Promise<void> {
+    if (this.isPreview) {
+      this.rows = PREVIEW_STATUS_ROWS.slice();
+      this.isLoading = false;
+      return;
+    }
     if (this.service === null) {
       return;
     }
@@ -48,6 +62,10 @@ export struct StatusHistoryPage {
   }
 
   private async seed(): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     if (this.service === null || this.isSeeding) {
       return;
     }

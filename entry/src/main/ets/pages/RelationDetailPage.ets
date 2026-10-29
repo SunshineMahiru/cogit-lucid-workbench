@@ -8,6 +8,7 @@ import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
 import { securityLevelText } from '../note';
 import { RelationDetailParams } from '../navigation/RouteParams';
+import { findPreviewRelation } from '../preview/PreviewData';
 
 /** Read-only relation detail: tier, flags, notes and the interaction timeline. */
 @ComponentV2
@@ -36,8 +37,7 @@ export struct RelationDetailPage {
   private async load(relationId: string): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
-      this.missing = true;
+      this.loadPreview(relationId);
       return;
     }
     try {
@@ -52,10 +52,23 @@ export struct RelationDetailPage {
         this.trustReason = decision.reason;
       }
     } catch (error) {
-      this.missing = true;
+      this.loadPreview(relationId);
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private loadPreview(relationId: string): void {
+    const detail = findPreviewRelation(relationId);
+    if (detail === null) {
+      this.missing = true;
+    } else {
+      this.detail = detail;
+      const decision = relationTrustDecision(detail);
+      this.trustAllowed = decision.allowMotiveAnalysis;
+      this.trustReason = decision.reason;
+    }
+    this.isLoading = false;
   }
 
   @Builder

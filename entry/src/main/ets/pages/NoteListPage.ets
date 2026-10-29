@@ -3,6 +3,8 @@ import { NoteDetailParams, NoteEditParams, NoteListParams } from '../navigation/
 import { ROUTES } from '../navigation/Routes';
 import { NoteCard } from '../components/NoteCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
+import { PREVIEW_NOTE_ITEMS } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 /** Note browser with type filters and an entry point to the editor. */
 @ComponentV2
@@ -11,6 +13,7 @@ export struct NoteListPage {
   @Local items: NoteListItem[] = [];
   @Local filter: string = '';
   @Local isLoading: boolean = true;
+  @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -21,19 +24,31 @@ export struct NoteListPage {
   private async openService(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
       this.service = await QuickNoteService.open(hostContext);
       await this.refresh();
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '加载失败，请重试' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '加载失败，已切换到演示数据' });
     }
   }
 
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.items = PREVIEW_NOTE_ITEMS.slice();
+    this.isLoading = false;
+  }
+
   async refresh(): Promise<void> {
+    if (this.isPreview) {
+      this.items = this.filter.length === 0 ? PREVIEW_NOTE_ITEMS.slice() :
+        PREVIEW_NOTE_ITEMS.filter((item: NoteListItem) => item.type === this.filter);
+      this.isLoading = false;
+      return;
+    }
     if (this.service === null) {
       return;
     }
@@ -55,6 +70,10 @@ export struct NoteListPage {
   }
 
   private openEditor(): void {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     if (this.navStack === null) {
       return;
     }

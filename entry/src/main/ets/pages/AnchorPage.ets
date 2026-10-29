@@ -3,6 +3,8 @@ import { AnchorService } from '../anchor';
 import { AnchorCard } from '../components/AnchorCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ROUTES } from '../navigation/Routes';
+import { PREVIEW_ANCHORS } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 /** Read-only value anchor library with a shortcut into the review flow. */
 @ComponentV2
@@ -11,6 +13,7 @@ export struct AnchorPage {
   @Local anchors: Anchor[] = [];
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
+  @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -21,7 +24,7 @@ export struct AnchorPage {
   private async load(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
@@ -29,12 +32,22 @@ export struct AnchorPage {
       this.anchors = await this.service.list();
       this.isLoading = false;
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '锚点加载失败' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '锚点加载失败，已切换到演示数据' });
     }
   }
 
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.anchors = PREVIEW_ANCHORS.slice();
+    this.isLoading = false;
+  }
+
   private async seed(): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     if (this.service === null || this.isSeeding) {
       return;
     }

@@ -3,6 +3,7 @@ import { SectionCard } from '../components/SectionCard';
 import { ReviewPeriod, ReviewService, ReviewStats, emptyReviewStats } from '../review';
 import { formatHitRate } from '../model/HomeModel';
 import { ROUTES } from '../navigation/Routes';
+import { PREVIEW_REVIEW_STATS } from '../preview/PreviewData';
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -12,25 +13,44 @@ export struct WeeklySettlementPage {
   @Local stats: ReviewStats = emptyReviewStats();
   @Local weekOffset: number = 0;
   @Local isLoading: boolean = true;
+  @Local isPreview: boolean = false;
   private service: ReviewService | null = null;
   private navStack: NavPathStack | null = null;
 
   async aboutToAppear(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
       this.service = await ReviewService.open(hostContext);
       await this.load();
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '周结算加载失败' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '周结算加载失败，已切换到演示数据' });
     }
   }
 
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.stats = this.weekOffset === 0 ? PREVIEW_REVIEW_STATS : {
+      rangeLabel: '上一周',
+      noteCount: 0,
+      decisionCount: 0,
+      pendingPredictions: 2,
+      settledPredictions: 3,
+      hitRate: 67,
+      anchorCount: 2
+    };
+    this.isLoading = false;
+  }
+
   private async load(): Promise<void> {
+    if (this.isPreview) {
+      this.loadPreview();
+      return;
+    }
     if (this.service === null) {
       return;
     }

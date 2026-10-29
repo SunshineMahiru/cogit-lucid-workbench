@@ -9,6 +9,8 @@ import {
   ReviewStats,
   emptyReviewStats
 } from '../review';
+import { PREVIEW_ANCHORS, PREVIEW_REVIEW_STATS } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 const STEP_LABELS: string[] = ['事实', '解释', '矛盾', '行动'];
 const STEP_HINTS: string[] = [
@@ -39,6 +41,7 @@ export struct ReviewForm {
   @Local isSaving: boolean = false;
   @Local saved: boolean = false;
   @Local selectedAnchorIds: string[] = [];
+  @Local isPreview: boolean = false;
   private service: ReviewService | null = null;
 
   aboutToAppear(): void {
@@ -48,7 +51,7 @@ export struct ReviewForm {
   private async load(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
@@ -58,9 +61,17 @@ export struct ReviewForm {
       this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
       this.isLoading = false;
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '复盘数据加载失败' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '复盘数据加载失败，已切换到演示数据' });
     }
+  }
+
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.stats = PREVIEW_REVIEW_STATS;
+    this.anchors = PREVIEW_ANCHORS.slice(0, 3);
+    this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
+    this.isLoading = false;
   }
 
   private currentText(): string {
@@ -120,7 +131,9 @@ export struct ReviewForm {
       return;
     }
     if (this.service === null) {
-      this.getUIContext().getPromptAction().showToast({ message: '数据库尚未就绪' });
+      this.getUIContext().getPromptAction().showToast({
+        message: this.isPreview ? PREVIEW_WRITE_BLOCKED : '数据库尚未就绪'
+      });
       return;
     }
     this.isSaving = true;

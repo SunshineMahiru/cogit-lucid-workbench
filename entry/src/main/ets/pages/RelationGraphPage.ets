@@ -4,6 +4,8 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { RelationGraph } from '../components/RelationGraph';
 import { RelationListItem, RelationService, trustLevelText } from '../relation';
 import { TrustLevel } from '../model/TrustLevel';
+import { PREVIEW_RELATION_ITEMS } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 /** Read-only relation star map; the list view remains the editing-free directory. */
 @ComponentV2
@@ -12,6 +14,7 @@ export struct RelationGraphPage {
   @Local items: RelationListItem[] = [];
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
+  @Local isPreview: boolean = false;
   private hasShownOnce: boolean = false;
 
   aboutToAppear(): void {
@@ -21,7 +24,7 @@ export struct RelationGraphPage {
   private async load(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
@@ -29,12 +32,22 @@ export struct RelationGraphPage {
       this.items = await this.service.list(null);
       this.isLoading = false;
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '关系图谱加载失败' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '关系图谱加载失败，已切换到演示数据' });
     }
   }
 
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.items = PREVIEW_RELATION_ITEMS.slice();
+    this.isLoading = false;
+  }
+
   private async seed(): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     if (this.service === null || this.isSeeding) {
       return;
     }

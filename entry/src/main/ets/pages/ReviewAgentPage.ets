@@ -3,6 +3,7 @@ import { AppTheme } from '../theme/AppTheme';
 import { SectionCard } from '../components/SectionCard';
 import { ReviewAgentPanel } from '../components/ReviewAgentPanel';
 import { ReviewService } from '../review';
+import { PREVIEW_ANCHORS } from '../preview/PreviewData';
 
 /** Standalone agent workspace; the same panel is embedded in the contradiction step. */
 @ComponentV2
@@ -19,13 +20,14 @@ export struct ReviewAgentPage {
   private async loadAnchors(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
+      this.anchors = PREVIEW_ANCHORS.slice(0, 3);
       return;
     }
     try {
       const service = await ReviewService.open(hostContext);
       this.anchors = await service.loadAnchors(3);
     } catch (error) {
-      this.anchors = [];
+      this.anchors = PREVIEW_ANCHORS.slice(0, 3);
     }
   }
 

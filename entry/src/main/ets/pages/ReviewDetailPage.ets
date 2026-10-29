@@ -5,6 +5,7 @@ import { ReviewDetailView, ReviewService } from '../review';
 import { Anchor } from '../model/Anchor';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewDetailParams } from '../navigation/RouteParams';
+import { findPreviewReview } from '../preview/PreviewData';
 
 /** Read-only four-step review with the anchors it actually referenced. */
 @ComponentV2
@@ -29,8 +30,7 @@ export struct ReviewDetailPage {
   private async load(reviewId: string): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
-      this.missing = true;
+      this.loadPreview(reviewId);
       return;
     }
     try {
@@ -42,10 +42,20 @@ export struct ReviewDetailPage {
         this.detail = detail;
       }
     } catch (error) {
-      this.missing = true;
+      this.loadPreview(reviewId);
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private loadPreview(reviewId: string): void {
+    const detail = findPreviewReview(reviewId);
+    if (detail === null) {
+      this.missing = true;
+    } else {
+      this.detail = detail;
+    }
+    this.isLoading = false;
   }
 
   @Builder

@@ -5,6 +5,8 @@ import { PredictionTrendChart } from '../components/PredictionTrendChart';
 import { PredictionShareChart } from '../components/PredictionShareChart';
 import { PredictionService, PredictionStats } from '../prediction';
 import { formatHitRate } from '../model/HomeModel';
+import { PREVIEW_PREDICTION_STATS } from '../preview/PreviewData';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
 /** Read-only statistics: monthly hit-rate trend and hit/miss share. */
 @ComponentV2
@@ -14,6 +16,7 @@ export struct PredictionStatsPage {
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
   @Local hasAnyPrediction: boolean = false;
+  @Local isPreview: boolean = false;
   private hasShownOnce: boolean = false;
 
   aboutToAppear(): void {
@@ -23,7 +26,7 @@ export struct PredictionStatsPage {
   private async load(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
+      this.loadPreview();
       return;
     }
     try {
@@ -32,12 +35,25 @@ export struct PredictionStatsPage {
       this.hasAnyPrediction = (await this.service.list(null)).length > 0;
       this.isLoading = false;
     } catch (error) {
-      this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '统计数据加载失败' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '统计数据加载失败，已切换到演示数据' });
     }
   }
 
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.stats = PREVIEW_PREDICTION_STATS;
+    this.hasAnyPrediction = true;
+    this.isLoading = false;
+  }
+
   private async refresh(): Promise<void> {
+    if (this.isPreview) {
+      this.stats = PREVIEW_PREDICTION_STATS;
+      this.hasAnyPrediction = true;
+      this.isLoading = false;
+      return;
+    }
     if (this.service === null) {
       return;
     }
@@ -53,6 +69,10 @@ export struct PredictionStatsPage {
   }
 
   private async seed(): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     if (this.service === null || this.isSeeding) {
       return;
     }
