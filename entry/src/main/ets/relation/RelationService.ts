@@ -1,7 +1,10 @@
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { MOCK_RELATIONS } from '../model/mockData';
+import { Relation } from '../model/Relation';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
+import { createRelation } from '../model/factories';
 import { DbHelper } from '../db/DbHelper';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
@@ -49,6 +52,33 @@ export class RelationService {
       .filter((decision) => decision.relatedRelationIds.includes(id))
       .map((decision) => decision.title);
     return detail;
+  }
+
+  /** Creates or updates one relation profile and returns its detail. */
+  async save(id: string | null, name: string, trustLevel: TrustLevel, rawMaterialTest: boolean,
+    forbidAnalysis: boolean, level: SecurityLevel, notes: string): Promise<RelationDetail> {
+    const relation: Relation = id === null ? createRelation() : await this.requireRelation(id);
+    relation.name = name.trim();
+    relation.trustLevel = trustLevel;
+    relation.rawMaterialTest = rawMaterialTest;
+    relation.forbidAnalysis = forbidAnalysis;
+    relation.level = level;
+    relation.notes = notes.trim();
+    if (id === null) {
+      await this.relationDao.insert(relation);
+    } else {
+      await this.relationDao.updateProfile(relation.id, relation.name, relation.trustLevel,
+        relation.rawMaterialTest, relation.forbidAnalysis, relation.level, relation.notes);
+    }
+    return toRelationDetail(relation);
+  }
+
+  private async requireRelation(id: string): Promise<Relation> {
+    const relation = await this.relationDao.queryById(id);
+    if (relation === null) {
+      throw new Error('relation not found');
+    }
+    return relation;
   }
 
   /**

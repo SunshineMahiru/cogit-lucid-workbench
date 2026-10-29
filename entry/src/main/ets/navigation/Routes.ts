@@ -16,8 +16,10 @@ export const ROUTES = {
   ANCHOR: 'anchor',
   RELATION: 'relation',
   RELATION_DETAIL: 'relation_detail',
+  RELATION_EDIT: 'relation_edit',
   RELATION_GRAPH: 'relation_graph',
   STATUS: 'status',
   STATUS_HISTORY: 'status_history',
+  STATUS_EDIT: 'status_edit',
   SETTINGS: 'settings'
 } as const;

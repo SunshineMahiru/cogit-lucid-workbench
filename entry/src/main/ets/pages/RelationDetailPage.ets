@@ -7,7 +7,8 @@ import { InteractionLog } from '../model/Relation';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
 import { securityLevelText } from '../note';
-import { RelationDetailParams } from '../navigation/RouteParams';
+import { RelationDetailParams, RelationEditParams } from '../navigation/RouteParams';
+import { ROUTES } from '../navigation/Routes';
 import { findPreviewRelation } from '../preview/PreviewData';
 
 /** Read-only relation detail: tier, flags, notes and the interaction timeline. */
@@ -32,6 +33,7 @@ export struct RelationDetailPage {
   @Local missing: boolean = false;
   @Local trustAllowed: boolean = false;
   @Local trustReason: string = '';
+  @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
 
   private async load(relationId: string): Promise<void> {
@@ -59,6 +61,7 @@ export struct RelationDetailPage {
   }
 
   private loadPreview(relationId: string): void {
+    this.isPreview = true;
     const detail = findPreviewRelation(relationId);
     if (detail === null) {
       this.missing = true;
@@ -69,6 +72,31 @@ export struct RelationDetailPage {
       this.trustReason = decision.reason;
     }
     this.isLoading = false;
+  }
+
+  private openEditor(): void {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: '演示模式下不能编辑关系' });
+      return;
+    }
+    if (this.navStack === null || this.detail.id.length === 0) {
+      return;
+    }
+    const params: RelationEditParams = { relationId: this.detail.id };
+    this.navStack.pushPathByName(ROUTES.RELATION_EDIT, params, () => {
+      this.load(this.detail.id);
+    });
+  }
+
+  @Builder
+  editMenu() {
+    Text('编辑')
+      .fontSize(14)
+      .fontColor(AppTheme.color.primary)
+      .padding({ left: 12, right: 16 })
+      .onClick(() => {
+        this.openEditor();
+      })
   }
 
   @Builder
@@ -286,6 +314,7 @@ export struct RelationDetailPage {
       }
     }
     .title('关系详情')
+    .menus(this.editMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param === undefined) {

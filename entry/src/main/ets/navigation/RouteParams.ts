@@ -43,3 +43,13 @@ export interface ReviewDetailParams {
 export interface RelationDetailParams {
   relationId: string;
 }
+
+/** Parameters accepted by the relation editor; null creates a new relation. */
+export interface RelationEditParams {
+  relationId: string | null;
+}
+
+/** Parameters accepted by the status editor; null uses today. */
+export interface StatusEditParams {
+  date: string | null;
+}

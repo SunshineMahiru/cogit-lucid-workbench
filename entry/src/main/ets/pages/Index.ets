@@ -17,9 +17,11 @@ import { ReviewDetailPage } from './ReviewDetailPage';
 import { AnchorPage } from './AnchorPage';
 import { RelationListPage } from './RelationListPage';
 import { RelationDetailPage } from './RelationDetailPage';
+import { RelationEditPage } from './RelationEditPage';
 import { RelationGraphPage } from './RelationGraphPage';
 import { StatusPage } from './StatusPage';
 import { StatusHistoryPage } from './StatusHistoryPage';
+import { StatusEditPage } from './StatusEditPage';
 import { SettingsPage } from './SettingsPage';
 
 @Entry
@@ -61,12 +63,16 @@ struct Index {
       RelationListPage()
     } else if (name === ROUTES.RELATION_DETAIL) {
       RelationDetailPage()
+    } else if (name === ROUTES.RELATION_EDIT) {
+      RelationEditPage()
     } else if (name === ROUTES.RELATION_GRAPH) {
       RelationGraphPage()
     } else if (name === ROUTES.STATUS) {
       StatusPage()
     } else if (name === ROUTES.STATUS_HISTORY) {
       StatusHistoryPage()
+    } else if (name === ROUTES.STATUS_EDIT) {
+      StatusEditPage()
     } else if (name === ROUTES.SETTINGS) {
       SettingsPage()
     } else {

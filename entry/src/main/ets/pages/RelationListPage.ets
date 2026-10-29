@@ -4,7 +4,7 @@ import { RelationCard } from '../components/RelationCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { RelationListItem, RelationService, trustLevelText } from '../relation';
 import { TrustLevel } from '../model/TrustLevel';
-import { RelationDetailParams } from '../navigation/RouteParams';
+import { RelationDetailParams, RelationEditParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { PREVIEW_RELATION_ITEMS } from '../preview/PreviewData';
 import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
@@ -101,6 +101,20 @@ export struct RelationListPage {
     this.navStack.pushPathByName(ROUTES.RELATION_DETAIL, params);
   }
 
+  private openEditor(): void {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
+    if (this.navStack === null) {
+      return;
+    }
+    const params: RelationEditParams = { relationId: null };
+    this.navStack.pushPathByName(ROUTES.RELATION_EDIT, params, () => {
+      this.refresh();
+    });
+  }
+
   @Builder
   filterChip(label: string, level: TrustLevel | null) {
     Text(label)
@@ -116,15 +130,24 @@ export struct RelationListPage {
 
   @Builder
   graphMenu() {
-    Text('图谱')
-      .fontSize(14)
-      .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
-      .onClick(() => {
-        if (this.navStack !== null) {
-          this.navStack.pushPathByName(ROUTES.RELATION_GRAPH, null);
-        }
-      })
+    Row({ space: 2 }) {
+      Text('＋')
+        .fontSize(20)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 8, right: 4 })
+        .onClick(() => {
+          this.openEditor();
+        })
+      Text('图谱')
+        .fontSize(14)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 4, right: 16 })
+        .onClick(() => {
+          if (this.navStack !== null) {
+            this.navStack.pushPathByName(ROUTES.RELATION_GRAPH, null);
+          }
+        })
+    }
   }
 
   @Builder
@@ -143,7 +166,7 @@ export struct RelationListPage {
         }
         .width('100%')
 
-        Text('只读 · 按信任层级排序；互动记录用于复盘时判断可分析边界。')
+        Text('可维护 · 按信任层级排序；互动记录用于复盘时判断可分析边界。')
           .fontSize(11)
           .lineHeight(17)
           .fontColor(AppTheme.color.textSecondary)

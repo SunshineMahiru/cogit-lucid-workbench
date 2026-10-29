@@ -23,6 +23,20 @@ export class StatusRecordDao {
     return this.store.insert(DB_TABLES.STATUS_RECORD, values);
   }
 
+  /** Updates all editable fields of a status record. */
+  async update(record: StatusRecord): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [STATUS_RECORD_COLS.DATE]: record.date,
+      [STATUS_RECORD_COLS.SLEEP_HOURS]: record.sleepHours,
+      [STATUS_RECORD_COLS.EXERCISE_COUNT]: record.exerciseCount,
+      [STATUS_RECORD_COLS.ALERT_COUNT]: record.alertCount,
+      [STATUS_RECORD_COLS.NOTE]: record.note
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
+    predicates.equalTo(STATUS_RECORD_COLS.ID, record.id);
+    return this.store.update(values, predicates);
+  }
+
   /** Returns all status records. */
   async queryAll(): Promise<StatusRecord[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);

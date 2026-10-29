@@ -3,10 +3,12 @@ import { common } from '@kit.AbilityKit';
 import { ReadingRules } from '../analysis/status/ReadingRules';
 import { ThresholdReadingRules } from '../analysis/status/ThresholdReadingRules';
 import { MOCK_STATUS_RECORDS } from '../model/mockData';
+import { StatusRecord } from '../model/StatusRecord';
+import { createStatusRecord } from '../model/factories';
 import { DbHelper } from '../db/DbHelper';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
 import { StatusDayRow, StatusOverview } from './StatusListItem';
-import { buildStatusOverview, toStatusDayRows } from './StatusMapper';
+import { buildStatusOverview, toStatusDayRow, toStatusDayRows } from './StatusMapper';
 
 /** Reads status records for the panel and the history page. */
 export class StatusService {
@@ -33,6 +35,30 @@ export class StatusService {
   async history(limit: number = 50): Promise<StatusDayRow[]> {
     const records = await this.statusDao.queryRecent(limit);
     return toStatusDayRows(records, this.rules);
+  }
+
+  /** Returns one day's rendered reading, or null when it is absent. */
+  async find(date: string): Promise<StatusDayRow | null> {
+    const record = await this.statusDao.queryByDate(date);
+    return record === null ? null : toStatusDayRow(record, this.rules);
+  }
+
+  /** Creates or updates one day's reading and returns the refreshed overview. */
+  async save(date: string, sleepHours: number, exerciseCount: number, alertCount: number,
+    note: string): Promise<StatusOverview> {
+    const existing = await this.statusDao.queryByDate(date);
+    const record: StatusRecord = existing === null ? createStatusRecord() : existing;
+    record.date = date;
+    record.sleepHours = sleepHours;
+    record.exerciseCount = exerciseCount;
+    record.alertCount = alertCount;
+    record.note = note.trim();
+    if (existing === null) {
+      await this.statusDao.insert(record);
+    } else {
+      await this.statusDao.update(record);
+    }
+    return this.overview();
   }
 
   /**

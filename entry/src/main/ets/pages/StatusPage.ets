@@ -5,6 +5,7 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { StatusDayRow as StatusRow, StatusOverview, StatusService } from '../status';
 import { ReadingFlag } from '../analysis/status/ReadingRules';
 import { ROUTES } from '../navigation/Routes';
+import { StatusEditParams } from '../navigation/RouteParams';
 import { PREVIEW_STATUS_OVERVIEW } from '../preview/PreviewData';
 import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
@@ -95,6 +96,31 @@ export struct StatusPage {
       return;
     }
     this.navStack.pushPathByName(ROUTES.STATUS_HISTORY, null);
+  }
+
+  private openEditor(): void {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: '演示模式下不能录入读数' });
+      return;
+    }
+    if (this.navStack === null) {
+      return;
+    }
+    const params: StatusEditParams = { date: null };
+    this.navStack.pushPathByName(ROUTES.STATUS_EDIT, params, () => {
+      this.refresh();
+    });
+  }
+
+  @Builder
+  addMenu() {
+    Text('＋')
+      .fontSize(20)
+      .fontColor(AppTheme.color.primary)
+      .padding({ left: 12, right: 16 })
+      .onClick(() => {
+        this.openEditor();
+      })
   }
 
   @Builder
@@ -257,6 +283,7 @@ export struct StatusPage {
       .backgroundColor(AppTheme.color.page)
     }
     .title('状态面板')
+    .menus(this.addMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
     })
