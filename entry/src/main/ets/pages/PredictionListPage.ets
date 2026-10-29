@@ -5,8 +5,7 @@ import { PredictionDetailParams, PredictionListParams } from '../navigation/Rout
 import { ROUTES } from '../navigation/Routes';
 import { PredictionListCard } from '../components/PredictionListCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
-import { PREVIEW_PREDICTION_ITEMS, PREVIEW_PREDICTION_SUMMARY } from '../preview/PreviewData';
-import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
+import { previewStore } from '../preview/PreviewStore';
 
 /** Prediction log: summary counts, status filters and the row list. */
 @ComponentV2
@@ -41,15 +40,15 @@ export struct PredictionListPage {
 
   private loadPreview(): void {
     this.isPreview = true;
-    this.items = PREVIEW_PREDICTION_ITEMS.slice();
-    this.summary = PREVIEW_PREDICTION_SUMMARY;
+    this.items = previewStore.listPredictions(this.filter);
+    this.summary = previewStore.predictionSummary();
     this.isLoading = false;
   }
 
   async refresh(): Promise<void> {
     if (this.isPreview) {
-      this.items = this.filter === null ? PREVIEW_PREDICTION_ITEMS.slice() :
-        PREVIEW_PREDICTION_ITEMS.filter((item: PredictionListItem) => item.status === this.filter);
+      this.items = previewStore.listPredictions(this.filter);
+      this.summary = previewStore.predictionSummary();
       this.isLoading = false;
       return;
     }
@@ -81,10 +80,6 @@ export struct PredictionListPage {
   }
 
   private openCreate(): void {
-    if (this.isPreview) {
-      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
-      return;
-    }
     if (this.navStack !== null) {
       this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, null);
     }

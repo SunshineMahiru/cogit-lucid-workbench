@@ -10,7 +10,7 @@ import {
   emptyReviewStats
 } from '../review';
 import { PREVIEW_ANCHORS, PREVIEW_REVIEW_STATS } from '../preview/PreviewData';
-import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
+import { previewStore } from '../preview/PreviewStore';
 
 const STEP_LABELS: string[] = ['事实', '解释', '矛盾', '行动'];
 const STEP_HINTS: string[] = [
@@ -61,8 +61,8 @@ export struct ReviewForm {
       this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
       this.isLoading = false;
     } catch (error) {
-      this.loadPreview();
-      this.getUIContext().getPromptAction().showToast({ message: '复盘数据加载失败，已切换到演示数据' });
+      this.isLoading = false;
+      this.getUIContext().getPromptAction().showToast({ message: '复盘数据加载失败' });
     }
   }
 
@@ -130,10 +130,21 @@ export struct ReviewForm {
       this.getUIContext().getPromptAction().showToast({ message: '补一条下一步行动' });
       return;
     }
+    if (this.isPreview) {
+      const draft: ReviewDraft = {
+        facts: this.facts,
+        interpretation: this.interpretation,
+        contradiction: this.contradiction,
+        action: this.action,
+        anchorIds: this.selectedAnchorIds.slice()
+      };
+      previewStore.saveReview(this.period, draft, this.stats.rangeLabel);
+      this.saved = true;
+      this.getUIContext().getPromptAction().showToast({ message: '演示模式：复盘已保存在当前会话' });
+      return;
+    }
     if (this.service === null) {
-      this.getUIContext().getPromptAction().showToast({
-        message: this.isPreview ? PREVIEW_WRITE_BLOCKED : '数据库尚未就绪'
-      });
+      this.getUIContext().getPromptAction().showToast({ message: '数据库尚未就绪' });
       return;
     }
     this.isSaving = true;

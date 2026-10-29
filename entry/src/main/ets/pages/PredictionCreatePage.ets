@@ -11,6 +11,7 @@ import {
   hasPredictionErrors,
   validatePredictionDraft
 } from '../prediction';
+import { previewStore } from '../preview/PreviewStore';
 
 const EMPTY_ERRORS: PredictionDraftErrors = {
   target: '',
@@ -60,7 +61,11 @@ export struct PredictionCreatePage {
 
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.getUIContext().getPromptAction().showToast({ message: '运行环境未就绪' });
+      previewStore.createPrediction(draft);
+      this.getUIContext().getPromptAction().showToast({ message: '演示模式：预测已保存在当前会话' });
+      if (this.navStack !== null) {
+        this.navStack.pop(true);
+      }
       return;
     }
     this.isSaving = true;

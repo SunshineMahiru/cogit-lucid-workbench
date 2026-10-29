@@ -4,6 +4,7 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { PredictionDetail, PredictionService, todayDateString } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { PredictionSettleParams } from '../navigation/RouteParams';
+import { previewStore } from '../preview/PreviewStore';
 
 /** Settles one pending prediction; the result and hit flag are written once. */
 @ComponentV2
@@ -29,6 +30,7 @@ export struct PredictionSettlePage {
   @Local isDue: boolean = true;
   @Local isSaving: boolean = false;
   @Local errorText: string = '';
+  @Local isPreview: boolean = false;
   private predictionId: string = '';
   private navStack: NavPathStack | null = null;
 
@@ -36,8 +38,7 @@ export struct PredictionSettlePage {
     this.predictionId = id;
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.isLoading = false;
-      this.missing = true;
+      this.loadPreview(id);
       return;
     }
     try {
@@ -51,10 +52,23 @@ export struct PredictionSettlePage {
         this.isDue = todayDateString() >= detail.settlementDate;
       }
     } catch (error) {
-      this.missing = true;
+      this.loadPreview(id);
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private loadPreview(id: string): void {
+    this.isPreview = true;
+    const detail = previewStore.findPrediction(id);
+    if (detail === null) {
+      this.missing = true;
+    } else {
+      this.detail = detail;
+      this.alreadySettled = detail.status !== PredictionStatus.PENDING;
+      this.isDue = todayDateString() >= detail.settlementDate;
+    }
+    this.isLoading = false;
   }
 
   private async save(): Promise<void> {
@@ -71,7 +85,17 @@ export struct PredictionSettlePage {
     }
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      this.getUIContext().getPromptAction().showToast({ message: '运行环境未就绪' });
+      const updated = previewStore.settlePrediction(this.predictionId, this.actualResult, this.hitChoice === 'hit');
+      if (updated === null) {
+        this.errorText = '结算失败：这条预测可能已经结算';
+        return;
+      }
+      this.getUIContext().getPromptAction().showToast({
+        message: updated.hit === true ? '演示模式：已结算命中' : '演示模式：已结算未命中'
+      });
+      if (this.navStack !== null) {
+        this.navStack.pop(true);
+      }
       return;
     }
     this.errorText = '';

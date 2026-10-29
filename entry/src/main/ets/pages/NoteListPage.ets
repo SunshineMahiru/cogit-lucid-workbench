@@ -3,8 +3,7 @@ import { NoteDetailParams, NoteEditParams, NoteListParams } from '../navigation/
 import { ROUTES } from '../navigation/Routes';
 import { NoteCard } from '../components/NoteCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
-import { PREVIEW_NOTE_ITEMS } from '../preview/PreviewData';
-import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
+import { previewStore } from '../preview/PreviewStore';
 
 /** Note browser with type filters and an entry point to the editor. */
 @ComponentV2
@@ -38,14 +37,13 @@ export struct NoteListPage {
 
   private loadPreview(): void {
     this.isPreview = true;
-    this.items = PREVIEW_NOTE_ITEMS.slice();
+    this.items = previewStore.listNotes(this.filter);
     this.isLoading = false;
   }
 
   async refresh(): Promise<void> {
     if (this.isPreview) {
-      this.items = this.filter.length === 0 ? PREVIEW_NOTE_ITEMS.slice() :
-        PREVIEW_NOTE_ITEMS.filter((item: NoteListItem) => item.type === this.filter);
+      this.items = previewStore.listNotes(this.filter);
       this.isLoading = false;
       return;
     }
@@ -70,10 +68,6 @@ export struct NoteListPage {
   }
 
   private openEditor(): void {
-    if (this.isPreview) {
-      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
-      return;
-    }
     if (this.navStack === null) {
       return;
     }

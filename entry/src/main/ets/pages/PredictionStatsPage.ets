@@ -5,8 +5,7 @@ import { PredictionTrendChart } from '../components/PredictionTrendChart';
 import { PredictionShareChart } from '../components/PredictionShareChart';
 import { PredictionService, PredictionStats } from '../prediction';
 import { formatHitRate } from '../model/HomeModel';
-import { PREVIEW_PREDICTION_STATS } from '../preview/PreviewData';
-import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
+import { previewStore } from '../preview/PreviewStore';
 
 /** Read-only statistics: monthly hit-rate trend and hit/miss share. */
 @ComponentV2
@@ -42,14 +41,14 @@ export struct PredictionStatsPage {
 
   private loadPreview(): void {
     this.isPreview = true;
-    this.stats = PREVIEW_PREDICTION_STATS;
+    this.stats = previewStore.predictionStats();
     this.hasAnyPrediction = true;
     this.isLoading = false;
   }
 
   private async refresh(): Promise<void> {
     if (this.isPreview) {
-      this.stats = PREVIEW_PREDICTION_STATS;
+      this.stats = previewStore.predictionStats();
       this.hasAnyPrediction = true;
       this.isLoading = false;
       return;
@@ -69,10 +68,6 @@ export struct PredictionStatsPage {
   }
 
   private async seed(): Promise<void> {
-    if (this.isPreview) {
-      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
-      return;
-    }
     if (this.service === null || this.isSeeding) {
       return;
     }

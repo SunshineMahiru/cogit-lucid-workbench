@@ -20,6 +20,8 @@ import { NoteSaveBar } from '../components/NoteSaveBar';
 import { NoteTagEditor } from '../components/NoteTagEditor';
 import { NoteTemplatePicker } from '../components/NoteTemplatePicker';
 import { RelationListItem, RelationService } from '../relation';
+import { PREVIEW_RELATION_ITEMS } from '../preview/PreviewData';
+import { previewStore } from '../preview/PreviewStore';
 
 /** Quick capture editor: template picker, dynamic fields, tags and save. */
 @ComponentV2
@@ -30,11 +32,14 @@ export struct NoteEditPage {
   @Local isDirty: boolean = false;
   @Local service: QuickNoteService | null = null;
   @Local relations: RelationListItem[] = [];
+  @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
 
   async aboutToAppear(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
+      this.isPreview = true;
+      this.relations = PREVIEW_RELATION_ITEMS.slice();
       return;
     }
     try {
@@ -169,7 +174,7 @@ export struct NoteEditPage {
     if (this.isSaving) {
       return;
     }
-    if (this.service === null) {
+    if (this.service === null && !this.isPreview) {
       this.getUIContext().getPromptAction().showToast({ message: '数据库尚未就绪' });
       return;
     }
@@ -181,7 +186,11 @@ export struct NoteEditPage {
     }
     this.isSaving = true;
     try {
-      await this.service.save(this.draft);
+      if (this.isPreview) {
+        previewStore.addNote(this.draft);
+      } else if (this.service !== null) {
+        await this.service.save(this.draft);
+      }
       this.isDirty = false;
       const message = this.draft.templateId === NoteTemplateId.DECISION ? '已保存，并生成决策记录' : '已保存';
       this.getUIContext().getPromptAction().showToast({ message: message });

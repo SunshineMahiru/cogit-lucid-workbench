@@ -20,15 +20,8 @@ import { APP_DISPLAY_NAME } from '../theme/AppIdentity';
 import { AppTheme } from '../theme/AppTheme';
 import { ReviewPeriod, ReviewService, ReviewStats, emptyReviewStats } from '../review';
 import { ReviewPromptPanel } from '../components/ReviewPromptPanel';
-import { PREVIEW_BANNER, PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
-import {
-  PREVIEW_HOME_SUMMARY,
-  PREVIEW_PENDING_PREDICTIONS,
-  PREVIEW_READINGS,
-  PREVIEW_RECENT_NOTES,
-  PREVIEW_REVIEW_STATS,
-  PREVIEW_WEEK_REVIEWED
-} from '../preview/PreviewData';
+import { PREVIEW_BANNER } from '../preview/PreviewMode';
+import { previewStore } from '../preview/PreviewStore';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -69,18 +62,22 @@ export struct DashboardView {
 
   private loadPreview(): void {
     this.isPreview = true;
-    this.readings = PREVIEW_READINGS.slice();
-    this.predictions = PREVIEW_PENDING_PREDICTIONS.slice();
-    this.recentNotes = PREVIEW_RECENT_NOTES.slice();
-    this.summary = PREVIEW_HOME_SUMMARY;
-    this.weekStats = PREVIEW_REVIEW_STATS;
-    this.weekReviewed = PREVIEW_WEEK_REVIEWED;
+    this.readings = previewStore.previewReadings();
+    this.predictions = previewStore.pendingPredictions();
+    this.recentNotes = previewStore.recentNotes();
+    this.summary = previewStore.homeSummary();
+    this.weekStats = previewStore.weekStats();
+    this.weekReviewed = previewStore.weekReviewed();
     this.moduleItems = this.buildModules();
     this.isLoading = false;
     this.loadFailed = false;
   }
 
   async refresh(): Promise<void> {
+    if (this.isPreview) {
+      this.loadPreview();
+      return;
+    }
     if (this.dataService === null) {
       this.isLoading = false;
       return;
@@ -161,10 +158,6 @@ export struct DashboardView {
   }
 
   private openNoteEditor(): void {
-    if (this.isPreview) {
-      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
-      return;
-    }
     const params: NoteEditParams = { templateId: null };
     this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params, () => {
       this.refresh();

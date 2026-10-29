@@ -1,7 +1,7 @@
 import { NoteDetail, QuickNoteService, securityLevelText } from '../note';
 import { NoteDetailParams } from '../navigation/RouteParams';
 import { NoteEmptyState } from '../components/NoteEmptyState';
-import { findPreviewNote } from '../preview/PreviewData';
+import { previewStore } from '../preview/PreviewStore';
 
 /** Read-only view of one stored note. */
 @ComponentV2
@@ -29,7 +29,7 @@ export struct NoteDetailPage {
   }
 
   private loadPreview(noteId: string): void {
-    this.detail = findPreviewNote(noteId);
+    this.detail = previewStore.findNote(noteId);
     this.missing = this.detail === null;
     this.isLoading = false;
   }

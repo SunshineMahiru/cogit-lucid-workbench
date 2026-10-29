@@ -5,7 +5,7 @@ import { ReviewDetailView, ReviewService } from '../review';
 import { Anchor } from '../model/Anchor';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewDetailParams } from '../navigation/RouteParams';
-import { findPreviewReview } from '../preview/PreviewData';
+import { previewStore } from '../preview/PreviewStore';
 
 /** Read-only four-step review with the anchors it actually referenced. */
 @ComponentV2
@@ -49,7 +49,7 @@ export struct ReviewDetailPage {
   }
 
   private loadPreview(reviewId: string): void {
-    const detail = findPreviewReview(reviewId);
+    const detail = previewStore.findReview(reviewId);
     if (detail === null) {
       this.missing = true;
     } else {

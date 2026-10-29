@@ -10,8 +10,7 @@ import { PredictionDetailParams, PredictionSettleParams } from '../navigation/Ro
 import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { AppTheme } from '../theme/AppTheme';
-import { findPreviewPrediction } from '../preview/PreviewData';
-import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
+import { previewStore } from '../preview/PreviewStore';
 
 /** One label/value row; kept as a child component so async detail reloads re-render it. */
 @ComponentV2
@@ -60,10 +59,6 @@ export struct PredictionDetailPage {
   private hasShownOnce: boolean = false;
 
   private openSettle(): void {
-    if (this.isPreview) {
-      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
-      return;
-    }
     if (this.navStack === null) {
       return;
     }
@@ -94,7 +89,7 @@ export struct PredictionDetailPage {
 
   private loadPreview(id: string): void {
     this.isPreview = true;
-    const detail = findPreviewPrediction(id);
+    const detail = previewStore.findPrediction(id);
     if (detail === null) {
       this.missing = true;
     } else {
