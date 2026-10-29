@@ -12,6 +12,7 @@ import {
 import { PREVIEW_ANCHORS, PREVIEW_REVIEW_STATS } from '../preview/PreviewData';
 import { previewStore } from '../preview/PreviewStore';
 import { ReviewDraftStore } from '../review/ReviewDraftStore';
+import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 const STEP_LABELS: string[] = ['事实', '解释', '矛盾', '行动'];
 const STEP_HINTS: string[] = [
@@ -174,6 +175,7 @@ export struct ReviewForm {
         anchorIds: this.selectedAnchorIds.slice()
       };
       previewStore.saveReview(this.period, draft, this.stats.rangeLabel);
+      notifyHomeRefresh();
       this.saved = true;
       this.getUIContext().getPromptAction().showToast({ message: '演示模式：复盘已保存在当前会话' });
       return;
@@ -195,6 +197,7 @@ export struct ReviewForm {
       if (this.draftStore !== null) {
         await this.draftStore.clear(this.period);
       }
+      notifyHomeRefresh();
       this.saved = true;
       this.getUIContext().getPromptAction().showToast({ message: '复盘已保存' });
     } catch (error) {

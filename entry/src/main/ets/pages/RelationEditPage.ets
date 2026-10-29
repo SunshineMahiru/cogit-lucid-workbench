@@ -5,6 +5,7 @@ import { RelationEditParams } from '../navigation/RouteParams';
 import { TrustLevel } from '../model/TrustLevel';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { securityLevelText } from '../note';
+import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Creates or edits one relation profile; interaction logs stay on the detail page. */
 @ComponentV2
@@ -74,6 +75,7 @@ export struct RelationEditPage {
       const service = await RelationService.open(hostContext);
       await service.save(this.relationId, this.name, this.trustLevel, this.rawMaterialTest,
         this.forbidAnalysis, this.level, this.notes);
+      notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '关系已保存' });
       if (this.navStack !== null) {
         this.navStack.pop(true);

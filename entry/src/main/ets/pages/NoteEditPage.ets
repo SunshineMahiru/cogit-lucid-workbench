@@ -22,6 +22,7 @@ import { NoteTemplatePicker } from '../components/NoteTemplatePicker';
 import { RelationListItem, RelationService } from '../relation';
 import { PREVIEW_RELATION_ITEMS } from '../preview/PreviewData';
 import { previewStore } from '../preview/PreviewStore';
+import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Quick capture editor: template picker, dynamic fields, tags and save. */
 @ComponentV2
@@ -191,6 +192,7 @@ export struct NoteEditPage {
       } else if (this.service !== null) {
         await this.service.save(this.draft);
       }
+      notifyHomeRefresh();
       this.isDirty = false;
       const message = this.draft.templateId === NoteTemplateId.DECISION ? '已保存，并生成决策记录' : '已保存';
       this.getUIContext().getPromptAction().showToast({ message: message });

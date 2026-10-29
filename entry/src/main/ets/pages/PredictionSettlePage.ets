@@ -5,6 +5,7 @@ import { PredictionDetail, PredictionService, todayDateString } from '../predict
 import { PredictionStatus } from '../model/PredictionStatus';
 import { PredictionSettleParams } from '../navigation/RouteParams';
 import { previewStore } from '../preview/PreviewStore';
+import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Settles one pending prediction; the result and hit flag are written once. */
 @ComponentV2
@@ -90,6 +91,7 @@ export struct PredictionSettlePage {
         this.errorText = '结算失败：这条预测可能已经结算';
         return;
       }
+      notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({
         message: updated.hit === true ? '演示模式：已结算命中' : '演示模式：已结算未命中'
       });
@@ -107,6 +109,7 @@ export struct PredictionSettlePage {
         this.missing = true;
         return;
       }
+      notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({
         message: updated.hit === true ? '已结算：命中' : '已结算：未命中'
       });

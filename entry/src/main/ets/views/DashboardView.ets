@@ -22,6 +22,7 @@ import { ReviewPeriod, ReviewService, ReviewStats, emptyReviewStats } from '../r
 import { ReviewPromptPanel } from '../components/ReviewPromptPanel';
 import { PREVIEW_BANNER } from '../preview/PreviewMode';
 import { previewStore } from '../preview/PreviewStore';
+import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -43,8 +44,15 @@ export struct DashboardView {
   @Local loadFailed: boolean = false;
   @Local isPreview: boolean = false;
   private reviewService: ReviewService | null = null;
+  private refreshListener: (() => void) | null = null;
 
   async aboutToAppear(): Promise<void> {
+    if (this.refreshListener === null) {
+      this.refreshListener = () => {
+        this.refresh();
+      };
+      subscribeHomeRefresh(this.refreshListener);
+    }
     const context = this.getUIContext().getHostContext();
     if (context === undefined) {
       this.loadPreview();
@@ -57,6 +65,13 @@ export struct DashboardView {
     } catch (error) {
       this.loadPreview();
       this.getUIContext().getPromptAction().showToast({ message: '数据加载失败，已切换到演示数据' });
+    }
+  }
+
+  aboutToDisappear(): void {
+    if (this.refreshListener !== null) {
+      unsubscribeHomeRefresh(this.refreshListener);
+      this.refreshListener = null;
     }
   }
 

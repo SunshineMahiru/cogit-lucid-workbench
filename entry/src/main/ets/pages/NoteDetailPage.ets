@@ -2,6 +2,7 @@ import { NoteDetail, QuickNoteService, securityLevelText } from '../note';
 import { NoteDetailParams } from '../navigation/RouteParams';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { previewStore } from '../preview/PreviewStore';
+import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Read-only view of one stored note. */
 @ComponentV2
@@ -70,6 +71,7 @@ export struct NoteDetailPage {
     try {
       const service = await QuickNoteService.open(hostContext);
       await service.delete(this.detail.id);
+      notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '速记已删除' });
       if (this.navStack !== null) {
         this.navStack.pop(true);

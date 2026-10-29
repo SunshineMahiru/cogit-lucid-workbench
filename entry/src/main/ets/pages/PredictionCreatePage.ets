@@ -12,6 +12,7 @@ import {
   validatePredictionDraft
 } from '../prediction';
 import { previewStore } from '../preview/PreviewStore';
+import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 const EMPTY_ERRORS: PredictionDraftErrors = {
   target: '',
@@ -62,6 +63,7 @@ export struct PredictionCreatePage {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
       previewStore.createPrediction(draft);
+      notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '演示模式：预测已保存在当前会话' });
       if (this.navStack !== null) {
         this.navStack.pop(true);
@@ -72,6 +74,7 @@ export struct PredictionCreatePage {
     try {
       const service = await PredictionService.open(hostContext);
       await service.create(draft);
+      notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '预测已落盘，不能修改' });
       if (this.navStack !== null) {
         this.navStack.pop(true);

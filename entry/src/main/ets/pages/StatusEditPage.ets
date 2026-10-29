@@ -2,6 +2,7 @@ import { AppTheme } from '../theme/AppTheme';
 import { SectionCard } from '../components/SectionCard';
 import { StatusDayRow, StatusService } from '../status';
 import { StatusEditParams } from '../navigation/RouteParams';
+import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Creates or edits one day's physiological reading. */
 @ComponentV2
@@ -76,6 +77,7 @@ export struct StatusEditPage {
     try {
       const service = await StatusService.open(hostContext);
       await service.save(this.date, sleep, exercise, alerts, this.note);
+      notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '读数已保存' });
       if (this.navStack !== null) {
         this.navStack.pop(true);
