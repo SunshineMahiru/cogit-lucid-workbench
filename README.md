@@ -27,7 +27,7 @@ The interface is Chinese only. The display name is set in `entry/src/main/ets/th
 
 ## Project status
 
-Course build, feature-complete for FR1–FR8. Last emulator verification on 2026-10-28 covered the HAP build, install, dashboard, notes, predictions including settlement, charts, review and agent, relations and star map, anchors, status, settings, and Markdown export. It is not an AppGallery release. Signing material is local-only; the tracked build profile contains no signing config.
+The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings, and export, with a local-use flow in place. The project is still being refined.
 
 ## Highlights
 
