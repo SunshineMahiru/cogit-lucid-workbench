@@ -19,6 +19,16 @@ import { ROUTES } from '../navigation/Routes';
 import { APP_DISPLAY_NAME } from '../theme/AppIdentity';
 import { AppTheme } from '../theme/AppTheme';
 import { ReviewPeriod, ReviewService, ReviewStats, emptyReviewStats } from '../review';
+import { ReviewPromptPanel } from '../components/ReviewPromptPanel';
+import { PREVIEW_BANNER, PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
+import {
+  PREVIEW_HOME_SUMMARY,
+  PREVIEW_PENDING_PREDICTIONS,
+  PREVIEW_READINGS,
+  PREVIEW_RECENT_NOTES,
+  PREVIEW_REVIEW_STATS,
+  PREVIEW_WEEK_REVIEWED
+} from '../preview/PreviewData';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -38,13 +48,13 @@ export struct DashboardView {
   @Local weekReviewed: boolean = false;
   @Local isLoading: boolean = true;
   @Local loadFailed: boolean = false;
+  @Local isPreview: boolean = false;
   private reviewService: ReviewService | null = null;
 
   async aboutToAppear(): Promise<void> {
     const context = this.getUIContext().getHostContext();
     if (context === undefined) {
-      this.isLoading = false;
-      this.loadFailed = true;
+      this.loadPreview();
       return;
     }
     try {
@@ -52,10 +62,22 @@ export struct DashboardView {
       this.reviewService = await ReviewService.open(context);
       await this.refresh();
     } catch (error) {
-      this.isLoading = false;
-      this.loadFailed = true;
-      this.getUIContext().getPromptAction().showToast({ message: '数据加载失败，请稍后重试' });
+      this.loadPreview();
+      this.getUIContext().getPromptAction().showToast({ message: '数据加载失败，已切换到演示数据' });
     }
+  }
+
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.readings = PREVIEW_READINGS.slice();
+    this.predictions = PREVIEW_PENDING_PREDICTIONS.slice();
+    this.recentNotes = PREVIEW_RECENT_NOTES.slice();
+    this.summary = PREVIEW_HOME_SUMMARY;
+    this.weekStats = PREVIEW_REVIEW_STATS;
+    this.weekReviewed = PREVIEW_WEEK_REVIEWED;
+    this.moduleItems = this.buildModules();
+    this.isLoading = false;
+    this.loadFailed = false;
   }
 
   async refresh(): Promise<void> {
@@ -139,6 +161,10 @@ export struct DashboardView {
   }
 
   private openNoteEditor(): void {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
     const params: NoteEditParams = { templateId: null };
     this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params, () => {
       this.refresh();
@@ -274,6 +300,15 @@ export struct DashboardView {
           .backgroundColor('#FFF4E0')
       }
 
+      if (this.isPreview) {
+        Text(PREVIEW_BANNER)
+          .fontSize(11)
+          .fontColor(AppTheme.color.primaryDeep)
+          .width('100%')
+          .padding({ left: 20, right: 20, top: 6, bottom: 6 })
+          .backgroundColor(AppTheme.color.tint)
+      }
+
       if (this.isLoading) {
         this.loadingView()
       } else {
@@ -383,6 +418,8 @@ export struct DashboardView {
               .onClick(() => {
                 this.openWeeklySettlement();
               })
+
+              ReviewPromptPanel({ period: ReviewPeriod.WEEK })
 
               // Module tiles
               Column({ space: 10 }) {
