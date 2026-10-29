@@ -124,6 +124,17 @@ export struct RelationEditPage {
       .onClick(onToggle)
   }
 
+  @Builder
+  saveMenu() {
+    Text(this.isSaving ? '保存中' : '保存')
+      .fontSize(14)
+      .fontColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
+      .padding({ left: 12, right: 16 })
+      .onClick(() => {
+        this.save();
+      })
+  }
+
   build() {
     NavDestination() {
       if (this.isLoading) {
@@ -261,6 +272,7 @@ export struct RelationEditPage {
       }
     }
     .title(this.relationId === null ? '新建关系' : '编辑关系')
+    .menus(this.saveMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       const params = context.pathInfo.param as RelationEditParams;

@@ -90,6 +90,17 @@ export struct StatusEditPage {
   }
 
   @Builder
+  saveMenu() {
+    Text(this.isSaving ? '保存中' : '保存')
+      .fontSize(14)
+      .fontColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
+      .padding({ left: 12, right: 16 })
+      .onClick(() => {
+        this.save();
+      })
+  }
+
+  @Builder
   numberField(label: string, placeholder: string, value: string, decimal: boolean, onChange: (value: string) => void) {
     Column({ space: 5 }) {
       Text(label)
@@ -206,6 +217,7 @@ export struct StatusEditPage {
       }
     }
     .title('记录读数')
+    .menus(this.saveMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       const params = context.pathInfo.param as StatusEditParams;
