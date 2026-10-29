@@ -15,17 +15,25 @@ import { toNoteListItems } from '../note/NoteListMapper';
 import {
   PredictionDetail,
   PredictionListItem,
-  PredictionSummary,
-  PredictionStats,
-  buildPredictionStats,
+  PredictionSummary
+} from '../prediction/PredictionListItem';
+import {
   summarizePredictions,
   toPredictionDetail,
   toPredictionListItems
-} from '../prediction';
-import { RelationDetail, RelationListItem, toRelationDetail, toRelationListItems } from '../relation';
-import { StatusDayRow, StatusOverview, buildStatusOverview, toStatusDayRows } from '../status';
+} from '../prediction/PredictionListMapper';
+import { PredictionStats, buildPredictionStats } from '../prediction/PredictionStats';
+import { RelationDetail, RelationListItem } from '../relation/RelationListItem';
+import { toRelationDetail, toRelationListItems } from '../relation/RelationListMapper';
+import { StatusDayRow, StatusOverview } from '../status/StatusListItem';
+import { buildStatusOverview, toStatusDayRows } from '../status/StatusMapper';
 import { ThresholdReadingRules } from '../analysis/status/ThresholdReadingRules';
-import { ReviewDetailView, ReviewHistoryItem, toReviewDetailView, toReviewHistoryItem } from '../review';
+import {
+  ReviewDetailView,
+  ReviewHistoryItem,
+  toReviewDetailView,
+  toReviewHistoryItem
+} from '../review/ReviewHistory';
 import { ReviewStats } from '../review/ReviewDraft';
 import { AppSettings, defaultAppSettings } from '../settings/AppSettings';
 
@@ -35,7 +43,7 @@ const PREVIEW_NOW = 1761609600000;
 export const PREVIEW_READINGS: BodyReading[] = [
   { label: '睡眠', value: '7.2', unit: ' 小时' },
   { label: '运动', value: '1', unit: ' 次' },
-  { label: '速记', value: '2', unit: ' 条' }
+  { label: '速记', value: '1', unit: ' 条' }
 ];
 
 /** Synthetic pending predictions for the dashboard. */
