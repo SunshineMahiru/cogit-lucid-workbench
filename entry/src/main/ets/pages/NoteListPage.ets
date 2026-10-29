@@ -11,6 +11,7 @@ export struct NoteListPage {
   @Local service: QuickNoteService | null = null;
   @Local items: NoteListItem[] = [];
   @Local filter: string = '';
+  @Local search: string = '';
   @Local isLoading: boolean = true;
   @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
@@ -67,6 +68,17 @@ export struct NoteListPage {
     this.refresh();
   }
 
+  private visibleItems(): NoteListItem[] {
+    const query = this.search.trim().toLowerCase();
+    if (query.length === 0) {
+      return this.items;
+    }
+    return this.items.filter((item: NoteListItem) =>
+      item.title.toLowerCase().includes(query) ||
+      item.summary.toLowerCase().includes(query) ||
+      item.tags.some((tag: string) => tag.toLowerCase().includes(query)));
+  }
+
   private openEditor(): void {
     if (this.navStack === null) {
       return;
@@ -111,6 +123,13 @@ export struct NoteListPage {
     NavDestination() {
       Stack({ alignContent: Alignment.BottomEnd }) {
         Column({ space: 10 }) {
+          TextInput({ text: this.search, placeholder: '搜索标题、摘要或标签' })
+            .backgroundColor(Color.White)
+            .borderRadius(12)
+            .onChange((value: string) => {
+              this.search = value;
+            })
+
           Scroll() {
             Row({ space: 8 }) {
               this.filterChip('全部', '')
@@ -135,11 +154,13 @@ export struct NoteListPage {
             .width('100%')
             .layoutWeight(1)
             .justifyContent(FlexAlign.Center)
-          } else if (this.items.length === 0) {
+          } else if (this.visibleItems().length === 0) {
             Column() {
               NoteEmptyState({
-                title: this.filter.length === 0 ? '还没有速记' : '没有匹配的速记',
-                hint: this.filter.length === 0 ? '点下面的按钮记第一条' : '换个类型看看，或者记一条新的',
+                title: this.search.trim().length > 0 ? '没有匹配的速记' :
+                  (this.filter.length === 0 ? '还没有速记' : '没有匹配的速记'),
+                hint: this.search.trim().length > 0 ? '换个关键词试试' :
+                  (this.filter.length === 0 ? '点下面的按钮记第一条' : '换个类型看看，或者记一条新的'),
                 actionLabel: '记一条',
                 dashed: true,
                 onAction: () => {
@@ -152,7 +173,7 @@ export struct NoteListPage {
             .justifyContent(FlexAlign.Center)
           } else {
             List({ space: 8 }) {
-              ForEach(this.items, (item: NoteListItem) => {
+              ForEach(this.visibleItems(), (item: NoteListItem) => {
                 ListItem() {
                   NoteCard({
                     note: item,

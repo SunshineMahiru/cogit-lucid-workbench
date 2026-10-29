@@ -97,6 +97,11 @@ export class QuickNoteService {
     }
     return toNoteDetail(event);
   }
+
+  /** Deletes one note and its event row. */
+  async delete(noteId: string): Promise<void> {
+    await this.eventDao.delete(noteId);
+  }
 }
 
 /** Limits must stay positive for the SQL LIMIT clause to return rows. */
