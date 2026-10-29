@@ -86,7 +86,7 @@ export const PREVIEW_STATUS_ROWS: StatusDayRow[] = toStatusDayRows(MOCK_STATUS_R
 export const PREVIEW_STATUS_OVERVIEW: StatusOverview =
   buildStatusOverview(MOCK_STATUS_RECORDS, PREVIEW_RULES, 7);
 
-const PREVIEW_REVIEW: ReviewResult = {
+export const PREVIEW_REVIEW_RESULT: ReviewResult = {
   id: 'rv_demo_1',
   period: ReviewPeriod.WEEK,
   rangeLabel: '10 月 20 日 – 10 月 26 日',
@@ -98,9 +98,9 @@ const PREVIEW_REVIEW: ReviewResult = {
   createdAt: PREVIEW_NOW
 };
 
-export const PREVIEW_REVIEW_HISTORY: ReviewHistoryItem[] = [toReviewHistoryItem(PREVIEW_REVIEW)];
+export const PREVIEW_REVIEW_HISTORY: ReviewHistoryItem[] = [toReviewHistoryItem(PREVIEW_REVIEW_RESULT)];
 export const PREVIEW_REVIEW_DETAIL: ReviewDetailView =
-  toReviewDetailView(PREVIEW_REVIEW, MOCK_ANCHORS);
+  toReviewDetailView(PREVIEW_REVIEW_RESULT, MOCK_ANCHORS);
 
 export const PREVIEW_REVIEW_STATS: ReviewStats = {
   rangeLabel: '10 月 26 日 – 11 月 1 日',
