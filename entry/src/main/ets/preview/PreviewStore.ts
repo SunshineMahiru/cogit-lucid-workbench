@@ -63,6 +63,20 @@ class PreviewStore {
     return toNoteDetail(event, Date.now());
   }
 
+  updateNote(id: string, draft: NoteDraft): NoteDetail | null {
+    for (const event of this.notes) {
+      if (event.id === id) {
+        event.title = draft.title.trim().length > 0 ? draft.title.trim() : deriveNoteTitle(draft);
+        event.content = composeNoteContent(draft);
+        event.tags = normalizeTags(draft.tags);
+        event.relatedRelationIds = draft.relatedRelationIds.slice();
+        event.level = draft.level;
+        return toNoteDetail(event, Date.now());
+      }
+    }
+    return null;
+  }
+
   listPredictions(filter: PredictionStatus | null): PredictionListItem[] {
     const selected: Prediction[] = filter === null ? this.predictions :
       this.predictions.filter((prediction: Prediction) => prediction.status === filter);

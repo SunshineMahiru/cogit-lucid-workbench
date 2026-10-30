@@ -5,6 +5,8 @@ import { PredictionStatus } from '../model/PredictionStatus';
 export interface NoteEditParams {
   /** Pre-selected template; null opens the free-form editor */
   templateId: NoteTemplateId | null;
+  /** Existing note id; when present the editor updates instead of creating */
+  noteId?: string | null;
 }
 
 /** Parameters accepted by the note list route. */

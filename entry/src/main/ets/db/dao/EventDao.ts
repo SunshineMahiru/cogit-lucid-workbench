@@ -27,6 +27,23 @@ export class EventDao {
     return this.store.insert(DB_TABLES.EVENT, values);
   }
 
+  /** Updates all editable fields of an event. */
+  async update(event: Event): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [EVENT_COLS.TITLE]: event.title,
+      [EVENT_COLS.CONTENT]: event.content,
+      [EVENT_COLS.TYPE]: event.type,
+      [EVENT_COLS.TIMESTAMP]: event.timestamp,
+      [EVENT_COLS.TAGS]: JSON.stringify(event.tags),
+      [EVENT_COLS.LEVEL]: event.level,
+      [EVENT_COLS.RELATED_DECISION_IDS]: JSON.stringify(event.relatedDecisionIds),
+      [EVENT_COLS.RELATED_RELATION_IDS]: JSON.stringify(event.relatedRelationIds)
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.ID, event.id);
+    return this.store.update(values, predicates);
+  }
+
   /** Deletes an event by id. */
   async delete(id: string): Promise<number> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);

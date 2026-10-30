@@ -108,6 +108,25 @@ export class QuickNoteService {
     return toNoteDetail(event);
   }
 
+  /** Updates the editable fields of an existing note while keeping its id. */
+  async updateNote(noteId: string, draft: NoteDraft): Promise<NoteDetail> {
+    const validation = validateNoteDraft(draft);
+    if (!validation.valid) {
+      throw new Error(validation.errors[0].message);
+    }
+    const event = await this.eventDao.queryById(noteId);
+    if (event === null) {
+      throw new Error('note not found');
+    }
+    event.title = deriveNoteTitle(draft);
+    event.content = composeNoteContent(draft);
+    event.tags = normalizeTags(draft.tags);
+    event.relatedRelationIds = (draft.relatedRelationIds ?? []).slice();
+    event.level = draft.level;
+    await this.eventDao.update(event);
+    return toNoteDetail(event);
+  }
+
   /** Deletes one note and its event row. */
   async delete(noteId: string): Promise<void> {
     await this.eventDao.delete(noteId);

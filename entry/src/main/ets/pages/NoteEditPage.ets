@@ -1,6 +1,7 @@
 import { AppTheme } from '../theme/AppTheme';
 import {
   NoteDraft,
+  NoteDetail,
   NoteEntry,
   NoteFieldKey,
   NoteTemplateField,
@@ -35,6 +36,8 @@ export struct NoteEditPage {
   @Local service: QuickNoteService | null = null;
   @Local relations: RelationListItem[] = [];
   @Local isPreview: boolean = false;
+  @Local noteId: string | null = null;
+  @Local isEditing: boolean = false;
   private navStack: NavPathStack | null = null;
 
   async aboutToAppear(): Promise<void> {
@@ -189,13 +192,23 @@ export struct NoteEditPage {
     this.isSaving = true;
     try {
       if (this.isPreview) {
-        previewStore.addNote(this.draft);
+        if (this.noteId === null) {
+          previewStore.addNote(this.draft);
+        } else {
+          previewStore.updateNote(this.noteId, this.draft);
+        }
       } else if (this.service !== null) {
-        await this.service.save(this.draft);
+        if (this.noteId === null) {
+          await this.service.save(this.draft);
+        } else {
+          await this.service.updateNote(this.noteId, this.draft);
+        }
       }
       notifyHomeRefresh();
       this.isDirty = false;
-      const message = this.draft.templateId === NoteTemplateId.DECISION ? '已保存，并生成决策记录' : '已保存';
+      const message = this.noteId === null ?
+        (this.draft.templateId === NoteTemplateId.DECISION ? '已保存，并生成决策记录' : '已保存') :
+        '修改已保存';
       this.getUIContext().getPromptAction().showToast({ message: message });
       if (this.navStack !== null) {
         this.navStack.pop(true);
@@ -207,17 +220,60 @@ export struct NoteEditPage {
     }
   }
 
+  private async loadNote(noteId: string): Promise<void> {
+    this.noteId = noteId;
+    this.isEditing = true;
+    const hostContext = this.getUIContext().getHostContext();
+    if (hostContext === undefined) {
+      this.isPreview = true;
+      const detail = previewStore.findNote(noteId);
+      if (detail !== null) {
+        this.applyNoteDetail(detail);
+      }
+      return;
+    }
+    try {
+      if (this.service === null) {
+        this.service = await QuickNoteService.open(hostContext);
+      }
+      const detail = await this.service.findNote(noteId);
+      if (detail !== null) {
+        this.applyNoteDetail(detail);
+      }
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '速记读取失败' });
+    }
+  }
+
+  private applyNoteDetail(detail: NoteDetail): void {
+    this.draft = {
+      templateId: null,
+      title: detail.title,
+      content: detail.content,
+      entries: [],
+      tags: detail.tags.slice(),
+      relatedRelationIds: detail.relatedRelationIds.slice(),
+      level: detail.level,
+      timestamp: detail.timestamp
+    };
+    this.isDirty = false;
+  }
+
   @Builder
   saveMenu() {
-    Text(this.isSaving ? '保存中' : '保存')
-      .fontSize(14)
-      .fontColor(this.isSaving ? AppTheme.color.textMuted : AppTheme.color.primary)
-      .padding({ left: 8, right: 16 })
-      .onClick(() => {
-        if (!this.isSaving) {
-          this.save();
-        }
-      })
+    Row() {
+      Text(this.isSaving ? '保存中' : '保存')
+        .fontSize(14)
+        .fontColor(this.isSaving ? AppTheme.color.textMuted : AppTheme.color.primary)
+        .padding({ left: 8, right: 16 })
+        .onClick(() => {
+          if (!this.isSaving) {
+            this.save();
+          }
+        })
+    }
+    .height(56)
+    .alignItems(VerticalAlign.Center)
   }
 
   build() {
@@ -361,13 +417,17 @@ export struct NoteEditPage {
       .height('100%')
       .backgroundColor(AppTheme.color.page)
     }
-    .title('速记')
+    .title(this.isEditing ? '编辑速记' : '速记')
     .menus(this.saveMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param !== undefined) {
         const params = context.pathInfo.param as NoteEditParams;
-        this.applyTemplate(params.templateId);
+        if (params.noteId !== undefined && params.noteId !== null && params.noteId.length > 0) {
+          this.loadNote(params.noteId);
+        } else {
+          this.applyTemplate(params.templateId);
+        }
       }
     })
     .onBackPressed(() => {

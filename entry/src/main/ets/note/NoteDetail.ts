@@ -11,6 +11,8 @@ export interface NoteDetail {
   tags: string[];
   level: SecurityLevel;
   timestamp: number;
+  /** Relations linked to the note, used when editing */
+  relatedRelationIds: string[];
   timeLabel: string;
 }
 
@@ -24,6 +26,7 @@ export function toNoteDetail(event: Event, now: number = Date.now()): NoteDetail
     tags: event.tags.slice(),
     level: event.level,
     timestamp: event.timestamp,
+    relatedRelationIds: event.relatedRelationIds.slice(),
     timeLabel: formatNoteTime(event.timestamp, now)
   };
 }

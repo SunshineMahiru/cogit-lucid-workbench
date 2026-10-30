@@ -1,6 +1,7 @@
 import { AppTheme } from '../theme/AppTheme';
 import { NoteDetail, QuickNoteService, securityLevelText } from '../note';
-import { NoteDetailParams } from '../navigation/RouteParams';
+import { NoteDetailParams, NoteEditParams } from '../navigation/RouteParams';
+import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { previewStore } from '../preview/PreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
@@ -80,6 +81,42 @@ export struct NoteDetailPage {
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '删除失败，请重试' });
     }
+  }
+
+  private openEdit(): void {
+    if (this.detail === null || this.navStack === null) {
+      return;
+    }
+    const params: NoteEditParams = { templateId: null, noteId: this.detail.id };
+    this.navStack.pushPathByName(ROUTES.NOTE_EDIT, params, () => {
+      if (this.detail !== null) {
+        this.load(this.detail.id);
+      }
+    });
+  }
+
+  @Builder
+  editMenu() {
+    Row({ space: 4 }) {
+      Text('编辑')
+        .fontSize(14)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 10, right: 8 })
+        .accessibilityText('编辑速记')
+        .onClick(() => {
+          this.openEdit();
+        })
+      Text('删除')
+        .fontSize(14)
+        .fontColor(AppTheme.color.danger)
+        .padding({ left: 4, right: 16 })
+        .accessibilityText('删除速记')
+        .onClick(() => {
+          this.confirmDelete();
+        })
+    }
+    .height(56)
+    .alignItems(VerticalAlign.Center)
   }
 
   @Builder
@@ -182,7 +219,7 @@ export struct NoteDetailPage {
       }
     }
     .title('速记详情')
-    .menus(this.deleteMenu)
+    .menus(this.editMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param === undefined) {
