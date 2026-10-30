@@ -8,7 +8,7 @@ import {
   hitRateCaption,
   todayLabel
 } from '../model/HomeModel';
-import { HomeDataService } from '../model/HomeDataService';
+import { HomeDataService } from '../data/HomeDataService';
 import { ModuleCard } from '../components/ModuleCard';
 import { PredictionCard } from '../components/PredictionCard';
 import { ReadingCard } from '../components/ReadingCard';

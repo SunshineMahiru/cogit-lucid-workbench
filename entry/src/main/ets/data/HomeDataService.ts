@@ -7,10 +7,11 @@ import { EventDao } from '../db/dao/EventDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
 import { RelationDao } from '../db/dao/RelationDao';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
-import { Prediction } from './Prediction';
-import { PredictionStatus } from './PredictionStatus';
-import { StatusRecord } from './StatusRecord';
-import { BodyReading, PredictionItem, HomeSummary } from './HomeModel';
+import { Prediction } from '../model/Prediction';
+import { PredictionStatus } from '../model/PredictionStatus';
+import { SecurityLevel } from '../model/SecurityLevel';
+import { StatusRecord } from '../model/StatusRecord';
+import { BodyReading, PredictionItem, HomeSummary } from '../model/HomeModel';
 import { NoteListItem } from '../note/NoteListItem';
 import { toNoteListItems } from '../note/NoteListMapper';
 
@@ -44,12 +45,14 @@ export class HomeDataService {
   async loadReadings(): Promise<BodyReading[]> {
     const today = formatDate(new Date());
     const status = await this.statusRecordDao.queryByDate(today);
+    const visibleStatus = status === null || status.level === SecurityLevel.SEALED ? null : status;
     const recentEvents = await this.eventDao.queryRecent(100);
-    const todayEvents = recentEvents.filter(e => formatDate(new Date(e.timestamp)) === today);
+    const todayEvents = recentEvents.filter(e =>
+      e.level !== SecurityLevel.SEALED && formatDate(new Date(e.timestamp)) === today);
 
     const readings: BodyReading[] = [
-      { label: '睡眠', value: status ? String(status.sleepHours) : '--', unit: ' 小时' },
-      { label: '运动', value: status ? String(status.exerciseCount) : '--', unit: ' 次' },
+      { label: '睡眠', value: visibleStatus ? String(visibleStatus.sleepHours) : '--', unit: ' 小时' },
+      { label: '运动', value: visibleStatus ? String(visibleStatus.exerciseCount) : '--', unit: ' 次' },
       { label: '速记', value: String(todayEvents.length), unit: ' 条' }
     ];
     return readings;
@@ -58,7 +61,8 @@ export class HomeDataService {
   /** Returns pending predictions for the home list. */
   async loadPendingPredictions(): Promise<PredictionItem[]> {
     const all = await this.predictionDao.queryAll();
-    const pending = all.filter(p => p.status === PredictionStatus.PENDING);
+    const pending = all.filter(p =>
+      p.status === PredictionStatus.PENDING && p.level !== SecurityLevel.SEALED);
     return pending.map(p => ({
       id: p.id,
       title: p.target,
@@ -75,13 +79,13 @@ export class HomeDataService {
 
   /** Returns summary statistics for the dashboard. */
   async loadSummary(): Promise<HomeSummary> {
-    const allEvents = await this.eventDao.queryAll();
+    const allEvents = (await this.eventDao.queryAll()).filter(e => e.level !== SecurityLevel.SEALED);
     const today = formatDate(new Date());
     const todayNotes = allEvents.filter(e => formatDate(new Date(e.timestamp)) === today).length;
-    const allDecisions = await this.decisionDao.queryAll();
-    const allRelations = await this.relationDao.queryAll();
-    const allPredictions = await this.predictionDao.queryAll();
-    const allAnchors = await this.anchorDao.queryAll();
+    const allDecisions = (await this.decisionDao.queryAll()).filter(d => d.level !== SecurityLevel.SEALED);
+    const allRelations = (await this.relationDao.queryAll()).filter(r => r.level !== SecurityLevel.SEALED);
+    const allPredictions = (await this.predictionDao.queryAll()).filter(p => p.level !== SecurityLevel.SEALED);
+    const allAnchors = (await this.anchorDao.queryAll()).filter(a => a.level !== SecurityLevel.SEALED);
     const pending = allPredictions.filter(p => p.status === PredictionStatus.PENDING);
     const settled = allPredictions.filter(p => p.status === PredictionStatus.SETTLED);
     const hits = settled.filter(p => p.hit === true);
