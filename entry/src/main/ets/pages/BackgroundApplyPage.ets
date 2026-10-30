@@ -16,6 +16,7 @@ export struct BackgroundApplyPage {
   @Local imageOpacity: number = 0.1;
   @Local isLoading: boolean = true;
   @Local busyKey: string = '';
+  @Local selectedKeys: string[] = [];
   private navStack: NavPathStack = new NavPathStack();
   private hostContext: common.Context | null = null;
 
@@ -88,8 +89,50 @@ export struct BackgroundApplyPage {
     this.busyKey = 'all';
     try {
       await PageBackgroundService.applyToAll(this.pendingPath, this.hostContext);
+      this.selectedKeys = [];
       await this.refreshStates();
       this.getUIContext().getPromptAction().showToast({ message: '已应用到全部页面' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '应用失败，请重试' });
+    } finally {
+      this.busyKey = '';
+    }
+  }
+
+  private isSelected(key: string): boolean {
+    return this.selectedKeys.includes(key);
+  }
+
+  private toggleSelected(key: string): void {
+    const next: string[] = [];
+    let removed = false;
+    for (const item of this.selectedKeys) {
+      if (item === key) {
+        removed = true;
+      } else {
+        next.push(item);
+      }
+    }
+    if (!removed) {
+      next.push(key);
+    }
+    this.selectedKeys = next;
+  }
+
+  private async applyToSelected(): Promise<void> {
+    if (this.hostContext === null || this.pendingPath.length === 0 || this.busyKey.length > 0 ||
+      this.selectedKeys.length === 0) {
+      return;
+    }
+    this.busyKey = 'selected';
+    try {
+      for (const key of this.selectedKeys) {
+        await PageBackgroundService.applyToGroup(key, this.pendingPath, this.hostContext);
+      }
+      const count = this.selectedKeys.length;
+      this.selectedKeys = [];
+      await this.refreshStates();
+      this.getUIContext().getPromptAction().showToast({ message: `已应用到 ${count} 个页面` });
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '应用失败，请重试' });
     } finally {
@@ -244,6 +287,22 @@ export struct BackgroundApplyPage {
                     .width('100%')
                   ForEach(this.states, (state: BackgroundGroupState) => {
                     Row({ space: 8 }) {
+                      Text(this.isSelected(state.key) ? '✓' : '')
+                        .fontSize(12)
+                        .fontColor(Color.White)
+                        .width(22)
+                        .height(22)
+                        .textAlign(TextAlign.Center)
+                        .borderRadius(6)
+                        .border({
+                          width: 1,
+                          color: this.isSelected(state.key) ? AppTheme.color.primary : AppTheme.color.borderStrong
+                        })
+                        .backgroundColor(this.isSelected(state.key) ? AppTheme.color.primary : Color.Transparent)
+                        .accessibilityText(this.isSelected(state.key) ? `取消选择${state.label}` : `选择${state.label}`)
+                        .onClick(() => {
+                          this.toggleSelected(state.key);
+                        })
                       Text(state.label)
                         .fontSize(13)
                         .fontColor(AppTheme.color.text)
@@ -285,13 +344,26 @@ export struct BackgroundApplyPage {
                   }, (state: BackgroundGroupState) => `${state.key}-${state.applied}`)
 
                   Row({ space: 8 }) {
-                    Text(this.busyKey === 'all' ? '应用中…' : '全部应用')
+                    Text(this.busyKey === 'selected' ? '应用中…' : `应用到已选（${this.selectedKeys.length}）`)
                       .fontSize(12)
                       .fontColor(Color.White)
                       .textAlign(TextAlign.Center)
                       .layoutWeight(1)
                       .padding({ top: 9, bottom: 9 })
-                      .backgroundColor(this.pendingPath.length > 0 ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
+                      .backgroundColor(this.selectedKeys.length > 0 && this.pendingPath.length > 0 ?
+                        AppTheme.color.primary : AppTheme.color.primaryDisabled)
+                      .borderRadius(10)
+                      .accessibilityText('把背景应用到已勾选的页面')
+                      .onClick(() => {
+                        this.applyToSelected();
+                      })
+                    Text(this.busyKey === 'all' ? '应用中…' : '全部应用')
+                      .fontSize(12)
+                      .fontColor(AppTheme.color.primary)
+                      .textAlign(TextAlign.Center)
+                      .layoutWeight(1)
+                      .padding({ top: 9, bottom: 9 })
+                      .backgroundColor(AppTheme.color.tint)
                       .borderRadius(10)
                       .accessibilityText('把背景应用到全部页面')
                       .onClick(() => {
