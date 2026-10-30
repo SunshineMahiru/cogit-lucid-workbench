@@ -10,11 +10,20 @@ export interface PageBackgroundGroup {
   label: string;
 }
 
+export interface BackgroundGroupState {
+  key: string;
+  label: string;
+  applied: boolean;
+}
+
 export interface BackgroundRecoveryResult {
   converted: number;
   cleared: number;
   failed: number;
 }
+
+const MAX_WIDTH = 1080;
+const MAX_HEIGHT = 1920;
 
 /** Page groups that can each carry a different local background image. */
 export const PAGE_BACKGROUND_GROUPS: PageBackgroundGroup[] = [
@@ -54,7 +63,7 @@ export function backgroundKeyForRoute(route: string): string {
   if (route === 'status' || route === 'status_history' || route === 'status_edit') {
     return 'status';
   }
-  if (route === 'settings') {
+  if (route === 'settings' || route === 'background_apply') {
     return 'settings';
   }
   return 'home';
@@ -62,6 +71,7 @@ export function backgroundKeyForRoute(route: string): string {
 
 /** Picks an image, normalizes it to PNG, then applies it to one group or all groups. */
 export class PageBackgroundService {
+  /** Opens the picker and keeps the normalized image as the staged ("pending") one. */
   static async pickImage(context: common.Context): Promise<string> {
     const options = new photoAccessHelper.PhotoSelectOptions();
     options.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
@@ -72,9 +82,41 @@ export class PageBackgroundService {
     }
     const directory = `${context.filesDir}/page-backgrounds`;
     PageBackgroundService.ensureDirectory(directory);
+    PageBackgroundService.purgeStaged(directory);
     const destination = `${directory}/pending-${Date.now()}.png`;
     await PageBackgroundService.convertToPng(result.photoUris[0], destination);
+    const store = await PageBackgroundStore.open(context);
+    await store.setPending(destination);
     return destination;
+  }
+
+  static async getPending(context: common.Context): Promise<string> {
+    const store = await PageBackgroundStore.open(context);
+    return store.getPending();
+  }
+
+  /** Drops the staged image once the user leaves the apply page. */
+  static async discardPending(context: common.Context): Promise<void> {
+    const store = await PageBackgroundStore.open(context);
+    const staged = await store.getPending();
+    if (staged.length > 0) {
+      PageBackgroundService.removeFile(staged);
+    }
+    await store.clearPending();
+  }
+
+  /** Picks a replacement for the staged image and keeps the previous selection intact on cancel. */
+  static async replacePending(context: common.Context): Promise<string> {
+    const store = await PageBackgroundStore.open(context);
+    const previous = await store.getPending();
+    const picked = await PageBackgroundService.pickImage(context);
+    if (picked.length === 0) {
+      return previous;
+    }
+    if (previous.length > 0 && previous !== picked) {
+      PageBackgroundService.removeFile(previous);
+    }
+    return picked;
   }
 
   static async applyToGroup(group: string, sourcePath: string, context: common.Context): Promise<string> {
@@ -94,6 +136,42 @@ export class PageBackgroundService {
     return destination;
   }
 
+  /** One shared copy keeps "apply to all" from storing the same picture eight times. */
+  static async applyToAll(sourcePath: string, context: common.Context): Promise<void> {
+    const directory = `${context.filesDir}/page-backgrounds`;
+    PageBackgroundService.ensureDirectory(directory);
+    const destination = `${directory}/shared.png`;
+    PageBackgroundService.removeFile(destination);
+    const source = fileIo.openSync(sourcePath, fileIo.OpenMode.READ_ONLY);
+    try {
+      fileIo.copyFileSync(source.fd, destination);
+    } finally {
+      fileIo.closeSync(source);
+    }
+    const store = await PageBackgroundStore.open(context);
+    for (const group of PAGE_BACKGROUND_GROUPS) {
+      PageBackgroundService.removeFile(`${directory}/${group.key}.png`);
+      PageBackgroundService.removeFile(`${directory}/display-${group.key}.png`);
+      await store.set(group.key, destination);
+    }
+    notifyPageBackgroundChanged();
+  }
+
+  static async groupStates(context: common.Context): Promise<BackgroundGroupState[]> {
+    const store = await PageBackgroundStore.open(context);
+    const states: BackgroundGroupState[] = [];
+    for (const group of PAGE_BACKGROUND_GROUPS) {
+      const path = await store.get(group.key);
+      const state: BackgroundGroupState = {
+        key: group.key,
+        label: group.label,
+        applied: path.length > 0 && fileIo.accessSync(path)
+      };
+      states.push(state);
+    }
+    return states;
+  }
+
   /** Returns a display-sized cache, converting large legacy images before Image decodes them. */
   static async prepareDisplayImage(sourcePath: string, group: string, context: common.Context): Promise<string> {
     if (sourcePath.length === 0 || !fileIo.accessSync(sourcePath)) {
@@ -111,7 +189,7 @@ export class PageBackgroundService {
         const source = image.createImageSource(sourceFile.fd);
         try {
           const info = await source.getImageInfo();
-          if (info.size.width <= 1080 && info.size.height <= 1920) {
+          if (info.size.width <= MAX_WIDTH && info.size.height <= MAX_HEIGHT) {
             return sourcePath;
           }
         } finally {
@@ -130,27 +208,21 @@ export class PageBackgroundService {
     }
   }
 
-  static async applyToAll(sourcePath: string, context: common.Context): Promise<void> {
-    for (const group of PAGE_BACKGROUND_GROUPS) {
-      await PageBackgroundService.applyToGroup(group.key, sourcePath, context);
-    }
-  }
-
-  static async discardPrepared(path: string): Promise<void> {
-    try {
-      fileIo.unlinkSync(path);
-    } catch (error) {
-    }
-  }
-
   static async clear(group: string, context: common.Context): Promise<void> {
     const store = await PageBackgroundStore.open(context);
     await store.clear(group);
-    PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}.png`);
-    PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}.jpg`);
-    PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}-repair.png`);
-    PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/display-${group}.png`);
+    const directory = `${context.filesDir}/page-backgrounds`;
+    PageBackgroundService.removeFile(`${directory}/${group}.png`);
+    PageBackgroundService.removeFile(`${directory}/${group}.jpg`);
+    PageBackgroundService.removeFile(`${directory}/${group}-repair.png`);
+    PageBackgroundService.removeFile(`${directory}/display-${group}.png`);
     notifyPageBackgroundChanged();
+  }
+
+  static async clearAll(context: common.Context): Promise<void> {
+    for (const group of PAGE_BACKGROUND_GROUPS) {
+      await PageBackgroundService.clear(group.key, context);
+    }
   }
 
   static async setOpacity(context: common.Context, value: number): Promise<void> {
@@ -159,8 +231,11 @@ export class PageBackgroundService {
     notifyPageBackgroundChanged();
   }
 
-  /** Repairs backgrounds saved before PNG normalization; clears files that cannot be decoded. */
-  static async recoverLegacyBackgrounds(context: common.Context, forceAll: boolean = false): Promise<BackgroundRecoveryResult> {
+  /**
+   * Checks every stored background on startup: keeps readable PNGs at display size,
+   * re-encodes anything else, and drops files that cannot be decoded at all.
+   */
+  static async recoverLegacyBackgrounds(context: common.Context): Promise<BackgroundRecoveryResult> {
     const store = await PageBackgroundStore.open(context);
     const directory = `${context.filesDir}/page-backgrounds`;
     PageBackgroundService.ensureDirectory(directory);
@@ -177,25 +252,88 @@ export class PageBackgroundService {
         cleared += 1;
         continue;
       }
-      if (path.endsWith('.png') && !forceAll) {
+      const readable = await PageBackgroundService.isReadableAtDisplaySize(path);
+      if (readable) {
         continue;
       }
-      const destination = `${directory}/${group.key}-repair.png`;
+      const destination = `${directory}/${group.key}.png`;
       try {
         await PageBackgroundService.convertToPng(path, destination);
         await store.set(group.key, destination);
-        PageBackgroundService.removeFile(path);
+        if (path !== destination) {
+          PageBackgroundService.removeFile(path);
+        }
+        PageBackgroundService.removeFile(`${directory}/display-${group.key}.png`);
         converted += 1;
       } catch (error) {
         await store.clear(group.key);
         PageBackgroundService.removeFile(path);
+        PageBackgroundService.removeFile(`${directory}/display-${group.key}.png`);
         failed += 1;
       }
     }
+    PageBackgroundService.purgeStaged(directory);
+    await PageBackgroundService.purgeUnreferenced(directory, context);
     if (converted > 0 || cleared > 0 || failed > 0) {
       notifyPageBackgroundChanged();
     }
     return { converted: converted, cleared: cleared, failed: failed };
+  }
+
+  private static async isReadableAtDisplaySize(path: string): Promise<boolean> {
+    if (!path.endsWith('.png')) {
+      return false;
+    }
+    try {
+      const sourceFile = fileIo.openSync(path, fileIo.OpenMode.READ_ONLY);
+      const source = image.createImageSource(sourceFile.fd);
+      try {
+        const info = await source.getImageInfo();
+        return info.size.width > 0 && info.size.height > 0 &&
+          info.size.width <= MAX_WIDTH && info.size.height <= MAX_HEIGHT;
+      } finally {
+        source.release();
+        fileIo.closeSync(sourceFile);
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /** Removes staged images left behind by an interrupted selection. */
+  private static purgeStaged(directory: string): void {
+    try {
+      for (const name of fileIo.listFileSync(directory)) {
+        if (name.startsWith('pending-')) {
+          PageBackgroundService.removeFile(`${directory}/${name}`);
+        }
+      }
+    } catch (error) {
+    }
+  }
+
+  /** Drops files no group points at any more, including display caches of removed images. */
+  private static async purgeUnreferenced(directory: string, context: common.Context): Promise<void> {
+    const store = await PageBackgroundStore.open(context);
+    const keep: string[] = [];
+    for (const group of PAGE_BACKGROUND_GROUPS) {
+      const path = await store.get(group.key);
+      if (path.length > 0) {
+        keep.push(path.substring(path.lastIndexOf('/') + 1));
+      }
+    }
+    const pending = await store.getPending();
+    if (pending.length > 0) {
+      keep.push(pending.substring(pending.lastIndexOf('/') + 1));
+    }
+    try {
+      for (const name of fileIo.listFileSync(directory)) {
+        if (!keep.includes(name)) {
+          PageBackgroundService.removeFile(`${directory}/${name}`);
+        }
+      }
+    } catch (error) {
+    }
   }
 
   private static ensureDirectory(directory: string): void {
@@ -220,9 +358,7 @@ export class PageBackgroundService {
       const info = await source.getImageInfo();
       const sourceWidth = info.size.width;
       const sourceHeight = info.size.height;
-      const maxWidth = 1080;
-      const maxHeight = 1920;
-      const scale = Math.min(1, Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight));
+      const scale = Math.min(1, Math.min(MAX_WIDTH / sourceWidth, MAX_HEIGHT / sourceHeight));
       const width = Math.max(1, Math.round(sourceWidth * scale));
       const height = Math.max(1, Math.round(sourceHeight * scale));
       const pixelMap = await source.createPixelMap({ desiredSize: { width: width, height: height } });

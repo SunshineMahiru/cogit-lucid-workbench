@@ -14,9 +14,8 @@ import {
   PAGE_BACKGROUND_GROUPS,
   PageBackgroundService
 } from '../settings/PageBackgroundService';
-import { PageBackgroundStore } from '../settings/PageBackgroundStore';
 import { BackupService } from '../settings/BackupService';
-import { fileUri } from '@kit.CoreFileKit';
+import { ROUTES } from '../navigation/Routes';
 import { ExportService, totalExportRecords } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { securityLevelText } from '../note';
@@ -60,14 +59,12 @@ export struct SettingsPage {
   @Local lastExportTotal: number = 0;
   @Local spentYuan: number = 0;
   @Local backgroundBusy: string = '';
-  @Local backgroundOpacity: number = 0.14;
-  @Local pendingBackgroundPath: string = '';
-  @Local showApplyChoices: boolean = false;
   @Local dataBusy: boolean = false;
   @Local clearArmed: boolean = false;
   @Local backgroundRows: BackgroundRowState[] = initialBackgroundRows();
   private store: SettingsStore | null = null;
   private hostContext: common.Context | null = null;
+  private navStack: NavPathStack = new NavPathStack();
 
   private showToast(message: string): void {
     try {
@@ -171,30 +168,27 @@ export struct SettingsPage {
   }
 
   private async loadBackgrounds(context: common.Context): Promise<void> {
-    const store = await PageBackgroundStore.open(context);
     const rows: BackgroundRowState[] = [];
-    for (const group of PAGE_BACKGROUND_GROUPS) {
-      rows.push({
-        key: group.key,
-        label: group.label,
-        path: await store.get(group.key)
-      });
+    const states = await PageBackgroundService.groupStates(context);
+    for (const state of states) {
+      rows.push({ key: state.key, label: state.label, path: state.applied ? 'applied' : '' });
     }
     this.backgroundRows = rows;
-    this.backgroundOpacity = await store.getOpacity();
   }
 
-  private updateBackgroundRow(group: string, path: string): void {
-    const rows: BackgroundRowState[] = [];
+  private appliedSummary(): string {
+    let total = 0;
     for (const row of this.backgroundRows) {
-      rows.push(row.key === group ? { key: row.key, label: row.label, path: path } : row);
+      if (row.path.length > 0) {
+        total += 1;
+      }
     }
-    this.backgroundRows = rows;
+    return total > 0 ? `已应用到 ${total} 个页面` : '尚未设置';
   }
 
   private async chooseBackground(): Promise<void> {
     if (this.hostContext === null) {
-      this.showToast('预览器不支持选择图片');
+      this.showToast('当前环境不支持选择图片');
       return;
     }
     if (this.backgroundBusy.length > 0) {
@@ -207,81 +201,10 @@ export struct SettingsPage {
         this.showToast('未选择图片');
         return;
       }
-      this.pendingBackgroundPath = path;
-      this.showApplyChoices = true;
-      this.showToast('图片已读取，请选择应用范围');
-    } catch (error) {
-      this.showToast('图片格式无法处理；请换一张 JPG 或 PNG');
-    } finally {
-      this.backgroundBusy = '';
-    }
-  }
-
-  private async repairBackgrounds(): Promise<void> {
-    if (this.hostContext === null || this.backgroundBusy.length > 0) {
-      return;
-    }
-    this.backgroundBusy = 'repair';
-    try {
-      const result = await PageBackgroundService.recoverLegacyBackgrounds(this.hostContext, true);
       await this.loadBackgrounds(this.hostContext);
-      this.showToast(`背景修复：转换 ${result.converted}，清除 ${result.failed + result.cleared}，请重新选择无法识别的图片`);
+      this.navStack.pushPathByName(ROUTES.BACKGROUND_APPLY, null);
     } catch (error) {
-      this.showToast('背景修复失败，请重试');
-    } finally {
-      this.backgroundBusy = '';
-    }
-  }
-
-  private async applyPending(group: string | null): Promise<void> {
-    if (this.hostContext === null || this.pendingBackgroundPath.length === 0) {
-      return;
-    }
-    this.backgroundBusy = 'apply';
-    try {
-      if (group === null) {
-        await PageBackgroundService.applyToAll(this.pendingBackgroundPath, this.hostContext);
-        const rows: BackgroundRowState[] = [];
-        for (const row of this.backgroundRows) {
-          rows.push({ key: row.key, label: row.label, path: this.pendingBackgroundPath });
-        }
-        this.backgroundRows = rows;
-        this.showToast('已应用到全部页面');
-      } else {
-        const path = await PageBackgroundService.applyToGroup(group, this.pendingBackgroundPath,
-          this.hostContext);
-        this.updateBackgroundRow(group, path);
-        this.showToast('已应用到当前页面组');
-      }
-      await PageBackgroundService.discardPrepared(this.pendingBackgroundPath);
-      this.pendingBackgroundPath = '';
-      this.showApplyChoices = false;
-    } catch (error) {
-      this.showToast('应用背景失败，请重试');
-    } finally {
-      this.backgroundBusy = '';
-    }
-  }
-
-  private async cancelPending(): Promise<void> {
-    if (this.pendingBackgroundPath.length > 0) {
-      await PageBackgroundService.discardPrepared(this.pendingBackgroundPath);
-    }
-    this.pendingBackgroundPath = '';
-    this.showApplyChoices = false;
-  }
-
-  private async clearBackground(group: string): Promise<void> {
-    if (this.hostContext === null || this.backgroundBusy.length > 0) {
-      return;
-    }
-    this.backgroundBusy = group;
-    try {
-      await PageBackgroundService.clear(group, this.hostContext);
-      this.updateBackgroundRow(group, '');
-      this.showToast('页面背景已清除');
-    } catch (error) {
-      this.showToast('清除背景失败');
+      this.showToast('图片读取失败；换一张 JPG、PNG 或 HEIF 再试');
     } finally {
       this.backgroundBusy = '';
     }
@@ -296,18 +219,6 @@ export struct SettingsPage {
       await service.share(this.hostContext, this.lastExportPath);
     } catch (error) {
       this.showToast('系统分享暂不可用，请使用另存为');
-    }
-  }
-
-  private async updateOpacity(value: number): Promise<void> {
-    this.backgroundOpacity = value / 100;
-    if (this.hostContext === null) {
-      return;
-    }
-    try {
-      await PageBackgroundService.setOpacity(this.hostContext, this.backgroundOpacity);
-    } catch (error) {
-      this.showToast('背景透明度保存失败');
     }
   }
 
@@ -438,7 +349,7 @@ export struct SettingsPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else {
         Column() {
           Scroll() {
@@ -682,146 +593,26 @@ export struct SettingsPage {
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
-                  Text('点击更换图片，选择图片后再决定应用到一个页面组或全部页面；图片会转为 PNG 并复制到应用沙箱。')
+                  Text('选一张图片，进入下一页决定应用到哪个功能页面；旧格式图片在启动时自动校正。')
                     .fontSize(11)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Row({ space: 8 }) {
-                    Text(this.backgroundBusy === 'pending' ? '读取中…' : '更换图片')
-                      .fontSize(11)
-                      .fontColor(AppTheme.color.primary)
-                      .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-                      .backgroundColor(AppTheme.color.tint)
+                    Text(this.backgroundBusy === 'pending' ? '读取中…' : '更换页面背景')
+                      .fontSize(12)
+                      .fontColor(Color.White)
+                      .padding({ left: 14, right: 14, top: 9, bottom: 9 })
+                      .backgroundColor(AppTheme.color.primary)
                       .borderRadius(8)
-                      .accessibilityText('更换背景图片')
+                      .accessibilityText('选择图片并进入页面背景应用页')
                       .onClick(() => {
                         this.chooseBackground();
                       })
-                    Text('图片格式不兼容时会转换为 PNG')
-                      .fontSize(10)
-                      .fontColor(AppTheme.color.textMuted)
-                    Text(this.backgroundBusy === 'repair' ? '修复中…' : '修复旧背景')
-                      .fontSize(10)
-                      .fontColor(AppTheme.color.primary)
-                      .padding({ left: 8, right: 8, top: 6, bottom: 6 })
-                      .onClick(() => {
-                        this.repairBackgrounds();
-                      })
-                  }
-                  .width('100%')
-                  ForEach(this.backgroundRows, (row: BackgroundRowState) => {
-                    Row({ space: 8 }) {
-                      if (row.path.length > 0) {
-                        Image(fileUri.getUriFromPath(row.path))
-                          .width(42)
-                          .height(30)
-                          .objectFit(ImageFit.Cover)
-                          .borderRadius(6)
-                      } else {
-                        Text('无')
-                          .fontSize(10)
-                          .fontColor(AppTheme.color.textMuted)
-                          .width(42)
-                          .height(30)
-                          .textAlign(TextAlign.Center)
-                          .backgroundColor(AppTheme.color.surfaceAlt)
-                          .borderRadius(6)
-                      }
-                      Text(row.label)
-                        .fontSize(12)
-                        .fontColor(AppTheme.color.text)
-                        .layoutWeight(1)
-                      Text('清除')
-                        .fontSize(11)
-                        .fontColor(AppTheme.color.textMuted)
-                        .padding({ left: 4, right: 4, top: 6, bottom: 6 })
-                        .accessibilityText(`清除${row.label}背景图片`)
-                        .onClick(() => {
-                          this.clearBackground(row.key);
-                        })
-                    }
-                    .width('100%')
-                  }, (row: BackgroundRowState) => row.key)
-
-                  if (this.showApplyChoices) {
-                    Column({ space: 8 }) {
-                      Row({ space: 8 }) {
-                        if (this.pendingBackgroundPath.length > 0) {
-                          Image(fileUri.getUriFromPath(this.pendingBackgroundPath))
-                            .width(42)
-                            .height(30)
-                            .objectFit(ImageFit.Cover)
-                            .borderRadius(6)
-                        }
-                        Text('应用这张图片到')
-                          .fontSize(12)
-                          .fontWeight(FontWeight.Medium)
-                          .fontColor(AppTheme.color.text)
-                          .layoutWeight(1)
-                        Text('取消')
-                          .fontSize(11)
-                          .fontColor(AppTheme.color.textMuted)
-                          .onClick(() => {
-                            this.cancelPending();
-                          })
-                      }
-                      .width('100%')
-
-                      Flex({ wrap: FlexWrap.Wrap }) {
-                        ForEach(this.backgroundRows, (row: BackgroundRowState) => {
-                          Text(row.label)
-                            .fontSize(11)
-                            .fontColor(AppTheme.color.primary)
-                            .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-                            .backgroundColor(AppTheme.color.tint)
-                            .borderRadius(8)
-                            .margin({ right: 6, bottom: 6 })
-                            .onClick(() => {
-                              this.applyPending(row.key);
-                            })
-                        }, (row: BackgroundRowState) => row.key)
-                        Text('全部应用')
-                          .fontSize(11)
-                          .fontColor(Color.White)
-                          .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-                          .backgroundColor(AppTheme.color.primary)
-                          .borderRadius(8)
-                          .margin({ right: 6, bottom: 6 })
-                          .accessibilityText('把背景应用到全部页面')
-                          .onClick(() => {
-                            this.applyPending(null);
-                          })
-                      }
-                      .width('100%')
-                    }
-                    .width('100%')
-                    .padding(10)
-                    .backgroundColor(AppTheme.color.surfaceAlt)
-                    .borderRadius(10)
-                    .alignItems(HorizontalAlign.Start)
-                  }
-
-                  Row({ space: 8 }) {
-                    Text('透明度')
+                    Blank()
+                    Text(this.appliedSummary())
                       .fontSize(11)
-                      .fontColor(AppTheme.color.textSecondary)
-                    Slider({
-                      value: this.backgroundOpacity * 100,
-                      min: 5,
-                      max: 40,
-                      step: 1
-                    })
-                      .layoutWeight(1)
-                      .selectedColor(AppTheme.color.primary)
-                      .onChange((value: number) => {
-                        this.updateOpacity(value);
-                      })
-                    Text(`${Math.round(this.backgroundOpacity * 100)}%`)
-                      .fontSize(10)
                       .fontColor(AppTheme.color.textMuted)
-                      .width(36)
-                      .textAlign(TextAlign.End)
                   }
                   .width('100%')
                 }
@@ -879,9 +670,18 @@ export struct SettingsPage {
         }
         .width('100%')
         .height('100%')
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       }
     }
     .title('设置')
+    .backgroundColor(Color.Transparent)
+    .onReady((context: NavDestinationContext) => {
+      this.navStack = context.pathStack;
+    })
+    .onShown(() => {
+      if (this.hostContext !== null) {
+        this.loadBackgrounds(this.hostContext);
+      }
+    })
   }
 }

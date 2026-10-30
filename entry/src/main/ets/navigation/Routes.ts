@@ -21,5 +21,6 @@ export const ROUTES = {
   STATUS: 'status',
   STATUS_HISTORY: 'status_history',
   STATUS_EDIT: 'status_edit',
-  SETTINGS: 'settings'
+  SETTINGS: 'settings',
+  BACKGROUND_APPLY: 'background_apply'
 } as const;
