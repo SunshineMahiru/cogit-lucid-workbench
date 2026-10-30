@@ -155,15 +155,15 @@ class PreviewStore {
 
   pendingPredictions(): PredictionItem[] {
     const rows: PredictionItem[] = [];
-    for (const prediction of this.predictions) {
-      if (prediction.status === PredictionStatus.PENDING) {
-        rows.push({
-          id: prediction.id,
-          title: prediction.target,
-          confidence: prediction.confidence,
-          dueDate: prediction.settlementDate
-        });
-      }
+    const pending = this.predictions.filter(p => p.status === PredictionStatus.PENDING);
+    pending.sort((left, right) => left.settlementDate < right.settlementDate ? -1 : 1);
+    for (const prediction of pending) {
+      rows.push({
+        id: prediction.id,
+        title: prediction.target,
+        confidence: prediction.confidence,
+        dueDate: prediction.settlementDate
+      });
     }
     return rows;
   }

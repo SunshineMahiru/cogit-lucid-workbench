@@ -63,6 +63,7 @@ export class HomeDataService {
     const all = await this.predictionDao.queryAll();
     const pending = all.filter(p =>
       p.status === PredictionStatus.PENDING && p.level !== SecurityLevel.SEALED);
+    pending.sort((left, right) => left.settlementDate < right.settlementDate ? -1 : 1);
     return pending.map(p => ({
       id: p.id,
       title: p.target,

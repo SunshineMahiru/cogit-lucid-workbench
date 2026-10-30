@@ -1,4 +1,5 @@
 import { PredictionItem } from '../model/HomeModel';
+import { todayDateString } from '../prediction';
 import { AppTheme } from '../theme/AppTheme';
 
 /**
@@ -10,14 +11,33 @@ export struct PredictionCard {
   @Param item: PredictionItem = { id: '', title: '', confidence: 0, dueDate: '' };
   @Event onTap: () => void = () => {};
 
+  private dueLabel(): string {
+    const today = todayDateString();
+    if (this.item.dueDate < today) {
+      return '已到期';
+    }
+    if (this.item.dueDate === today) {
+      return '今日到期';
+    }
+    return '待结算';
+  }
+
+  private dueColor(): string {
+    return this.item.dueDate <= todayDateString() ? AppTheme.color.danger : AppTheme.color.accentGold;
+  }
+
+  private dueSurface(): string {
+    return this.item.dueDate <= todayDateString() ? AppTheme.color.dangerSurface : AppTheme.color.warningSurface;
+  }
+
   build() {
     Column({ space: 10 }) {
       Row() {
-        Text('待结算')
+        Text(this.dueLabel())
           .fontSize(10)
-          .fontColor(AppTheme.color.accentGold)
+          .fontColor(this.dueColor())
           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-          .backgroundColor(AppTheme.color.warningSurface)
+          .backgroundColor(this.dueSurface())
           .borderRadius(8)
           .margin({ right: 6 })
         Text(this.item.title)
