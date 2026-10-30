@@ -9,6 +9,7 @@ import {
   ReviewPromptRepository
 } from '../network';
 import { SettingsStore } from '../settings';
+import { isEmulatorDevice } from '../network/DeviceMode';
 
 const STATE_LOADING = 'loading';
 const STATE_READY = 'ready';
@@ -27,6 +28,8 @@ export struct ReviewPromptPanel {
   @Param period: ReviewPeriod = ReviewPeriod.WEEK;
   @Local state: string = STATE_LOADING;
   @Local prompts: ReviewPrompt[] = [];
+  @Local isRealDevice: boolean = false;
+  @Local hasConfiguredHost: boolean = false;
   private repository: ReviewPromptRepository = new HttpReviewPromptRepository();
 
   aboutToAppear(): void {
@@ -36,15 +39,22 @@ export struct ReviewPromptPanel {
   private async prepareRepository(): Promise<void> {
     const context = this.getUIContext().getHostContext();
     if (context !== undefined) {
+      this.isRealDevice = !isEmulatorDevice();
       try {
         const store = await SettingsStore.open(context);
         const settings = await store.load();
         const base = mockBaseFrom(settings.llmBaseUrl);
+        this.hasConfiguredHost = base.length > 0 && !isLoopbackBase(base);
         if (base.length > 0) {
           this.repository = new HttpReviewPromptRepository(new HttpClient(), base);
         }
       } catch (error) {
       }
+    }
+    if (this.isRealDevice && !this.hasConfiguredHost) {
+      this.prompts = LOCAL_PROMPTS;
+      this.state = STATE_ERROR;
+      return;
     }
     this.load();
   }
@@ -69,7 +79,8 @@ export struct ReviewPromptPanel {
             .fontSize(11)
             .fontColor(AppTheme.color.textSecondary)
           Blank()
-          Text(this.state === STATE_ERROR ? 'Mock 未连接' : '本地 Mock')
+          Text(this.state === STATE_ERROR ?
+            (this.isRealDevice && !this.hasConfiguredHost ? '未配置 Mock' : 'Mock 未连接') : '本地 Mock')
             .fontSize(10)
             .fontColor(this.state === STATE_ERROR ? AppTheme.color.danger : AppTheme.color.textMuted)
         }
@@ -100,7 +111,9 @@ export struct ReviewPromptPanel {
                 })
             }
             .width('100%')
-            Text(`先启动 mock-server，确认 ${API_BASE_URL}/review-prompts 可访问`)
+            Text(this.isRealDevice && !this.hasConfiguredHost ?
+              '真机不自动猜地址；请在设置里填写宿主机局域网地址后重试' :
+              `先启动 mock-server，确认 ${API_BASE_URL}/review-prompts 可访问`)
               .fontSize(10)
               .lineHeight(15)
               .fontColor(AppTheme.color.textMuted)
@@ -148,4 +161,9 @@ function mockBaseFrom(baseUrl: string): string {
     value = value.slice(0, value.length - 1);
   }
   return value;
+}
+
+function isLoopbackBase(baseUrl: string): boolean {
+  const value = baseUrl.toLowerCase();
+  return value.includes('localhost') || value.includes('127.0.0.1') || value.includes('[::1]');
 }

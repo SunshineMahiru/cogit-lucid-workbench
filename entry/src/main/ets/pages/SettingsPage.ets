@@ -521,6 +521,11 @@ export struct SettingsPage {
                       .onChange((value: string) => {
                         this.withBaseUrl(value);
                       })
+                    Text('真机请填写宿主机局域网地址；Mock 提示与模型请求共用此主机。')
+                      .fontSize(10)
+                      .lineHeight(16)
+                      .fontColor(AppTheme.color.textMuted)
+                      .width('100%')
 
                     Text('API Key（可空，仅存本机）')
                       .fontSize(11)
