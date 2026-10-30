@@ -362,7 +362,7 @@ export struct BackgroundApplyPage {
                         this.showSourceSheet = true;
                       })
                     Blank()
-                    Text(`已应用 ${this.appliedCount()} 个页面`)
+                    Text(`覆盖 ${this.appliedCount()} 个页面`)
                       .fontSize(11)
                       .fontColor(AppTheme.color.textMuted)
                   }

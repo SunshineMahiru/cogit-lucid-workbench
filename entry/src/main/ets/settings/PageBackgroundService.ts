@@ -343,11 +343,6 @@ export class PageBackgroundService {
     notifyPageBackgroundChanged();
   }
 
-  static async getGlobalAlpha(context: common.Context): Promise<number> {
-    const store = await PageBackgroundStore.open(context);
-    return store.getGlobalAlpha();
-  }
-
   /**
    * Checks every stored background on startup: keeps readable PNGs at display size,
    * re-encodes anything else, and drops files that cannot be decoded at all.
