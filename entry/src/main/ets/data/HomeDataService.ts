@@ -84,7 +84,6 @@ export class HomeDataService {
     const recentEvents = await this.eventDao.queryRecent(100);
     const todayNotes = recentEvents.filter(e =>
       e.level !== SecurityLevel.SEALED && formatDate(new Date(e.timestamp)) === today).length;
-    const totalDecisions = await this.decisionDao.countVisible();
     const unreviewedDecisions = await this.decisionDao.countUnreviewed();
     const totalRelations = await this.relationDao.countVisible();
     const allPredictions = (await this.predictionDao.queryAll()).filter(p => p.level !== SecurityLevel.SEALED);
