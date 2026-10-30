@@ -8,6 +8,12 @@ const STATE_READY = 'ready';
 const STATE_EMPTY = 'empty';
 const STATE_ERROR = 'error';
 
+const LOCAL_PROMPTS: ReviewPrompt[] = [
+  { id: 'local_1', text: '这一周哪件事最消耗你？', category: 'energy' },
+  { id: 'local_2', text: '哪次判断事后被证明是对的？', category: 'judgement' },
+  { id: 'local_3', text: '如果重来一次，你会先确认什么？', category: 'action' }
+];
+
 /** Fetches review prompts with explicit loading, empty, error and ready states. */
 @ComponentV2
 export struct ReviewPromptPanel {
@@ -27,6 +33,7 @@ export struct ReviewPromptPanel {
       this.prompts = prompts;
       this.state = prompts.length > 0 ? STATE_READY : STATE_EMPTY;
     } catch (error) {
+      this.prompts = LOCAL_PROMPTS;
       this.state = STATE_ERROR;
     }
   }
@@ -75,6 +82,17 @@ export struct ReviewPromptPanel {
               .lineHeight(15)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
+            Text('当前显示本地回退提示')
+              .fontSize(10)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+            ForEach(this.prompts, (prompt: ReviewPrompt) => {
+              Text(`· ${prompt.text}`)
+                .fontSize(12)
+                .lineHeight(19)
+                .fontColor(AppTheme.color.text)
+                .width('100%')
+            }, (prompt: ReviewPrompt) => prompt.id)
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
