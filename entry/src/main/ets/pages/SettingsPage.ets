@@ -15,6 +15,7 @@ import {
   PageBackgroundService
 } from '../settings/PageBackgroundService';
 import { PageBackgroundStore } from '../settings/PageBackgroundStore';
+import { BackupService } from '../settings/BackupService';
 import { ExportService, totalExportRecords } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { securityLevelText } from '../note';
@@ -59,6 +60,8 @@ export struct SettingsPage {
   @Local spentYuan: number = 0;
   @Local backgroundBusy: string = '';
   @Local backgroundOpacity: number = 0.14;
+  @Local dataBusy: boolean = false;
+  @Local clearArmed: boolean = false;
   @Local backgroundRows: BackgroundRowState[] = initialBackgroundRows();
   private store: SettingsStore | null = null;
   private hostContext: common.Context | null = null;
@@ -245,6 +248,57 @@ export struct SettingsPage {
       await PageBackgroundService.setOpacity(this.hostContext, this.backgroundOpacity);
     } catch (error) {
       this.showToast('背景透明度保存失败');
+    }
+  }
+
+  private async backupData(): Promise<void> {
+    if (this.hostContext === null || this.dataBusy) {
+      return;
+    }
+    this.dataBusy = true;
+    try {
+      const name = await BackupService.backupToUser(this.hostContext);
+      this.showToast(name.length > 0 ? `已备份 ${name}` : '已生成备份，但未另存');
+    } catch (error) {
+      this.showToast('备份失败；请检查存储空间或目录权限');
+    } finally {
+      this.dataBusy = false;
+    }
+  }
+
+  private async restoreData(): Promise<void> {
+    if (this.hostContext === null || this.dataBusy) {
+      return;
+    }
+    this.dataBusy = true;
+    try {
+      const restored = await BackupService.restoreFromUser(this.hostContext);
+      this.showToast(restored ? '已恢复备份，建议重启应用' : '未选择备份文件');
+    } catch (error) {
+      this.showToast('恢复失败；请确认文件是本应用导出的备份');
+    } finally {
+      this.dataBusy = false;
+    }
+  }
+
+  private async clearData(): Promise<void> {
+    if (this.hostContext === null || this.dataBusy) {
+      return;
+    }
+    if (!this.clearArmed) {
+      this.clearArmed = true;
+      this.showToast('再次点击“确认清空”才会删除全部记录');
+      return;
+    }
+    this.dataBusy = true;
+    try {
+      await BackupService.clearAll(this.hostContext);
+      this.clearArmed = false;
+      this.showToast('全部记录已清空');
+    } catch (error) {
+      this.showToast('清空失败，请重试');
+    } finally {
+      this.dataBusy = false;
     }
   }
 
@@ -502,6 +556,51 @@ export struct SettingsPage {
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
+
+              SectionCard() {
+                Column({ space: 8 }) {
+                  Text('数据管理')
+                    .fontSize(14)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor(AppTheme.color.text)
+                    .width('100%')
+                  Text('备份包含全部本地记录；恢复需要选择本应用导出的 .db 文件。')
+                    .fontSize(11)
+                    .lineHeight(17)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Row({ space: 8 }) {
+                    Text(this.dataBusy ? '处理中…' : '备份并另存')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.primary)
+                      .padding({ left: 10, right: 10, top: 7, bottom: 7 })
+                      .backgroundColor(AppTheme.color.tint)
+                      .borderRadius(8)
+                      .onClick(() => {
+                        this.backupData();
+                      })
+                    Text('恢复备份')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.primary)
+                      .padding({ left: 10, right: 10, top: 7, bottom: 7 })
+                      .backgroundColor(AppTheme.color.tint)
+                      .borderRadius(8)
+                      .onClick(() => {
+                        this.restoreData();
+                      })
+                    Text(this.clearArmed ? '确认清空' : '清空全部数据')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.danger)
+                      .padding({ left: 8, right: 8, top: 7, bottom: 7 })
+                      .onClick(() => {
+                        this.clearData();
+                      })
+                  }
+                  .width('100%')
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)
