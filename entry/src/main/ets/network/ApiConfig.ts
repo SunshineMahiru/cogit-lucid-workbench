@@ -1,8 +1,8 @@
 /**
  * Base URL for the local mock server.
- * Previewer: keep 127.0.0.1. Emulator: replace with the host LAN IP.
+ * Previewer and emulator: localhost with hdc rport. Device: replace with the host LAN IP.
  */
-export const API_BASE_URL = 'http://127.0.0.1:4523';
+export const API_BASE_URL = 'http://localhost:4523';
 
 /** Request timeout in milliseconds. */
 export const API_TIMEOUT_MS = 5000;

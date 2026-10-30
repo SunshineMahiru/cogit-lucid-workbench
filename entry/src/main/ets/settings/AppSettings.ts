@@ -27,7 +27,7 @@ export const MAX_MONTHLY_BUDGET = 500;
 export const DEFAULT_SETTINGS: AppSettings = {
   llmEnabled: false,
   llmProvider: 'template',
-  llmBaseUrl: 'http://127.0.0.1:4523/v1',
+  llmBaseUrl: 'http://localhost:4523/v1',
   llmApiKey: '',
   llmModel: 'glm-4.7-flash',
   llmMonthlyBudget: 30,

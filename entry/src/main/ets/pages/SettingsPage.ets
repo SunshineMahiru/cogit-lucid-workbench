@@ -285,7 +285,7 @@ export struct SettingsPage {
                       .fontSize(11)
                       .fontColor(AppTheme.color.textSecondary)
                       .width('100%')
-                    TextInput({ text: this.settings.llmBaseUrl, placeholder: 'http://127.0.0.1:4523/v1' })
+                    TextInput({ text: this.settings.llmBaseUrl, placeholder: 'http://localhost:4523/v1' })
                       .backgroundColor('#F7F6F2')
                       .onChange((value: string) => {
                         this.withBaseUrl(value);
