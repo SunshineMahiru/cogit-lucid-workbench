@@ -1,4 +1,4 @@
-import { fileIo } from '@kit.CoreFileKit';
+import { fileIo, hash } from '@kit.CoreFileKit';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import { common } from '@kit.AbilityKit';
 import { image } from '@kit.ImageKit';
@@ -119,38 +119,33 @@ export class PageBackgroundService {
     return picked;
   }
 
+  /** Stores the image under a content hash so the same picture is kept only once. */
   static async applyToGroup(group: string, sourcePath: string, context: common.Context): Promise<string> {
     const directory = `${context.filesDir}/page-backgrounds`;
     PageBackgroundService.ensureDirectory(directory);
-    const destination = `${directory}/${group}.png`;
-    PageBackgroundService.removeFile(`${directory}/display-${group}.png`);
-    const source = fileIo.openSync(sourcePath, fileIo.OpenMode.READ_ONLY);
-    try {
-      fileIo.copyFileSync(source.fd, destination);
-    } finally {
-      fileIo.closeSync(source);
-    }
+    const destination = await PageBackgroundService.hashedPath(directory, sourcePath);
     const store = await PageBackgroundStore.open(context);
+    const previous = await store.get(group);
+    if (previous.length > 0 && previous !== destination) {
+      await PageBackgroundService.dropIfUnused(previous, group, context);
+    }
+    PageBackgroundService.removeFile(`${directory}/display-${group}.png`);
     await store.set(group, destination);
     notifyPageBackgroundChanged();
     return destination;
   }
 
-  /** One shared copy keeps "apply to all" from storing the same picture eight times. */
+  /** Points every group at one hashed file; the picture itself is copied once. */
   static async applyToAll(sourcePath: string, context: common.Context): Promise<void> {
     const directory = `${context.filesDir}/page-backgrounds`;
     PageBackgroundService.ensureDirectory(directory);
-    const destination = `${directory}/shared.png`;
-    PageBackgroundService.removeFile(destination);
-    const source = fileIo.openSync(sourcePath, fileIo.OpenMode.READ_ONLY);
-    try {
-      fileIo.copyFileSync(source.fd, destination);
-    } finally {
-      fileIo.closeSync(source);
-    }
+    const destination = await PageBackgroundService.hashedPath(directory, sourcePath);
     const store = await PageBackgroundStore.open(context);
     for (const group of PAGE_BACKGROUND_GROUPS) {
-      PageBackgroundService.removeFile(`${directory}/${group.key}.png`);
+      const previous = await store.get(group.key);
+      if (previous.length > 0 && previous !== destination) {
+        await PageBackgroundService.dropIfUnused(previous, group.key, context);
+      }
       PageBackgroundService.removeFile(`${directory}/display-${group.key}.png`);
       await store.set(group.key, destination);
     }
@@ -210,12 +205,13 @@ export class PageBackgroundService {
 
   static async clear(group: string, context: common.Context): Promise<void> {
     const store = await PageBackgroundStore.open(context);
-    await store.clear(group);
     const directory = `${context.filesDir}/page-backgrounds`;
-    PageBackgroundService.removeFile(`${directory}/${group}.png`);
-    PageBackgroundService.removeFile(`${directory}/${group}.jpg`);
-    PageBackgroundService.removeFile(`${directory}/${group}-repair.png`);
+    const previous = await store.get(group);
+    await store.clear(group);
     PageBackgroundService.removeFile(`${directory}/display-${group}.png`);
+    if (previous.length > 0) {
+      await PageBackgroundService.dropIfUnused(previous, group, context);
+    }
     notifyPageBackgroundChanged();
   }
 
@@ -273,10 +269,9 @@ export class PageBackgroundService {
       }
     }
     PageBackgroundService.purgeStaged(directory);
+    await PageBackgroundService.collapseDuplicates(context);
     await PageBackgroundService.purgeUnreferenced(directory, context);
-    if (converted > 0 || cleared > 0 || failed > 0) {
-      notifyPageBackgroundChanged();
-    }
+    notifyPageBackgroundChanged();
     return { converted: converted, cleared: cleared, failed: failed };
   }
 
@@ -334,6 +329,74 @@ export class PageBackgroundService {
       }
     } catch (error) {
     }
+  }
+
+  /** Points groups that carry the same picture at one file, so old copies stop adding up. */
+  private static async collapseDuplicates(context: common.Context): Promise<void> {
+    const store = await PageBackgroundStore.open(context);
+    const canonical: string[] = [];
+    const seen: string[] = [];
+    for (const group of PAGE_BACKGROUND_GROUPS) {
+      const path = await store.get(group.key);
+      if (path.length === 0) {
+        continue;
+      }
+      const digest = await PageBackgroundService.digestOf(path);
+      if (digest.length === 0) {
+        continue;
+      }
+      const index = seen.indexOf(digest);
+      if (index < 0) {
+        seen.push(digest);
+        canonical.push(path);
+        continue;
+      }
+      const keep = canonical[index];
+      if (path !== keep) {
+        await store.set(group.key, keep);
+        await PageBackgroundService.dropIfUnused(path, group.key, context);
+      }
+    }
+  }
+
+  private static async digestOf(path: string): Promise<string> {
+    try {
+      return await hash.hash(path, 'sha256');
+    } catch (error) {
+      return '';
+    }
+  }
+
+  /** Copies the picture under its content hash, or reuses the copy that already exists. */
+  private static async hashedPath(directory: string, sourcePath: string): Promise<string> {
+    let digest = await PageBackgroundService.digestOf(sourcePath);
+    if (digest.length === 0) {
+      digest = `t${Date.now()}`;
+    }
+    const destination = `${directory}/bg-${digest.substring(0, 16)}.png`;
+    if (!fileIo.accessSync(destination)) {
+      const source = fileIo.openSync(sourcePath, fileIo.OpenMode.READ_ONLY);
+      try {
+        fileIo.copyFileSync(source.fd, destination);
+      } finally {
+        fileIo.closeSync(source);
+      }
+    }
+    return destination;
+  }
+
+  /** Deletes a picture only when no other group still points at it. */
+  private static async dropIfUnused(path: string, skipGroup: string, context: common.Context): Promise<void> {
+    const store = await PageBackgroundStore.open(context);
+    for (const group of PAGE_BACKGROUND_GROUPS) {
+      if (group.key === skipGroup) {
+        continue;
+      }
+      if (await store.get(group.key) === path) {
+        return;
+      }
+    }
+    PageBackgroundService.removeFile(path);
   }
 
   private static ensureDirectory(directory: string): void {
