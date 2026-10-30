@@ -131,6 +131,7 @@ export struct RelationDetailPage {
         .fontSize(14)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 10, right: 8 })
+        .accessibilityText('编辑关系')
         .onClick(() => {
           this.openEditor();
         })
@@ -138,6 +139,7 @@ export struct RelationDetailPage {
         .fontSize(14)
         .fontColor(AppTheme.color.danger)
         .padding({ left: 4, right: 16 })
+        .accessibilityText('删除关系，可撤销')
         .onClick(() => {
           this.deleteRelation();
         })
@@ -203,6 +205,7 @@ export struct RelationDetailPage {
                   Text('撤销')
                     .fontSize(12)
                     .fontColor(AppTheme.color.primary)
+                    .accessibilityText('撤销删除关系')
                     .onClick(() => {
                       this.undoDelete();
                     })

@@ -161,6 +161,7 @@ export struct StatusHistoryPage {
                     Text('撤销')
                       .fontSize(12)
                       .fontColor(AppTheme.color.primary)
+                      .accessibilityText('撤销删除状态读数')
                       .onClick(() => {
                         this.undoDelete();
                       })
@@ -179,6 +180,7 @@ export struct StatusHistoryPage {
                         .fontSize(11)
                         .fontColor(AppTheme.color.danger)
                         .padding({ top: 2, bottom: 2 })
+                        .accessibilityText(`删除 ${row.date} 的状态读数，可撤销`)
                         .onClick(() => {
                           this.deleteRow(row);
                         })

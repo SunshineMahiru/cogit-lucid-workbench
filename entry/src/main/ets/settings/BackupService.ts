@@ -1,4 +1,3 @@
-import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { fileIo, picker } from '@kit.CoreFileKit';
 import { DbHelper } from '../db/DbHelper';
