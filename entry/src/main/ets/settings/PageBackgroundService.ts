@@ -1,6 +1,7 @@
 import { fileIo } from '@kit.CoreFileKit';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import { common } from '@kit.AbilityKit';
+import { image } from '@kit.ImageKit';
 import { PageBackgroundStore } from './PageBackgroundStore';
 import { notifyPageBackgroundChanged } from './PageBackgroundBus';
 
@@ -53,9 +54,9 @@ export function backgroundKeyForRoute(route: string): string {
   return 'home';
 }
 
-/** Opens the system photo picker, copies the chosen image into the sandbox, and saves its group. */
+/** Picks an image, normalizes it to PNG, then applies it to one group or all groups. */
 export class PageBackgroundService {
-  static async pickAndSave(group: string, context: common.Context): Promise<string> {
+  static async pickImage(context: common.Context): Promise<string> {
     const options = new photoAccessHelper.PhotoSelectOptions();
     options.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
     options.maxSelectNumber = 1;
@@ -64,12 +65,17 @@ export class PageBackgroundService {
       return '';
     }
     const directory = `${context.filesDir}/page-backgrounds`;
-    try {
-      fileIo.mkdirSync(directory);
-    } catch (error) {
-    }
-    const destination = `${directory}/${group}.jpg`;
-    const source = fileIo.openSync(result.photoUris[0], fileIo.OpenMode.READ_ONLY);
+    PageBackgroundService.ensureDirectory(directory);
+    const destination = `${directory}/pending-${Date.now()}.png`;
+    await PageBackgroundService.convertToPng(result.photoUris[0], destination);
+    return destination;
+  }
+
+  static async applyToGroup(group: string, sourcePath: string, context: common.Context): Promise<string> {
+    const directory = `${context.filesDir}/page-backgrounds`;
+    PageBackgroundService.ensureDirectory(directory);
+    const destination = `${directory}/${group}.png`;
+    const source = fileIo.openSync(sourcePath, fileIo.OpenMode.READ_ONLY);
     try {
       fileIo.copyFileSync(source.fd, destination);
     } finally {
@@ -81,13 +87,24 @@ export class PageBackgroundService {
     return destination;
   }
 
+  static async applyToAll(sourcePath: string, context: common.Context): Promise<void> {
+    for (const group of PAGE_BACKGROUND_GROUPS) {
+      await PageBackgroundService.applyToGroup(group.key, sourcePath, context);
+    }
+  }
+
+  static async discardPrepared(path: string): Promise<void> {
+    try {
+      fileIo.unlinkSync(path);
+    } catch (error) {
+    }
+  }
+
   static async clear(group: string, context: common.Context): Promise<void> {
     const store = await PageBackgroundStore.open(context);
     await store.clear(group);
-    try {
-      fileIo.unlinkSync(`${context.filesDir}/page-backgrounds/${group}.jpg`);
-    } catch (error) {
-    }
+    PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}.png`);
+    PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}.jpg`);
     notifyPageBackgroundChanged();
   }
 
@@ -95,5 +112,36 @@ export class PageBackgroundService {
     const store = await PageBackgroundStore.open(context);
     await store.setOpacity(value);
     notifyPageBackgroundChanged();
+  }
+
+  private static ensureDirectory(directory: string): void {
+    try {
+      fileIo.mkdirSync(directory);
+    } catch (error) {
+    }
+  }
+
+  private static removeFile(path: string): void {
+    try {
+      fileIo.unlinkSync(path);
+    } catch (error) {
+    }
+  }
+
+  private static async convertToPng(sourceUri: string, destination: string): Promise<void> {
+    const source = image.createImageSource(sourceUri);
+    const packer = image.createImagePacker();
+    try {
+      const file = fileIo.openSync(destination,
+        fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.TRUNC);
+      try {
+        await packer.packToFile(source, file.fd, { format: 'image/png', quality: 100 });
+      } finally {
+        fileIo.closeSync(file);
+      }
+    } finally {
+      packer.release();
+      source.release();
+    }
   }
 }
