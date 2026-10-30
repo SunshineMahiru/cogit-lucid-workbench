@@ -179,6 +179,7 @@ It listens on `0.0.0.0:4523`; set `PORT` to change the port.
 
 - DevEco previewer: `http://127.0.0.1:4523` works as is.
 - Emulator: `127.0.0.1` resolves to the emulator itself. Either set `API_BASE_URL` in `entry/src/main/ets/network/ApiConfig.ts` to the host LAN address, or forward the port with `hdc rport tcp:4523 tcp:4523`.
+- Real device: the client tries the host from the configured model URL first, then the host-LAN fallback `10.111.10.55:4523`; if neither is reachable it shows local fallback prompts. Set the model base URL to your host's LAN address when the fallback differs.
 - Cleartext HTTP is permitted by `entry/src/main/resources/base/profile/network_config.json`; the client timeout is 5 seconds.
 
 ### Review agent modes
