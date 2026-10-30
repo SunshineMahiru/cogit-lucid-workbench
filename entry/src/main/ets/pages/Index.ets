@@ -24,6 +24,8 @@ import { StatusPage } from './StatusPage';
 import { StatusHistoryPage } from './StatusHistoryPage';
 import { StatusEditPage } from './StatusEditPage';
 import { SettingsPage } from './SettingsPage';
+import { PageBackground } from '../components/PageBackground';
+import { backgroundKeyForRoute } from '../settings/PageBackgroundService';
 
 @Entry
 @ComponentV2
@@ -32,6 +34,16 @@ struct Index {
 
   @Builder
   pageMap(name: string) {
+    Stack() {
+      this.pageContent(name)
+      PageBackground({ route: backgroundKeyForRoute(name) })
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  @Builder
+  pageContent(name: string) {
     if (name === ROUTES.NOTE_EDIT) {
       NoteEditPage()
     } else if (name === ROUTES.NOTE_LIST) {
@@ -83,7 +95,12 @@ struct Index {
 
   build() {
     Navigation(this.pathStack) {
-      DashboardView({ pathStack: this.pathStack })
+      Stack() {
+        DashboardView({ pathStack: this.pathStack })
+        PageBackground({ route: 'home' })
+      }
+      .width('100%')
+      .height('100%')
     }
     .width('100%')
     .height('100%')

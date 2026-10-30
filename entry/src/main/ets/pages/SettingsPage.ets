@@ -10,6 +10,11 @@ import {
   defaultAppSettings,
   sanitizeAppSettings
 } from '../settings';
+import {
+  PAGE_BACKGROUND_GROUPS,
+  PageBackgroundGroup,
+  PageBackgroundService
+} from '../settings/PageBackgroundService';
 import { ExportService, totalExportRecords } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { securityLevelText } from '../note';
@@ -36,6 +41,7 @@ export struct SettingsPage {
   @Local lastExportChars: number = 0;
   @Local lastExportTotal: number = 0;
   @Local spentYuan: number = 0;
+  @Local backgroundBusy: string = '';
   private store: SettingsStore | null = null;
   private hostContext: common.Context | null = null;
 
@@ -136,6 +142,40 @@ export struct SettingsPage {
       this.showToast('保存失败，请重试');
     } finally {
       this.isSaving = false;
+    }
+  }
+
+  private async chooseBackground(group: string): Promise<void> {
+    if (this.hostContext === null) {
+      this.showToast('预览器不支持选择图片');
+      return;
+    }
+    if (this.backgroundBusy.length > 0) {
+      return;
+    }
+    this.backgroundBusy = group;
+    try {
+      const path = await PageBackgroundService.pickAndSave(group, this.hostContext);
+      this.showToast(path.length > 0 ? '页面背景已更新' : '未选择图片');
+    } catch (error) {
+      this.showToast('选择图片失败，请重试');
+    } finally {
+      this.backgroundBusy = '';
+    }
+  }
+
+  private async clearBackground(group: string): Promise<void> {
+    if (this.hostContext === null || this.backgroundBusy.length > 0) {
+      return;
+    }
+    this.backgroundBusy = group;
+    try {
+      await PageBackgroundService.clear(group, this.hostContext);
+      this.showToast('页面背景已清除');
+    } catch (error) {
+      this.showToast('清除背景失败');
+    } finally {
+      this.backgroundBusy = '';
     }
   }
 
@@ -381,6 +421,48 @@ export struct SettingsPage {
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
+
+              SectionCard() {
+                Column({ space: 8 }) {
+                  Text('页面背景')
+                    .fontSize(14)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor(AppTheme.color.text)
+                    .width('100%')
+                  Text('每个模块可选一张本机图片，作为页面半透明背景；图片只复制到应用沙箱。')
+                    .fontSize(11)
+                    .lineHeight(17)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  ForEach(PAGE_BACKGROUND_GROUPS, (group: PageBackgroundGroup) => {
+                    Row({ space: 8 }) {
+                      Text(group.label)
+                        .fontSize(12)
+                        .fontColor(AppTheme.color.text)
+                        .layoutWeight(1)
+                      Text(this.backgroundBusy === group.key ? '处理中…' : '选择')
+                        .fontSize(11)
+                        .fontColor(AppTheme.color.primary)
+                        .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+                        .backgroundColor(AppTheme.color.tint)
+                        .borderRadius(8)
+                        .onClick(() => {
+                          this.chooseBackground(group.key);
+                        })
+                      Text('清除')
+                        .fontSize(11)
+                        .fontColor(AppTheme.color.textMuted)
+                        .padding({ left: 4, right: 4, top: 6, bottom: 6 })
+                        .onClick(() => {
+                          this.clearBackground(group.key);
+                        })
+                    }
+                    .width('100%')
+                  }, (group: PageBackgroundGroup) => group.key)
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)
