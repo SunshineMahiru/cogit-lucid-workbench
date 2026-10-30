@@ -175,7 +175,8 @@ export class PageBackgroundService {
   }
 
   private static async convertToPng(sourceUri: string, destination: string): Promise<void> {
-    const source = image.createImageSource(sourceUri);
+    const sourceFile = fileIo.openSync(sourceUri, fileIo.OpenMode.READ_ONLY);
+    const source = image.createImageSource(sourceFile.fd);
     const packer = image.createImagePacker();
     try {
       const file = fileIo.openSync(destination,
@@ -188,6 +189,7 @@ export class PageBackgroundService {
     } finally {
       packer.release();
       source.release();
+      fileIo.closeSync(sourceFile);
     }
   }
 }
