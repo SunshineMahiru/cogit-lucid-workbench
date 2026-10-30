@@ -194,7 +194,8 @@ export struct SettingsPage {
       this.lastExportName = result.fileName;
       this.lastExportChars = result.charCount;
       this.lastExportTotal = totalExportRecords(result.counts);
-      this.showToast(`已导出 ${result.fileName}`);
+      const saved = await service.saveAs(this.hostContext, result);
+      this.showToast(saved ? `已另存为 ${result.fileName}` : '已生成，但未另存');
     } catch (error) {
       this.showToast('导出失败，预览器可能不支持文件写入');
     } finally {
@@ -395,13 +396,13 @@ export struct SettingsPage {
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
-                  Text('把全部可导出记录写成 Markdown，保存在应用沙箱内。')
+                  Text('把全部可导出记录写成 Markdown，并另存到你选择的位置。')
                     .fontSize(11)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
 
-                  Text(this.isExporting ? '导出中…' : '导出 Markdown')
+                    Text(this.isExporting ? '导出中…' : '导出并另存为')
                     .fontSize(13)
                     .fontColor(AppTheme.color.primary)
                     .padding({ left: 14, right: 14, top: 8, bottom: 8 })

@@ -1,5 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
+import { fileIo, picker } from '@kit.CoreFileKit';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
@@ -52,6 +53,19 @@ export class ExportService {
   async buildMarkdown(now: number = Date.now()): Promise<string> {
     const bundle = await this.loadPreparedBundle(now);
     return renderExportDocument(bundle);
+  }
+
+  /** Copies an exported file to a user-selected document URI. */
+  async saveAs(context: common.Context, result: ExportResult): Promise<boolean> {
+    const options = new picker.DocumentSaveOptions();
+    options.newFileNames = [result.fileName];
+    options.fileSuffixChoices = ['Markdown|.md'];
+    const uris = await new picker.DocumentViewPicker(context).save(options);
+    if (uris.length === 0) {
+      return false;
+    }
+    await fileIo.copyFile(result.filePath, uris[0]);
+    return true;
   }
 
   /** Exports every exportable record and returns the file that was written. */
