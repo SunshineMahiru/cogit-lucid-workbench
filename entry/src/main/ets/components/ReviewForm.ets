@@ -328,7 +328,7 @@ export struct ReviewForm {
             }
             .width('100%')
             .padding(14)
-            .backgroundColor(Color.White)
+            .backgroundColor(AppTheme.color.surface)
             .borderRadius(12)
 
             this.stepDots()
@@ -412,7 +412,7 @@ export struct ReviewForm {
               .fontSize(13)
               .height(180)
               .padding(12)
-              .backgroundColor(Color.White)
+              .backgroundColor(AppTheme.color.surface)
               .borderRadius(12)
               .border({ width: 0.5, color: AppTheme.color.border })
               .onChange((value: string) => {

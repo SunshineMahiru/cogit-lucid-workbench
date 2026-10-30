@@ -163,7 +163,7 @@ export struct PredictionListPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor(Color.White)
+    .backgroundColor(AppTheme.color.surface)
     .borderRadius(14)
   }
 

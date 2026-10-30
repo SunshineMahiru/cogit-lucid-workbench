@@ -134,7 +134,7 @@ export struct ReviewAgentPanel {
     }
     .width('100%')
     .padding(12)
-    .backgroundColor(Color.White)
+    .backgroundColor(AppTheme.color.surface)
     .borderRadius(12)
     .border({ width: 0.5, color: AppTheme.color.border })
     .alignItems(HorizontalAlign.Start)

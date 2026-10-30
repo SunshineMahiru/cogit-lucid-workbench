@@ -210,7 +210,7 @@ export struct PredictionDetailPage {
             }
             .width('100%')
             .padding(16)
-            .backgroundColor(Color.White)
+            .backgroundColor(AppTheme.color.surface)
             .borderRadius(12)
 
             if (this.detail.reason.length > 0) {
@@ -227,7 +227,7 @@ export struct PredictionDetailPage {
               }
               .width('100%')
               .padding(16)
-              .backgroundColor(Color.White)
+              .backgroundColor(AppTheme.color.surface)
               .borderRadius(12)
               .alignItems(HorizontalAlign.Start)
             }

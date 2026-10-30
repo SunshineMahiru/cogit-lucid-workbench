@@ -125,7 +125,7 @@ export struct NoteListPage {
       Stack({ alignContent: Alignment.BottomEnd }) {
         Column({ space: 10 }) {
           TextInput({ text: this.search, placeholder: '搜索标题、摘要或标签' })
-            .backgroundColor(Color.White)
+            .backgroundColor(AppTheme.color.surface)
             .borderRadius(12)
             .onChange((value: string) => {
               this.search = value;

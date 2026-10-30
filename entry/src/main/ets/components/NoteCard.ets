@@ -46,7 +46,7 @@ export struct NoteCard {
     }
     .width('100%')
     .padding(12)
-    .backgroundColor(Color.White)
+    .backgroundColor(AppTheme.color.surface)
     .borderRadius(10)
     .onClick(() => {
       this.onTap();

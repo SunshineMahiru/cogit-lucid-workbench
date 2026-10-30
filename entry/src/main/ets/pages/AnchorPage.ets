@@ -96,7 +96,7 @@ export struct AnchorPage {
     }
     .width('100%')
     .padding(14)
-    .backgroundColor(Color.White)
+    .backgroundColor(AppTheme.color.surface)
     .borderRadius(12)
     .alignItems(HorizontalAlign.Start)
   }

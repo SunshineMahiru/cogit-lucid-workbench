@@ -384,7 +384,7 @@ export struct DashboardView {
               .columnsGap(0)
               .width('100%')
               .padding(16)
-              .backgroundColor(Color.White)
+              .backgroundColor(AppTheme.color.surface)
               .borderRadius(14)
 
               // Summary
@@ -427,7 +427,7 @@ export struct DashboardView {
               }
               .width('100%')
               .padding(16)
-              .backgroundColor(Color.White)
+              .backgroundColor(AppTheme.color.surface)
               .borderRadius(14)
 
               // Weekly settlement
@@ -506,7 +506,7 @@ export struct DashboardView {
               }
               .width('100%')
               .padding(16)
-              .backgroundColor(Color.White)
+              .backgroundColor(AppTheme.color.surface)
               .borderRadius(14)
 
               // Recent notes
@@ -546,7 +546,7 @@ export struct DashboardView {
               }
               .width('100%')
               .padding(16)
-              .backgroundColor(Color.White)
+              .backgroundColor(AppTheme.color.surface)
               .borderRadius(14)
 
               // Pending predictions
@@ -586,7 +586,7 @@ export struct DashboardView {
               }
               .width('100%')
               .padding(16)
-              .backgroundColor(Color.White)
+              .backgroundColor(AppTheme.color.surface)
               .borderRadius(14)
             }
             .width('100%')

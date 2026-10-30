@@ -27,7 +27,7 @@ export struct EntryChip {
         .fontColor(AppTheme.color.text)
     }
     .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-    .backgroundColor(Color.White)
+    .backgroundColor(AppTheme.color.surface)
     .borderRadius(16)
     .onClick(() => {
       this.onTap();

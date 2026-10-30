@@ -1,4 +1,5 @@
-import { AppTheme } from '../theme/AppTheme';
+import { AppTheme, applyTheme } from '../theme/AppTheme';
+import { resourceManager } from '@kit.LocalizationKit';
 import { DashboardView } from '../views/DashboardView';
 import { ROUTES } from '../navigation/Routes';
 import { PlaceholderPage } from './PlaceholderPage';
@@ -31,6 +32,17 @@ import { backgroundKeyForRoute } from '../settings/PageBackgroundService';
 @ComponentV2
 struct Index {
   @Local pathStack: NavPathStack = new NavPathStack();
+
+  aboutToAppear(): void {
+    try {
+      const context = this.getUIContext().getHostContext();
+      if (context !== undefined) {
+        const configuration = context.resourceManager.getConfigurationSync();
+        applyTheme(configuration.colorMode === resourceManager.ColorMode.DARK);
+      }
+    } catch (error) {
+    }
+  }
 
   @Builder
   pageMap(name: string) {
