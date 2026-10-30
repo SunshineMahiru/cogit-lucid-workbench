@@ -47,6 +47,9 @@ export struct PageBackground {
           .height('100%')
           .objectFit(ImageFit.Cover)
           .opacity(this.imageOpacity)
+          .onError(() => {
+            this.imagePath = '';
+          })
       }
     }
     .width('100%')

@@ -216,6 +216,22 @@ export struct SettingsPage {
     }
   }
 
+  private async repairBackgrounds(): Promise<void> {
+    if (this.hostContext === null || this.backgroundBusy.length > 0) {
+      return;
+    }
+    this.backgroundBusy = 'repair';
+    try {
+      const result = await PageBackgroundService.recoverLegacyBackgrounds(this.hostContext);
+      await this.loadBackgrounds(this.hostContext);
+      this.showToast(`背景修复：转换 ${result.converted}，清除 ${result.failed + result.cleared}，请重新选择无法识别的图片`);
+    } catch (error) {
+      this.showToast('背景修复失败，请重试');
+    } finally {
+      this.backgroundBusy = '';
+    }
+  }
+
   private async applyPending(group: string | null): Promise<void> {
     if (this.hostContext === null || this.pendingBackgroundPath.length === 0) {
       return;
@@ -679,6 +695,13 @@ export struct SettingsPage {
                     Text('图片格式不兼容时会转换为 PNG')
                       .fontSize(10)
                       .fontColor(AppTheme.color.textMuted)
+                    Text(this.backgroundBusy === 'repair' ? '修复中…' : '修复旧背景')
+                      .fontSize(10)
+                      .fontColor(AppTheme.color.primary)
+                      .padding({ left: 8, right: 8, top: 6, bottom: 6 })
+                      .onClick(() => {
+                        this.repairBackgrounds();
+                      })
                   }
                   .width('100%')
                   ForEach(this.backgroundRows, (row: BackgroundRowState) => {

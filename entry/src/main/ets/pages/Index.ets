@@ -26,7 +26,7 @@ import { StatusHistoryPage } from './StatusHistoryPage';
 import { StatusEditPage } from './StatusEditPage';
 import { SettingsPage } from './SettingsPage';
 import { PageBackground } from '../components/PageBackground';
-import { backgroundKeyForRoute } from '../settings/PageBackgroundService';
+import { backgroundKeyForRoute, PageBackgroundService } from '../settings/PageBackgroundService';
 
 @Entry
 @ComponentV2
@@ -39,6 +39,8 @@ struct Index {
       if (context !== undefined) {
         const configuration = context.resourceManager.getConfigurationSync();
         applyTheme(configuration.colorMode === resourceManager.ColorMode.DARK);
+        PageBackgroundService.recoverLegacyBackgrounds(context).catch(() => {
+        });
       }
     } catch (error) {
     }

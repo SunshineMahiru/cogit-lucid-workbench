@@ -10,6 +10,12 @@ export interface PageBackgroundGroup {
   label: string;
 }
 
+export interface BackgroundRecoveryResult {
+  converted: number;
+  cleared: number;
+  failed: number;
+}
+
 /** Page groups that can each carry a different local background image. */
 export const PAGE_BACKGROUND_GROUPS: PageBackgroundGroup[] = [
   { key: 'home', label: '首页' },
@@ -112,6 +118,45 @@ export class PageBackgroundService {
     const store = await PageBackgroundStore.open(context);
     await store.setOpacity(value);
     notifyPageBackgroundChanged();
+  }
+
+  /** Repairs backgrounds saved before PNG normalization; clears files that cannot be decoded. */
+  static async recoverLegacyBackgrounds(context: common.Context): Promise<BackgroundRecoveryResult> {
+    const store = await PageBackgroundStore.open(context);
+    const directory = `${context.filesDir}/page-backgrounds`;
+    PageBackgroundService.ensureDirectory(directory);
+    let converted = 0;
+    let cleared = 0;
+    let failed = 0;
+    for (const group of PAGE_BACKGROUND_GROUPS) {
+      const path = await store.get(group.key);
+      if (path.length === 0) {
+        continue;
+      }
+      if (!fileIo.accessSync(path)) {
+        await store.clear(group.key);
+        cleared += 1;
+        continue;
+      }
+      if (path.endsWith('.png')) {
+        continue;
+      }
+      const destination = `${directory}/${group.key}.png`;
+      try {
+        await PageBackgroundService.convertToPng(path, destination);
+        await store.set(group.key, destination);
+        PageBackgroundService.removeFile(path);
+        converted += 1;
+      } catch (error) {
+        await store.clear(group.key);
+        PageBackgroundService.removeFile(path);
+        failed += 1;
+      }
+    }
+    if (converted > 0 || cleared > 0 || failed > 0) {
+      notifyPageBackgroundChanged();
+    }
+    return { converted: converted, cleared: cleared, failed: failed };
   }
 
   private static ensureDirectory(directory: string): void {
