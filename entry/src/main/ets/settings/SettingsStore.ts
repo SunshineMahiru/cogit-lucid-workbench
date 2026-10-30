@@ -3,6 +3,7 @@ import { common } from '@kit.AbilityKit';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { AppSettings, LlmProvider, defaultAppSettings, sanitizeAppSettings } from './AppSettings';
 import { SETTINGS_KEYS, SETTINGS_STORE_NAME } from './SettingsKeys';
+import { SecretStore } from './SecretStore';
 
 /** Reads and writes user options through Preferences. */
 export class SettingsStore {
@@ -24,7 +25,17 @@ export class SettingsStore {
     const enabled = await this.prefs.get(SETTINGS_KEYS.LLM_ENABLED, defaults.llmEnabled);
     const provider = await this.prefs.get(SETTINGS_KEYS.LLM_PROVIDER, defaults.llmProvider);
     const baseUrl = await this.prefs.get(SETTINGS_KEYS.LLM_BASE_URL, defaults.llmBaseUrl);
-    const apiKey = await this.prefs.get(SETTINGS_KEYS.LLM_API_KEY, defaults.llmApiKey);
+    const storedApiKey = await this.prefs.get(SETTINGS_KEYS.LLM_API_KEY, defaults.llmApiKey);
+    let apiKey = await SecretStore.load();
+    if (apiKey.length === 0 && typeof storedApiKey === 'string' && storedApiKey.length > 0) {
+      // Migrate the old plaintext value once, then remove it from Preferences.
+      const migrated = await SecretStore.save(storedApiKey);
+      if (migrated) {
+        await this.prefs.put(SETTINGS_KEYS.LLM_API_KEY, '');
+        await this.prefs.flush();
+        apiKey = storedApiKey;
+      }
+    }
     const model = await this.prefs.get(SETTINGS_KEYS.LLM_MODEL, defaults.llmModel);
     const budget = await this.prefs.get(SETTINGS_KEYS.LLM_MONTHLY_BUDGET, defaults.llmMonthlyBudget);
     const level = await this.prefs.get(SETTINGS_KEYS.DEFAULT_LEVEL, defaults.defaultLevel);
@@ -47,10 +58,14 @@ export class SettingsStore {
   /** Persists sanitized options and flushes them to disk. */
   async save(settings: AppSettings): Promise<void> {
     const safe = sanitizeAppSettings(settings);
+    const stored = await SecretStore.save(safe.llmApiKey);
+    if (!stored) {
+      throw new Error('无法写入系统密钥库');
+    }
     await this.prefs.put(SETTINGS_KEYS.LLM_ENABLED, safe.llmEnabled);
     await this.prefs.put(SETTINGS_KEYS.LLM_PROVIDER, safe.llmProvider);
     await this.prefs.put(SETTINGS_KEYS.LLM_BASE_URL, safe.llmBaseUrl);
-    await this.prefs.put(SETTINGS_KEYS.LLM_API_KEY, safe.llmApiKey);
+    await this.prefs.put(SETTINGS_KEYS.LLM_API_KEY, '');
     await this.prefs.put(SETTINGS_KEYS.LLM_MODEL, safe.llmModel);
     await this.prefs.put(SETTINGS_KEYS.LLM_MONTHLY_BUDGET, safe.llmMonthlyBudget);
     await this.prefs.put(SETTINGS_KEYS.DEFAULT_LEVEL, safe.defaultLevel);
