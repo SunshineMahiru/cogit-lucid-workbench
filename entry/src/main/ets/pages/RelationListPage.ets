@@ -148,6 +148,8 @@ export struct RelationListPage {
           }
         })
     }
+    .height(56)
+    .alignItems(VerticalAlign.Center)
   }
 
   @Builder

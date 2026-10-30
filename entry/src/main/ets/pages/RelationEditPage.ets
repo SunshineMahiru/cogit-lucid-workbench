@@ -126,13 +126,17 @@ export struct RelationEditPage {
 
   @Builder
   saveMenu() {
-    Text(this.isSaving ? '保存中' : '保存')
-      .fontSize(14)
-      .fontColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
-      .onClick(() => {
-        this.save();
-      })
+    Row() {
+      Text(this.isSaving ? '保存中' : '保存')
+        .fontSize(14)
+        .fontColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
+        .padding({ left: 12, right: 16 })
+        .onClick(() => {
+          this.save();
+        })
+    }
+    .height(56)
+    .alignItems(VerticalAlign.Center)
   }
 
   build() {

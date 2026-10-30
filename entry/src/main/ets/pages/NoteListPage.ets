@@ -134,13 +134,17 @@ export struct NoteListPage {
 
   @Builder
   addMenu() {
-    Text('＋')
-      .fontSize(20)
-      .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
-      .onClick(() => {
-        this.openEditor();
-      })
+    Row() {
+      Text('＋')
+        .fontSize(20)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 12, right: 16 })
+        .onClick(() => {
+          this.openEditor();
+        })
+    }
+    .height(56)
+    .alignItems(VerticalAlign.Center)
   }
 
   build() {

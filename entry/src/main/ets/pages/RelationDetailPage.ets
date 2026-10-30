@@ -144,6 +144,8 @@ export struct RelationDetailPage {
           this.deleteRelation();
         })
     }
+    .height(56)
+    .alignItems(VerticalAlign.Center)
   }
 
   @Builder

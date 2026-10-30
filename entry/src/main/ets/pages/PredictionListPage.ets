@@ -141,6 +141,8 @@ export struct PredictionListPage {
           this.openCreate();
         })
     }
+    .height(56)
+    .alignItems(VerticalAlign.Center)
   }
 
   @Builder

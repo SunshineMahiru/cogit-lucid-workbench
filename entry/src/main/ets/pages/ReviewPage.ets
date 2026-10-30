@@ -31,6 +31,8 @@ export struct ReviewPage {
           }
         })
     }
+    .height(56)
+    .alignItems(VerticalAlign.Center)
   }
 
   build() {

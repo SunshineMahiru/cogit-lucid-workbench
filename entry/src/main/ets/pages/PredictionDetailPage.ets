@@ -78,13 +78,17 @@ export struct PredictionDetailPage {
 
   @Builder
   reviseMenu() {
-    Text('修改')
-      .fontSize(14)
-      .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
-      .onClick(() => {
-        this.openRevise();
-      })
+    Row() {
+      Text('修改')
+        .fontSize(14)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 12, right: 16 })
+        .onClick(() => {
+          this.openRevise();
+        })
+    }
+    .height(56)
+    .alignItems(VerticalAlign.Center)
   }
 
   private async load(id: string): Promise<void> {
