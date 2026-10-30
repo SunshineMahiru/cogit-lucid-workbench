@@ -42,7 +42,7 @@ The current build covers notes, predictions and settlement, review and the agent
 
 ## Architecture
 
-The code is organised as five layers with a single dependency direction, plus a shared type layer at the bottom. A layer only calls the layers below it; `analysis/` imports nothing but `model/` types, so rules stay testable without a database or a UI.
+The code is organised as six layers with a single dependency direction, plus a shared type layer at the bottom. A layer only calls the layers below it; `analysis/` imports nothing but `model/` types, so rules stay testable without a database or a UI. The `data/` layer owns cross-entity read models such as the dashboard aggregate.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -53,12 +53,14 @@ The code is organised as five layers with a single dependency direction, plus a 
 │               relation/  status/                            │
 │               validation, composition, projection           │
 ├─────────────────────────────────────────────────────────────┤
+│ data/         dashboard aggregate, cross-entity reads       │
+├─────────────────────────────────────────────────────────────┤
 │ analysis/     contradiction  calibration  anchors/trust     │
 │               status rules   llm adapter                    │
 │               imports model/ only                           │
 ├─────────────────────────────────────────────────────────────┤
 │ network/      prompt repository  OpenAI-compatible          │
-│               local mock client  cleartext HTTP, 5 s        │
+│               local mock client  cleartext blocked by default│
 ├─────────────────────────────────────────────────────────────┤
 │ records       db/  settings/  export/                       │
 │               relationalStore, Preferences, Markdown        │
@@ -70,7 +72,7 @@ The code is organised as five layers with a single dependency direction, plus a 
 
 - ArkTS pages with state management V2 (`@ComponentV2`, `@Local`, `@Param`); entity models and services in plain TypeScript.
 - Navigation with `NavPathStack`; 20 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
-- `relationalStore` is the single source of truth, `Preferences` holds settings, `fileIo` writes the Markdown export.
+- `relationalStore` is the single source of truth, `Preferences` holds non-secret options, the model key is stored in the system asset service, and `fileIo` writes the Markdown export.
 - `@ohos/mpchart` 3.1.0-rc.0 is the only runtime dependency. Icons come from system glyphs rather than an icon pack.
 
 ## Usage Example
@@ -218,7 +220,7 @@ Settings writes a single Markdown file covering events, decisions, relations, pr
 cogit-lucid-workbench/
 ├── AppScope/                     bundle name, version, launcher icon
 ├── entry/                        the only module
-│   └── src/main/
+│   ├── src/main/
 │       ├── ets/
 │       │   ├── entryability/     ability entry
 │       │   ├── pages/            20 route pages, host, placeholder fallback
@@ -226,14 +228,16 @@ cogit-lucid-workbench/
 │       │   ├── components/       22 reusable pieces
 │       │   ├── navigation/       route names and parameter types
 │       │   ├── model/            entity types, enums, factories, demo data
+│       │   ├── data/             dashboard aggregate and cross-entity reads
 │       │   ├── note/ prediction/ review/ anchor/ relation/ status/
 │       │   ├── analysis/         rules, analyzers, LLM adapters
 │       │   ├── db/               schema, helpers, seven DAOs
-│       │   ├── settings/         Preferences keys, LLM budget ledger
+│       │   ├── settings/         Preferences keys, asset-backed key, budget ledger
 │       │   ├── export/           Markdown sections and file writer
 │       │   ├── network/          prompt repository, HTTP, LLM clients
 │       │   └── theme/            design tokens, app identity
 │       └── resources/            strings, colours, icons, network config
+│   └── src/test/                 Hypium unit tests
 ├── mock-server/                  zero-dependency Node mock server
 ├── signing/                      local-only signing config and material (ignored)
 ├── docs/                         UI freeze record, debug screenshots, signing template
@@ -241,6 +245,10 @@ cogit-lucid-workbench/
 ├── oh-package.json5              dependencies
 └── LICENSE                       AGPL-3.0
 ```
+
+## Tests
+
+`hvigorw test` runs the Hypium unit tests in `entry/src/test/List.test.ets`; the current suite covers prediction validation, confidence calibration, and sealed-record export filtering (4 cases).
 
 ## Documentation
 

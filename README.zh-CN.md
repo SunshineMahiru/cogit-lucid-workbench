@@ -42,7 +42,7 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 
 ## 架构
 
-代码分成五层，依赖方向只有一条，最底下是共享类型层。每层只调用它下面的层；`analysis/` 只 import `model/` 的类型，规则因此不需要数据库和界面就能单独验证。
+代码分成六层，依赖方向只有一条，最底下是共享类型层。每层只调用它下面的层；`analysis/` 只 import `model/` 的类型，规则因此不需要数据库和界面就能单独验证。`data/` 层负责首页聚合等跨实体读取。
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -53,12 +53,14 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 │               relation/  status/                            │
 │               validation, composition, projection           │
 ├─────────────────────────────────────────────────────────────┤
+│ data/         首页聚合、跨实体读取                           │
+├─────────────────────────────────────────────────────────────┤
 │ analysis/     contradiction  calibration  anchors/trust     │
 │               status rules   llm adapter                    │
 │               imports model/ only                           │
 ├─────────────────────────────────────────────────────────────┤
 │ network/      prompt repository  OpenAI-compatible          │
-│               local mock client  cleartext HTTP, 5 s        │
+│               local mock client  默认阻止明文                 │
 ├─────────────────────────────────────────────────────────────┤
 │ records       db/  settings/  export/                       │
 │               relationalStore, Preferences, Markdown        │
@@ -70,7 +72,7 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 
 - 页面用 ArkTS 与状态管理 V2（`@ComponentV2`、`@Local`、`@Param`）；实体模型与服务用普通 TypeScript。
 - 路由走 `NavPathStack`，20 个路由名集中在 `entry/src/main/ets/navigation/Routes.ts`，新增页面只往 `Index.pageMap` 加一个分支。
-- `relationalStore` 是唯一事实源，`Preferences` 存设置，`fileIo` 写 Markdown 导出。
+- `relationalStore` 是唯一事实源，`Preferences` 存非敏感设置，模型密钥存入系统资产库，`fileIo` 写 Markdown 导出。
 - 运行时依赖只有 `@ohos/mpchart` 3.1.0-rc.0。图标用系统字形，没有引入图标包。
 
 ## 使用示例
@@ -176,7 +178,7 @@ node mock-server/server.js
 
 - DevEco 预览器：`http://127.0.0.1:4523` 直接可用。
 - 模拟器：`127.0.0.1` 指向模拟器自己。要么把 `entry/src/main/ets/network/ApiConfig.ts` 里的 `API_BASE_URL` 改成宿主机局域网地址，要么先执行 `hdc rport tcp:4523 tcp:4523` 做端口转发。
-- 明文 HTTP 由 `entry/src/main/resources/base/profile/network_config.json` 放行；客户端超时 5 秒。
+- 明文 HTTP 默认关闭，仅在 `network_config.json` 中显式列入的本地调试地址放行；客户端超时 5 秒。
 
 ### 复盘 Agent 三档
 
@@ -218,7 +220,7 @@ node mock-server/server.js
 cogit-lucid-workbench/
 ├── AppScope/                     bundle 名、版本、桌面图标
 ├── entry/                        唯一的模块
-│   └── src/main/
+│   ├── src/main/
 │       ├── ets/
 │       │   ├── entryability/     应用入口
 │       │   ├── pages/            20 个路由页、宿主页、占位页
@@ -226,14 +228,16 @@ cogit-lucid-workbench/
 │       │   ├── components/       22 个可复用组件
 │       │   ├── navigation/       路由名与参数类型
 │       │   ├── model/            实体类型、枚举、工厂、示例数据
+│       │   ├── data/             首页聚合、跨实体读取
 │       │   ├── note/ prediction/ review/ anchor/ relation/ status/
 │       │   ├── analysis/         规则、分析器、LLM 适配器
 │       │   ├── db/               表结构、工具、七个 DAO
-│       │   ├── settings/         Preferences 键、LLM 预算账本
+│       │   ├── settings/         Preferences 键、资产库密钥、LLM 预算账本
 │       │   ├── export/           Markdown 分段与写文件
 │       │   ├── network/          提示仓库、HTTP、LLM 客户端
 │       │   └── theme/            设计令牌、应用标识
 │       └── resources/            字符串、颜色、图标、网络配置
+│   └── src/test/                 Hypium 单元测试
 ├── mock-server/                  零依赖 Node Mock 服务
 ├── signing/                      本地签名配置和材料（忽略）
 ├── docs/                         UI 冻结记录、调试截图、签名模板
@@ -241,6 +245,10 @@ cogit-lucid-workbench/
 ├── oh-package.json5              依赖声明
 └── LICENSE                       AGPL-3.0
 ```
+
+## 测试
+
+`hvigorw test` 运行 `entry/src/test/List.test.ets` 中的 Hypium 用例，覆盖预测校验、置信度校准和 SEALED 导出过滤，共 4 条。
 
 ## 文档
 
