@@ -1,5 +1,6 @@
 import { PageBackgroundStore } from '../settings/PageBackgroundStore';
 import { subscribePageBackground, unsubscribePageBackground } from '../settings/PageBackgroundBus';
+import { PageBackgroundService } from '../settings/PageBackgroundService';
 import { fileUri } from '@kit.CoreFileKit';
 
 /** A low-opacity image layer used behind one page group. */
@@ -33,7 +34,8 @@ export struct PageBackground {
     }
     try {
       const store = await PageBackgroundStore.open(context);
-      this.imagePath = await store.get(this.route);
+      const storedPath = await store.get(this.route);
+      this.imagePath = await PageBackgroundService.prepareDisplayImage(storedPath, this.route, context);
       this.imageOpacity = await store.getOpacity();
     } catch (error) {
       this.imagePath = '';

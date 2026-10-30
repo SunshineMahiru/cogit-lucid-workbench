@@ -81,6 +81,7 @@ export class PageBackgroundService {
     const directory = `${context.filesDir}/page-backgrounds`;
     PageBackgroundService.ensureDirectory(directory);
     const destination = `${directory}/${group}.png`;
+    PageBackgroundService.removeFile(`${directory}/display-${group}.png`);
     const source = fileIo.openSync(sourcePath, fileIo.OpenMode.READ_ONLY);
     try {
       fileIo.copyFileSync(source.fd, destination);
@@ -91,6 +92,42 @@ export class PageBackgroundService {
     await store.set(group, destination);
     notifyPageBackgroundChanged();
     return destination;
+  }
+
+  /** Returns a display-sized cache, converting large legacy images before Image decodes them. */
+  static async prepareDisplayImage(sourcePath: string, group: string, context: common.Context): Promise<string> {
+    if (sourcePath.length === 0 || !fileIo.accessSync(sourcePath)) {
+      return '';
+    }
+    const directory = `${context.filesDir}/page-backgrounds`;
+    PageBackgroundService.ensureDirectory(directory);
+    const displayPath = `${directory}/display-${group}.png`;
+    if (fileIo.accessSync(displayPath)) {
+      return displayPath;
+    }
+    if (sourcePath.endsWith('.png')) {
+      try {
+        const sourceFile = fileIo.openSync(sourcePath, fileIo.OpenMode.READ_ONLY);
+        const source = image.createImageSource(sourceFile.fd);
+        try {
+          const info = await source.getImageInfo();
+          if (info.size.width <= 1080 && info.size.height <= 1920) {
+            return sourcePath;
+          }
+        } finally {
+          source.release();
+          fileIo.closeSync(sourceFile);
+        }
+      } catch (error) {
+        return '';
+      }
+    }
+    try {
+      await PageBackgroundService.convertToPng(sourcePath, displayPath);
+      return displayPath;
+    } catch (error) {
+      return '';
+    }
   }
 
   static async applyToAll(sourcePath: string, context: common.Context): Promise<void> {
@@ -112,6 +149,7 @@ export class PageBackgroundService {
     PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}.png`);
     PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}.jpg`);
     PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}-repair.png`);
+    PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/display-${group}.png`);
     notifyPageBackgroundChanged();
   }
 
