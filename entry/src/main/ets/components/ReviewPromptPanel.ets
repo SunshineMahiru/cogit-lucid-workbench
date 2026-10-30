@@ -1,7 +1,14 @@
 import { AppTheme } from '../theme/AppTheme';
 import { SectionCard } from './SectionCard';
 import { ReviewPeriod } from '../model/ReviewPeriod';
-import { API_BASE_URL, HttpReviewPromptRepository, ReviewPrompt, ReviewPromptRepository } from '../network';
+import {
+  API_BASE_URL,
+  HttpClient,
+  HttpReviewPromptRepository,
+  ReviewPrompt,
+  ReviewPromptRepository
+} from '../network';
+import { SettingsStore } from '../settings';
 
 const STATE_LOADING = 'loading';
 const STATE_READY = 'ready';
@@ -23,6 +30,22 @@ export struct ReviewPromptPanel {
   private repository: ReviewPromptRepository = new HttpReviewPromptRepository();
 
   aboutToAppear(): void {
+    this.prepareRepository();
+  }
+
+  private async prepareRepository(): Promise<void> {
+    const context = this.getUIContext().getHostContext();
+    if (context !== undefined) {
+      try {
+        const store = await SettingsStore.open(context);
+        const settings = await store.load();
+        const base = mockBaseFrom(settings.llmBaseUrl);
+        if (base.length > 0) {
+          this.repository = new HttpReviewPromptRepository(new HttpClient(), base);
+        }
+      } catch (error) {
+      }
+    }
     this.load();
   }
 
@@ -114,4 +137,15 @@ export struct ReviewPromptPanel {
       .alignItems(HorizontalAlign.Start)
     }
   }
+}
+
+function mockBaseFrom(baseUrl: string): string {
+  let value = baseUrl.trim();
+  if (value.endsWith('/v1')) {
+    value = value.slice(0, value.length - 3);
+  }
+  if (value.endsWith('/')) {
+    value = value.slice(0, value.length - 1);
+  }
+  return value;
 }
