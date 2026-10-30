@@ -1,11 +1,7 @@
 import { AppTheme } from '../theme/AppTheme';
 import { SectionCard } from './SectionCard';
 import { ReviewPeriod } from '../model/ReviewPeriod';
-import {
-  HttpReviewPromptRepository,
-  ReviewPrompt,
-  ReviewPromptRepository
-} from '../network';
+import { API_BASE_URL, HttpReviewPromptRepository, ReviewPrompt, ReviewPromptRepository } from '../network';
 
 const STATE_LOADING = 'loading';
 const STATE_READY = 'ready';
@@ -43,9 +39,9 @@ export struct ReviewPromptPanel {
             .fontSize(11)
             .fontColor(AppTheme.color.textSecondary)
           Blank()
-          Text('本地 Mock')
+          Text(this.state === STATE_ERROR ? 'Mock 未连接' : '本地 Mock')
             .fontSize(10)
-            .fontColor(AppTheme.color.textMuted)
+            .fontColor(this.state === STATE_ERROR ? AppTheme.color.danger : AppTheme.color.textMuted)
         }
         .width('100%')
 
@@ -60,19 +56,28 @@ export struct ReviewPromptPanel {
               .fontColor(AppTheme.color.textMuted)
           }
         } else if (this.state === STATE_ERROR) {
-          Row({ space: 8 }) {
-            Text('提示加载失败')
-              .fontSize(11)
-              .fontColor(AppTheme.color.danger)
-            Blank()
-            Text('重试')
-              .fontSize(11)
-              .fontColor(AppTheme.color.primary)
-              .onClick(() => {
-                this.load();
-              })
+          Column({ space: 4 }) {
+            Row({ space: 8 }) {
+              Text('提示加载失败')
+                .fontSize(11)
+                .fontColor(AppTheme.color.danger)
+              Blank()
+              Text('重试')
+                .fontSize(11)
+                .fontColor(AppTheme.color.primary)
+                .onClick(() => {
+                  this.load();
+                })
+            }
+            .width('100%')
+            Text(`先启动 mock-server，确认 ${API_BASE_URL}/review-prompts 可访问`)
+              .fontSize(10)
+              .lineHeight(15)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
           }
           .width('100%')
+          .alignItems(HorizontalAlign.Start)
         } else if (this.state === STATE_EMPTY) {
           Text('暂无提示，稍后再试')
             .fontSize(11)
