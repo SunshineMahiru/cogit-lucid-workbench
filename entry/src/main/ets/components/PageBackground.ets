@@ -6,6 +6,7 @@ import { subscribePageBackground, unsubscribePageBackground } from '../settings/
 export struct PageBackground {
   @Param route: string = 'home';
   @Local imagePath: string = '';
+  @Local imageOpacity: number = 0.14;
   private listener: (() => void) | null = null;
 
   aboutToAppear(): void {
@@ -32,6 +33,7 @@ export struct PageBackground {
     try {
       const store = await PageBackgroundStore.open(context);
       this.imagePath = await store.get(this.route);
+      this.imageOpacity = await store.getOpacity();
     } catch (error) {
       this.imagePath = '';
     }
@@ -44,7 +46,7 @@ export struct PageBackground {
           .width('100%')
           .height('100%')
           .objectFit(ImageFit.Cover)
-          .opacity(0.14)
+          .opacity(this.imageOpacity)
       }
     }
     .width('100%')

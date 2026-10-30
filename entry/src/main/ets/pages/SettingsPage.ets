@@ -12,9 +12,9 @@ import {
 } from '../settings';
 import {
   PAGE_BACKGROUND_GROUPS,
-  PageBackgroundGroup,
   PageBackgroundService
 } from '../settings/PageBackgroundService';
+import { PageBackgroundStore } from '../settings/PageBackgroundStore';
 import { ExportService, totalExportRecords } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { securityLevelText } from '../note';
@@ -22,6 +22,21 @@ import { securityLevelText } from '../note';
 interface ModelOption {
   id: string;
   label: string;
+}
+
+interface BackgroundRowState {
+  key: string;
+  label: string;
+  path: string;
+}
+
+function initialBackgroundRows(): BackgroundRowState[] {
+  const rows: BackgroundRowState[] = [];
+  for (const group of PAGE_BACKGROUND_GROUPS) {
+    const row: BackgroundRowState = { key: group.key, label: group.label, path: '' };
+    rows.push(row);
+  }
+  return rows;
 }
 
 const MODEL_OPTIONS: ModelOption[] = [
@@ -43,6 +58,8 @@ export struct SettingsPage {
   @Local lastExportTotal: number = 0;
   @Local spentYuan: number = 0;
   @Local backgroundBusy: string = '';
+  @Local backgroundOpacity: number = 0.14;
+  @Local backgroundRows: BackgroundRowState[] = initialBackgroundRows();
   private store: SettingsStore | null = null;
   private hostContext: common.Context | null = null;
 
@@ -69,6 +86,7 @@ export struct SettingsPage {
       } catch (error) {
         this.spentYuan = 0;
       }
+      await this.loadBackgrounds(context);
       this.isLoading = false;
     } catch (error) {
       this.isLoading = false;
@@ -146,6 +164,28 @@ export struct SettingsPage {
     }
   }
 
+  private async loadBackgrounds(context: common.Context): Promise<void> {
+    const store = await PageBackgroundStore.open(context);
+    const rows: BackgroundRowState[] = [];
+    for (const group of PAGE_BACKGROUND_GROUPS) {
+      rows.push({
+        key: group.key,
+        label: group.label,
+        path: await store.get(group.key)
+      });
+    }
+    this.backgroundRows = rows;
+    this.backgroundOpacity = await store.getOpacity();
+  }
+
+  private updateBackgroundRow(group: string, path: string): void {
+    const rows: BackgroundRowState[] = [];
+    for (const row of this.backgroundRows) {
+      rows.push(row.key === group ? { key: row.key, label: row.label, path: path } : row);
+    }
+    this.backgroundRows = rows;
+  }
+
   private async chooseBackground(group: string): Promise<void> {
     if (this.hostContext === null) {
       this.showToast('预览器不支持选择图片');
@@ -157,6 +197,9 @@ export struct SettingsPage {
     this.backgroundBusy = group;
     try {
       const path = await PageBackgroundService.pickAndSave(group, this.hostContext);
+      if (path.length > 0) {
+        this.updateBackgroundRow(group, path);
+      }
       this.showToast(path.length > 0 ? '页面背景已更新' : '未选择图片');
     } catch (error) {
       this.showToast('选择图片失败，请重试');
@@ -172,6 +215,7 @@ export struct SettingsPage {
     this.backgroundBusy = group;
     try {
       await PageBackgroundService.clear(group, this.hostContext);
+      this.updateBackgroundRow(group, '');
       this.showToast('页面背景已清除');
     } catch (error) {
       this.showToast('清除背景失败');
@@ -189,6 +233,18 @@ export struct SettingsPage {
       await service.share(this.hostContext, this.lastExportPath);
     } catch (error) {
       this.showToast('系统分享暂不可用，请使用另存为');
+    }
+  }
+
+  private async updateOpacity(value: number): Promise<void> {
+    this.backgroundOpacity = value / 100;
+    if (this.hostContext === null) {
+      return;
+    }
+    try {
+      await PageBackgroundService.setOpacity(this.hostContext, this.backgroundOpacity);
+    } catch (error) {
+      this.showToast('背景透明度保存失败');
     }
   }
 
@@ -463,31 +519,69 @@ export struct SettingsPage {
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
-                  ForEach(PAGE_BACKGROUND_GROUPS, (group: PageBackgroundGroup) => {
+                  ForEach(this.backgroundRows, (row: BackgroundRowState) => {
                     Row({ space: 8 }) {
-                      Text(group.label)
+                      if (row.path.length > 0) {
+                        Image(row.path)
+                          .width(42)
+                          .height(30)
+                          .objectFit(ImageFit.Cover)
+                          .borderRadius(6)
+                      } else {
+                        Text('无')
+                          .fontSize(10)
+                          .fontColor(AppTheme.color.textMuted)
+                          .width(42)
+                          .height(30)
+                          .textAlign(TextAlign.Center)
+                          .backgroundColor(AppTheme.color.surfaceAlt)
+                          .borderRadius(6)
+                      }
+                      Text(row.label)
                         .fontSize(12)
                         .fontColor(AppTheme.color.text)
                         .layoutWeight(1)
-                      Text(this.backgroundBusy === group.key ? '处理中…' : '选择')
+                      Text(this.backgroundBusy === row.key ? '处理中…' : '选择')
                         .fontSize(11)
                         .fontColor(AppTheme.color.primary)
                         .padding({ left: 10, right: 10, top: 6, bottom: 6 })
                         .backgroundColor(AppTheme.color.tint)
                         .borderRadius(8)
                         .onClick(() => {
-                          this.chooseBackground(group.key);
+                          this.chooseBackground(row.key);
                         })
                       Text('清除')
                         .fontSize(11)
                         .fontColor(AppTheme.color.textMuted)
                         .padding({ left: 4, right: 4, top: 6, bottom: 6 })
                         .onClick(() => {
-                          this.clearBackground(group.key);
+                          this.clearBackground(row.key);
                         })
                     }
                     .width('100%')
-                  }, (group: PageBackgroundGroup) => group.key)
+                  }, (row: BackgroundRowState) => row.key)
+                  Row({ space: 8 }) {
+                    Text('透明度')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.textSecondary)
+                    Slider({
+                      value: this.backgroundOpacity * 100,
+                      min: 5,
+                      max: 40,
+                      step: 1
+                    })
+                      .layoutWeight(1)
+                      .selectedColor(AppTheme.color.primary)
+                      .onChange((value: number) => {
+                        this.updateOpacity(value);
+                      })
+                    Text(`${Math.round(this.backgroundOpacity * 100)}%`)
+                      .fontSize(10)
+                      .fontColor(AppTheme.color.textMuted)
+                      .width(36)
+                      .textAlign(TextAlign.End)
+                  }
+                  .width('100%')
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)

@@ -2,8 +2,10 @@ import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 
 const STORE_NAME = 'cogit_page_backgrounds';
+const OPACITY_KEY = '__opacity';
+const DEFAULT_OPACITY = 0.14;
 
-/** Stores one local image path per page group. */
+/** Stores one local image path per page group and the shared overlay opacity. */
 export class PageBackgroundStore {
   private prefs: preferences.Preferences;
 
@@ -28,6 +30,19 @@ export class PageBackgroundStore {
 
   async clear(route: string): Promise<void> {
     await this.prefs.put(route, '');
+    await this.prefs.flush();
+  }
+
+  async getOpacity(): Promise<number> {
+    const value = await this.prefs.get(OPACITY_KEY, DEFAULT_OPACITY);
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+      return DEFAULT_OPACITY;
+    }
+    return Math.min(0.4, Math.max(0.05, value));
+  }
+
+  async setOpacity(value: number): Promise<void> {
+    await this.prefs.put(OPACITY_KEY, Math.min(0.4, Math.max(0.05, value)));
     await this.prefs.flush();
   }
 }

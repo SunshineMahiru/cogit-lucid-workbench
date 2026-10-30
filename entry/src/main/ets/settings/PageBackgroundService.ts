@@ -90,4 +90,10 @@ export class PageBackgroundService {
     }
     notifyPageBackgroundChanged();
   }
+
+  static async setOpacity(context: common.Context, value: number): Promise<void> {
+    const store = await PageBackgroundStore.open(context);
+    await store.setOpacity(value);
+    notifyPageBackgroundChanged();
+  }
 }
