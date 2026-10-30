@@ -1,6 +1,7 @@
 import { AppTheme } from '../theme/AppTheme';
 import { SectionCard } from '../components/SectionCard';
 import { StatusDayRow } from '../components/StatusDayRow';
+import { StatusTrendCard } from '../components/StatusTrendCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { StatusDayRow as StatusRow, StatusOverview, StatusService } from '../status';
 import { ReadingFlag } from '../analysis/status/ReadingRules';
@@ -246,6 +247,8 @@ export struct StatusPage {
                 }
                 .width('100%')
               }
+
+              StatusTrendCard({ rows: this.overview.recent })
 
               SectionCard() {
                 Column({ space: 10 }) {
