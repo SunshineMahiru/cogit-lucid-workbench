@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { setPageEmpty } from '../settings/PageBackgroundBus';
 
 /** Shared empty state for filtered or empty note lists. */
 @ComponentV2
@@ -8,6 +9,14 @@ export struct NoteEmptyState {
   @Param actionLabel: string = '';
   @Param dashed: boolean = false;
   @Event onAction: () => void = () => {};
+
+  aboutToAppear(): void {
+    setPageEmpty(true);
+  }
+
+  aboutToDisappear(): void {
+    setPageEmpty(false);
+  }
 
   build() {
     Column({ space: 8 }) {

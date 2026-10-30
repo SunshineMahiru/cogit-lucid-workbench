@@ -28,6 +28,7 @@ import { SettingsPage } from './SettingsPage';
 import { BackgroundApplyPage } from './BackgroundApplyPage';
 import { PageBackground } from '../components/PageBackground';
 import { backgroundKeyForRoute, PageBackgroundService } from '../settings/PageBackgroundService';
+import { setPageEmpty } from '../settings/PageBackgroundBus';
 
 @Entry
 @ComponentV2
@@ -60,6 +61,7 @@ struct Index {
         } else {
           this.currentGroup = 'home';
         }
+        setPageEmpty(false);
       }
     });
   }

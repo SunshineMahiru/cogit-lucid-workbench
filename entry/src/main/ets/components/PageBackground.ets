@@ -1,5 +1,9 @@
 import { PageBackgroundStore } from '../settings/PageBackgroundStore';
-import { subscribePageBackground, unsubscribePageBackground } from '../settings/PageBackgroundBus';
+import {
+  isPageEmpty,
+  subscribePageBackground,
+  unsubscribePageBackground
+} from '../settings/PageBackgroundBus';
 import { PageBackgroundService } from '../settings/PageBackgroundService';
 import { fileUri } from '@kit.CoreFileKit';
 
@@ -10,6 +14,7 @@ export struct PageBackground {
   @Local imagePath: string = '';
   @Local imageOpacity: number = 0.1;
   private listener: (() => void) | null = null;
+  private static readonly EMPTY_FACTOR: number = 0.55;
 
   aboutToAppear(): void {
     this.listener = () => {
@@ -41,7 +46,8 @@ export struct PageBackground {
       const store = await PageBackgroundStore.open(context);
       const storedPath = await store.get(this.route);
       this.imagePath = await PageBackgroundService.prepareDisplayImage(storedPath, this.route, context);
-      this.imageOpacity = await store.getOpacity();
+      const base = await store.getOpacity();
+      this.imageOpacity = isPageEmpty() ? base * PageBackground.EMPTY_FACTOR : base;
     } catch (error) {
       this.imagePath = '';
     }

@@ -2,6 +2,21 @@ type BackgroundListener = () => void;
 
 const listeners: BackgroundListener[] = [];
 
+let pageIsEmpty: boolean = false;
+
+/** Pages without content report it, so the shared layer can step back and stay out of the way. */
+export function setPageEmpty(value: boolean): void {
+  if (pageIsEmpty === value) {
+    return;
+  }
+  pageIsEmpty = value;
+  notifyPageBackgroundChanged();
+}
+
+export function isPageEmpty(): boolean {
+  return pageIsEmpty;
+}
+
 /** Subscribes a page background to local image changes. */
 export function subscribePageBackground(listener: BackgroundListener): void {
   if (!listeners.includes(listener)) {
