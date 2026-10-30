@@ -6,7 +6,7 @@ import {
   todayDateString
 } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
-import { PredictionDetailParams, PredictionSettleParams } from '../navigation/RouteParams';
+import { PredictionDetailParams, PredictionSettleParams, PredictionCreateParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { AppTheme } from '../theme/AppTheme';
@@ -64,6 +64,27 @@ export struct PredictionDetailPage {
     }
     const params: PredictionSettleParams = { predictionId: this.detail.id };
     this.navStack.pushPathByName(ROUTES.PREDICTION_SETTLE, params);
+  }
+
+  private openRevise(): void {
+    if (this.navStack === null || this.detail.id.length === 0) {
+      return;
+    }
+    const params: PredictionCreateParams = { sourcePredictionId: this.detail.id };
+    this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, params, () => {
+      this.load(this.detail.id);
+    });
+  }
+
+  @Builder
+  reviseMenu() {
+    Text('修改')
+      .fontSize(14)
+      .fontColor(AppTheme.color.primary)
+      .padding({ left: 12, right: 16 })
+      .onClick(() => {
+        this.openRevise();
+      })
   }
 
   private async load(id: string): Promise<void> {
@@ -251,6 +272,7 @@ export struct PredictionDetailPage {
       }
     }
     .title('预测详情')
+    .menus(this.reviseMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param === undefined) {

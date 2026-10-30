@@ -97,6 +97,27 @@ class PreviewStore {
     return toPredictionDetail(prediction);
   }
 
+  revisePrediction(sourceId: string, draft: PredictionDraft): PredictionDetail | null {
+    let source: Prediction | null = null;
+    for (const prediction of this.predictions) {
+      if (prediction.id === sourceId) {
+        source = prediction;
+      }
+    }
+    if (source === null) {
+      return null;
+    }
+    const prediction = makePrediction();
+    prediction.target = draft.target.trim();
+    prediction.judgment = draft.judgment.trim();
+    prediction.confidence = Math.round(draft.confidence);
+    prediction.reason = draft.reason.trim();
+    prediction.settlementDate = draft.settlementDate.trim();
+    prediction.version = source.version + 1;
+    this.predictions.unshift(prediction);
+    return toPredictionDetail(prediction);
+  }
+
   settlePrediction(id: string, actualResult: string, hit: boolean): PredictionDetail | null {
     for (const prediction of this.predictions) {
       if (prediction.id === id && prediction.status === PredictionStatus.PENDING) {

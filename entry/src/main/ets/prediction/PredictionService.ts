@@ -74,6 +74,27 @@ export class PredictionService {
     return toPredictionDetail(prediction);
   }
 
+  /** Creates and stores a new version of an existing prediction. */
+  async revise(id: string, draft: PredictionDraft, now: number = Date.now()): Promise<PredictionDetail> {
+    if (hasPredictionErrors(validatePredictionDraft(draft, now))) {
+      throw new Error('invalid prediction draft');
+    }
+    const existing = await this.predictionDao.queryById(id);
+    if (existing === null) {
+      throw new Error('prediction not found');
+    }
+    const prediction = createPrediction();
+    prediction.target = draft.target.trim();
+    prediction.judgment = draft.judgment.trim();
+    prediction.confidence = Math.round(draft.confidence);
+    prediction.reason = draft.reason.trim();
+    prediction.settlementDate = draft.settlementDate.trim();
+    prediction.version = existing.version + 1;
+    prediction.createdAt = now;
+    await this.predictionDao.insert(prediction);
+    return toPredictionDetail(prediction);
+  }
+
   /**
    * Settles a pending prediction once, on or after its due date.
    * Returns null when it is gone and throws when it is not due, already settled

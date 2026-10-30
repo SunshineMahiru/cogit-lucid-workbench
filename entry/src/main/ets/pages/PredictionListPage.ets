@@ -1,7 +1,7 @@
 import { PredictionListItem, PredictionService, PredictionSummary } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { formatHitRate, hitRateCaption } from '../model/HomeModel';
-import { PredictionDetailParams, PredictionListParams } from '../navigation/RouteParams';
+import { PredictionDetailParams, PredictionListParams, PredictionCreateParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { PredictionListCard } from '../components/PredictionListCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
@@ -81,7 +81,8 @@ export struct PredictionListPage {
 
   private openCreate(): void {
     if (this.navStack !== null) {
-      this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, null);
+      const params: PredictionCreateParams = { sourcePredictionId: null };
+      this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, params);
     }
   }
 

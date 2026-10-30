@@ -4,6 +4,7 @@ import {
   MAX_JUDGMENT_LENGTH,
   MAX_REASON_LENGTH,
   MAX_TARGET_LENGTH,
+  PredictionDetail,
   PredictionDraft,
   PredictionDraftErrors,
   PredictionService,
@@ -11,6 +12,7 @@ import {
   hasPredictionErrors,
   validatePredictionDraft
 } from '../prediction';
+import { PredictionCreateParams } from '../navigation/RouteParams';
 import { previewStore } from '../preview/PreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
@@ -31,10 +33,41 @@ export struct PredictionCreatePage {
   @Local settlementDate: string = '';
   @Local errors: PredictionDraftErrors = EMPTY_ERRORS;
   @Local isSaving: boolean = false;
+  @Local sourceId: string | null = null;
+  @Local sourceVersion: number = 0;
   private navStack: NavPathStack | null = null;
 
   aboutToAppear(): void {
     this.settlementDate = dateAfterDays(Date.now(), 7);
+  }
+
+  private async loadSource(id: string): Promise<void> {
+    this.sourceId = id;
+    const hostContext = this.getUIContext().getHostContext();
+    if (hostContext === undefined) {
+      const detail = previewStore.findPrediction(id);
+      if (detail !== null) {
+        this.applySource(detail);
+      }
+      return;
+    }
+    try {
+      const service = await PredictionService.open(hostContext);
+      const detail = await service.find(id);
+      if (detail !== null) {
+        this.applySource(detail);
+      }
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '原预测读取失败' });
+    }
+  }
+
+  private applySource(detail: PredictionDetail): void {
+    this.target = detail.target;
+    this.judgment = detail.judgment;
+    this.confidence = detail.confidence;
+    this.reason = detail.reason;
+    this.sourceVersion = detail.version;
   }
 
   private useDeadline(days: number): void {
@@ -62,9 +95,16 @@ export struct PredictionCreatePage {
 
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
-      previewStore.createPrediction(draft);
+      const saved = this.sourceId === null ? previewStore.createPrediction(draft) :
+        previewStore.revisePrediction(this.sourceId, draft);
+      if (saved === null) {
+        this.getUIContext().getPromptAction().showToast({ message: '原预测不存在' });
+        return;
+      }
       notifyHomeRefresh();
-      this.getUIContext().getPromptAction().showToast({ message: '演示模式：预测已保存在当前会话' });
+      this.getUIContext().getPromptAction().showToast({
+        message: this.sourceId === null ? '演示模式：预测已保存在当前会话' : `演示模式：已生成第 ${saved.version} 版`
+      });
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
@@ -73,9 +113,11 @@ export struct PredictionCreatePage {
     this.isSaving = true;
     try {
       const service = await PredictionService.open(hostContext);
-      await service.create(draft);
+      const saved = this.sourceId === null ? await service.create(draft) : await service.revise(this.sourceId, draft);
       notifyHomeRefresh();
-      this.getUIContext().getPromptAction().showToast({ message: '预测已落盘，不能修改' });
+      this.getUIContext().getPromptAction().showToast({
+        message: this.sourceId === null ? '预测已保存，不能修改' : `已生成第 ${saved.version} 版预测`
+      });
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
@@ -233,7 +275,7 @@ export struct PredictionCreatePage {
         .scrollBar(BarState.Off)
 
         Column() {
-          Text(this.isSaving ? '保存中…' : '落盘这条预测')
+          Text(this.isSaving ? '保存中…' : (this.sourceId === null ? '保存这条预测' : '生成新版本'))
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
@@ -255,9 +297,15 @@ export struct PredictionCreatePage {
       .height('100%')
       .backgroundColor(AppTheme.color.page)
     }
-    .title('新建预测')
+    .title(this.sourceId === null ? '新建预测' : '修改预测')
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
+      if (context.pathInfo.param !== undefined) {
+        const params = context.pathInfo.param as PredictionCreateParams;
+        if (params.sourcePredictionId !== null) {
+          this.loadSource(params.sourcePredictionId);
+        }
+      }
     })
   }
 }

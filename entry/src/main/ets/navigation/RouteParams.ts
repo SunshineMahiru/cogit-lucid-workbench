@@ -24,6 +24,11 @@ export interface PredictionDetailParams {
   predictionId: string;
 }
 
+/** Parameters accepted by the prediction editor; a source id creates a revision. */
+export interface PredictionCreateParams {
+  sourcePredictionId: string | null;
+}
+
 /** Parameters accepted by the prediction settle route. */
 export interface PredictionSettleParams {
   predictionId: string;
