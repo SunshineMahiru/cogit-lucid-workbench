@@ -39,6 +39,13 @@ export struct SettingsPage {
   private store: SettingsStore | null = null;
   private hostContext: common.Context | null = null;
 
+  private showToast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: message });
+    } catch (error) {
+    }
+  }
+
   async aboutToAppear(): Promise<void> {
     const context = this.getUIContext().getHostContext();
     if (context === undefined) {
@@ -58,7 +65,7 @@ export struct SettingsPage {
       this.isLoading = false;
     } catch (error) {
       this.isLoading = false;
-      this.getUIContext().getPromptAction().showToast({ message: '设置读取失败，已使用默认值' });
+      this.showToast('设置读取失败，已使用默认值');
     }
   }
 
@@ -116,7 +123,7 @@ export struct SettingsPage {
       return;
     }
     if (this.store === null) {
-      this.getUIContext().getPromptAction().showToast({ message: '设置存储未就绪' });
+      this.showToast('设置存储未就绪');
       return;
     }
     this.isSaving = true;
@@ -124,9 +131,9 @@ export struct SettingsPage {
       this.settings = sanitizeAppSettings(this.settings);
       await this.store.save(this.settings);
       this.isDirty = false;
-      this.getUIContext().getPromptAction().showToast({ message: '设置已保存' });
+      this.showToast('设置已保存');
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: '保存失败，请重试' });
+      this.showToast('保存失败，请重试');
     } finally {
       this.isSaving = false;
     }
@@ -137,7 +144,7 @@ export struct SettingsPage {
       return;
     }
     if (this.hostContext === null) {
-      this.getUIContext().getPromptAction().showToast({ message: '运行环境未就绪' });
+      this.showToast('运行环境未就绪');
       return;
     }
     this.isExporting = true;
@@ -147,9 +154,9 @@ export struct SettingsPage {
       this.lastExportName = result.fileName;
       this.lastExportChars = result.charCount;
       this.lastExportTotal = totalExportRecords(result.counts);
-      this.getUIContext().getPromptAction().showToast({ message: `已导出 ${result.fileName}` });
+      this.showToast(`已导出 ${result.fileName}`);
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: '导出失败，预览器可能不支持文件写入' });
+      this.showToast('导出失败，预览器可能不支持文件写入');
     } finally {
       this.isExporting = false;
     }
