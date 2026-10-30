@@ -1,6 +1,7 @@
 import { relationalStore } from '@kit.ArkData';
 import { ReviewPeriod } from '../../model/ReviewPeriod';
 import { ReviewResult } from '../../model/ReviewResult';
+import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, REVIEW_COLS } from '../DbConstants';
 
 /** Data access for saved review sessions. */
@@ -22,6 +23,7 @@ export class ReviewResultDao {
       [REVIEW_COLS.CONTRADICTION]: result.contradiction,
       [REVIEW_COLS.ACTION]: result.action,
       [REVIEW_COLS.ANCHOR_IDS]: JSON.stringify(result.anchorIds),
+      [REVIEW_COLS.LEVEL]: result.level ?? SecurityLevel.LOCAL_ONLY,
       [REVIEW_COLS.CREATED_AT]: result.createdAt
     };
     return this.store.insert(DB_TABLES.REVIEW_RESULT, values);
@@ -63,6 +65,7 @@ export class ReviewResultDao {
       contradiction: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.CONTRADICTION)),
       action: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.ACTION)),
       anchorIds: JSON.parse(resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.ANCHOR_IDS))) as string[],
+      level: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.LEVEL)) as SecurityLevel,
       createdAt: resultSet.getLong(resultSet.getColumnIndex(REVIEW_COLS.CREATED_AT))
     };
   }

@@ -1,5 +1,6 @@
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
 
 /** Converts one prediction into a list row. */
@@ -31,16 +32,21 @@ export function toPredictionListItems(predictions: Prediction[]): PredictionList
 export function summarizePredictions(predictions: Prediction[]): PredictionSummary {
   let pending = 0;
   let hits = 0;
+  let total = 0;
   for (const prediction of predictions) {
+    if (prediction.level === SecurityLevel.SEALED) {
+      continue;
+    }
+    total += 1;
     if (prediction.status === PredictionStatus.PENDING) {
       pending += 1;
     } else if (prediction.hit === true) {
       hits += 1;
     }
   }
-  const settled = predictions.length - pending;
+  const settled = total - pending;
   const hitRate = settled > 0 ? Math.round(hits / settled * 100) : 0;
-  return { total: predictions.length, pending: pending, settled: settled, hits: hits, hitRate: hitRate };
+  return { total: total, pending: pending, settled: settled, hits: hits, hitRate: hitRate };
 }
 
 /** Tag text shown on a prediction card. */

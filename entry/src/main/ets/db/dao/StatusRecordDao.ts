@@ -1,5 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
 import { StatusRecord } from '../../model/StatusRecord';
+import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, STATUS_RECORD_COLS } from '../DbConstants';
 
 /** Data access for the status record table. */
@@ -18,7 +19,8 @@ export class StatusRecordDao {
       [STATUS_RECORD_COLS.SLEEP_HOURS]: record.sleepHours,
       [STATUS_RECORD_COLS.EXERCISE_COUNT]: record.exerciseCount,
       [STATUS_RECORD_COLS.ALERT_COUNT]: record.alertCount,
-      [STATUS_RECORD_COLS.NOTE]: record.note
+      [STATUS_RECORD_COLS.NOTE]: record.note,
+      [STATUS_RECORD_COLS.LEVEL]: record.level ?? SecurityLevel.LOCAL_ONLY
     };
     return this.store.insert(DB_TABLES.STATUS_RECORD, values);
   }
@@ -30,7 +32,8 @@ export class StatusRecordDao {
       [STATUS_RECORD_COLS.SLEEP_HOURS]: record.sleepHours,
       [STATUS_RECORD_COLS.EXERCISE_COUNT]: record.exerciseCount,
       [STATUS_RECORD_COLS.ALERT_COUNT]: record.alertCount,
-      [STATUS_RECORD_COLS.NOTE]: record.note
+      [STATUS_RECORD_COLS.NOTE]: record.note,
+      [STATUS_RECORD_COLS.LEVEL]: record.level ?? SecurityLevel.LOCAL_ONLY
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
     predicates.equalTo(STATUS_RECORD_COLS.ID, record.id);
@@ -82,7 +85,8 @@ export class StatusRecordDao {
       sleepHours: resultSet.getDouble(resultSet.getColumnIndex(STATUS_RECORD_COLS.SLEEP_HOURS)),
       exerciseCount: resultSet.getLong(resultSet.getColumnIndex(STATUS_RECORD_COLS.EXERCISE_COUNT)),
       alertCount: resultSet.getLong(resultSet.getColumnIndex(STATUS_RECORD_COLS.ALERT_COUNT)),
-      note: resultSet.getString(resultSet.getColumnIndex(STATUS_RECORD_COLS.NOTE))
+      note: resultSet.getString(resultSet.getColumnIndex(STATUS_RECORD_COLS.NOTE)),
+      level: resultSet.getString(resultSet.getColumnIndex(STATUS_RECORD_COLS.LEVEL)) as SecurityLevel
     };
   }
 }

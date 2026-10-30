@@ -60,25 +60,45 @@ function prepareRelations(relations: Relation[]): Relation[] {
 }
 
 function preparePredictions(predictions: Prediction[]): Prediction[] {
-  const items: Prediction[] = predictions.slice();
+  const items: Prediction[] = [];
+  for (const prediction of predictions) {
+    if (isExportable(prediction.level ?? SecurityLevel.LOCAL_ONLY)) {
+      items.push(prediction);
+    }
+  }
   items.sort((left, right) => right.createdAt - left.createdAt);
   return items;
 }
 
 function prepareAnchors(anchors: Anchor[]): Anchor[] {
-  const items: Anchor[] = anchors.slice();
+  const items: Anchor[] = [];
+  for (const anchor of anchors) {
+    if (isExportable(anchor.level ?? SecurityLevel.LOCAL_ONLY)) {
+      items.push(anchor);
+    }
+  }
   items.sort((left, right) => left.order - right.order);
   return items;
 }
 
 function prepareStatusRecords(records: StatusRecord[]): StatusRecord[] {
-  const items: StatusRecord[] = records.slice();
+  const items: StatusRecord[] = [];
+  for (const record of records) {
+    if (isExportable(record.level ?? SecurityLevel.LOCAL_ONLY)) {
+      items.push(record);
+    }
+  }
   items.sort((left, right) => compareDateDesc(left.date, right.date));
   return items;
 }
 
 function prepareReviews(reviews: ReviewResult[]): ReviewResult[] {
-  const items: ReviewResult[] = reviews.slice();
+  const items: ReviewResult[] = [];
+  for (const review of reviews) {
+    if (isExportable(review.level ?? SecurityLevel.LOCAL_ONLY)) {
+      items.push(review);
+    }
+  }
   items.sort((left, right) => right.createdAt - left.createdAt);
   return items;
 }

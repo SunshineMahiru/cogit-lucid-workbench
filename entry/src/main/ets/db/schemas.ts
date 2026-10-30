@@ -47,13 +47,15 @@ export const TABLE_CREATE_SQLS: string[] = [
     actual_result TEXT NOT NULL,
     hit INTEGER,
     version INTEGER NOT NULL,
+    level TEXT NOT NULL DEFAULT 'local_only',
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.ANCHOR} (
     id TEXT PRIMARY KEY,
     text TEXT NOT NULL,
     source TEXT NOT NULL,
-    sort_order INTEGER NOT NULL
+    sort_order INTEGER NOT NULL,
+    level TEXT NOT NULL DEFAULT 'local_only'
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.STATUS_RECORD} (
     id TEXT PRIMARY KEY,
@@ -61,7 +63,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     sleep_hours REAL NOT NULL,
     exercise_count INTEGER NOT NULL,
     alert_count INTEGER NOT NULL,
-    note TEXT NOT NULL
+    note TEXT NOT NULL,
+    level TEXT NOT NULL DEFAULT 'local_only'
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.REVIEW_RESULT} (
     id TEXT PRIMARY KEY,
@@ -72,6 +75,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     contradiction TEXT NOT NULL,
     next_action TEXT NOT NULL,
     anchor_ids TEXT NOT NULL,
+    level TEXT NOT NULL DEFAULT 'local_only',
     created_at INTEGER NOT NULL
   )`
 ];

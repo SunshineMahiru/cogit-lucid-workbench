@@ -61,6 +61,7 @@ export const PREDICTION_COLS = {
   ACTUAL_RESULT: 'actual_result',
   HIT: 'hit',
   VERSION: 'version',
+  LEVEL: 'level',
   CREATED_AT: 'created_at'
 } as const;
 
@@ -69,7 +70,8 @@ export const ANCHOR_COLS = {
   ID: 'id',
   TEXT: 'text',
   SOURCE: 'source',
-  ORDER: 'sort_order'
+  ORDER: 'sort_order',
+  LEVEL: 'level'
 } as const;
 
 /** Column names for the status record table. */
@@ -79,7 +81,8 @@ export const STATUS_RECORD_COLS = {
   SLEEP_HOURS: 'sleep_hours',
   EXERCISE_COUNT: 'exercise_count',
   ALERT_COUNT: 'alert_count',
-  NOTE: 'note'
+  NOTE: 'note',
+  LEVEL: 'level'
 } as const;
 
 /** Column names for the review result table. */
@@ -92,5 +95,6 @@ export const REVIEW_COLS = {
   CONTRADICTION: 'contradiction',
   ACTION: 'next_action',
   ANCHOR_IDS: 'anchor_ids',
+  LEVEL: 'level',
   CREATED_AT: 'created_at'
 } as const;

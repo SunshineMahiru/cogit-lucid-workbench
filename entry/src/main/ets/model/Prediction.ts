@@ -1,4 +1,5 @@
 import { PredictionStatus } from './PredictionStatus';
+import { SecurityLevel } from './SecurityLevel';
 
 /** A prediction committed before the outcome; immutable once submitted, settled on the due date. */
 export interface Prediction {
@@ -20,6 +21,8 @@ export interface Prediction {
   hit: boolean | null;
   /** Version: edits are append-only, not in-place */
   version: number;
+  /** Security level controlling aggregation and export; absent values are local-only */
+  level?: SecurityLevel;
   /** Commit timestamp in milliseconds */
   createdAt: number;
 }

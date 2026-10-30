@@ -76,6 +76,7 @@ export function createPrediction(): Prediction {
     actualResult: '',
     hit: null,
     version: 1,
+    level: SecurityLevel.LOCAL_ONLY,
     createdAt: Date.now()
   };
 }
@@ -86,7 +87,8 @@ export function createAnchor(): Anchor {
     id: newId('an'),
     text: '',
     source: '',
-    order: 0
+    order: 0,
+    level: SecurityLevel.LOCAL_ONLY
   };
 }
 
@@ -98,7 +100,8 @@ export function createStatusRecord(): StatusRecord {
     sleepHours: 0,
     exerciseCount: 0,
     alertCount: 0,
-    note: ''
+    note: '',
+    level: SecurityLevel.LOCAL_ONLY
   };
 }
 
@@ -113,6 +116,7 @@ export function createReviewResult(): ReviewResult {
     contradiction: '',
     action: '',
     anchorIds: [],
+    level: SecurityLevel.LOCAL_ONLY,
     createdAt: Date.now()
   };
 }

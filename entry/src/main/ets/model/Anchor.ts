@@ -1,4 +1,6 @@
-/** A preset value anchor; read-only, referenced by review analysis. */
+/** A preset value anchor; referenced by review analysis. */
+import { SecurityLevel } from './SecurityLevel';
+
 export interface Anchor {
   id: string;
   /** Anchor sentence */
@@ -7,4 +9,6 @@ export interface Anchor {
   source: string;
   /** Order in the read-only list */
   order: number;
+  /** Security level controlling aggregation and export; absent values are local-only */
+  level?: SecurityLevel;
 }

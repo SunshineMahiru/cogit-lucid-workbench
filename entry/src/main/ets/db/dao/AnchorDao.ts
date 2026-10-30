@@ -1,5 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
 import { Anchor } from '../../model/Anchor';
+import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, ANCHOR_COLS } from '../DbConstants';
 
 /** Data access for the anchor table. */
@@ -16,7 +17,8 @@ export class AnchorDao {
       [ANCHOR_COLS.ID]: anchor.id,
       [ANCHOR_COLS.TEXT]: anchor.text,
       [ANCHOR_COLS.SOURCE]: anchor.source,
-      [ANCHOR_COLS.ORDER]: anchor.order
+      [ANCHOR_COLS.ORDER]: anchor.order,
+      [ANCHOR_COLS.LEVEL]: anchor.level ?? SecurityLevel.LOCAL_ONLY
     };
     return this.store.insert(DB_TABLES.ANCHOR, values);
   }
@@ -39,7 +41,8 @@ export class AnchorDao {
       id: resultSet.getString(resultSet.getColumnIndex(ANCHOR_COLS.ID)),
       text: resultSet.getString(resultSet.getColumnIndex(ANCHOR_COLS.TEXT)),
       source: resultSet.getString(resultSet.getColumnIndex(ANCHOR_COLS.SOURCE)),
-      order: resultSet.getLong(resultSet.getColumnIndex(ANCHOR_COLS.ORDER))
+      order: resultSet.getLong(resultSet.getColumnIndex(ANCHOR_COLS.ORDER)),
+      level: resultSet.getString(resultSet.getColumnIndex(ANCHOR_COLS.LEVEL)) as SecurityLevel
     };
   }
 }

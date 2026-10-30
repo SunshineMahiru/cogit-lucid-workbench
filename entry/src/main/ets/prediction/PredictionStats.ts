@@ -1,5 +1,6 @@
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
+import { SecurityLevel } from '../model/SecurityLevel';
 
 /** One month of settled predictions. */
 export interface PredictionMonthPoint {
@@ -35,7 +36,7 @@ export function buildPredictionStats(predictions: Prediction[], monthLimit: numb
   let settled = 0;
   let hits = 0;
   for (const prediction of predictions) {
-    if (prediction.status !== PredictionStatus.SETTLED) {
+    if (prediction.status !== PredictionStatus.SETTLED || prediction.level === SecurityLevel.SEALED) {
       continue;
     }
     settled += 1;

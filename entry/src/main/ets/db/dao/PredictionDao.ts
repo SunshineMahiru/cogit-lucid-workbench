@@ -1,6 +1,7 @@
 import { relationalStore } from '@kit.ArkData';
 import { Prediction } from '../../model/Prediction';
 import { PredictionStatus } from '../../model/PredictionStatus';
+import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, PREDICTION_COLS } from '../DbConstants';
 
 /** Data access for the prediction table. */
@@ -24,6 +25,7 @@ export class PredictionDao {
       [PREDICTION_COLS.ACTUAL_RESULT]: prediction.actualResult,
       [PREDICTION_COLS.HIT]: prediction.hit === null ? null : (prediction.hit ? 1 : 0),
       [PREDICTION_COLS.VERSION]: prediction.version,
+      [PREDICTION_COLS.LEVEL]: prediction.level ?? SecurityLevel.LOCAL_ONLY,
       [PREDICTION_COLS.CREATED_AT]: prediction.createdAt
     };
     return this.store.insert(DB_TABLES.PREDICTION, values);
@@ -85,6 +87,7 @@ export class PredictionDao {
       actualResult: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.ACTUAL_RESULT)),
       hit: hitValue,
       version: resultSet.getLong(resultSet.getColumnIndex(PREDICTION_COLS.VERSION)),
+      level: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.LEVEL)) as SecurityLevel,
       createdAt: resultSet.getLong(resultSet.getColumnIndex(PREDICTION_COLS.CREATED_AT))
     };
   }

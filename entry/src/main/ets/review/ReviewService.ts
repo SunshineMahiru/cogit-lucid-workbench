@@ -7,6 +7,7 @@ import { createReviewResult } from '../model/factories';
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { ReviewPeriod } from '../model/ReviewPeriod';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { DbHelper } from '../db/DbHelper';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
@@ -52,16 +53,16 @@ export class ReviewService {
   /** Returns the counts for the period containing the given anchor time. */
   async loadStatsFor(period: ReviewPeriod, now: number): Promise<ReviewStats> {
     const range = rangeFor(period, now);
-    const events = await this.eventDao.queryAll();
-    const decisions = await this.decisionDao.queryAll();
-    const predictions = await this.predictionDao.queryAll();
-    const anchors = await this.anchorDao.queryAll();
+    const events = (await this.eventDao.queryAll()).filter(e => e.level !== SecurityLevel.SEALED);
+    const decisions = (await this.decisionDao.queryAll()).filter(d => d.level !== SecurityLevel.SEALED);
+    const predictions = (await this.predictionDao.queryAll()).filter(p => p.level !== SecurityLevel.SEALED);
+    const anchors = (await this.anchorDao.queryAll()).filter(a => a.level !== SecurityLevel.SEALED);
     return summarize(events, decisions, predictions, anchors.length, range);
   }
 
   /** Returns the anchors quoted during the contradiction step. */
   async loadAnchors(limit: number = 3): Promise<Anchor[]> {
-    const anchors = await this.anchorDao.queryAll();
+    const anchors = (await this.anchorDao.queryAll()).filter(a => a.level !== SecurityLevel.SEALED);
     return anchors.slice(0, limit);
   }
 

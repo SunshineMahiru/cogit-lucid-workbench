@@ -33,6 +33,19 @@ export class DbHelper {
       await store.executeSql(`ALTER TABLE review_result RENAME COLUMN action TO next_action`);
     } catch (error) {
     }
+    // Older installs predate security levels on four record types.
+    const levelMigrations: string[] = [
+      `ALTER TABLE prediction ADD COLUMN level TEXT NOT NULL DEFAULT 'local_only'`,
+      `ALTER TABLE anchor ADD COLUMN level TEXT NOT NULL DEFAULT 'local_only'`,
+      `ALTER TABLE status_record ADD COLUMN level TEXT NOT NULL DEFAULT 'local_only'`,
+      `ALTER TABLE review_result ADD COLUMN level TEXT NOT NULL DEFAULT 'local_only'`
+    ];
+    for (const sql of levelMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     return store;
   }
 }
