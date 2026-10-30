@@ -8,6 +8,8 @@ import { PredictionListCard } from '../components/PredictionListCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { previewStore } from '../preview/PreviewStore';
 
+const PAGE_SIZE = 20;
+
 /** Prediction log: summary counts, status filters and the row list. */
 @ComponentV2
 export struct PredictionListPage {
@@ -16,6 +18,8 @@ export struct PredictionListPage {
   @Local summary: PredictionSummary = { total: 0, pending: 0, settled: 0, hits: 0, hitRate: 0 };
   @Local filter: PredictionStatus | null = null;
   @Local isLoading: boolean = true;
+  @Local isLoadingMore: boolean = false;
+  @Local hasMore: boolean = false;
   @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
@@ -58,12 +62,29 @@ export struct PredictionListPage {
     }
     this.isLoading = true;
     try {
-      this.items = await this.service.list(this.filter);
+      this.items = await this.service.listPage(this.filter, PAGE_SIZE, 0);
+      this.hasMore = this.items.length >= PAGE_SIZE;
       this.summary = await this.service.summary();
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '加载失败，请重试' });
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  private async loadMore(): Promise<void> {
+    if (this.service === null || this.isLoadingMore || !this.hasMore) {
+      return;
+    }
+    this.isLoadingMore = true;
+    try {
+      const next = await this.service.listPage(this.filter, PAGE_SIZE, this.items.length);
+      this.items = this.items.concat(next);
+      this.hasMore = next.length >= PAGE_SIZE;
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '加载更多失败，请重试' });
+    } finally {
+      this.isLoadingMore = false;
     }
   }
 
@@ -218,6 +239,20 @@ export struct PredictionListPage {
                 })
               }
             }, (item: PredictionListItem) => item.id)
+            if (this.hasMore) {
+              ListItem() {
+                Text(this.isLoadingMore ? '加载中…' : '加载更多')
+                  .fontSize(12)
+                  .fontColor(AppTheme.color.primary)
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+                  .padding({ top: 10, bottom: 10 })
+                  .onClick(() => {
+                    this.loadMore();
+                  })
+                  .accessibilityText(this.isLoadingMore ? '正在加载更多预测' : '加载更多预测')
+              }
+            }
           }
           .width('100%')
           .layoutWeight(1)

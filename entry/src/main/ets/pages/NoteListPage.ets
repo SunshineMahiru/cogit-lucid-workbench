@@ -1,10 +1,12 @@
 import { AppTheme } from '../theme/AppTheme';
-import { DEFAULT_NOTE_LIST_LIMIT, NoteListItem, QuickNoteService } from '../note';
+import { NoteListItem, QuickNoteService } from '../note';
 import { NoteDetailParams, NoteEditParams, NoteListParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { NoteCard } from '../components/NoteCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { previewStore } from '../preview/PreviewStore';
+
+const PAGE_SIZE = 20;
 
 /** Note browser with type filters and an entry point to the editor. */
 @ComponentV2
@@ -14,6 +16,8 @@ export struct NoteListPage {
   @Local filter: string = '';
   @Local search: string = '';
   @Local isLoading: boolean = true;
+  @Local isLoadingMore: boolean = false;
+  @Local hasMore: boolean = false;
   @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
@@ -55,12 +59,31 @@ export struct NoteListPage {
     this.isLoading = true;
     try {
       this.items = this.filter.length === 0 ?
-        await this.service.listRecent(DEFAULT_NOTE_LIST_LIMIT) :
-        await this.service.listByType(this.filter, DEFAULT_NOTE_LIST_LIMIT);
+        await this.service.listRecentPage(PAGE_SIZE, 0) :
+        await this.service.listByTypePage(this.filter, PAGE_SIZE, 0);
+      this.hasMore = this.items.length >= PAGE_SIZE;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '加载失败，请重试' });
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  private async loadMore(): Promise<void> {
+    if (this.service === null || this.isLoadingMore || !this.hasMore) {
+      return;
+    }
+    this.isLoadingMore = true;
+    try {
+      const next = this.filter.length === 0 ?
+        await this.service.listRecentPage(PAGE_SIZE, this.items.length) :
+        await this.service.listByTypePage(this.filter, PAGE_SIZE, this.items.length);
+      this.items = this.items.concat(next);
+      this.hasMore = next.length >= PAGE_SIZE;
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '加载更多失败，请重试' });
+    } finally {
+      this.isLoadingMore = false;
     }
   }
 
@@ -127,6 +150,7 @@ export struct NoteListPage {
           TextInput({ text: this.search, placeholder: '搜索标题、摘要或标签' })
             .backgroundColor(AppTheme.color.surface)
             .borderRadius(12)
+            .accessibilityText('搜索速记标题、摘要或标签')
             .onChange((value: string) => {
               this.search = value;
             })
@@ -184,6 +208,20 @@ export struct NoteListPage {
                   })
                 }
               }, (item: NoteListItem) => item.id)
+              if (this.hasMore) {
+                ListItem() {
+                  Text(this.isLoadingMore ? '加载中…' : '加载更多')
+                    .fontSize(12)
+                    .fontColor(AppTheme.color.primary)
+                    .width('100%')
+                    .textAlign(TextAlign.Center)
+                    .padding({ top: 10, bottom: 10 })
+                    .onClick(() => {
+                      this.loadMore();
+                    })
+                    .accessibilityText(this.isLoadingMore ? '正在加载更多速记' : '加载更多速记')
+                }
+              }
             }
             .width('100%')
             .layoutWeight(1)

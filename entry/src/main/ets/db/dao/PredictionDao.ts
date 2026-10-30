@@ -50,8 +50,16 @@ export class PredictionDao {
 
   /** Returns predictions of one status. */
   async queryByStatus(status: PredictionStatus): Promise<Prediction[]> {
+    return this.queryPage(status, 1000, 0);
+  }
+
+  /** Returns one page of predictions, optionally filtered by status. */
+  async queryPage(status: PredictionStatus | null, limit: number, offset: number): Promise<Prediction[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
-    predicates.equalTo(PREDICTION_COLS.STATUS, status);
+    if (status !== null) {
+      predicates.equalTo(PREDICTION_COLS.STATUS, status);
+    }
+    predicates.orderByAsc(PREDICTION_COLS.SETTLEMENT_DATE).limitAs(limit).offsetAs(offset);
     return this.queryWith(predicates);
   }
 

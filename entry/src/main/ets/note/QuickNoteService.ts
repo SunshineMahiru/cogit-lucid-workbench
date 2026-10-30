@@ -75,17 +75,27 @@ export class QuickNoteService {
 
   /** Returns the newest notes as list rows. */
   async listRecent(limit: number = DEFAULT_NOTE_LIST_LIMIT): Promise<NoteListItem[]> {
-    const events = await this.eventDao.queryRecent(normalizeLimit(limit));
+    return this.listRecentPage(limit, 0);
+  }
+
+  /** Returns one page of the newest notes. */
+  async listRecentPage(limit: number, offset: number): Promise<NoteListItem[]> {
+    const events = await this.eventDao.queryRecentPage(normalizeLimit(limit), Math.max(0, offset));
     return toNoteListItems(events);
   }
 
   /** Returns the newest notes of one type; an empty type falls back to all notes. */
   async listByType(type: string, limit: number = DEFAULT_NOTE_LIST_LIMIT): Promise<NoteListItem[]> {
+    return this.listByTypePage(type, limit, 0);
+  }
+
+  /** Returns one page of notes of one type. */
+  async listByTypePage(type: string, limit: number, offset: number): Promise<NoteListItem[]> {
     const value = type.trim();
     if (value.length === 0) {
-      return this.listRecent(limit);
+      return this.listRecentPage(limit, offset);
     }
-    const events = await this.eventDao.queryByType(value, normalizeLimit(limit));
+    const events = await this.eventDao.queryByTypePage(value, normalizeLimit(limit), Math.max(0, offset));
     return toNoteListItems(events);
   }
 

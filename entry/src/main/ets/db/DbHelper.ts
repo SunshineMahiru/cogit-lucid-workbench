@@ -56,6 +56,18 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    const indexSqls: string[] = [
+      `CREATE INDEX IF NOT EXISTS idx_event_timestamp ON event(timestamp)`,
+      `CREATE INDEX IF NOT EXISTS idx_prediction_status_date ON prediction(status, settlement_date)`,
+      `CREATE INDEX IF NOT EXISTS idx_status_record_date ON status_record(date)`,
+      `CREATE INDEX IF NOT EXISTS idx_review_result_created ON review_result(created_at)`
+    ];
+    for (const sql of indexSqls) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     return store;
   }
 }

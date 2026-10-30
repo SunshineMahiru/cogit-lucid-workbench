@@ -31,9 +31,12 @@ export class PredictionService {
 
   /** Returns prediction rows, optionally filtered by status. */
   async list(status: PredictionStatus | null): Promise<PredictionListItem[]> {
-    const predictions = status === null ?
-      await this.predictionDao.queryAll() :
-      await this.predictionDao.queryByStatus(status);
+    return this.listPage(status, 1000, 0);
+  }
+
+  /** Returns one page of prediction rows, optionally filtered by status. */
+  async listPage(status: PredictionStatus | null, limit: number, offset: number): Promise<PredictionListItem[]> {
+    const predictions = await this.predictionDao.queryPage(status, limit, offset);
     return toPredictionListItems(predictions);
   }
 

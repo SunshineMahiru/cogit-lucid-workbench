@@ -54,15 +54,26 @@ export class EventDao {
 
   /** Returns the newest events first, capped at limit. */
   async queryRecent(limit: number): Promise<Event[]> {
+    return this.queryRecentPage(limit, 0);
+  }
+
+  /** Returns one page of events ordered newest first. */
+  async queryRecentPage(limit: number, offset: number): Promise<Event[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
-    predicates.orderByDesc(EVENT_COLS.TIMESTAMP).limitAs(limit);
+    predicates.orderByDesc(EVENT_COLS.TIMESTAMP).limitAs(limit).offsetAs(offset);
     return this.queryWith(predicates);
   }
 
   /** Returns events of one type, newest first, capped at limit. */
   async queryByType(type: string, limit: number): Promise<Event[]> {
+    return this.queryByTypePage(type, limit, 0);
+  }
+
+  /** Returns one page of events of one type. */
+  async queryByTypePage(type: string, limit: number, offset: number): Promise<Event[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
-    predicates.equalTo(EVENT_COLS.TYPE, type).orderByDesc(EVENT_COLS.TIMESTAMP).limitAs(limit);
+    predicates.equalTo(EVENT_COLS.TYPE, type).orderByDesc(EVENT_COLS.TIMESTAMP)
+      .limitAs(limit).offsetAs(offset);
     return this.queryWith(predicates);
   }
 
