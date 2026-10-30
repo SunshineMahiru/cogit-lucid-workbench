@@ -25,6 +25,10 @@ export class SettingsStore {
     const enabled = await this.prefs.get(SETTINGS_KEYS.LLM_ENABLED, defaults.llmEnabled);
     const provider = await this.prefs.get(SETTINGS_KEYS.LLM_PROVIDER, defaults.llmProvider);
     const baseUrl = await this.prefs.get(SETTINGS_KEYS.LLM_BASE_URL, defaults.llmBaseUrl);
+    let baseUrlValue = typeof baseUrl === 'string' ? baseUrl : defaults.llmBaseUrl;
+    if (baseUrlValue === 'http://127.0.0.1:4523/v1') {
+      baseUrlValue = 'http://localhost:4523/v1';
+    }
     const storedApiKey = await this.prefs.get(SETTINGS_KEYS.LLM_API_KEY, defaults.llmApiKey);
     let apiKey = await SecretStore.load();
     if (apiKey.length === 0 && typeof storedApiKey === 'string' && storedApiKey.length > 0) {
@@ -47,7 +51,7 @@ export class SettingsStore {
     return sanitizeAppSettings({
       llmEnabled: typeof enabled === 'boolean' ? enabled : defaults.llmEnabled,
       llmProvider: providerValue,
-      llmBaseUrl: typeof baseUrl === 'string' ? baseUrl : defaults.llmBaseUrl,
+      llmBaseUrl: baseUrlValue,
       llmApiKey: typeof apiKey === 'string' ? apiKey : defaults.llmApiKey,
       llmModel: typeof model === 'string' ? model : defaults.llmModel,
       llmMonthlyBudget: typeof budget === 'number' ? budget : defaults.llmMonthlyBudget,
