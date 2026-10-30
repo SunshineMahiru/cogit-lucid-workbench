@@ -79,27 +79,30 @@ export class HomeDataService {
 
   /** Returns summary statistics for the dashboard. */
   async loadSummary(): Promise<HomeSummary> {
-    const allEvents = (await this.eventDao.queryAll()).filter(e => e.level !== SecurityLevel.SEALED);
+    const totalNotes = await this.eventDao.countVisible();
     const today = formatDate(new Date());
-    const todayNotes = allEvents.filter(e => formatDate(new Date(e.timestamp)) === today).length;
-    const allDecisions = (await this.decisionDao.queryAll()).filter(d => d.level !== SecurityLevel.SEALED);
-    const allRelations = (await this.relationDao.queryAll()).filter(r => r.level !== SecurityLevel.SEALED);
+    const recentEvents = await this.eventDao.queryRecent(100);
+    const todayNotes = recentEvents.filter(e =>
+      e.level !== SecurityLevel.SEALED && formatDate(new Date(e.timestamp)) === today).length;
+    const totalDecisions = await this.decisionDao.countVisible();
+    const unreviewedDecisions = await this.decisionDao.countUnreviewed();
+    const totalRelations = await this.relationDao.countVisible();
     const allPredictions = (await this.predictionDao.queryAll()).filter(p => p.level !== SecurityLevel.SEALED);
-    const allAnchors = (await this.anchorDao.queryAll()).filter(a => a.level !== SecurityLevel.SEALED);
+    const totalAnchors = await this.anchorDao.countVisible();
     const pending = allPredictions.filter(p => p.status === PredictionStatus.PENDING);
     const settled = allPredictions.filter(p => p.status === PredictionStatus.SETTLED);
     const hits = settled.filter(p => p.hit === true);
     const hitRate = settled.length > 0 ? Math.round(hits.length / settled.length * 100) : 0;
     return {
-      totalNotes: allEvents.length,
+      totalNotes: totalNotes,
       todayNotes: todayNotes,
       totalPredictions: allPredictions.length,
       pendingPredictions: pending.length,
       settledPredictions: settled.length,
       hitRate: hitRate,
-      unreviewedDecisions: allDecisions.filter(d => !d.reviewed).length,
-      totalAnchors: allAnchors.length,
-      totalRelations: allRelations.length
+      unreviewedDecisions: unreviewedDecisions,
+      totalAnchors: totalAnchors,
+      totalRelations: totalRelations
     };
   }
 }

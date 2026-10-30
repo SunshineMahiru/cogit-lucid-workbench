@@ -79,6 +79,20 @@ export class RelationDao {
     return relation;
   }
 
+  private async queryCount(sql: string): Promise<number> {
+    const resultSet = await this.store.querySql(sql);
+    let total = 0;
+    if (resultSet.goToFirstRow()) {
+      total = resultSet.getLong(0);
+    }
+    resultSet.close();
+    return total;
+  }
+
+  async countVisible(): Promise<number> {
+    return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.RELATION} WHERE level <> 'sealed'`);
+  }
+
   private mapRow(resultSet: relationalStore.ResultSet): Relation {
     return {
       id: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.ID)),

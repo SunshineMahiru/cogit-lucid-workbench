@@ -51,6 +51,24 @@ export class DecisionDao {
     return decisions;
   }
 
+  private async queryCount(sql: string): Promise<number> {
+    const resultSet = await this.store.querySql(sql);
+    let total = 0;
+    if (resultSet.goToFirstRow()) {
+      total = resultSet.getLong(0);
+    }
+    resultSet.close();
+    return total;
+  }
+
+  async countVisible(): Promise<number> {
+    return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.DECISION} WHERE level <> 'sealed'`);
+  }
+
+  async countUnreviewed(): Promise<number> {
+    return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.DECISION} WHERE level <> 'sealed' AND ${DECISION_COLS.REVIEWED} = 0`);
+  }
+
   private mapRow(resultSet: relationalStore.ResultSet): Decision {
     return {
       id: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.ID)),

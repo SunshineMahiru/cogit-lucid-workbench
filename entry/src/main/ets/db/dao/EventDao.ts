@@ -39,6 +39,11 @@ export class EventDao {
     return this.queryWith(new relationalStore.RdbPredicates(DB_TABLES.EVENT));
   }
 
+  /** Returns the total number of events without materialising rows. */
+  async countVisible(): Promise<number> {
+    return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed'`);
+  }
+
   /** Returns one event by id, or null when it does not exist. */
   async queryById(id: string): Promise<Event | null> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
@@ -69,6 +74,16 @@ export class EventDao {
     }
     resultSet.close();
     return events;
+  }
+
+  private async queryCount(sql: string): Promise<number> {
+    const resultSet = await this.store.querySql(sql);
+    let total = 0;
+    if (resultSet.goToFirstRow()) {
+      total = resultSet.getLong(0);
+    }
+    resultSet.close();
+    return total;
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): Event {
