@@ -4,6 +4,7 @@ import { ReadingRules } from '../analysis/status/ReadingRules';
 import { ThresholdReadingRules } from '../analysis/status/ThresholdReadingRules';
 import { MOCK_STATUS_RECORDS } from '../model/mockData';
 import { StatusRecord } from '../model/StatusRecord';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { createStatusRecord } from '../model/factories';
 import { DbHelper } from '../db/DbHelper';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
@@ -27,13 +28,13 @@ export class StatusService {
 
   /** Returns the recent window used by the panel. */
   async overview(limit: number = 7): Promise<StatusOverview> {
-    const records = await this.statusDao.queryRecent(limit);
+    const records = (await this.statusDao.queryRecent(limit)).filter(r => r.level !== SecurityLevel.SEALED);
     return buildStatusOverview(records, this.rules, limit);
   }
 
   /** Returns all rendered rows, newest first. */
   async history(limit: number = 50): Promise<StatusDayRow[]> {
-    const records = await this.statusDao.queryRecent(limit);
+    const records = (await this.statusDao.queryRecent(limit)).filter(r => r.level !== SecurityLevel.SEALED);
     return toStatusDayRows(records, this.rules);
   }
 
