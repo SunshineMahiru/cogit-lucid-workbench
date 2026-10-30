@@ -56,6 +56,7 @@ export struct NoteTagEditor {
           .borderRadius(AppTheme.radius.tag)
           .border({ width: 0.5, color: AppTheme.color.border })
           .maxLength(12)
+          .accessibilityText('输入新标签')
           .onChange((value: string) => {
             this.draftTag = value;
           })
@@ -69,6 +70,7 @@ export struct NoteTagEditor {
           .padding({ left: 14, right: 14, top: 9, bottom: 9 })
           .backgroundColor(this.canSubmit() ? AppTheme.color.primary : AppTheme.color.chip)
           .borderRadius(AppTheme.radius.tag)
+          .accessibilityText('添加标签')
           .onClick(() => {
             this.submit();
           })
