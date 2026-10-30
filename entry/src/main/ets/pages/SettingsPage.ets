@@ -11,9 +11,11 @@ import {
   sanitizeAppSettings
 } from '../settings';
 import {
+  BackgroundImageSource,
   PAGE_BACKGROUND_GROUPS,
   PageBackgroundService
 } from '../settings/PageBackgroundService';
+import { ImageSourceSheet } from '../components/ImageSourceSheet';
 import { BackupService } from '../settings/BackupService';
 import { ROUTES } from '../navigation/Routes';
 import { ExportService, totalExportRecords } from '../export';
@@ -59,6 +61,8 @@ export struct SettingsPage {
   @Local lastExportTotal: number = 0;
   @Local spentYuan: number = 0;
   @Local backgroundBusy: string = '';
+  @Local globalApplied: boolean = false;
+  @Local showSourceSheet: boolean = false;
   @Local dataBusy: boolean = false;
   @Local clearArmed: boolean = false;
   @Local backgroundRows: BackgroundRowState[] = initialBackgroundRows();
@@ -174,6 +178,7 @@ export struct SettingsPage {
       rows.push({ key: state.key, label: state.label, path: state.applied ? 'applied' : '' });
     }
     this.backgroundRows = rows;
+    this.globalApplied = (await PageBackgroundService.getGlobal(context)).length > 0;
   }
 
   private appliedSummary(): string {
@@ -183,10 +188,13 @@ export struct SettingsPage {
         total += 1;
       }
     }
-    return total > 0 ? `已应用到 ${total} 个页面` : '尚未设置';
+    if (total === 0) {
+      return '尚未设置';
+    }
+    return this.globalApplied ? `全局默认 · 覆盖 ${total} 个页面` : `已应用到 ${total} 个页面`;
   }
 
-  private async chooseBackground(): Promise<void> {
+  private async chooseBackground(source: BackgroundImageSource): Promise<void> {
     if (this.hostContext === null) {
       this.showToast('当前环境不支持选择图片');
       return;
@@ -196,7 +204,7 @@ export struct SettingsPage {
     }
     this.backgroundBusy = 'pending';
     try {
-      const path = await PageBackgroundService.pickImage(this.hostContext);
+      const path = await PageBackgroundService.pick(source, this.hostContext);
       if (path.length === 0) {
         this.showToast('未选择图片');
         return;
@@ -335,6 +343,16 @@ export struct SettingsPage {
       .onClick(() => {
         this.withLevel(level);
       })
+  }
+
+  @Builder
+  sourceSheet() {
+    ImageSourceSheet({
+      onPick: (source: BackgroundImageSource) => {
+        this.showSourceSheet = false;
+        this.chooseBackground(source);
+      }
+    })
   }
 
   build() {
@@ -593,7 +611,7 @@ export struct SettingsPage {
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
-                  Text('选一张图片，进入下一页决定应用到哪个功能页面；旧格式图片在启动时自动校正。')
+                  Text('设置页面背景图与页面透明度，进入下一页选择应用范围；旧格式图片在启动时自动校正。')
                     .fontSize(11)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
@@ -607,7 +625,7 @@ export struct SettingsPage {
                       .borderRadius(8)
                       .accessibilityText('选择图片并进入页面背景应用页')
                       .onClick(() => {
-                        this.chooseBackground();
+                        this.showSourceSheet = true;
                       })
                     Blank()
                     Text(this.appliedSummary())
@@ -671,6 +689,11 @@ export struct SettingsPage {
         .width('100%')
         .height('100%')
         .backgroundColor(Color.Transparent)
+        .bindSheet($$this.showSourceSheet, this.sourceSheet(), {
+          height: 300,
+          dragBar: false,
+          backgroundColor: AppTheme.color.surface
+        })
       }
     }
     .title('设置')
