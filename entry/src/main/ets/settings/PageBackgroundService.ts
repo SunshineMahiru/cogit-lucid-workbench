@@ -179,12 +179,25 @@ export class PageBackgroundService {
     const source = image.createImageSource(sourceFile.fd);
     const packer = image.createImagePacker();
     try {
-      const file = fileIo.openSync(destination,
-        fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.TRUNC);
+      const info = await source.getImageInfo();
+      const sourceWidth = info.size.width;
+      const sourceHeight = info.size.height;
+      const maxWidth = 1080;
+      const maxHeight = 1920;
+      const scale = Math.min(1, Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight));
+      const width = Math.max(1, Math.round(sourceWidth * scale));
+      const height = Math.max(1, Math.round(sourceHeight * scale));
+      const pixelMap = await source.createPixelMap({ desiredSize: { width: width, height: height } });
       try {
-        await packer.packToFile(source, file.fd, { format: 'image/png', quality: 100 });
+        const file = fileIo.openSync(destination,
+          fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.TRUNC);
+        try {
+          await packer.packToFile(pixelMap, file.fd, { format: 'image/png', quality: 100 });
+        } finally {
+          fileIo.closeSync(file);
+        }
       } finally {
-        fileIo.closeSync(file);
+        pixelMap.release();
       }
     } finally {
       packer.release();
