@@ -38,6 +38,7 @@ export struct SettingsPage {
   @Local isDirty: boolean = false;
   @Local isExporting: boolean = false;
   @Local lastExportName: string = '';
+  @Local lastExportPath: string = '';
   @Local lastExportChars: number = 0;
   @Local lastExportTotal: number = 0;
   @Local spentYuan: number = 0;
@@ -179,6 +180,18 @@ export struct SettingsPage {
     }
   }
 
+  private async shareExport(): Promise<void> {
+    if (this.isExporting || this.hostContext === null || this.lastExportPath.length === 0) {
+      return;
+    }
+    try {
+      const service = await ExportService.open(this.hostContext);
+      await service.share(this.hostContext, this.lastExportPath);
+    } catch (error) {
+      this.showToast('系统分享暂不可用，请使用另存为');
+    }
+  }
+
   private async exportMarkdown(): Promise<void> {
     if (this.isExporting) {
       return;
@@ -192,6 +205,7 @@ export struct SettingsPage {
       const service = await ExportService.open(this.hostContext);
       const result = await service.exportMarkdown(this.hostContext);
       this.lastExportName = result.fileName;
+      this.lastExportPath = result.filePath;
       this.lastExportChars = result.charCount;
       this.lastExportTotal = totalExportRecords(result.counts);
       const saved = await service.saveAs(this.hostContext, result);
@@ -411,6 +425,16 @@ export struct SettingsPage {
                     .onClick(() => {
                       this.exportMarkdown();
                     })
+
+                  if (this.lastExportPath.length > 0) {
+                    Text('分享')
+                      .fontSize(12)
+                      .fontColor(AppTheme.color.primary)
+                      .padding({ left: 10, right: 10, top: 9, bottom: 9 })
+                      .onClick(() => {
+                        this.shareExport();
+                      })
+                  }
 
                   if (this.lastExportName.length > 0) {
                     Text(`已写入 ${this.lastExportName}`)

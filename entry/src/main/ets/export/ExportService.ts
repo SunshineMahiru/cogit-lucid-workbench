@@ -1,6 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
-import { common } from '@kit.AbilityKit';
-import { fileIo, picker } from '@kit.CoreFileKit';
+import { common, Want } from '@kit.AbilityKit';
+import { fileIo, fileUri, picker } from '@kit.CoreFileKit';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
@@ -53,6 +53,16 @@ export class ExportService {
   async buildMarkdown(now: number = Date.now()): Promise<string> {
     const bundle = await this.loadPreparedBundle(now);
     return renderExportDocument(bundle);
+  }
+
+  /** Opens the system share sheet for an exported Markdown file. */
+  async share(context: common.Context, filePath: string): Promise<void> {
+    const want: Want = {
+      action: 'ohos.want.action.sendData',
+      uri: fileUri.getUriFromPath(filePath),
+      type: 'text/markdown'
+    };
+    await (context as common.UIAbilityContext).startAbility(want);
   }
 
   /** Copies an exported file to a user-selected document URI. */
