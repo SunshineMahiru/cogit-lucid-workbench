@@ -20,6 +20,8 @@ import { APP_DISPLAY_NAME } from '../theme/AppIdentity';
 import { AppTheme } from '../theme/AppTheme';
 import { ReviewPeriod, ReviewService, ReviewStats, emptyReviewStats } from '../review';
 import { ReviewPromptPanel } from '../components/ReviewPromptPanel';
+import { WelcomeCard } from '../components/WelcomeCard';
+import { OnboardingStore } from '../settings/OnboardingStore';
 import { PREVIEW_BANNER } from '../preview/PreviewMode';
 import { previewStore } from '../preview/PreviewStore';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
@@ -43,6 +45,7 @@ export struct DashboardView {
   @Local isLoading: boolean = true;
   @Local loadFailed: boolean = false;
   @Local isPreview: boolean = false;
+  @Local showWelcome: boolean = false;
   private reviewService: ReviewService | null = null;
   private refreshListener: (() => void) | null = null;
 
@@ -55,8 +58,15 @@ export struct DashboardView {
     }
     const context = this.getUIContext().getHostContext();
     if (context === undefined) {
+      this.showWelcome = true;
       this.loadPreview();
       return;
+    }
+    try {
+      const onboarding = await OnboardingStore.open(context);
+      this.showWelcome = !(await onboarding.isSeen());
+    } catch (error) {
+      this.showWelcome = true;
     }
     try {
       this.dataService = await HomeDataService.open(context);
@@ -164,6 +174,24 @@ export struct DashboardView {
 
   private openSettings(): void {
     this.pathStack.pushPathByName(ROUTES.SETTINGS, null);
+  }
+
+  private dismissWelcome(): void {
+    this.showWelcome = false;
+    const context = this.getUIContext().getHostContext();
+    if (context === undefined) {
+      return;
+    }
+    OnboardingStore.open(context).then((store: OnboardingStore) => {
+      store.markSeen().catch(() => {
+      });
+    }).catch(() => {
+    });
+  }
+
+  private startFromWelcome(): void {
+    this.dismissWelcome();
+    this.openNoteEditor();
   }
 
   private openWeeklySettlement(): void {
@@ -323,6 +351,17 @@ export struct DashboardView {
         Stack({ alignContent: Alignment.BottomEnd }) {
           Scroll() {
             Column({ space: 16 }) {
+              if (this.showWelcome) {
+                WelcomeCard({
+                  onStart: () => {
+                    this.startFromWelcome();
+                  },
+                  onDismiss: () => {
+                    this.dismissWelcome();
+                  }
+                })
+              }
+
               // Body readings
               Grid() {
                 ForEach(this.readings, (reading: BodyReading) => {
