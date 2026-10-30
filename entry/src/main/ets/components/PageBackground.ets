@@ -1,5 +1,6 @@
 import { PageBackgroundStore } from '../settings/PageBackgroundStore';
 import { subscribePageBackground, unsubscribePageBackground } from '../settings/PageBackgroundBus';
+import { fileUri } from '@kit.CoreFileKit';
 
 /** A low-opacity image layer used behind one page group. */
 @ComponentV2
@@ -42,7 +43,7 @@ export struct PageBackground {
   build() {
     Stack() {
       if (this.imagePath.length > 0) {
-        Image(this.imagePath)
+        Image(fileUri.getUriFromPath(this.imagePath))
           .width('100%')
           .height('100%')
           .objectFit(ImageFit.Cover)

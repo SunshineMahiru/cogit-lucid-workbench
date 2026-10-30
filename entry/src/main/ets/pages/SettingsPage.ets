@@ -16,6 +16,7 @@ import {
 } from '../settings/PageBackgroundService';
 import { PageBackgroundStore } from '../settings/PageBackgroundStore';
 import { BackupService } from '../settings/BackupService';
+import { fileUri } from '@kit.CoreFileKit';
 import { ExportService, totalExportRecords } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { securityLevelText } from '../note';
@@ -712,7 +713,7 @@ export struct SettingsPage {
                   ForEach(this.backgroundRows, (row: BackgroundRowState) => {
                     Row({ space: 8 }) {
                       if (row.path.length > 0) {
-                        Image(row.path)
+                        Image(fileUri.getUriFromPath(row.path))
                           .width(42)
                           .height(30)
                           .objectFit(ImageFit.Cover)
@@ -747,7 +748,7 @@ export struct SettingsPage {
                     Column({ space: 8 }) {
                       Row({ space: 8 }) {
                         if (this.pendingBackgroundPath.length > 0) {
-                          Image(this.pendingBackgroundPath)
+                          Image(fileUri.getUriFromPath(this.pendingBackgroundPath))
                             .width(42)
                             .height(30)
                             .objectFit(ImageFit.Cover)
