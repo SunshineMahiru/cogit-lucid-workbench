@@ -4,6 +4,7 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { PredictionTrendChart } from '../components/PredictionTrendChart';
 import { PredictionShareChart } from '../components/PredictionShareChart';
 import { PredictionService, PredictionStats } from '../prediction';
+import { CalibrationBucket } from '../analysis';
 import { formatHitRate } from '../model/HomeModel';
 import { previewStore } from '../preview/PreviewStore';
 
@@ -11,7 +12,10 @@ import { previewStore } from '../preview/PreviewStore';
 @ComponentV2
 export struct PredictionStatsPage {
   @Local service: PredictionService | null = null;
-  @Local stats: PredictionStats = { settled: 0, hits: 0, misses: 0, hitRate: 0, months: [] };
+  @Local stats: PredictionStats = {
+    settled: 0, hits: 0, misses: 0, hitRate: 0, months: [],
+    calibration: { settled: 0, hits: 0, hitRate: 0, brierScore: 0, buckets: [] }
+  };
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
   @Local hasAnyPrediction: boolean = false;
@@ -192,6 +196,52 @@ export struct PredictionStatsPage {
                     .width('100%')
                 }
                 .width('100%')
+              }
+
+              SectionCard() {
+                Column({ space: 8 }) {
+                  Row() {
+                    Text('置信度校准')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.textSecondary)
+                    Blank()
+                    Text(`Brier ${this.stats.calibration.brierScore.toFixed(3)}`)
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.primary)
+                  }
+                  .width('100%')
+                  Text(this.stats.settled < 10 ?
+                    '样本不足 10 条，校准结果仅供观察' : '按置信度区间统计命中率')
+                    .fontSize(10)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  ForEach(this.stats.calibration.buckets, (bucket: CalibrationBucket) => {
+                    Row() {
+                      Text(bucket.label)
+                        .fontSize(11)
+                        .fontColor(AppTheme.color.text)
+                        .width(72)
+                      Text(`${bucket.hits} / ${bucket.total}`)
+                        .fontSize(11)
+                        .fontColor(AppTheme.color.textSecondary)
+                        .layoutWeight(1)
+                        .textAlign(TextAlign.End)
+                      Text(bucket.total > 0 ? `${bucket.hitRate}%` : '—')
+                        .fontSize(11)
+                        .fontColor(bucket.hitRate >= 50 ? AppTheme.color.success : AppTheme.color.warning)
+                        .width(48)
+                        .textAlign(TextAlign.End)
+                    }
+                    .width('100%')
+                  }, (bucket: CalibrationBucket) => bucket.label)
+                  Text('Brier 越低越接近真实置信度；命中率高不等于校准好')
+                    .fontSize(10)
+                    .lineHeight(16)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
               }
             }
             .width('100%')
