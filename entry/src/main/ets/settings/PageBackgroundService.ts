@@ -111,6 +111,7 @@ export class PageBackgroundService {
     await store.clear(group);
     PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}.png`);
     PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}.jpg`);
+    PageBackgroundService.removeFile(`${context.filesDir}/page-backgrounds/${group}-repair.png`);
     notifyPageBackgroundChanged();
   }
 
@@ -121,7 +122,7 @@ export class PageBackgroundService {
   }
 
   /** Repairs backgrounds saved before PNG normalization; clears files that cannot be decoded. */
-  static async recoverLegacyBackgrounds(context: common.Context): Promise<BackgroundRecoveryResult> {
+  static async recoverLegacyBackgrounds(context: common.Context, forceAll: boolean = false): Promise<BackgroundRecoveryResult> {
     const store = await PageBackgroundStore.open(context);
     const directory = `${context.filesDir}/page-backgrounds`;
     PageBackgroundService.ensureDirectory(directory);
@@ -138,10 +139,10 @@ export class PageBackgroundService {
         cleared += 1;
         continue;
       }
-      if (path.endsWith('.png')) {
+      if (path.endsWith('.png') && !forceAll) {
         continue;
       }
-      const destination = `${directory}/${group.key}.png`;
+      const destination = `${directory}/${group.key}-repair.png`;
       try {
         await PageBackgroundService.convertToPng(path, destination);
         await store.set(group.key, destination);

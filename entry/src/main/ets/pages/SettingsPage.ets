@@ -222,7 +222,7 @@ export struct SettingsPage {
     }
     this.backgroundBusy = 'repair';
     try {
-      const result = await PageBackgroundService.recoverLegacyBackgrounds(this.hostContext);
+      const result = await PageBackgroundService.recoverLegacyBackgrounds(this.hostContext, true);
       await this.loadBackgrounds(this.hostContext);
       this.showToast(`背景修复：转换 ${result.converted}，清除 ${result.failed + result.cleared}，请重新选择无法识别的图片`);
     } catch (error) {
