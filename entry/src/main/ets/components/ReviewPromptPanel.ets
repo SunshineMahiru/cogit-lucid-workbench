@@ -15,6 +15,7 @@ const STATE_LOADING = 'loading';
 const STATE_READY = 'ready';
 const STATE_EMPTY = 'empty';
 const STATE_ERROR = 'error';
+const STATE_LOCAL = 'local';
 
 const LOCAL_PROMPTS: ReviewPrompt[] = [
   { id: 'local_1', text: '这一周哪件事最消耗你？', category: 'energy' },
@@ -53,7 +54,7 @@ export struct ReviewPromptPanel {
     }
     if (this.isRealDevice && !this.hasConfiguredHost) {
       this.prompts = LOCAL_PROMPTS;
-      this.state = STATE_ERROR;
+      this.state = STATE_LOCAL;
       return;
     }
     this.load();
@@ -79,8 +80,8 @@ export struct ReviewPromptPanel {
             .fontSize(11)
             .fontColor(AppTheme.color.textSecondary)
           Blank()
-          Text(this.state === STATE_ERROR ?
-            (this.isRealDevice && !this.hasConfiguredHost ? '未配置 Mock' : 'Mock 未连接') : '本地 Mock')
+          Text(this.state === STATE_ERROR ? 'Mock 未连接' :
+            (this.state === STATE_LOCAL ? '本地示例' : '本地 Mock'))
             .fontSize(10)
             .fontColor(this.state === STATE_ERROR ? AppTheme.color.danger : AppTheme.color.textMuted)
         }
@@ -137,6 +138,13 @@ export struct ReviewPromptPanel {
             .fontSize(11)
             .fontColor(AppTheme.color.textMuted)
         } else {
+          if (this.state === STATE_LOCAL) {
+            Text('真机未配置 Mock，以下为内置示例提示')
+              .fontSize(10)
+              .lineHeight(15)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+          }
           ForEach(this.prompts, (prompt: ReviewPrompt) => {
             Text(`· ${prompt.text}`)
               .fontSize(12)
