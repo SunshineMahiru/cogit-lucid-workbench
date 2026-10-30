@@ -124,38 +124,38 @@ export struct DashboardView {
     return [
       {
         route: ROUTES.NOTE_EDIT,
-        icon: '📝',
+        icon: '记',
         title: '速记',
         summary: formatNoteCount(this.summary.todayNotes, this.summary.totalNotes)
       },
       {
         route: ROUTES.PREDICTION_LIST,
-        icon: '🔮',
+        icon: '测',
         title: '预测',
         summary: `待结算 ${this.summary.pendingPredictions} · 命中 ` +
           `${formatHitRate(this.summary.hitRate, this.summary.settledPredictions)}`
       },
       {
         route: ROUTES.REVIEW,
-        icon: '🔄',
+        icon: '复',
         title: '复盘',
         summary: `待复盘 ${this.summary.unreviewedDecisions} 条`
       },
       {
         route: ROUTES.ANCHOR,
-        icon: '⭐',
+        icon: '锚',
         title: '锚点',
         summary: `共 ${this.summary.totalAnchors} 条`
       },
       {
         route: ROUTES.STATUS,
-        icon: '📊',
+        icon: '状',
         title: '状态',
         summary: sleep === '--' ? '暂无读数' : `睡眠 ${sleep} 小时`
       },
       {
         route: ROUTES.RELATION,
-        icon: '🔗',
+        icon: '联',
         title: '关系',
         summary: `共 ${this.summary.totalRelations} 人`
       }
