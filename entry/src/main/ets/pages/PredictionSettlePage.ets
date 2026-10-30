@@ -149,7 +149,7 @@ export struct PredictionSettlePage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else if (this.missing) {
         Column() {
           NoteEmptyState({
@@ -166,7 +166,7 @@ export struct PredictionSettlePage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else if (this.alreadySettled) {
         Column() {
           NoteEmptyState({
@@ -183,7 +183,7 @@ export struct PredictionSettlePage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else if (!this.isDue) {
         Column() {
           NoteEmptyState({
@@ -200,7 +200,7 @@ export struct PredictionSettlePage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else {
         Column() {
           Scroll() {
@@ -297,10 +297,11 @@ export struct PredictionSettlePage {
         }
         .width('100%')
         .height('100%')
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       }
     }
     .title('结算预测')
+    .backgroundColor(Color.Transparent)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param === undefined) {

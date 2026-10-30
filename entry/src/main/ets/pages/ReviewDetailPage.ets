@@ -89,7 +89,7 @@ export struct ReviewDetailPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else if (this.missing) {
         Column() {
           NoteEmptyState({
@@ -106,7 +106,7 @@ export struct ReviewDetailPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else {
         Scroll() {
           Column({ space: 10 }) {
@@ -193,10 +193,11 @@ export struct ReviewDetailPage {
         .height('100%')
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       }
     }
     .title('复盘详情')
+    .backgroundColor(Color.Transparent)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param === undefined) {

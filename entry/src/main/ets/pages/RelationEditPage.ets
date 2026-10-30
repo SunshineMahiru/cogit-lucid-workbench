@@ -151,7 +151,7 @@ export struct RelationEditPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else {
         Scroll() {
           Column({ space: 12 }) {
@@ -272,10 +272,11 @@ export struct RelationEditPage {
         .width('100%')
         .height('100%')
         .scrollBar(BarState.Off)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       }
     }
     .title(this.relationId === null ? '新建关系' : '编辑关系')
+    .backgroundColor(Color.Transparent)
     .menus(this.saveMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;

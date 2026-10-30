@@ -125,9 +125,10 @@ export struct ReviewHistoryPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('复盘历史')
+    .backgroundColor(Color.Transparent)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
     })

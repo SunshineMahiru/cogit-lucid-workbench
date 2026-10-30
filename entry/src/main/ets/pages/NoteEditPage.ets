@@ -415,9 +415,10 @@ export struct NoteEditPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title(this.isEditing ? '编辑速记' : '速记')
+    .backgroundColor(Color.Transparent)
     .menus(this.saveMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;

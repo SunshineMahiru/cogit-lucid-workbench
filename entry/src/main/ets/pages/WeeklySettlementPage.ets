@@ -118,7 +118,7 @@ export struct WeeklySettlementPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else {
         Column() {
           Scroll() {
@@ -207,10 +207,11 @@ export struct WeeklySettlementPage {
         }
         .width('100%')
         .height('100%')
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       }
     }
     .title('周结算')
+    .backgroundColor(Color.Transparent)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
     })

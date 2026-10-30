@@ -249,9 +249,10 @@ export struct RelationListPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('关系层')
+    .backgroundColor(Color.Transparent)
     .menus(this.graphMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;

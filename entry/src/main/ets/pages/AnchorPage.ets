@@ -171,9 +171,10 @@ export struct AnchorPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('价值锚点')
+    .backgroundColor(Color.Transparent)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
     })

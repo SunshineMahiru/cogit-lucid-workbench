@@ -8,7 +8,7 @@ import { fileUri } from '@kit.CoreFileKit';
 export struct PageBackground {
   @Param route: string = 'home';
   @Local imagePath: string = '';
-  @Local imageOpacity: number = 0.14;
+  @Local imageOpacity: number = 0.1;
   private listener: (() => void) | null = null;
 
   aboutToAppear(): void {
@@ -16,6 +16,11 @@ export struct PageBackground {
       this.load();
     };
     subscribePageBackground(this.listener);
+    this.load();
+  }
+
+  @Monitor('route')
+  onRouteChanged(): void {
     this.load();
   }
 

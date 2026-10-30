@@ -176,7 +176,7 @@ export struct RelationDetailPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else if (this.missing) {
         Column() {
           NoteEmptyState({
@@ -193,7 +193,7 @@ export struct RelationDetailPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else {
         Scroll() {
           Column({ space: 12 }) {
@@ -378,10 +378,11 @@ export struct RelationDetailPage {
         .height('100%')
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       }
     }
     .title('关系详情')
+    .backgroundColor(Color.Transparent)
     .menus(this.editMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;

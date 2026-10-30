@@ -465,6 +465,6 @@ export struct ReviewForm {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(AppTheme.color.page)
+    .backgroundColor(Color.Transparent)
   }
 }

@@ -16,8 +16,9 @@ export struct PlaceholderPage {
       .width('100%')
       .height('100%')
       .justifyContent(FlexAlign.Center)
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title(this.title)
+    .backgroundColor(Color.Transparent)
   }
 }

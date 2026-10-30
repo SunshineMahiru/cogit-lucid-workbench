@@ -166,9 +166,10 @@ export struct RelationGraphPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('关系图谱')
+    .backgroundColor(Color.Transparent)
     .onShown(() => {
       if (this.hasShownOnce) {
         this.load();

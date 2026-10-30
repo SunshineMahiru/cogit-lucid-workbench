@@ -55,9 +55,10 @@ export struct ReviewPage {
       })
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('复盘')
+    .backgroundColor(Color.Transparent)
     .menus(this.actionsMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;

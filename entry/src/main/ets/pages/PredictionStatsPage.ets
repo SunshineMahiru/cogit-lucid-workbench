@@ -253,9 +253,10 @@ export struct PredictionStatsPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('预测统计')
+    .backgroundColor(Color.Transparent)
     .onShown(() => {
       if (this.hasShownOnce) {
         this.refresh();

@@ -201,9 +201,10 @@ export struct StatusHistoryPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('状态历史')
+    .backgroundColor(Color.Transparent)
     .onShown(() => {
       if (this.hasShownOnce) {
         this.refresh();

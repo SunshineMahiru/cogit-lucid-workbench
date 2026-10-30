@@ -25,6 +25,7 @@ import { StatusPage } from './StatusPage';
 import { StatusHistoryPage } from './StatusHistoryPage';
 import { StatusEditPage } from './StatusEditPage';
 import { SettingsPage } from './SettingsPage';
+import { BackgroundApplyPage } from './BackgroundApplyPage';
 import { PageBackground } from '../components/PageBackground';
 import { backgroundKeyForRoute, PageBackgroundService } from '../settings/PageBackgroundService';
 
@@ -32,8 +33,10 @@ import { backgroundKeyForRoute, PageBackgroundService } from '../settings/PageBa
 @ComponentV2
 struct Index {
   @Local pathStack: NavPathStack = new NavPathStack();
+  @Local currentGroup: string = 'home';
 
   aboutToAppear(): void {
+    this.trackCurrentPage();
     try {
       const context = this.getUIContext().getHostContext();
       if (context !== undefined) {
@@ -46,14 +49,24 @@ struct Index {
     }
   }
 
+  /** Keeps the shared background layer on the group of the page currently on top. */
+  private trackCurrentPage(): void {
+    this.pathStack.setInterception({
+      didShow: (from: NavBar | NavDestinationContext, to: NavBar | NavDestinationContext,
+        operation: NavigationOperation) => {
+        const context = to as NavDestinationContext;
+        if (context.pathInfo !== undefined) {
+          this.currentGroup = backgroundKeyForRoute(context.pathInfo.name);
+        } else {
+          this.currentGroup = 'home';
+        }
+      }
+    });
+  }
+
   @Builder
   pageMap(name: string) {
-    Stack() {
-      this.pageContent(name)
-      PageBackground({ route: backgroundKeyForRoute(name) })
-    }
-    .width('100%')
-    .height('100%')
+    this.pageContent(name)
   }
 
   @Builder
@@ -102,25 +115,29 @@ struct Index {
       StatusEditPage()
     } else if (name === ROUTES.SETTINGS) {
       SettingsPage()
+    } else if (name === ROUTES.BACKGROUND_APPLY) {
+      BackgroundApplyPage()
     } else {
       PlaceholderPage({ title: '页面未实现', hint: name })
     }
   }
 
   build() {
-    Navigation(this.pathStack) {
-      Stack() {
+    Stack() {
+      PageBackground({ route: this.currentGroup })
+      Navigation(this.pathStack) {
         DashboardView({ pathStack: this.pathStack })
-        PageBackground({ route: 'home' })
       }
       .width('100%')
       .height('100%')
+      .hideTitleBar(true)
+      .mode(NavigationMode.Stack)
+      .navDestination(this.pageMap)
+      .backgroundColor(Color.Transparent)
     }
     .width('100%')
     .height('100%')
-    .hideTitleBar(true)
-    .mode(NavigationMode.Stack)
-    .navDestination(this.pageMap)
+    .alignContent(Alignment.TopStart)
     .backgroundColor(AppTheme.color.page)
   }
 }

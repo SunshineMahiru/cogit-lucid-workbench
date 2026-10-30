@@ -132,7 +132,7 @@ export struct StatusEditPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       } else {
         Scroll() {
           Column({ space: 12 }) {
@@ -217,10 +217,11 @@ export struct StatusEditPage {
         .width('100%')
         .height('100%')
         .scrollBar(BarState.Off)
-        .backgroundColor(AppTheme.color.page)
+        .backgroundColor(Color.Transparent)
       }
     }
     .title('记录读数')
+    .backgroundColor(Color.Transparent)
     .menus(this.saveMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;

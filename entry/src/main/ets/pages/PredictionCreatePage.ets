@@ -296,9 +296,10 @@ export struct PredictionCreatePage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title(this.sourceId === null ? '新建预测' : '修改预测')
+    .backgroundColor(Color.Transparent)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
       if (context.pathInfo.param !== undefined) {

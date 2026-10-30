@@ -252,9 +252,10 @@ export struct NoteListPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('速记列表')
+    .backgroundColor(Color.Transparent)
     .menus(this.addMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;

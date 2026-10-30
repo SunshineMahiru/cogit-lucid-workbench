@@ -264,9 +264,10 @@ export struct PredictionListPage {
       .width('100%')
       .height('100%')
       .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('预测日志')
+    .backgroundColor(Color.Transparent)
     .menus(this.actionsMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;

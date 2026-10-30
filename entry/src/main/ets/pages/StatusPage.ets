@@ -287,9 +287,10 @@ export struct StatusPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('状态面板')
+    .backgroundColor(Color.Transparent)
     .menus(this.addMenu)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;

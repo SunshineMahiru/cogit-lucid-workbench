@@ -137,8 +137,9 @@ export struct ReviewAgentPage {
       .width('100%')
       .height('100%')
       .scrollBar(BarState.Off)
-      .backgroundColor(AppTheme.color.page)
+      .backgroundColor(Color.Transparent)
     }
     .title('复盘 Agent')
+    .backgroundColor(Color.Transparent)
   }
 }
