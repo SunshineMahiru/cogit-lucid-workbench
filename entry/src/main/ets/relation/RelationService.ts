@@ -73,6 +73,16 @@ export class RelationService {
     return toRelationDetail(relation);
   }
 
+  /** Soft-deletes a relation while keeping its history available for undo. */
+  async softDelete(id: string): Promise<void> {
+    await this.relationDao.softDelete(id);
+  }
+
+  /** Restores a relation removed by mistake. */
+  async restore(id: string): Promise<void> {
+    await this.relationDao.restore(id);
+  }
+
   private async requireRelation(id: string): Promise<Relation> {
     const relation = await this.relationDao.queryById(id);
     if (relation === null) {

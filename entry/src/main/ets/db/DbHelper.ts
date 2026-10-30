@@ -46,6 +46,16 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    const deleteMigrations: string[] = [
+      `ALTER TABLE relation ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE status_record ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`
+    ];
+    for (const sql of deleteMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     return store;
   }
 }

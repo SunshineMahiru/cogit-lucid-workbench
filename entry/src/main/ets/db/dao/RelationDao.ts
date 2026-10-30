@@ -22,6 +22,7 @@ export class RelationDao {
       [RELATION_COLS.RAW_MATERIAL_TEST]: relation.rawMaterialTest ? 1 : 0,
       [RELATION_COLS.FORBID_ANALYSIS]: relation.forbidAnalysis ? 1 : 0,
       [RELATION_COLS.LEVEL]: relation.level,
+      [RELATION_COLS.DELETED]: relation.deleted === true ? 1 : 0,
       [RELATION_COLS.NOTES]: relation.notes
     };
     return this.store.insert(DB_TABLES.RELATION, values);
@@ -54,9 +55,10 @@ export class RelationDao {
     return this.store.update(values, predicates);
   }
 
-  /** Returns all relations. */
+  /** Returns all active relations. */
   async queryAll(): Promise<Relation[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.RELATION);
+    predicates.equalTo(RELATION_COLS.DELETED, 0);
     const resultSet = await this.store.query(predicates);
     const relations: Relation[] = [];
     while (resultSet.goToNextRow()) {
@@ -66,10 +68,10 @@ export class RelationDao {
     return relations;
   }
 
-  /** Returns one relation by id, or null when it does not exist. */
+  /** Returns one active relation by id, or null when it is gone. */
   async queryById(id: string): Promise<Relation | null> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.RELATION);
-    predicates.equalTo(RELATION_COLS.ID, id).limitAs(1);
+    predicates.equalTo(RELATION_COLS.ID, id).equalTo(RELATION_COLS.DELETED, 0).limitAs(1);
     const resultSet = await this.store.query(predicates);
     let relation: Relation | null = null;
     if (resultSet.goToNextRow()) {
@@ -77,6 +79,25 @@ export class RelationDao {
     }
     resultSet.close();
     return relation;
+  }
+
+  /** Marks a relation as deleted without removing its history. */
+  async softDelete(id: string): Promise<number> {
+    return this.updateDeleted(id, 1);
+  }
+
+  /** Restores a soft-deleted relation. */
+  async restore(id: string): Promise<number> {
+    return this.updateDeleted(id, 0);
+  }
+
+  private async updateDeleted(id: string, deleted: number): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [RELATION_COLS.DELETED]: deleted
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.RELATION);
+    predicates.equalTo(RELATION_COLS.ID, id);
+    return this.store.update(values, predicates);
   }
 
   private async queryCount(sql: string): Promise<number> {
@@ -90,7 +111,8 @@ export class RelationDao {
   }
 
   async countVisible(): Promise<number> {
-    return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.RELATION} WHERE level <> 'sealed'`);
+    return this.queryCount(
+      `SELECT COUNT(*) AS total FROM ${DB_TABLES.RELATION} WHERE level <> 'sealed' AND deleted = 0`);
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): Relation {
@@ -102,6 +124,7 @@ export class RelationDao {
       rawMaterialTest: resultSet.getLong(resultSet.getColumnIndex(RELATION_COLS.RAW_MATERIAL_TEST)) === 1,
       forbidAnalysis: resultSet.getLong(resultSet.getColumnIndex(RELATION_COLS.FORBID_ANALYSIS)) === 1,
       level: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.LEVEL)) as SecurityLevel,
+      deleted: resultSet.getLong(resultSet.getColumnIndex(RELATION_COLS.DELETED)) === 1,
       notes: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.NOTES))
     };
   }

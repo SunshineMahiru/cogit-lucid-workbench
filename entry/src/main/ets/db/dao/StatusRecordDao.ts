@@ -20,7 +20,8 @@ export class StatusRecordDao {
       [STATUS_RECORD_COLS.EXERCISE_COUNT]: record.exerciseCount,
       [STATUS_RECORD_COLS.ALERT_COUNT]: record.alertCount,
       [STATUS_RECORD_COLS.NOTE]: record.note,
-      [STATUS_RECORD_COLS.LEVEL]: record.level ?? SecurityLevel.LOCAL_ONLY
+      [STATUS_RECORD_COLS.LEVEL]: record.level ?? SecurityLevel.LOCAL_ONLY,
+      [STATUS_RECORD_COLS.DELETED]: record.deleted === true ? 1 : 0
     };
     return this.store.insert(DB_TABLES.STATUS_RECORD, values);
   }
@@ -43,6 +44,7 @@ export class StatusRecordDao {
   /** Returns all status records. */
   async queryAll(): Promise<StatusRecord[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
+    predicates.equalTo(STATUS_RECORD_COLS.DELETED, 0);
     const resultSet = await this.store.query(predicates);
     const records: StatusRecord[] = [];
     while (resultSet.goToNextRow()) {
@@ -55,7 +57,7 @@ export class StatusRecordDao {
   /** Returns the status record for one date, or null when absent. */
   async queryByDate(date: string): Promise<StatusRecord | null> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
-    predicates.equalTo(STATUS_RECORD_COLS.DATE, date);
+    predicates.equalTo(STATUS_RECORD_COLS.DATE, date).equalTo(STATUS_RECORD_COLS.DELETED, 0);
     const resultSet = await this.store.query(predicates);
     let record: StatusRecord | null = null;
     if (resultSet.goToNextRow()) {
@@ -65,10 +67,10 @@ export class StatusRecordDao {
     return record;
   }
 
-  /** Returns the most recent status records, newest first. */
+  /** Returns the most recent active status records, newest first. */
   async queryRecent(limit: number): Promise<StatusRecord[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
-    predicates.orderByDesc(STATUS_RECORD_COLS.DATE).limitAs(limit);
+    predicates.equalTo(STATUS_RECORD_COLS.DELETED, 0).orderByDesc(STATUS_RECORD_COLS.DATE).limitAs(limit);
     const resultSet = await this.store.query(predicates);
     const records: StatusRecord[] = [];
     while (resultSet.goToNextRow()) {
@@ -76,6 +78,25 @@ export class StatusRecordDao {
     }
     resultSet.close();
     return records;
+  }
+
+  /** Marks a status record as deleted without removing its history. */
+  async softDelete(id: string): Promise<number> {
+    return this.updateDeleted(id, 1);
+  }
+
+  /** Restores a soft-deleted status record. */
+  async restore(id: string): Promise<number> {
+    return this.updateDeleted(id, 0);
+  }
+
+  private async updateDeleted(id: string, deleted: number): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [STATUS_RECORD_COLS.DELETED]: deleted
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
+    predicates.equalTo(STATUS_RECORD_COLS.ID, id);
+    return this.store.update(values, predicates);
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): StatusRecord {
@@ -86,7 +107,8 @@ export class StatusRecordDao {
       exerciseCount: resultSet.getLong(resultSet.getColumnIndex(STATUS_RECORD_COLS.EXERCISE_COUNT)),
       alertCount: resultSet.getLong(resultSet.getColumnIndex(STATUS_RECORD_COLS.ALERT_COUNT)),
       note: resultSet.getString(resultSet.getColumnIndex(STATUS_RECORD_COLS.NOTE)),
-      level: resultSet.getString(resultSet.getColumnIndex(STATUS_RECORD_COLS.LEVEL)) as SecurityLevel
+      level: resultSet.getString(resultSet.getColumnIndex(STATUS_RECORD_COLS.LEVEL)) as SecurityLevel,
+      deleted: resultSet.getLong(resultSet.getColumnIndex(STATUS_RECORD_COLS.DELETED)) === 1
     };
   }
 }

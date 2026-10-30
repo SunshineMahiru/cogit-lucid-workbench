@@ -21,5 +21,7 @@ export interface Relation {
   forbidAnalysis: boolean;
   /** Security level, defaults to LOCAL_ONLY */
   level: SecurityLevel;
+  /** Soft-delete marker; absent means active. */
+  deleted?: boolean;
   notes: string;
 }

@@ -14,4 +14,6 @@ export interface StatusRecord {
   note: string;
   /** Security level controlling aggregation and export; absent values are local-only */
   level?: SecurityLevel;
+  /** Soft-delete marker; absent means active. */
+  deleted?: boolean;
 }

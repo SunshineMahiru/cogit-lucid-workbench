@@ -14,6 +14,8 @@ export struct StatusHistoryPage {
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
   @Local isPreview: boolean = false;
+  @Local undoId: string = '';
+  @Local undoDate: string = '';
   private hasShownOnce: boolean = false;
 
   aboutToAppear(): void {
@@ -58,6 +60,40 @@ export struct StatusHistoryPage {
       this.getUIContext().getPromptAction().showToast({ message: '历史读数加载失败' });
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  private async deleteRow(row: StatusRow): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    try {
+      await this.service.softDelete(row.id);
+      this.undoId = row.id;
+      this.undoDate = row.date;
+      await this.refresh();
+      this.getUIContext().getPromptAction().showToast({ message: '已删除，可撤销' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '删除失败，请重试' });
+    }
+  }
+
+  private async undoDelete(): Promise<void> {
+    if (this.service === null || this.undoId.length === 0) {
+      return;
+    }
+    try {
+      await this.service.restore(this.undoId);
+      this.undoId = '';
+      this.undoDate = '';
+      await this.refresh();
+      this.getUIContext().getPromptAction().showToast({ message: '已恢复读数' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '恢复失败，请重试' });
     }
   }
 
@@ -115,9 +151,41 @@ export struct StatusHistoryPage {
         } else {
           Scroll() {
             Column({ space: 8 }) {
+              if (this.undoId.length > 0) {
+                SectionCard() {
+                  Row({ space: 8 }) {
+                    Text(`已删除 ${this.undoDate}`)
+                      .fontSize(12)
+                      .fontColor(AppTheme.color.textSecondary)
+                    Blank()
+                    Text('撤销')
+                      .fontSize(12)
+                      .fontColor(AppTheme.color.primary)
+                      .onClick(() => {
+                        this.undoDelete();
+                      })
+                  }
+                  .width('100%')
+                }
+              }
+
               ForEach(this.rows, (row: StatusRow) => {
                 SectionCard() {
-                  StatusDayRow({ row: row })
+                  Column({ space: 4 }) {
+                    StatusDayRow({ row: row })
+                    Row() {
+                      Blank()
+                      Text('删除')
+                        .fontSize(11)
+                        .fontColor(AppTheme.color.danger)
+                        .padding({ top: 2, bottom: 2 })
+                        .onClick(() => {
+                          this.deleteRow(row);
+                        })
+                    }
+                    .width('100%')
+                  }
+                  .width('100%')
                 }
               }, (row: StatusRow) => row.id)
             }

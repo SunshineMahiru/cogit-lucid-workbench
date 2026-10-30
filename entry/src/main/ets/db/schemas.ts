@@ -34,6 +34,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     raw_material_test INTEGER NOT NULL,
     forbid_analysis INTEGER NOT NULL,
     level TEXT NOT NULL,
+    deleted INTEGER NOT NULL DEFAULT 0,
     notes TEXT NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PREDICTION} (
@@ -64,7 +65,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     exercise_count INTEGER NOT NULL,
     alert_count INTEGER NOT NULL,
     note TEXT NOT NULL,
-    level TEXT NOT NULL DEFAULT 'local_only'
+    level TEXT NOT NULL DEFAULT 'local_only',
+    deleted INTEGER NOT NULL DEFAULT 0
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.REVIEW_RESULT} (
     id TEXT PRIMARY KEY,

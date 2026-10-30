@@ -46,6 +46,7 @@ export const RELATION_COLS = {
   RAW_MATERIAL_TEST: 'raw_material_test',
   FORBID_ANALYSIS: 'forbid_analysis',
   LEVEL: 'level',
+  DELETED: 'deleted',
   NOTES: 'notes'
 } as const;
 
@@ -82,7 +83,8 @@ export const STATUS_RECORD_COLS = {
   EXERCISE_COUNT: 'exercise_count',
   ALERT_COUNT: 'alert_count',
   NOTE: 'note',
-  LEVEL: 'level'
+  LEVEL: 'level',
+  DELETED: 'deleted'
 } as const;
 
 /** Column names for the review result table. */

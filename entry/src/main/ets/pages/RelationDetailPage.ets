@@ -34,7 +34,10 @@ export struct RelationDetailPage {
   @Local trustAllowed: boolean = false;
   @Local trustReason: string = '';
   @Local isPreview: boolean = false;
+  @Local deleted: boolean = false;
+  @Local undoVisible: boolean = false;
   private navStack: NavPathStack | null = null;
+  private service: RelationService | null = null;
 
   private async load(relationId: string): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
@@ -44,6 +47,7 @@ export struct RelationDetailPage {
     }
     try {
       const service = await RelationService.open(hostContext);
+      this.service = service;
       const detail = await service.find(relationId);
       if (detail === null) {
         this.missing = true;
@@ -74,6 +78,38 @@ export struct RelationDetailPage {
     this.isLoading = false;
   }
 
+  private async deleteRelation(): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: '演示模式下不能删除关系' });
+      return;
+    }
+    if (this.service === null || this.detail.id.length === 0) {
+      return;
+    }
+    try {
+      await this.service.softDelete(this.detail.id);
+      this.deleted = true;
+      this.undoVisible = true;
+      this.getUIContext().getPromptAction().showToast({ message: '已删除，可撤销' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '删除失败，请重试' });
+    }
+  }
+
+  private async undoDelete(): Promise<void> {
+    if (this.service === null || !this.deleted) {
+      return;
+    }
+    try {
+      await this.service.restore(this.detail.id);
+      this.deleted = false;
+      this.undoVisible = false;
+      this.getUIContext().getPromptAction().showToast({ message: '已恢复关系' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '恢复失败，请重试' });
+    }
+  }
+
   private openEditor(): void {
     if (this.isPreview) {
       this.getUIContext().getPromptAction().showToast({ message: '演示模式下不能编辑关系' });
@@ -90,13 +126,22 @@ export struct RelationDetailPage {
 
   @Builder
   editMenu() {
-    Text('编辑')
-      .fontSize(14)
-      .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
-      .onClick(() => {
-        this.openEditor();
-      })
+    Row({ space: 4 }) {
+      Text('编辑')
+        .fontSize(14)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 10, right: 8 })
+        .onClick(() => {
+          this.openEditor();
+        })
+      Text('删除')
+        .fontSize(14)
+        .fontColor(AppTheme.color.danger)
+        .padding({ left: 4, right: 16 })
+        .onClick(() => {
+          this.deleteRelation();
+        })
+    }
   }
 
   @Builder
@@ -148,6 +193,24 @@ export struct RelationDetailPage {
       } else {
         Scroll() {
           Column({ space: 12 }) {
+            if (this.undoVisible) {
+              SectionCard() {
+                Row({ space: 8 }) {
+                  Text('关系已删除')
+                    .fontSize(12)
+                    .fontColor(AppTheme.color.textSecondary)
+                  Blank()
+                  Text('撤销')
+                    .fontSize(12)
+                    .fontColor(AppTheme.color.primary)
+                    .onClick(() => {
+                      this.undoDelete();
+                    })
+                }
+                .width('100%')
+              }
+            }
+
             SectionCard() {
               Column({ space: 8 }) {
                 Row({ space: 8 }) {

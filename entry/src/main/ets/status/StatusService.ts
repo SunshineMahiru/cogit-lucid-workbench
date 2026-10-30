@@ -62,6 +62,16 @@ export class StatusService {
     return this.overview();
   }
 
+  /** Soft-deletes one day's reading while keeping it available for undo. */
+  async softDelete(id: string): Promise<void> {
+    await this.statusDao.softDelete(id);
+  }
+
+  /** Restores a status reading removed by mistake. */
+  async restore(id: string): Promise<void> {
+    await this.statusDao.restore(id);
+  }
+
   /**
    * Inserts the synthetic demo readings when the table is empty.
    * Returns how many rows were added; existing data is never touched.
