@@ -284,6 +284,7 @@ export struct PredictionCreatePage {
             .padding({ top: 12, bottom: 12 })
             .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
             .borderRadius(12)
+            .accessibilityText(this.isSaving ? '正在保存预测' : (this.sourceId === null ? '保存预测' : '生成新版本预测'))
             .onClick(() => {
               if (!this.isSaving) {
                 this.save();

@@ -312,12 +312,14 @@ export struct DashboardView {
           Text('设置')
             .fontSize(12)
             .fontColor(AppTheme.color.primary)
+            .accessibilityText('打开设置')
             .onClick(() => {
               this.openSettings();
             })
           Text('↻ 刷新')
             .fontSize(12)
             .fontColor(AppTheme.color.primary)
+            .accessibilityText('刷新首页数据')
             .onClick(() => {
               this.refresh();
             })

@@ -447,6 +447,7 @@ export struct ReviewForm {
             .padding({ left: 24, right: 24, top: 11, bottom: 11 })
             .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
             .borderRadius(12)
+            .accessibilityText(this.step < 3 ? '进入下一步' : '完成复盘')
             .onClick(() => {
               if (this.isSaving) {
                 return;

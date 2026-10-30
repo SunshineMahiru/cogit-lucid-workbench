@@ -527,11 +527,12 @@ export struct SettingsPage {
                     .width('100%')
 
                     Text(this.isExporting ? '导出中…' : '导出并另存为')
-                    .fontSize(13)
-                    .fontColor(AppTheme.color.primary)
-                    .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-                    .backgroundColor(AppTheme.color.tint)
-                    .borderRadius(10)
+                      .fontSize(13)
+                      .fontColor(AppTheme.color.primary)
+                      .padding({ left: 14, right: 14, top: 8, bottom: 8 })
+                      .backgroundColor(AppTheme.color.tint)
+                      .borderRadius(10)
+                      .accessibilityText('导出记录并另存为 Markdown')
                     .onClick(() => {
                       this.exportMarkdown();
                     })
@@ -580,6 +581,7 @@ export struct SettingsPage {
                       .padding({ left: 10, right: 10, top: 7, bottom: 7 })
                       .backgroundColor(AppTheme.color.tint)
                       .borderRadius(8)
+                      .accessibilityText('备份本地数据并另存')
                       .onClick(() => {
                         this.backupData();
                       })
@@ -589,6 +591,7 @@ export struct SettingsPage {
                       .padding({ left: 10, right: 10, top: 7, bottom: 7 })
                       .backgroundColor(AppTheme.color.tint)
                       .borderRadius(8)
+                      .accessibilityText('从备份文件恢复数据')
                       .onClick(() => {
                         this.restoreData();
                       })
@@ -596,6 +599,7 @@ export struct SettingsPage {
                       .fontSize(11)
                       .fontColor(AppTheme.color.danger)
                       .padding({ left: 8, right: 8, top: 7, bottom: 7 })
+                      .accessibilityText(this.clearArmed ? '确认清空全部数据' : '清空全部数据，需要二次确认')
                       .onClick(() => {
                         this.clearData();
                       })
@@ -646,6 +650,7 @@ export struct SettingsPage {
                         .padding({ left: 10, right: 10, top: 6, bottom: 6 })
                         .backgroundColor(AppTheme.color.tint)
                         .borderRadius(8)
+                        .accessibilityText(`选择${row.label}背景图片`)
                         .onClick(() => {
                           this.chooseBackground(row.key);
                         })
@@ -653,6 +658,7 @@ export struct SettingsPage {
                         .fontSize(11)
                         .fontColor(AppTheme.color.textMuted)
                         .padding({ left: 4, right: 4, top: 6, bottom: 6 })
+                        .accessibilityText(`清除${row.label}背景图片`)
                         .onClick(() => {
                           this.clearBackground(row.key);
                         })
@@ -724,6 +730,7 @@ export struct SettingsPage {
               .padding({ top: 12, bottom: 12 })
               .backgroundColor(this.isDirty && !this.isSaving ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
               .borderRadius(12)
+              .accessibilityText(this.isSaving ? '正在保存设置' : '保存设置')
               .onClick(() => {
                 if (!this.isSaving && this.isDirty) {
                   this.save();

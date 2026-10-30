@@ -28,6 +28,7 @@ export struct NoteSaveBar {
     .justifyContent(FlexAlign.Center)
     .backgroundColor(this.saving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
     .borderRadius(12)
+    .accessibilityText(this.saving ? '正在保存速记' : '保存速记')
     .onClick(() => {
       if (!this.saving) {
         this.onSave();
