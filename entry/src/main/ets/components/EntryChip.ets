@@ -1,3 +1,5 @@
+import { AppTheme } from '../theme/AppTheme';
+
 /** A tappable chip for the quick-entry section of the dashboard. */
 @ComponentV2
 export struct EntryChip {
@@ -22,7 +24,7 @@ export struct EntryChip {
         .fontSize(14)
       Text(this.label)
         .fontSize(13)
-        .fontColor('#1F2329')
+        .fontColor(AppTheme.color.text)
     }
     .padding({ left: 12, right: 12, top: 8, bottom: 8 })
     .backgroundColor(Color.White)

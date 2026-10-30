@@ -1,5 +1,6 @@
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewForm } from '../components/ReviewForm';
+import { AppTheme } from '../theme/AppTheme';
 import { ROUTES } from '../navigation/Routes';
 
 /** Review session shell: week and month tabs, each owning its own draft. */
@@ -13,7 +14,7 @@ export struct ReviewPage {
     Row({ space: 2 }) {
       Text('历史')
         .fontSize(14)
-        .fontColor('#4A6FA5')
+        .fontColor(AppTheme.color.primary)
         .padding({ left: 8, right: 8 })
         .onClick(() => {
           if (this.navStack !== null) {
@@ -22,7 +23,7 @@ export struct ReviewPage {
         })
       Text('Agent')
         .fontSize(14)
-        .fontColor('#4A6FA5')
+        .fontColor(AppTheme.color.primary)
         .padding({ left: 4, right: 14 })
         .onClick(() => {
           if (this.navStack !== null) {
@@ -52,7 +53,7 @@ export struct ReviewPage {
       })
       .width('100%')
       .height('100%')
-      .backgroundColor('#F5F6F8')
+      .backgroundColor(AppTheme.color.page)
     }
     .title('复盘')
     .menus(this.actionsMenu)

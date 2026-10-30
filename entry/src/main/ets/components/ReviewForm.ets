@@ -1,5 +1,6 @@
 import { Anchor } from '../model/Anchor';
 import { ReviewPeriod } from '../model/ReviewPeriod';
+import { AppTheme } from '../theme/AppTheme';
 import { formatHitRate } from '../model/HomeModel';
 import { ReviewPromptPanel } from './ReviewPromptPanel';
 import { ReviewAgentPanel } from './ReviewAgentPanel';
@@ -227,10 +228,10 @@ export struct ReviewForm {
       Text(value)
         .fontSize(16)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#1F2329')
+        .fontColor(AppTheme.color.text)
       Text(label)
         .fontSize(10)
-        .fontColor('#8A8F99')
+        .fontColor(AppTheme.color.textSecondary)
     }
     .layoutWeight(1)
     .alignItems(HorizontalAlign.Center)
@@ -243,16 +244,16 @@ export struct ReviewForm {
         Row({ space: 4 }) {
           Text(String(index + 1))
             .fontSize(10)
-            .fontColor(index <= this.step ? Color.White : '#8A8F99')
+            .fontColor(index <= this.step ? Color.White : AppTheme.color.textSecondary)
             .width(18)
             .height(18)
             .textAlign(TextAlign.Center)
             .lineHeight(18)
-            .backgroundColor(index <= this.step ? '#4A6FA5' : '#E8EFF7')
+            .backgroundColor(index <= this.step ? AppTheme.color.primary : AppTheme.color.tint)
             .borderRadius(9)
           Text(label)
             .fontSize(11)
-            .fontColor(index === this.step ? '#1F2329' : '#8A8F99')
+            .fontColor(index === this.step ? AppTheme.color.text : AppTheme.color.textSecondary)
         }
         .margin({ right: 8 })
       }, (label: string) => label)
@@ -267,7 +268,7 @@ export struct ReviewForm {
           LoadingProgress()
             .width(32)
             .height(32)
-            .color('#4A6FA5')
+            .color(AppTheme.color.primary)
         }
         .width('100%')
         .layoutWeight(1)
@@ -277,20 +278,20 @@ export struct ReviewForm {
           Text('本期复盘已完成')
             .fontSize(18)
             .fontWeight(FontWeight.Medium)
-            .fontColor('#1F2329')
+            .fontColor(AppTheme.color.text)
           Text(this.stats.rangeLabel)
             .fontSize(12)
-            .fontColor('#8A8F99')
+            .fontColor(AppTheme.color.textSecondary)
           Text(this.action)
             .fontSize(14)
             .lineHeight(22)
-            .fontColor('#1F2329')
+            .fontColor(AppTheme.color.text)
             .textAlign(TextAlign.Center)
           Text('再写一条')
             .fontSize(13)
-            .fontColor('#4A6FA5')
+            .fontColor(AppTheme.color.primary)
             .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-            .backgroundColor('#E8EFF7')
+            .backgroundColor(AppTheme.color.tint)
             .borderRadius(16)
             .margin({ top: 8 })
             .onClick(() => {
@@ -309,11 +310,11 @@ export struct ReviewForm {
                 Text(this.period === ReviewPeriod.WEEK ? '本周' : '本月')
                   .fontSize(13)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor('#1F2329')
+                  .fontColor(AppTheme.color.text)
                 Blank()
                 Text(this.stats.rangeLabel)
                   .fontSize(11)
-                  .fontColor('#8A8F99')
+                  .fontColor(AppTheme.color.textSecondary)
               }
               .width('100%')
 
@@ -339,19 +340,19 @@ export struct ReviewForm {
             Text(`${this.step + 1}. ${STEP_LABELS[this.step]}`)
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#1F2329')
+              .fontColor(AppTheme.color.text)
               .width('100%')
             Text(STEP_HINTS[this.step])
               .fontSize(12)
               .lineHeight(18)
-              .fontColor('#8A8F99')
+              .fontColor(AppTheme.color.textSecondary)
               .width('100%')
 
             if (this.step === 2 && this.anchors.length > 0) {
               Column({ space: 8 }) {
                 Text('对照锚点 · 点击选择本次真正用到的')
                   .fontSize(11)
-                  .fontColor('#8A8F99')
+                  .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 ForEach(this.anchors, (anchor: Anchor) => {
                   Column({ space: 4 }) {
@@ -359,30 +360,30 @@ export struct ReviewForm {
                       Text(anchor.text)
                         .fontSize(13)
                         .lineHeight(20)
-                        .fontColor('#1F2329')
+                        .fontColor(AppTheme.color.text)
                         .layoutWeight(1)
                       if (this.isAnchorSelected(anchor.id)) {
                         Text('已对照')
                           .fontSize(9)
-                          .fontColor('#4A6FA5')
+                          .fontColor(AppTheme.color.primary)
                           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                          .backgroundColor('#E8EFF7')
+                          .backgroundColor(AppTheme.color.tint)
                           .borderRadius(6)
                       }
                     }
                     .width('100%')
                     Text(anchor.source)
                       .fontSize(10)
-                      .fontColor('#B0B4BE')
+                      .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
                   .width('100%')
                   .padding(10)
-                  .backgroundColor(this.isAnchorSelected(anchor.id) ? '#F3F7FC' : '#FFFDF5')
+                  .backgroundColor(this.isAnchorSelected(anchor.id) ? AppTheme.color.selectedSurface : AppTheme.color.surfaceWarm)
                   .borderRadius(8)
                   .border({
                     width: this.isAnchorSelected(anchor.id) ? 1 : 0,
-                    color: '#B7CDE8'
+                    color: AppTheme.color.borderSelected
                   })
                   .onClick(() => {
                     this.toggleAnchor(anchor.id);
@@ -391,7 +392,7 @@ export struct ReviewForm {
               }
               .width('100%')
               .padding(14)
-              .backgroundColor('#FFFDF5')
+              .backgroundColor(AppTheme.color.surfaceWarm)
               .borderRadius(12)
               .alignItems(HorizontalAlign.Start)
             }
@@ -413,7 +414,7 @@ export struct ReviewForm {
               .padding(12)
               .backgroundColor(Color.White)
               .borderRadius(12)
-              .border({ width: 0.5, color: '#E0E0E0' })
+              .border({ width: 0.5, color: AppTheme.color.border })
               .onChange((value: string) => {
                 this.updateCurrent(value);
               })
@@ -430,9 +431,9 @@ export struct ReviewForm {
           if (this.step > 0) {
             Text('上一步')
               .fontSize(14)
-              .fontColor('#5F5E5A')
+              .fontColor(AppTheme.color.textSecondaryStrong)
               .padding({ left: 20, right: 20, top: 11, bottom: 11 })
-              .backgroundColor('#F1EFE8')
+              .backgroundColor(AppTheme.color.chip)
               .borderRadius(12)
               .onClick(() => {
                 this.step -= 1;
@@ -444,7 +445,7 @@ export struct ReviewForm {
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
             .padding({ left: 24, right: 24, top: 11, bottom: 11 })
-            .backgroundColor(this.isSaving ? '#8FA6C4' : '#4A6FA5')
+            .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
             .borderRadius(12)
             .onClick(() => {
               if (this.isSaving) {
@@ -463,6 +464,6 @@ export struct ReviewForm {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F6F8')
+    .backgroundColor(AppTheme.color.page)
   }
 }

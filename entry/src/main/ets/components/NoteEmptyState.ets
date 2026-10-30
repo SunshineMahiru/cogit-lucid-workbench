@@ -1,3 +1,5 @@
+import { AppTheme } from '../theme/AppTheme';
+
 /** Shared empty state for filtered or empty note lists. */
 @ComponentV2
 export struct NoteEmptyState {
@@ -11,16 +13,16 @@ export struct NoteEmptyState {
     Column({ space: 8 }) {
       Text(this.title)
         .fontSize(14)
-        .fontColor('#8A8F99')
+        .fontColor(AppTheme.color.textSecondary)
       Text(this.hint)
         .fontSize(12)
-        .fontColor('#B0B4BE')
+        .fontColor(AppTheme.color.textMuted)
       if (this.actionLabel.length > 0) {
         Text(this.actionLabel)
           .fontSize(13)
-          .fontColor('#4A6FA5')
+          .fontColor(AppTheme.color.primary)
           .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-          .backgroundColor('#E8EFF7')
+          .backgroundColor(AppTheme.color.tint)
           .borderRadius(16)
           .margin({ top: 4 })
           .onClick(() => {
@@ -31,7 +33,7 @@ export struct NoteEmptyState {
     .width('100%')
     .padding(32)
     .justifyContent(FlexAlign.Center)
-    .border(this.dashed ? { width: 1, color: '#D3D1C7', style: BorderStyle.Dashed } : { width: 0 })
+    .border(this.dashed ? { width: 1, color: AppTheme.color.borderStrong, style: BorderStyle.Dashed } : { width: 0 })
     .borderRadius(this.dashed ? 12 : 0)
   }
 }

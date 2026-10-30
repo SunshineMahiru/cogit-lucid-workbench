@@ -1,4 +1,5 @@
 import { NoteFieldKey, NoteTemplateField } from '../note';
+import { AppTheme } from '../theme/AppTheme';
 
 /** One labelled template field with inline validation feedback. */
 @ComponentV2
@@ -19,11 +20,11 @@ export struct NoteFieldEditor {
       Row({ space: 4 }) {
         Text(this.field.label)
           .fontSize(12)
-          .fontColor('#5F5E5A')
+          .fontColor(AppTheme.color.textSecondaryStrong)
         if (this.field.required) {
           Text('*')
             .fontSize(12)
-            .fontColor('#A32D2D')
+            .fontColor(AppTheme.color.danger)
         }
       }
       .width('100%')
@@ -33,9 +34,9 @@ export struct NoteFieldEditor {
           .fontSize(13)
           .height(72)
           .padding(10)
-          .backgroundColor('#F7F9FC')
+          .backgroundColor(AppTheme.color.surfaceTint)
           .borderRadius(10)
-          .border({ width: 0.5, color: this.error.length > 0 ? '#A32D2D' : '#E0E0E0' })
+          .border({ width: 0.5, color: this.error.length > 0 ? AppTheme.color.danger : AppTheme.color.border })
           .onChange((value: string) => {
             this.onValueChange(value);
           })
@@ -44,9 +45,9 @@ export struct NoteFieldEditor {
           .fontSize(13)
           .height(40)
           .padding({ left: 10, right: 10 })
-          .backgroundColor('#F7F9FC')
+          .backgroundColor(AppTheme.color.surfaceTint)
           .borderRadius(10)
-          .border({ width: 0.5, color: this.error.length > 0 ? '#A32D2D' : '#E0E0E0' })
+          .border({ width: 0.5, color: this.error.length > 0 ? AppTheme.color.danger : AppTheme.color.border })
           .onChange((value: string) => {
             this.onValueChange(value);
           })
@@ -55,7 +56,7 @@ export struct NoteFieldEditor {
       if (this.error.length > 0) {
         Text(this.error)
           .fontSize(11)
-          .fontColor('#A32D2D')
+          .fontColor(AppTheme.color.danger)
           .width('100%')
       }
     }

@@ -1,3 +1,4 @@
+import { AppTheme } from '../theme/AppTheme';
 import {
   NoteDraft,
   NoteEntry,
@@ -210,7 +211,7 @@ export struct NoteEditPage {
   saveMenu() {
     Text(this.isSaving ? '保存中' : '保存')
       .fontSize(14)
-      .fontColor(this.isSaving ? '#B0B4BE' : '#4A6FA5')
+      .fontColor(this.isSaving ? AppTheme.color.textMuted : AppTheme.color.primary)
       .padding({ left: 8, right: 16 })
       .onClick(() => {
         if (!this.isSaving) {
@@ -227,7 +228,7 @@ export struct NoteEditPage {
             Column({ space: 6 }) {
               Text('模板')
                 .fontSize(12)
-                .fontColor('#8A8F99')
+                .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               NoteTemplatePicker({
                 selected: this.draft.templateId,
@@ -243,7 +244,7 @@ export struct NoteEditPage {
               Row({ space: 4 }) {
                 Text(this.draft.templateId === null ? '正文 *' : '正文（可选）')
                   .fontSize(12)
-                  .fontColor('#5F5E5A')
+                  .fontColor(AppTheme.color.textSecondaryStrong)
               }
               .width('100%')
 
@@ -251,9 +252,9 @@ export struct NoteEditPage {
                 .fontSize(13)
                 .height(88)
                 .padding(10)
-                .backgroundColor('#F7F9FC')
+                .backgroundColor(AppTheme.color.surfaceTint)
                 .borderRadius(10)
-                .border({ width: 0.5, color: this.errorFor(null).length > 0 ? '#A32D2D' : '#E0E0E0' })
+                .border({ width: 0.5, color: this.errorFor(null).length > 0 ? AppTheme.color.danger : AppTheme.color.border })
                 .onChange((value: string) => {
                   this.updateContent(value);
                 })
@@ -261,7 +262,7 @@ export struct NoteEditPage {
               if (this.errorFor(null).length > 0) {
                 Text(this.errorFor(null))
                   .fontSize(11)
-                  .fontColor('#A32D2D')
+                  .fontColor(AppTheme.color.danger)
                   .width('100%')
               }
             }
@@ -294,21 +295,21 @@ export struct NoteEditPage {
             Column({ space: 8 }) {
               Text('关联关系（可选）')
                 .fontSize(12)
-                .fontColor('#8A8F99')
+                .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               if (this.relations.length === 0) {
                 Text('关系层还没有记录，可先去载入示例关系')
                   .fontSize(10)
-                  .fontColor('#B0B4BE')
+                  .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               } else {
                 Flex({ wrap: FlexWrap.Wrap }) {
                   ForEach(this.relations, (relation: RelationListItem) => {
                     Text(relation.name)
                       .fontSize(11)
-                      .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? Color.White : '#5F5E5A')
+                      .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? Color.White : AppTheme.color.textSecondaryStrong)
                       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-                      .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? '#4A6FA5' : '#F1EFE8')
+                      .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.primary : AppTheme.color.chip)
                       .borderRadius(12)
                       .margin({ right: 6, bottom: 6 })
                       .onClick(() => {
@@ -325,15 +326,15 @@ export struct NoteEditPage {
             Row() {
               Text('密级')
                 .fontSize(12)
-                .fontColor('#8A8F99')
+                .fontColor(AppTheme.color.textSecondary)
               Text(securityLevelText(this.draft.level))
                 .fontSize(12)
-                .fontColor('#5F5E5A')
+                .fontColor(AppTheme.color.textSecondaryStrong)
                 .margin({ left: 12 })
               Blank()
               Text('跟随设置')
                 .fontSize(11)
-                .fontColor('#B0B4BE')
+                .fontColor(AppTheme.color.textMuted)
             }
             .width('100%')
             .padding({ top: 4 })
@@ -358,7 +359,7 @@ export struct NoteEditPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor('#F5F6F8')
+      .backgroundColor(AppTheme.color.page)
     }
     .title('速记')
     .menus(this.saveMenu)

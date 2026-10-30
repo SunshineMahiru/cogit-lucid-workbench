@@ -1,4 +1,5 @@
 import { PredictionItem } from '../model/HomeModel';
+import { AppTheme } from '../theme/AppTheme';
 
 /**
  * 待结算预测卡片。
@@ -14,20 +15,20 @@ export struct PredictionCard {
       Row() {
         Text('待结算')
           .fontSize(10)
-          .fontColor('#E8A93C')
+          .fontColor(AppTheme.color.accentGold)
           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-          .backgroundColor('#FFF4E0')
+          .backgroundColor(AppTheme.color.warningSurface)
           .borderRadius(8)
           .margin({ right: 6 })
         Text(this.item.title)
           .fontSize(15)
-          .fontColor('#1F2329')
+          .fontColor(AppTheme.color.text)
           .layoutWeight(1)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(`${this.item.confidence}%`)
           .fontSize(14)
-          .fontColor('#4A6FA5')
+          .fontColor(AppTheme.color.primary)
           .margin({ left: 8 })
       }
       .width('100%')
@@ -35,11 +36,11 @@ export struct PredictionCard {
       Row() {
         Text('置信度')
           .fontSize(12)
-          .fontColor('#8A8F99')
+          .fontColor(AppTheme.color.textSecondary)
         Blank()
         Text(this.item.dueDate)
           .fontSize(12)
-          .fontColor('#8A8F99')
+          .fontColor(AppTheme.color.textSecondary)
       }
       .width('100%')
     }

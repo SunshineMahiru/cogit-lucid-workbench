@@ -1,4 +1,5 @@
 import { Anchor } from '../model/Anchor';
+import { AppTheme } from '../theme/AppTheme';
 import { AnchorService } from '../anchor';
 import { AnchorCard } from '../components/AnchorCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
@@ -79,18 +80,18 @@ export struct AnchorPage {
         Text('北极星句段库')
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#1F2329')
+          .fontColor(AppTheme.color.text)
         Blank()
         Text(`${this.anchors.length} 条`)
           .fontSize(11)
-          .fontColor('#8A8F99')
+          .fontColor(AppTheme.color.textSecondary)
       }
       .width('100%')
 
       Text('复盘第三步用来对照的稳定句子，只读。')
         .fontSize(12)
         .lineHeight(18)
-        .fontColor('#8A8F99')
+        .fontColor(AppTheme.color.textSecondary)
         .width('100%')
     }
     .width('100%')
@@ -114,7 +115,7 @@ export struct AnchorPage {
             LoadingProgress()
               .width(32)
               .height(32)
-              .color('#4A6FA5')
+              .color(AppTheme.color.primary)
           }
           .width('100%')
           .layoutWeight(1)
@@ -158,7 +159,7 @@ export struct AnchorPage {
               .width('100%')
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
-              .backgroundColor('#4A6FA5')
+              .backgroundColor(AppTheme.color.primary)
               .borderRadius(12)
               .onClick(() => {
                 this.openReview();
@@ -170,7 +171,7 @@ export struct AnchorPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor('#F5F6F8')
+      .backgroundColor(AppTheme.color.page)
     }
     .title('价值锚点')
     .onReady((context: NavDestinationContext) => {

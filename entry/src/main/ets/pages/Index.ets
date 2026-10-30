@@ -1,3 +1,4 @@
+import { AppTheme } from '../theme/AppTheme';
 import { DashboardView } from '../views/DashboardView';
 import { ROUTES } from '../navigation/Routes';
 import { PlaceholderPage } from './PlaceholderPage';
@@ -89,6 +90,6 @@ struct Index {
     .hideTitleBar(true)
     .mode(NavigationMode.Stack)
     .navDestination(this.pageMap)
-    .backgroundColor('#F5F6F8')
+    .backgroundColor(AppTheme.color.page)
   }
 }

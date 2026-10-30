@@ -19,7 +19,7 @@ export struct RelationGraph {
   private drawEdges(): void {
     const context = this.graphContext;
     context.clearRect(0, 0, WIDTH, HEIGHT);
-    context.strokeStyle = '#D3D1C7';
+    context.strokeStyle = AppTheme.color.borderStrong;
     context.lineWidth = 1;
     const total = Math.min(this.items.length, MAX_NODES);
     for (let index = 0; index < total; index += 1) {

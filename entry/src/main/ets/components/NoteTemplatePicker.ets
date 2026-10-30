@@ -1,4 +1,5 @@
 import { NoteTemplate, NoteTemplateId, NOTE_TEMPLATES } from '../note';
+import { AppTheme } from '../theme/AppTheme';
 
 /** Horizontal template chips; the free-form chip stands for a null template. */
 @ComponentV2
@@ -10,9 +11,9 @@ export struct NoteTemplatePicker {
   chip(label: string, active: boolean, templateId: NoteTemplateId | null) {
     Text(label)
       .fontSize(13)
-      .fontColor(active ? Color.White : '#444441')
+      .fontColor(active ? Color.White : AppTheme.color.textStrong)
       .padding({ left: 14, right: 14, top: 7, bottom: 7 })
-      .backgroundColor(active ? '#4A6FA5' : '#F1EFE8')
+      .backgroundColor(active ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(16)
       .onClick(() => {
         this.onSelect(templateId);

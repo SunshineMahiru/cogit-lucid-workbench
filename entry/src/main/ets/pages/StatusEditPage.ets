@@ -109,7 +109,7 @@ export struct StatusEditPage {
         .width('100%')
       TextInput({ text: value, placeholder: placeholder })
         .type(decimal ? InputType.NUMBER_DECIMAL : InputType.Number)
-        .backgroundColor('#F7F6F2')
+        .backgroundColor(AppTheme.color.surfaceAlt)
         .onChange(onChange)
     }
     .width('100%')
@@ -145,7 +145,7 @@ export struct StatusEditPage {
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextInput({ text: this.date, placeholder: 'YYYY-MM-DD' })
-                  .backgroundColor('#F7F6F2')
+                  .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.date = value;
                   })
@@ -179,7 +179,7 @@ export struct StatusEditPage {
                 TextArea({ text: this.note, placeholder: '可写一句当天状态' })
                   .height(90)
                   .maxLength(200)
-                  .backgroundColor('#F7F6F2')
+                  .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.note = value;
                   })

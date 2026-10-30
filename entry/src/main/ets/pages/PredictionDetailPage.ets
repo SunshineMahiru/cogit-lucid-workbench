@@ -22,10 +22,10 @@ struct PredictionInfoRow {
     Row({ space: 12 }) {
       Text(this.label)
         .fontSize(12)
-        .fontColor('#8A8F99')
+        .fontColor(AppTheme.color.textSecondary)
       Text(this.value)
         .fontSize(12)
-        .fontColor('#1F2329')
+        .fontColor(AppTheme.color.text)
         .layoutWeight(1)
         .textAlign(TextAlign.End)
         .maxLines(2)
@@ -121,16 +121,16 @@ export struct PredictionDetailPage {
 
   private tagColor(): string {
     if (this.detail.status === PredictionStatus.PENDING) {
-      return '#B0761E';
+      return AppTheme.color.warning;
     }
-    return this.detail.hit === true ? '#2E7D32' : '#A32D2D';
+    return this.detail.hit === true ? AppTheme.color.success : AppTheme.color.danger;
   }
 
   private tagBackground(): string {
     if (this.detail.status === PredictionStatus.PENDING) {
-      return '#FFF4E0';
+      return AppTheme.color.warningSurface;
     }
-    return this.detail.hit === true ? '#E8F5E9' : '#FCEBEB';
+    return this.detail.hit === true ? AppTheme.color.successSurface : AppTheme.color.dangerSurface;
   }
 
   build() {
@@ -140,12 +140,12 @@ export struct PredictionDetailPage {
           LoadingProgress()
             .width(32)
             .height(32)
-            .color('#4A6FA5')
+            .color(AppTheme.color.primary)
         }
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor('#F5F6F8')
+        .backgroundColor(AppTheme.color.page)
       } else if (this.missing) {
         Column() {
           NoteEmptyState({
@@ -162,7 +162,7 @@ export struct PredictionDetailPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor('#F5F6F8')
+        .backgroundColor(AppTheme.color.page)
       } else {
         Scroll() {
           Column({ space: 12 }) {
@@ -175,24 +175,24 @@ export struct PredictionDetailPage {
                 .borderRadius(8)
               Text(`${this.detail.confidence}%`)
                 .fontSize(14)
-                .fontColor('#4A6FA5')
+                .fontColor(AppTheme.color.primary)
               Blank()
               Text(`v${this.detail.version}`)
                 .fontSize(11)
-                .fontColor('#B0B4BE')
+                .fontColor(AppTheme.color.textMuted)
             }
             .width('100%')
 
             Text(this.detail.target)
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
-              .fontColor('#1F2329')
+              .fontColor(AppTheme.color.text)
               .width('100%')
 
             Text(this.detail.judgment)
               .fontSize(14)
               .lineHeight(24)
-              .fontColor('#1F2329')
+              .fontColor(AppTheme.color.text)
               .width('100%')
 
             Column() {
@@ -217,12 +217,12 @@ export struct PredictionDetailPage {
               Column({ space: 6 }) {
                 Text('理由')
                   .fontSize(12)
-                  .fontColor('#8A8F99')
+                  .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Text(this.detail.reason)
                   .fontSize(13)
                   .lineHeight(22)
-                  .fontColor('#1F2329')
+                  .fontColor(AppTheme.color.text)
                   .width('100%')
               }
               .width('100%')
@@ -248,14 +248,14 @@ export struct PredictionDetailPage {
               } else {
                 Text(`到期后可结算 · ${this.detail.settlementDate}`)
                   .fontSize(10)
-                  .fontColor('#B0B4BE')
+                  .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                   .textAlign(TextAlign.Center)
               }
             } else {
               Text('已结算，结果不可修改')
                 .fontSize(10)
-                .fontColor('#B0B4BE')
+                .fontColor(AppTheme.color.textMuted)
                 .width('100%')
                 .textAlign(TextAlign.Center)
             }
@@ -268,7 +268,7 @@ export struct PredictionDetailPage {
         .height('100%')
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
-        .backgroundColor('#F5F6F8')
+        .backgroundColor(AppTheme.color.page)
       }
     }
     .title('预测详情')

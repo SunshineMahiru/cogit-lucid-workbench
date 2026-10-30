@@ -129,7 +129,7 @@ export struct PredictionSettlePage {
       .fontSize(13)
       .fontColor(this.hitChoice === value ? Color.White : AppTheme.color.text)
       .padding({ left: 18, right: 18, top: 8, bottom: 8 })
-      .backgroundColor(this.hitChoice === value ? AppTheme.color.primary : '#F1EFE8')
+      .backgroundColor(this.hitChoice === value ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(16)
       .onClick(() => {
         this.hitChoice = value;
@@ -235,7 +235,7 @@ export struct PredictionSettlePage {
                   TextArea({ placeholder: '实际发生了什么？只写可核对的事实', text: this.actualResult })
                     .height(96)
                     .maxLength(200)
-                    .backgroundColor('#F7F6F2')
+                    .backgroundColor(AppTheme.color.surfaceAlt)
                     .onChange((value: string) => {
                       this.actualResult = value;
                     })
@@ -284,7 +284,7 @@ export struct PredictionSettlePage {
               .width('100%')
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
-              .backgroundColor(this.isSaving ? '#8FA6C4' : AppTheme.color.primary)
+              .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
               .borderRadius(12)
               .onClick(() => {
                 if (!this.isSaving) {

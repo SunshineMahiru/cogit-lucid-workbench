@@ -127,7 +127,7 @@ export struct ReviewAgentPanel {
           }
           .width('100%')
           .padding(10)
-          .backgroundColor('#F7F6F2')
+          .backgroundColor(AppTheme.color.surfaceAlt)
           .borderRadius(8)
         }, (candidate: ContradictionCandidate, index: number) => `${candidate.anchorId}_${index}`)
       }
@@ -136,7 +136,7 @@ export struct ReviewAgentPanel {
     .padding(12)
     .backgroundColor(Color.White)
     .borderRadius(12)
-    .border({ width: 0.5, color: '#E0E0E0' })
+    .border({ width: 0.5, color: AppTheme.color.border })
     .alignItems(HorizontalAlign.Start)
   }
 }

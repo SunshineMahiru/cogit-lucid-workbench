@@ -1,3 +1,4 @@
+import { AppTheme } from '../theme/AppTheme';
 import { DEFAULT_NOTE_LIST_LIMIT, NoteListItem, QuickNoteService } from '../note';
 import { NoteDetailParams, NoteEditParams, NoteListParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
@@ -99,9 +100,9 @@ export struct NoteListPage {
   filterChip(label: string, type: string) {
     Text(label)
       .fontSize(12)
-      .fontColor(this.filter === type ? Color.White : '#444441')
+      .fontColor(this.filter === type ? Color.White : AppTheme.color.textStrong)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .backgroundColor(this.filter === type ? '#4A6FA5' : '#F1EFE8')
+      .backgroundColor(this.filter === type ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(14)
       .onClick(() => {
         this.selectFilter(type);
@@ -112,7 +113,7 @@ export struct NoteListPage {
   addMenu() {
     Text('＋')
       .fontSize(20)
-      .fontColor('#4A6FA5')
+      .fontColor(AppTheme.color.primary)
       .padding({ left: 12, right: 16 })
       .onClick(() => {
         this.openEditor();
@@ -149,7 +150,7 @@ export struct NoteListPage {
               LoadingProgress()
                 .width(32)
                 .height(32)
-                .color('#4A6FA5')
+                .color(AppTheme.color.primary)
             }
             .width('100%')
             .layoutWeight(1)
@@ -200,7 +201,7 @@ export struct NoteListPage {
           .height(48)
           .lineHeight(48)
           .textAlign(TextAlign.Center)
-          .backgroundColor('#4A6FA5')
+          .backgroundColor(AppTheme.color.primary)
           .borderRadius(24)
           .margin({ right: 16, bottom: 24 })
           .onClick(() => {
@@ -209,7 +210,7 @@ export struct NoteListPage {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor('#F5F6F8')
+      .backgroundColor(AppTheme.color.page)
     }
     .title('速记列表')
     .menus(this.addMenu)

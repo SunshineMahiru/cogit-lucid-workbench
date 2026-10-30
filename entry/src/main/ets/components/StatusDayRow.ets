@@ -32,7 +32,7 @@ export struct StatusDayRow {
       Progress({ value: this.row.sleepHours, total: 10, type: ProgressType.Linear })
         .height(6)
         .color(this.row.flags.length > 0 ? AppTheme.color.danger : AppTheme.color.primary)
-        .backgroundColor('#EEF0F3')
+        .backgroundColor(AppTheme.color.track)
 
       Row({ space: 12 }) {
         Text(`运动 ${this.row.exerciseCount} 次`)

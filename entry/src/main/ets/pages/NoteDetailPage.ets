@@ -1,3 +1,4 @@
+import { AppTheme } from '../theme/AppTheme';
 import { NoteDetail, QuickNoteService, securityLevelText } from '../note';
 import { NoteDetailParams } from '../navigation/RouteParams';
 import { NoteEmptyState } from '../components/NoteEmptyState';
@@ -85,7 +86,7 @@ export struct NoteDetailPage {
   deleteMenu() {
     Text('删除')
       .fontSize(14)
-      .fontColor('#A32D2D')
+      .fontColor(AppTheme.color.danger)
       .padding({ left: 12, right: 16 })
       .onClick(() => {
         this.confirmDelete();
@@ -99,12 +100,12 @@ export struct NoteDetailPage {
           LoadingProgress()
             .width(32)
             .height(32)
-            .color('#4A6FA5')
+            .color(AppTheme.color.primary)
         }
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor('#F5F6F8')
+        .backgroundColor(AppTheme.color.page)
       } else if (this.missing || this.detail === null) {
         Column() {
           NoteEmptyState({
@@ -121,31 +122,31 @@ export struct NoteDetailPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
-        .backgroundColor('#F5F6F8')
+        .backgroundColor(AppTheme.color.page)
       } else {
         Scroll() {
           Column({ space: 12 }) {
             Row({ space: 8 }) {
               Text(this.detail.type)
                 .fontSize(10)
-                .fontColor('#4A6FA5')
+                .fontColor(AppTheme.color.primary)
                 .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-                .backgroundColor('#E8EFF7')
+                .backgroundColor(AppTheme.color.tint)
                 .borderRadius(8)
               Text(this.detail.timeLabel)
                 .fontSize(11)
-                .fontColor('#B0B4BE')
+                .fontColor(AppTheme.color.textMuted)
               Blank()
               Text(securityLevelText(this.detail.level))
                 .fontSize(11)
-                .fontColor('#8A8F99')
+                .fontColor(AppTheme.color.textSecondary)
             }
             .width('100%')
 
             Text(this.detail.title)
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
-              .fontColor('#1F2329')
+              .fontColor(AppTheme.color.text)
               .width('100%')
 
             if (this.detail.tags.length > 0) {
@@ -153,9 +154,9 @@ export struct NoteDetailPage {
                 ForEach(this.detail.tags, (tag: string) => {
                   Text(tag)
                     .fontSize(11)
-                    .fontColor('#185FA5')
+                    .fontColor(AppTheme.color.primaryDeep)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-                    .backgroundColor('#E8EFF7')
+                    .backgroundColor(AppTheme.color.tint)
                     .borderRadius(10)
                     .margin({ right: 6, bottom: 6 })
                 }, (tag: string) => tag)
@@ -166,7 +167,7 @@ export struct NoteDetailPage {
             Text(this.detail.content)
               .fontSize(14)
               .lineHeight(24)
-              .fontColor('#1F2329')
+              .fontColor(AppTheme.color.text)
               .width('100%')
           }
           .width('100%')
@@ -177,7 +178,7 @@ export struct NoteDetailPage {
         .height('100%')
         .scrollBar(BarState.Off)
         .align(Alignment.Top)
-        .backgroundColor('#F5F6F8')
+        .backgroundColor(AppTheme.color.page)
       }
     }
     .title('速记详情')

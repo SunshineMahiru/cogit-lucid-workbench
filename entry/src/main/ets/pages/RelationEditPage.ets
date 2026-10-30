@@ -165,7 +165,7 @@ export struct RelationEditPage {
                   .width('100%')
                 TextInput({ text: this.name, placeholder: '例如：朋友 A' })
                   .maxLength(40)
-                  .backgroundColor('#F7F6F2')
+                  .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.name = value;
                   })
@@ -234,7 +234,7 @@ export struct RelationEditPage {
                 TextArea({ text: this.notes, placeholder: '只写与复盘边界有关的信息' })
                   .height(100)
                   .maxLength(200)
-                  .backgroundColor('#F7F6F2')
+                  .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.notes = value;
                   })

@@ -76,7 +76,7 @@ export struct PredictionShareChart {
             Row()
               .width(10)
               .height(10)
-              .backgroundColor('#D3D1C7')
+              .backgroundColor(AppTheme.color.borderStrong)
               .borderRadius(2)
             Text(`未命中 ${this.misses} 条`)
               .fontSize(11)

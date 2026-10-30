@@ -164,7 +164,7 @@ export struct PredictionCreatePage {
                   .width('100%')
                 TextInput({ placeholder: '例如：本周作息', text: this.target })
                   .maxLength(MAX_TARGET_LENGTH)
-                  .backgroundColor('#F7F6F2')
+                  .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.target = value;
                   })
@@ -183,7 +183,7 @@ export struct PredictionCreatePage {
                 TextArea({ placeholder: '写成到期能判断真假的句子', text: this.judgment })
                   .height(84)
                   .maxLength(MAX_JUDGMENT_LENGTH)
-                  .backgroundColor('#F7F6F2')
+                  .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.judgment = value;
                   })
@@ -234,7 +234,7 @@ export struct PredictionCreatePage {
                   this.deadlineChip('30 天后', 30)
                 }
                 TextInput({ placeholder: 'YYYY-MM-DD', text: this.settlementDate })
-                  .backgroundColor('#F7F6F2')
+                  .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.settlementDate = value;
                   })
@@ -253,7 +253,7 @@ export struct PredictionCreatePage {
                 TextArea({ placeholder: '当时为什么这么判断？', text: this.reason })
                   .height(72)
                   .maxLength(MAX_REASON_LENGTH)
-                  .backgroundColor('#F7F6F2')
+                  .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.reason = value;
                   })
@@ -282,7 +282,7 @@ export struct PredictionCreatePage {
             .width('100%')
             .textAlign(TextAlign.Center)
             .padding({ top: 12, bottom: 12 })
-            .backgroundColor(this.isSaving ? '#8FA6C4' : AppTheme.color.primary)
+            .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
             .borderRadius(12)
             .onClick(() => {
               if (!this.isSaving) {

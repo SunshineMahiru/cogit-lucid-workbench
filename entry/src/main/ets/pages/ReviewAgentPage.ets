@@ -54,7 +54,7 @@ export struct ReviewAgentPage {
                 .width('100%')
               TextArea({ text: this.facts, placeholder: '实际发生了什么？只写可核对的部分' })
                 .height(96)
-                .backgroundColor('#F7F6F2')
+                .backgroundColor(AppTheme.color.surfaceAlt)
                 .onChange((value: string) => {
                   this.facts = value;
                 })
@@ -71,7 +71,7 @@ export struct ReviewAgentPage {
                 .width('100%')
               TextArea({ text: this.interpretation, placeholder: '我当时怎么解释这些事？' })
                 .height(96)
-                .backgroundColor('#F7F6F2')
+                .backgroundColor(AppTheme.color.surfaceAlt)
                 .onChange((value: string) => {
                   this.interpretation = value;
                 })
@@ -122,7 +122,7 @@ export struct ReviewAgentPage {
                 .width('100%')
               TextArea({ text: this.notes, placeholder: '填入的提示会追加到这里，可再改写' })
                 .height(140)
-                .backgroundColor('#F7F6F2')
+                .backgroundColor(AppTheme.color.surfaceAlt)
                 .onChange((value: string) => {
                   this.notes = value;
                 })

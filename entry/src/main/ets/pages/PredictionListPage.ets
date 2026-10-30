@@ -1,3 +1,4 @@
+import { AppTheme } from '../theme/AppTheme';
 import { PredictionListItem, PredictionService, PredictionSummary } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { formatHitRate, hitRateCaption } from '../model/HomeModel';
@@ -90,9 +91,9 @@ export struct PredictionListPage {
   filterChip(label: string, status: PredictionStatus | null) {
     Text(label)
       .fontSize(12)
-      .fontColor(this.filter === status ? Color.White : '#444441')
+      .fontColor(this.filter === status ? Color.White : AppTheme.color.textStrong)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .backgroundColor(this.filter === status ? '#4A6FA5' : '#F1EFE8')
+      .backgroundColor(this.filter === status ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(14)
       .onClick(() => {
         this.selectFilter(status);
@@ -104,7 +105,7 @@ export struct PredictionListPage {
     Row({ space: 2 }) {
       Text('统计')
         .fontSize(14)
-        .fontColor('#4A6FA5')
+        .fontColor(AppTheme.color.primary)
         .padding({ left: 8, right: 8 })
         .onClick(() => {
           if (this.navStack !== null) {
@@ -113,7 +114,7 @@ export struct PredictionListPage {
         })
       Text('＋')
         .fontSize(20)
-        .fontColor('#4A6FA5')
+        .fontColor(AppTheme.color.primary)
         .padding({ left: 4, right: 14 })
         .onClick(() => {
           this.openCreate();
@@ -128,10 +129,10 @@ export struct PredictionListPage {
         Text(formatHitRate(this.summary.hitRate, this.summary.settled))
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#4A6FA5')
+          .fontColor(AppTheme.color.primary)
         Text(hitRateCaption(this.summary.settled))
           .fontSize(11)
-          .fontColor('#8A8F99')
+          .fontColor(AppTheme.color.textSecondary)
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Center)
@@ -140,10 +141,10 @@ export struct PredictionListPage {
         Text(String(this.summary.pending))
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#1F2329')
+          .fontColor(AppTheme.color.text)
         Text('待结算')
           .fontSize(11)
-          .fontColor('#8A8F99')
+          .fontColor(AppTheme.color.textSecondary)
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Center)
@@ -152,10 +153,10 @@ export struct PredictionListPage {
         Text(String(this.summary.settled))
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#1F2329')
+          .fontColor(AppTheme.color.text)
         Text('已结算')
           .fontSize(11)
-          .fontColor('#8A8F99')
+          .fontColor(AppTheme.color.textSecondary)
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Center)
@@ -187,7 +188,7 @@ export struct PredictionListPage {
             LoadingProgress()
               .width(32)
               .height(32)
-              .color('#4A6FA5')
+              .color(AppTheme.color.primary)
           }
           .width('100%')
           .layoutWeight(1)
@@ -226,7 +227,7 @@ export struct PredictionListPage {
       .width('100%')
       .height('100%')
       .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-      .backgroundColor('#F5F6F8')
+      .backgroundColor(AppTheme.color.page)
     }
     .title('预测日志')
     .menus(this.actionsMenu)

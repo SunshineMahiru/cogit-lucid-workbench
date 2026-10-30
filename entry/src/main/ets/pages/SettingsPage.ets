@@ -168,7 +168,7 @@ export struct SettingsPage {
       .fontSize(12)
       .fontColor(this.settings.llmProvider === provider ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .backgroundColor(this.settings.llmProvider === provider ? AppTheme.color.primary : '#F1EFE8')
+      .backgroundColor(this.settings.llmProvider === provider ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(14)
       .onClick(() => {
         this.withProvider(provider);
@@ -181,7 +181,7 @@ export struct SettingsPage {
       .fontSize(12)
       .fontColor(this.settings.llmModel === option.id ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .backgroundColor(this.settings.llmModel === option.id ? AppTheme.color.primary : '#F1EFE8')
+      .backgroundColor(this.settings.llmModel === option.id ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(14)
       .onClick(() => {
         this.withModel(option.id);
@@ -194,7 +194,7 @@ export struct SettingsPage {
       .fontSize(12)
       .fontColor(this.settings.defaultLevel === level ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-      .backgroundColor(this.settings.defaultLevel === level ? AppTheme.color.primary : '#F1EFE8')
+      .backgroundColor(this.settings.defaultLevel === level ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(14)
       .onClick(() => {
         this.withLevel(level);
@@ -293,7 +293,7 @@ export struct SettingsPage {
                       .fontColor(AppTheme.color.textSecondary)
                       .width('100%')
                     TextInput({ text: this.settings.llmBaseUrl, placeholder: 'http://localhost:4523/v1' })
-                      .backgroundColor('#F7F6F2')
+                      .backgroundColor(AppTheme.color.surfaceAlt)
                       .onChange((value: string) => {
                         this.withBaseUrl(value);
                       })
@@ -304,7 +304,7 @@ export struct SettingsPage {
                       .width('100%')
                     TextInput({ text: this.settings.llmApiKey, placeholder: 'sk-...' })
                       .type(InputType.Password)
-                      .backgroundColor('#F7F6F2')
+                      .backgroundColor(AppTheme.color.surfaceAlt)
                       .onChange((value: string) => {
                         this.withApiKey(value);
                       })
@@ -422,7 +422,7 @@ export struct SettingsPage {
               .width('100%')
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
-              .backgroundColor(this.isDirty && !this.isSaving ? AppTheme.color.primary : '#8FA6C4')
+              .backgroundColor(this.isDirty && !this.isSaving ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
               .borderRadius(12)
               .onClick(() => {
                 if (!this.isSaving && this.isDirty) {

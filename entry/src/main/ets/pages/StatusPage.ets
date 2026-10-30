@@ -202,7 +202,7 @@ export struct StatusPage {
                   Progress({ value: this.overview.latest.sleepHours, total: 10, type: ProgressType.Linear })
                     .height(8)
                     .color(this.overview.latest.flags.length > 0 ? AppTheme.color.danger : AppTheme.color.primary)
-                    .backgroundColor('#EEF0F3')
+                    .backgroundColor(AppTheme.color.track)
 
                   if (this.overview.latest.flags.length > 0) {
                     Flex({ wrap: FlexWrap.Wrap }) {

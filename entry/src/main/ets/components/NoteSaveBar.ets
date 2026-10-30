@@ -1,3 +1,5 @@
+import { AppTheme } from '../theme/AppTheme';
+
 /** Primary save action that reports its own progress state. */
 @ComponentV2
 export struct NoteSaveBar {
@@ -24,7 +26,7 @@ export struct NoteSaveBar {
     .width('100%')
     .height(44)
     .justifyContent(FlexAlign.Center)
-    .backgroundColor(this.saving ? '#8FA6C4' : '#4A6FA5')
+    .backgroundColor(this.saving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
     .borderRadius(12)
     .onClick(() => {
       if (!this.saving) {
