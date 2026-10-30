@@ -50,6 +50,7 @@ export struct PageBackground {
           .height('100%')
           .objectFit(ImageFit.Cover)
           .opacity(this.imageOpacity)
+          .hitTestBehavior(HitTestMode.None)
           .onError(() => {
             this.imagePath = '';
           })
@@ -57,6 +58,6 @@ export struct PageBackground {
     }
     .width('100%')
     .height('100%')
-    .hitTestBehavior(HitTestMode.None)
+    .hitTestBehavior(HitTestMode.Transparent)
   }
 }
