@@ -107,8 +107,25 @@ export const AppTheme = {
   }
 };
 
+let darkMode: boolean = false;
+
+/** True when the dark palette is active; pages use it for image strength and scrims. */
+export function isDarkMode(): boolean {
+  return darkMode;
+}
+
+/** Builds #AARRGGBB from a #RRGGBB token so a page surface can be made translucent. */
+export function withAlpha(hex: string, alpha: number): string {
+  const clamped = Math.min(1, Math.max(0, alpha));
+  const channel = Math.round(clamped * 255).toString(16).toUpperCase();
+  const prefix = channel.length === 1 ? `0${channel}` : channel;
+  const body = hex.startsWith('#') ? hex.substring(1) : hex;
+  return `#${prefix}${body}`;
+}
+
 /** Switches semantic colors before the page tree renders. */
 export function applyTheme(dark: boolean): void {
+  darkMode = dark;
   const source = dark ? DARK : LIGHT;
   const target = AppTheme.color;
   target.page = source.page;

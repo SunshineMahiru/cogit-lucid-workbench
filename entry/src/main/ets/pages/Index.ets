@@ -1,4 +1,4 @@
-import { AppTheme, applyTheme } from '../theme/AppTheme';
+import { applyTheme } from '../theme/AppTheme';
 import { resourceManager } from '@kit.LocalizationKit';
 import { DashboardView } from '../views/DashboardView';
 import { ROUTES } from '../navigation/Routes';
@@ -55,15 +55,19 @@ struct Index {
     this.pathStack.setInterception({
       didShow: (from: NavBar | NavDestinationContext, to: NavBar | NavDestinationContext,
         operation: NavigationOperation) => {
-        const context = to as NavDestinationContext;
-        if (context.pathInfo !== undefined) {
-          this.currentGroup = backgroundKeyForRoute(context.pathInfo.name);
-        } else {
-          this.currentGroup = 'home';
-        }
+        this.currentGroup = this.groupOf(to);
         setPageEmpty(false);
       }
     });
+  }
+
+  /** Resolves the group of a destination, falling back to the home group for the navigation bar. */
+  private groupOf(target: NavBar | NavDestinationContext): string {
+    const context = target as NavDestinationContext;
+    if (context.pathInfo !== undefined) {
+      return backgroundKeyForRoute(context.pathInfo.name);
+    }
+    return 'home';
   }
 
   @Builder
@@ -140,6 +144,6 @@ struct Index {
     .width('100%')
     .height('100%')
     .alignContent(Alignment.TopStart)
-    .backgroundColor(AppTheme.color.page)
+    .backgroundColor(Color.Transparent)
   }
 }

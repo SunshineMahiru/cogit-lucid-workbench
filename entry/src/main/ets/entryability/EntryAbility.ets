@@ -1,7 +1,9 @@
-import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { AbilityConstant, Configuration, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { DbHelper } from '../db/DbHelper';
+import { applyTheme } from '../theme/AppTheme';
+import { notifyPageBackgroundChanged } from '../settings/PageBackgroundBus';
 
 const DOMAIN = 0x0000;
 const TAG = 'CogitLucid';
@@ -18,6 +20,12 @@ export default class EntryAbility extends UIAbility {
     hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onDestroy');
   }
 
+  onConfigurationUpdate(newConfig: Configuration): void {
+    applyTheme(newConfig.colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+    notifyPageBackgroundChanged();
+    hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onConfigurationUpdate');
+  }
+
   onWindowStageCreate(windowStage: window.WindowStage): void {
     hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onWindowStageCreate');
 
@@ -27,6 +35,13 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       hilog.info(DOMAIN, TAG, 'Succeeded in loading the content.');
+    });
+    windowStage.getMainWindow().then((mainWindow: window.Window) => {
+      // The page scrim owns the surface colour, so the window itself stays clear and
+      // a translucent page can show what sits behind the application window.
+      mainWindow.setWindowBackgroundColor('#00000000');
+    }).catch((error: Error) => {
+      hilog.error(DOMAIN, TAG, 'setWindowBackgroundColor failed: %{public}s', error.message);
     });
   }
 
