@@ -328,12 +328,21 @@ export struct DashboardView {
       .border({ width: { bottom: 0.5 }, color: AppTheme.color.border })
 
       if (this.loadFailed) {
-        Text('本地数据暂不可用，当前仅展示界面')
-          .fontSize(11)
-          .fontColor(AppTheme.color.warning)
-          .width('100%')
-          .padding({ left: 20, right: 20, top: 6, bottom: 6 })
-          .backgroundColor(AppTheme.color.warningSurface)
+        Row({ space: 8 }) {
+          Text('本地数据暂不可用，当前仅展示界面')
+            .fontSize(11)
+            .fontColor(AppTheme.color.warning)
+            .layoutWeight(1)
+          Text('重试')
+            .fontSize(11)
+            .fontColor(AppTheme.color.primary)
+            .onClick(() => {
+              this.refresh();
+            })
+        }
+        .width('100%')
+        .padding({ left: 20, right: 20, top: 6, bottom: 6 })
+        .backgroundColor(AppTheme.color.warningSurface)
       }
 
       if (this.isPreview) {

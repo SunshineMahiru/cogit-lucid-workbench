@@ -202,7 +202,7 @@ export struct SettingsPage {
       }
       this.showToast(path.length > 0 ? '页面背景已更新' : '未选择图片');
     } catch (error) {
-      this.showToast('选择图片失败，请重试');
+      this.showToast('选择图片失败；请确认相册权限，或换一张图片');
     } finally {
       this.backgroundBusy = '';
     }
@@ -267,7 +267,7 @@ export struct SettingsPage {
       const saved = await service.saveAs(this.hostContext, result);
       this.showToast(saved ? `已另存为 ${result.fileName}` : '已生成，但未另存');
     } catch (error) {
-      this.showToast('导出失败，预览器可能不支持文件写入');
+      this.showToast('导出失败；请检查存储空间或选择其他目录');
     } finally {
       this.isExporting = false;
     }
