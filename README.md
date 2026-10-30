@@ -39,6 +39,7 @@ The current build covers notes, predictions and settlement, review and the agent
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
 | Markdown export | Seven record groups render into one Markdown file inside the app sandbox. |
+| Per-page backgrounds | Pick one local image for each module group; the image is copied into the app sandbox and shown as a low-opacity page layer. |
 
 ## Architecture
 
