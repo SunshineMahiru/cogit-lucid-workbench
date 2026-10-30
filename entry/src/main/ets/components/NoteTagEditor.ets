@@ -1,4 +1,6 @@
-/** Tag chips with a small inline input for adding a custom tag. */
+import { AppTheme } from '../theme/AppTheme';
+
+/** Tag chips with a separate input row for adding a custom tag. */
 @ComponentV2
 export struct NoteTagEditor {
   @Param tags: string[] = [];
@@ -15,51 +17,64 @@ export struct NoteTagEditor {
     this.draftTag = '';
   }
 
+  private canSubmit(): boolean {
+    return this.draftTag.trim().length > 0;
+  }
+
   build() {
     Column({ space: 8 }) {
-      Text('标签')
+      Text('添加标签')
         .fontSize(12)
-        .fontColor('#8A8F99')
+        .fontColor(AppTheme.color.textSecondaryStrong)
         .width('100%')
-      Flex({ wrap: FlexWrap.Wrap }) {
-        ForEach(this.tags, (tag: string) => {
-          Text(`${tag} ×`)
-            .fontSize(11)
-            .fontColor('#185FA5')
-            .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-            .backgroundColor('#E8EFF7')
-            .borderRadius(10)
-            .margin({ right: 6, bottom: 6 })
-            .onClick(() => {
-              this.onRemove(tag);
-            })
-        }, (tag: string) => tag)
-        Row({ space: 4 }) {
-          TextInput({ text: this.draftTag, placeholder: '新增标签' })
-            .width(96)
-            .height(28)
-            .fontSize(12)
-            .padding({ left: 8, right: 8 })
-            .backgroundColor('#F7F9FC')
-            .borderRadius(10)
-            .border({ width: 0.5, color: '#E0E0E0' })
-            .onChange((value: string) => {
-              this.draftTag = value;
-            })
-            .onSubmit(() => {
-              this.submit();
-            })
-          Text('＋')
-            .fontSize(16)
-            .fontColor('#4A6FA5')
-            .padding({ left: 4, right: 4 })
-            .onClick(() => {
-              this.submit();
-            })
+
+      if (this.tags.length > 0) {
+        Flex({ wrap: FlexWrap.Wrap }) {
+          ForEach(this.tags, (tag: string) => {
+            Text(`${tag} ×`)
+              .fontSize(11)
+              .fontColor(AppTheme.color.primaryDeep)
+              .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+              .backgroundColor(AppTheme.color.tint)
+              .borderRadius(10)
+              .margin({ right: 6, bottom: 4 })
+              .onClick(() => {
+                this.onRemove(tag);
+              })
+          }, (tag: string) => tag)
         }
-        .margin({ bottom: 6 })
+        .width('100%')
+      }
+
+      Row({ space: 8 }) {
+        TextInput({ text: this.draftTag, placeholder: '输入标签，回车添加' })
+          .layoutWeight(1)
+          .height(36)
+          .fontSize(13)
+          .padding({ left: 10, right: 10 })
+          .backgroundColor(AppTheme.color.surfaceTint)
+          .borderRadius(AppTheme.radius.tag)
+          .border({ width: 0.5, color: AppTheme.color.border })
+          .maxLength(12)
+          .onChange((value: string) => {
+            this.draftTag = value;
+          })
+          .onSubmit(() => {
+            this.submit();
+          })
+        Text('添加')
+          .fontSize(12)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.canSubmit() ? Color.White : AppTheme.color.textMuted)
+          .padding({ left: 14, right: 14, top: 9, bottom: 9 })
+          .backgroundColor(this.canSubmit() ? AppTheme.color.primary : AppTheme.color.chip)
+          .borderRadius(AppTheme.radius.tag)
+          .onClick(() => {
+            this.submit();
+          })
       }
       .width('100%')
+      .alignItems(VerticalAlign.Center)
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
