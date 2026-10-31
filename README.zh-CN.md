@@ -292,3 +292,5 @@ DevEco 预览器不提供 `relationalStore`，依赖数据的页面会走兜底�
 ## 许可证
 
 本项目基于 [GNU Affero 通用公共许可证第三版](./LICENSE) 发布。
+
+版权所有 (c) 2026 SunshineMahiru（曦昼Sunshine）。

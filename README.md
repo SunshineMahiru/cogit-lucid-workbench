@@ -292,3 +292,5 @@ Not yet. `theme/AppTheme.ts` holds a single light token set; only the start wind
 ## License
 
 Released under the [GNU Affero General Public License v3.0](./LICENSE).
+
+Copyright (c) 2026 SunshineMahiru (曦昼Sunshine).
