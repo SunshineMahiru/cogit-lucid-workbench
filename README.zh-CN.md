@@ -180,7 +180,7 @@ node mock-server/server.js
 - DevEco 预览器：`http://127.0.0.1:4523` 直接可用。
 - 模拟器：`127.0.0.1` 指向模拟器自己。要么把 `entry/src/main/ets/network/ApiConfig.ts` 里的 `API_BASE_URL` 改成宿主机局域网地址，要么先执行 `hdc rport tcp:4523 tcp:4523` 做端口转发。
 - 真机：localhost 不算有效地址。请在设置里把接口地址改为宿主机地址，否则显示本地回退提示。
-- 明文 HTTP 默认关闭，仅在 `network_config.json` 中显式列入的本地调试地址放行；客户端超时 5 秒。
+- 明文 HTTP 默认关闭，`network_config.json` 只放行 `127.0.0.1` 与 `localhost`；真机要通过 HTTP 访问 Mock，需要在本机把宿主机地址加进这个文件，并且不要把该改动提交。客户端超时 5 秒。
 
 ### 复盘 Agent 三档
 

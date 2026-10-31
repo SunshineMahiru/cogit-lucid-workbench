@@ -7,10 +7,6 @@
       {
         "domains": [
           {
-            "name": "10.111.10.55",
-            "include-subdomains": false
-          },
-          {
             "name": "127.0.0.1",
             "include-subdomains": false
           },

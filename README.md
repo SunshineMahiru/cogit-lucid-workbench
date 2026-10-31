@@ -180,7 +180,7 @@ It listens on `0.0.0.0:4523`; set `PORT` to change the port.
 - DevEco previewer: `http://127.0.0.1:4523` works as is.
 - Emulator: `127.0.0.1` resolves to the emulator itself. Either set `API_BASE_URL` in `entry/src/main/ets/network/ApiConfig.ts` to the host LAN address, or forward the port with `hdc rport tcp:4523 tcp:4523`.
 - Real device: localhost is not treated as a valid host. Set the model base URL to your host's address; otherwise the app shows local fallback prompts.
-- Cleartext HTTP is permitted by `entry/src/main/resources/base/profile/network_config.json`; the client timeout is 5 seconds.
+- Cleartext HTTP stays off by default; only `127.0.0.1` and `localhost` are allowlisted in `entry/src/main/resources/base/profile/network_config.json`. Add your own host there locally when a real device has to reach the mock server over HTTP, and keep that edit out of commits. The client timeout is 5 seconds.
 
 ### Review agent modes
 
