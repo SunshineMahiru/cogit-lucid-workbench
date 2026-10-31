@@ -1,11 +1,9 @@
 /**
  * Base URL for the local mock server.
- * Emulator and Previewer use localhost with hdc rport; a real device falls back to the host LAN address.
+ * Emulator and Previewer reach it through localhost plus hdc port forwarding;
+ * a real device must point the setting at its own host.
  */
 export const API_BASE_URL = 'http://localhost:4523';
-
-/** Host-LAN fallback used when the device is not the emulator. */
-export const API_FALLBACK_BASE_URL = 'http://10.111.10.55:4523';
 
 /** Request timeout in milliseconds. */
 export const API_TIMEOUT_MS = 5000;
@@ -19,12 +17,4 @@ export function reviewPromptsUrlForBase(baseUrl: string, period: string): string
 /** Builds the review prompt endpoint for the default local mock server. */
 export function reviewPromptsUrl(period: string): string {
   return reviewPromptsUrlForBase(API_BASE_URL, period);
-}
-
-/** Candidate endpoints, in priority order; the repository tries each one. */
-export function reviewPromptsUrls(period: string): string[] {
-  return [
-    reviewPromptsUrlForBase(API_BASE_URL, period),
-    reviewPromptsUrlForBase(API_FALLBACK_BASE_URL, period)
-  ];
 }
