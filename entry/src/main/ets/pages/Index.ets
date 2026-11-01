@@ -1,6 +1,6 @@
 import { applyTheme } from '../theme/AppTheme';
 import { resourceManager } from '@kit.LocalizationKit';
-import { DashboardView } from '../views/DashboardView';
+import { HomePage } from './HomePage';
 import { ROUTES } from '../navigation/Routes';
 import { PlaceholderPage } from './PlaceholderPage';
 import { NoteEditPage } from './NoteEditPage';
@@ -132,7 +132,7 @@ struct Index {
     Stack() {
       PageBackground({ route: this.currentGroup })
       Navigation(this.pathStack) {
-        DashboardView({ pathStack: this.pathStack })
+        HomePage({ pathStack: this.pathStack })
       }
       .width('100%')
       .height('100%')
