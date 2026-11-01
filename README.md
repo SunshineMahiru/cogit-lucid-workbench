@@ -300,7 +300,7 @@ The launcher label `cogit-lucid-workbench` comes from `AppScope/resources/base/e
 Charts are drawn on native canvas through `@ohos/mpchart`. No web view and no third-party icon pack are used, which keeps the HAP small and avoids asset licensing.
 
 **The camera option closes with an error.**
-The system camera picker needs a camera application on the device. Emulators usually ship without one, so use the gallery or the file picker there; the camera option works on a phone.
+The system camera picker needs a camera application on the device. Emulators usually ship without one, so use the gallery or the file picker there.
 
 **A transparent page shows the system wallpaper, not another app.**
 The window is created with a clear background colour, so lowering page transparency reveals whatever sits behind the window. No content from another application is read.
