@@ -256,9 +256,6 @@ export struct ProfileHeader {
           .backgroundColor(AppTheme.color.surfaceAlt)
           .borderRadius(10)
           .onClick(() => {
-            if (this.draftAvatar !== this.profile.avatarPath) {
-              removeAvatar(this.draftAvatar);
-            }
             this.showEditor = false;
           })
         Text(this.busyKey === 'save' ? '保存中…' : '保存')
@@ -345,7 +342,13 @@ export struct ProfileHeader {
     .bindSheet($$this.showEditor, this.editor(), {
       height: 480,
       dragBar: false,
-      backgroundColor: AppTheme.color.surface
+      backgroundColor: AppTheme.color.surface,
+      onDisappear: () => {
+        if (this.draftAvatar.length > 0 && this.draftAvatar !== this.profile.avatarPath) {
+          removeAvatar(this.draftAvatar);
+          this.draftAvatar = this.profile.avatarPath;
+        }
+      }
     })
   }
 }
