@@ -30,6 +30,8 @@ import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefresh
 @ComponentV2
 export struct DashboardView {
   @Require @Param pathStack: NavPathStack;
+  /** Set to false when the host page renders its own header above this content. */
+  @Param showTitleBar: boolean = true;
   @Local today: string = todayLabel();
   @Local readings: BodyReading[] = [];
   @Local predictions: PredictionItem[] = [];
@@ -290,44 +292,46 @@ export struct DashboardView {
 
   build() {
     Column() {
-      // Title bar
-      Row() {
-        Column({ space: 4 }) {
-          Text(APP_DISPLAY_NAME)
-            .fontSize(22)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(AppTheme.color.text)
-          Text(this.today)
-            .fontSize(12)
-            .fontColor(AppTheme.color.textSecondary)
-        }
-        .alignItems(HorizontalAlign.Start)
+      if (this.showTitleBar) {
+        // Title bar
+        Row() {
+          Column({ space: 4 }) {
+            Text(APP_DISPLAY_NAME)
+              .fontSize(22)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(AppTheme.color.text)
+            Text(this.today)
+              .fontSize(12)
+              .fontColor(AppTheme.color.textSecondary)
+          }
+          .alignItems(HorizontalAlign.Start)
 
-        Blank()
+          Blank()
 
-        Row({ space: 12 }) {
-          Text(`${this.predictions.length} 条待结算`)
-            .fontSize(12)
-            .fontColor(AppTheme.color.primary)
-          Text('设置')
-            .fontSize(12)
-            .fontColor(AppTheme.color.primary)
-            .accessibilityText('打开设置')
-            .onClick(() => {
-              this.openSettings();
-            })
-          Text('↻ 刷新')
-            .fontSize(12)
-            .fontColor(AppTheme.color.primary)
-            .accessibilityText('刷新首页数据')
-            .onClick(() => {
-              this.refresh();
-            })
+          Row({ space: 12 }) {
+            Text(`${this.predictions.length} 条待结算`)
+              .fontSize(12)
+              .fontColor(AppTheme.color.primary)
+            Text('设置')
+              .fontSize(12)
+              .fontColor(AppTheme.color.primary)
+              .accessibilityText('打开设置')
+              .onClick(() => {
+                this.openSettings();
+              })
+            Text('↻ 刷新')
+              .fontSize(12)
+              .fontColor(AppTheme.color.primary)
+              .accessibilityText('刷新首页数据')
+              .onClick(() => {
+                this.refresh();
+              })
+          }
         }
+        .width('100%')
+        .padding({ left: 20, right: 20, top: 16, bottom: 12 })
+        .border({ width: { bottom: 0.5 }, color: AppTheme.color.border })
       }
-      .width('100%')
-      .padding({ left: 20, right: 20, top: 16, bottom: 12 })
-      .border({ width: { bottom: 0.5 }, color: AppTheme.color.border })
 
       if (this.loadFailed) {
         Row({ space: 8 }) {

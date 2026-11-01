@@ -6,12 +6,13 @@ import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
 import { RelationDao } from '../db/dao/RelationDao';
+import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { StatusRecord } from '../model/StatusRecord';
-import { BodyReading, PredictionItem, HomeSummary } from '../model/HomeModel';
+import { BodyReading, PredictionItem, HomePulse, HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
 import { NoteListItem } from '../note/NoteListItem';
 import { toNoteListItems } from '../note/NoteListMapper';
 
@@ -24,6 +25,7 @@ export class HomeDataService {
   private predictionDao: PredictionDao;
   private anchorDao: AnchorDao;
   private statusRecordDao: StatusRecordDao;
+  private reviewDao: ReviewResultDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.store = store;
@@ -33,6 +35,7 @@ export class HomeDataService {
     this.predictionDao = new PredictionDao(store);
     this.anchorDao = new AnchorDao(store);
     this.statusRecordDao = new StatusRecordDao(store);
+    this.reviewDao = new ReviewResultDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -105,6 +108,38 @@ export class HomeDataService {
       totalRelations: totalRelations
     };
   }
+
+  /** Counts consecutive record days and finds the latest review for the home header. */
+  async loadPulse(): Promise<HomePulse> {
+    const events = (await this.eventDao.queryAll()).filter(e => e.level !== SecurityLevel.SEALED);
+    const days: string[] = [];
+    for (const event of events) {
+      const day = formatDate(new Date(event.timestamp));
+      if (!days.includes(day)) {
+        days.push(day);
+      }
+    }
+    let streakDays = 0;
+    const cursor = new Date();
+    if (!days.includes(formatDate(cursor))) {
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    while (days.includes(formatDate(cursor))) {
+      streakDays += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    const reviews = await this.reviewDao.queryRecent(1);
+    const lastReviewLabel = reviews.length > 0 ? formatMonthDay(new Date(reviews[0].createdAt)) : NO_RATE_TEXT;
+    const pulse: HomePulse = {
+      streakDays: streakDays,
+      lastReviewLabel: lastReviewLabel
+    };
+    return pulse;
+  }
+}
+
+function formatMonthDay(date: Date): string {
+  return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function formatDate(date: Date): string {

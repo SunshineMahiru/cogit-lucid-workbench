@@ -38,6 +38,14 @@ export interface HomeModule {
 /** Placeholder shown when a rate has no settled records behind it. */
 export const NO_RATE_TEXT = '—';
 
+/** Extra signals shown under the home header, separate from the dashboard summary. */
+export interface HomePulse {
+  /** Days with at least one record, counted back from today or yesterday. */
+  streakDays: number;
+  /** Month and day of the latest review, or a placeholder when none exists. */
+  lastReviewLabel: string;
+}
+
 /** Formats the hit rate, falling back to a placeholder until something is settled. */
 export function formatHitRate(hitRate: number, settledCount: number): string {
   return settledCount > 0 ? `${hitRate}%` : NO_RATE_TEXT;
