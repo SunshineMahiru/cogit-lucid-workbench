@@ -27,7 +27,7 @@ The interface is Chinese only. The display name is set in `entry/src/main/ets/th
 
 ## Project status
 
-The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings, and export, with a local-use flow in place. The project is still being refined.
+The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings with page backgrounds and surface opacity, and export. Both a light and a dark palette ship, and the interface follows the system colour mode. The project is still being refined.
 
 ## Highlights
 
@@ -39,7 +39,7 @@ The current build covers notes, predictions and settlement, review and the agent
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
 | Markdown export | Seven record groups render into one Markdown file inside the app sandbox. |
-| Per-page backgrounds | Pick one local image for each module group; the image is copied into the app sandbox and shown as a low-opacity page layer. |
+| Backgrounds and page opacity | Set one default picture or one per module, taken from the gallery, the camera or the file picker. The page surface itself takes 0-60% transparency, so the setting works with or without a picture. |
 
 ## Architecture
 
@@ -72,7 +72,7 @@ The code is organised as six layers with a single dependency direction, plus a s
 ```
 
 - ArkTS pages with state management V2 (`@ComponentV2`, `@Local`, `@Param`); entity models and services in plain TypeScript.
-- Navigation with `NavPathStack`; 20 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
+- Navigation with `NavPathStack`; 23 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
 - `relationalStore` is the single source of truth, `Preferences` holds non-secret options, the model key is stored in the system asset service, and `fileIo` writes the Markdown export.
 - `@ohos/mpchart` 3.1.0-rc.0 is the only runtime dependency. Icons come from system glyphs rather than an icon pack.
 
@@ -99,6 +99,15 @@ Expected result: after two or three settled predictions the statistics page draw
 3. In the contradiction step, tick up to three anchors to check the explanation against.
 4. Optionally open the agent panel to generate contradiction candidates. Template mode is offline; mock and model modes call an endpoint.
 5. Save. The period shows as complete and the session is kept in review history.
+
+### Set a page background
+
+1. Open settings (`设置`) and tap `更换页面背景`.
+2. Pick a source: `从相册选择`, `拍一张`, or `选择文件`. The picture is converted to PNG and capped at 1080×1920.
+3. On the apply page, either set it as the default for every page, or tick the modules that should carry it.
+4. Adjust `页面透明度` for all pages, or only for the ticked module, then tap `完成`.
+
+Expected result: the module you open shows the picture behind its cards. Transparency at 0% keeps the surface solid; raising it lets the system wallpaper show through, whether or not a picture is set.
 
 ### Take the records out
 
@@ -178,9 +187,22 @@ It listens on `0.0.0.0:4523`; set `PORT` to change the port.
 ### Pointing the app at the server
 
 - DevEco previewer: `http://127.0.0.1:4523` works as is.
-- Emulator: `127.0.0.1` resolves to the emulator itself. Either set `API_BASE_URL` in `entry/src/main/ets/network/ApiConfig.ts` to the host LAN address, or forward the port with `hdc rport tcp:4523 tcp:4523`.
+- Emulator: `127.0.0.1` resolves to the emulator itself. Forward the port with `hdc rport tcp:4523 tcp:4523`, or point the model base URL in settings at the host address.
 - Real device: localhost is not treated as a valid host. Set the model base URL to your host's address; otherwise the app shows local fallback prompts.
 - Cleartext HTTP stays off by default; only `127.0.0.1` and `localhost` are allowlisted in `entry/src/main/resources/base/profile/network_config.json`. Add your own host there locally when a real device has to reach the mock server over HTTP, and keep that edit out of commits. The client timeout is 5 seconds.
+
+### Backgrounds and page opacity
+
+| Item | Detail |
+|---|---|
+| Entry point | Settings → `页面背景` → `更换页面背景` |
+| Sources | Gallery, camera, or the document picker limited to picture suffixes. Every source is normalised to PNG and capped at 1080×1920 before it is stored. |
+| Scope | One default picture covers every page without a picture of its own; a module that has its own picture overrides it, and clearing that picture returns the module to the default. |
+| Ranges | Picture strength 4%-30% (default 10%); page transparency 0%-60% (default 0%). |
+| Storage | `${filesDir}/page-backgrounds`, named by content hash so an identical picture is stored once; files no module points at are removed at startup. |
+| Dark mode | Picture strength is multiplied by 0.7 and a black scrim is added, so the picture does not glow against a dark surface. |
+
+The transparency slider needs no picture: it lowers the alpha of the page surface itself. The window is created with a clear background colour, so a transparent page reveals what sits behind the window.
 
 ### Review agent modes
 
@@ -225,9 +247,9 @@ cogit-lucid-workbench/
 │   ├── src/main/
 │       ├── ets/
 │       │   ├── entryability/     ability entry
-│       │   ├── pages/            20 route pages, host, placeholder fallback
+│       │   ├── pages/            23 route names, host page, placeholder fallback
 │       │   ├── views/            dashboard composition
-│       │   ├── components/       22 reusable pieces
+│       │   ├── components/       26 reusable pieces
 │       │   ├── navigation/       route names and parameter types
 │       │   ├── model/            entity types, enums, factories, demo data
 │       │   ├── data/             dashboard aggregate and cross-entity reads
@@ -266,7 +288,7 @@ cogit-lucid-workbench/
 The DevEco previewer does not provide `relationalStore`, so data-backed pages fall back. Run on an emulator or a phone to see real records.
 
 **The emulator cannot reach the mock server.**
-`127.0.0.1` inside the emulator is the emulator itself. Set `API_BASE_URL` in `entry/src/main/ets/network/ApiConfig.ts` to the host LAN address, or run `hdc rport tcp:4523 tcp:4523` before launching.
+`127.0.0.1` inside the emulator is the emulator itself. Run `hdc rport tcp:4523 tcp:4523` before launching, or open settings and point the model base URL at the host address.
 
 **The built HAP will not install.**
 Without a local signing file, `assembleHap` produces `entry-default-unsigned.hap`. Add `signing/signing.local.json` using `docs/signing.local.example.json`, or configure signing in DevEco Studio, then rebuild. The tracked `build-profile.json5` deliberately has no signing config.
@@ -277,8 +299,14 @@ The launcher label `cogit-lucid-workbench` comes from `AppScope/resources/base/e
 **Why is there only one dependency?**
 Charts are drawn on native canvas through `@ohos/mpchart`. No web view and no third-party icon pack are used, which keeps the HAP small and avoids asset licensing.
 
+**The camera option closes with an error.**
+The system camera picker needs a camera application on the device. Emulators usually ship without one, so use the gallery or the file picker there; the camera option works on a phone.
+
+**A transparent page shows the system wallpaper, not another app.**
+The window is created with a clear background colour, so lowering page transparency reveals whatever sits behind the window. No content from another application is read.
+
 **Is dark mode supported?**
-Not yet. `theme/AppTheme.ts` holds a single light token set; only the start window colour has a dark variant.
+Yes. `theme/AppTheme.ts` carries both palettes; the app reads the system colour mode at launch and re-applies it when the system setting changes. Background pictures are dimmed and covered with a black scrim in dark mode.
 
 ## Contributing
 
