@@ -25,9 +25,11 @@ Three design choices separate it from a journal:
 
 The interface is Chinese only. The display name is set in `entry/src/main/ets/theme/AppIdentity.ts` and the launcher label in `AppScope/resources/base/element/string.json`.
 
+The launch screen opens with an identity band — avatar, nickname, signature, and a hand-written title — followed by four counters: notes today, pending settlements, consecutive record days, and the latest review date. Readings, the weekly card, and the module grid sit below it.
+
 ## Project status
 
-The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings with page backgrounds and surface opacity, and export. Both a light and a dark palette ship, and the interface follows the system colour mode. The project is still being refined.
+The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings with page backgrounds and surface opacity, and export. Both a light and a dark palette ship, and the interface follows the system colour mode. The home page is a normal destination on one navigation stack, so forward and back animate both pages. The project is still being refined.
 
 ## Highlights
 
@@ -39,6 +41,7 @@ The current build covers notes, predictions and settlement, review and the agent
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
 | Markdown export | Seven record groups render into one Markdown file inside the app sandbox. |
+| Home identity band | Avatar, nickname, signature, and a hand-written title sit above four counters: notes today, pending settlements, record streak, and the latest review. |
 | Backgrounds and page opacity | Set one default picture or one per module, taken from the gallery, the camera or the file picker. The page surface itself takes 0-60% transparency, so the setting works with or without a picture. |
 
 ## Architecture
@@ -72,15 +75,25 @@ The code is organised as six layers with a single dependency direction, plus a s
 ```
 
 - ArkTS pages with state management V2 (`@ComponentV2`, `@Local`, `@Param`); entity models and services in plain TypeScript.
-- Navigation with `NavPathStack`; 23 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
+- Navigation with `NavPathStack`; 24 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
 - `relationalStore` is the single source of truth, `Preferences` holds non-secret options, the model key is stored in the system asset service, and `fileIo` writes the Markdown export.
 - `@ohos/mpchart` 3.1.0-rc.0 is the only runtime dependency. Icons come from system glyphs rather than an icon pack.
+- `profile/` holds the home identity: a Preferences store for the four text fields plus a 320 px avatar pipeline.
 
 ## Usage Example
 
-The dashboard is the entry point: today's readings, a weekly settlement card, and a grid of the six modules. Settings sit in the top right.
+The home page opens with the identity band and four counters; today's readings, a weekly settlement card, and the grid of six modules follow below. `编辑` and `设置` sit on the right of the identity band.
 
 <img src="./docs/images/debug/home.jpeg" width="300" alt="Dashboard with sleep, exercise and note readings, a weekly settlement card, and a grid of six modules">
+
+### Set your identity
+
+1. Tap `编辑` on the identity band.
+2. Pick an avatar from the gallery, the camera, or the file picker; the picture is centre-cropped to a 320 px square and stored in the app sandbox.
+3. Fill in a nickname (up to 12 characters), a signature (24), and a title (8).
+4. Tap `保存`. The band updates at once and keeps the values after a restart.
+
+Expected result: the header shows the new avatar and text; an empty nickname or title falls back to `记录者` and `未命名`.
 
 ### Keep one prediction
 
@@ -115,7 +128,7 @@ Settings (`设置`) writes the whole record set to `cogit-export-YYYYMMDD-HHMM.m
 
 ## Screens
 
-Screenshots come from a Mate 70 Pro emulator. Every record in them is synthetic.
+Screenshots come from a Mate 70 Pro emulator. Every record in them is synthetic. They were captured before the identity band was added; the current home page carries that band above the content shown here, and the rest of the layout is unchanged.
 
 | Prediction statistics | Review complete |
 |---|---|
@@ -204,6 +217,16 @@ It listens on `0.0.0.0:4523`; set `PORT` to change the port.
 
 The transparency slider needs no picture: it lowers the alpha of the page surface itself. The window is created with a clear background colour, so a transparent page reveals what sits behind the window.
 
+### Home identity
+
+| Item | Detail |
+|---|---|
+| Entry | `编辑` on the identity band |
+| Fields | Nickname up to 12 characters, signature 24, title 8; an empty nickname or title falls back to `记录者` / `未命名` |
+| Avatar | Gallery, camera, or the file picker; centre-cropped to a 320×320 PNG in `${filesDir}/profile`; replacing it deletes the previous file |
+| Storage | Preferences store `cogit_profile`; none of the fields is secret |
+| Refresh | Settings → `数据管理` → `刷新首页数据` re-reads the four counters |
+
 ### Review agent modes
 
 | Mode | What it calls | Notes |
@@ -247,12 +270,13 @@ cogit-lucid-workbench/
 │   ├── src/main/
 │       ├── ets/
 │       │   ├── entryability/     ability entry
-│       │   ├── pages/            23 route names, host page, placeholder fallback
+│       │   ├── pages/            24 route names, home destination, placeholder fallback
 │       │   ├── views/            dashboard composition
-│       │   ├── components/       26 reusable pieces
+│       │   ├── components/       27 reusable pieces
 │       │   ├── navigation/       route names and parameter types
 │       │   ├── model/            entity types, enums, factories, demo data
 │       │   ├── data/             dashboard aggregate and cross-entity reads
+│       │   ├── profile/          identity store and avatar pipeline
 │       │   ├── note/ prediction/ review/ anchor/ relation/ status/
 │       │   ├── analysis/         rules, analyzers, LLM adapters
 │       │   ├── db/               schema, helpers, seven DAOs
@@ -295,6 +319,12 @@ Without a local signing file, `assembleHap` produces `entry-default-unsigned.hap
 
 **The launcher name does not match the title inside the app.**
 The launcher label `cogit-lucid-workbench` comes from `AppScope/resources/base/element/string.json`; the in-app title `Cogit Lucid` comes from `theme/AppIdentity.ts`. The Chinese name is not finalised, so both are placeholders.
+
+**Where did the refresh button go?**
+It moved into settings, under `数据管理` → `刷新首页数据`. The identity band keeps only `编辑` and `设置`.
+
+**Why do the screenshots differ from the running app?**
+They were taken before the identity band existed. The band now sits above the content in every screenshot; the rest of the layout is unchanged.
 
 **Why is there only one dependency?**
 Charts are drawn on native canvas through `@ohos/mpchart`. No web view and no third-party icon pack are used, which keeps the HAP small and avoids asset licensing.
