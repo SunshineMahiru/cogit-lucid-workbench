@@ -52,7 +52,8 @@ export struct HomePage {
   }
 
   build() {
-    Column() {
+    NavDestination() {
+      Column() {
       ProfileHeader({
         pathStack: this.pathStack
       })
@@ -122,7 +123,10 @@ export struct HomePage {
       .width('100%')
       .layoutWeight(1)
     }
-    .width('100%')
-    .height('100%')
+      .width('100%')
+      .height('100%')
+    }
+    .hideTitleBar(true)
+    .backgroundColor(Color.Transparent)
   }
 }

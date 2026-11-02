@@ -38,6 +38,7 @@ struct Index {
 
   aboutToAppear(): void {
     this.trackCurrentPage();
+    this.pathStack.pushPathByName(ROUTES.HOME, null, false);
     try {
       const context = this.getUIContext().getHostContext();
       if (context !== undefined) {
@@ -53,11 +54,11 @@ struct Index {
   /** Keeps the shared background layer on the group of the page currently on top. */
   private trackCurrentPage(): void {
     this.pathStack.setInterception({
-      didShow: (from: NavBar | NavDestinationContext, to: NavBar | NavDestinationContext,
-        operation: NavigationOperation) => {
-        this.currentGroup = this.groupOf(to);
-        setPageEmpty(false);
-      }
+        didShow: (from: NavBar | NavDestinationContext, to: NavBar | NavDestinationContext,
+          operation: NavigationOperation) => {
+          this.currentGroup = this.groupOf(to);
+          setPageEmpty(false);
+        }
     });
   }
 
@@ -77,7 +78,9 @@ struct Index {
 
   @Builder
   pageContent(name: string) {
-    if (name === ROUTES.NOTE_EDIT) {
+    if (name === ROUTES.HOME) {
+      HomePage({ pathStack: this.pathStack })
+    } else if (name === ROUTES.NOTE_EDIT) {
       NoteEditPage()
     } else if (name === ROUTES.NOTE_LIST) {
       NoteListPage()
@@ -132,7 +135,10 @@ struct Index {
     Stack() {
       PageBackground({ route: this.currentGroup })
       Navigation(this.pathStack) {
-        HomePage({ pathStack: this.pathStack })
+        Stack() {
+        }
+        .width('100%')
+        .height('100%')
       }
       .width('100%')
       .height('100%')
