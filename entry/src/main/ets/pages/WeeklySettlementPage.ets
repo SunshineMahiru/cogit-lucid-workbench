@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { ReviewPeriod, ReviewService, ReviewStats, emptyReviewStats } from '../review';
 import { formatHitRate } from '../model/HomeModel';
@@ -107,7 +108,20 @@ export struct WeeklySettlementPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'review_weekly',
+      title: '周结算',
+      content: () => {
+        this.weeklySettlementBody();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+      }
+    })
+  }
+
+  @Builder
+  weeklySettlementBody() {
       if (this.isLoading) {
         Column() {
           LoadingProgress()
@@ -209,11 +223,5 @@ export struct WeeklySettlementPage {
         .height('100%')
         .backgroundColor(Color.Transparent)
       }
-    }
-    .title('周结算')
-    .backgroundColor(Color.Transparent)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-    })
   }
 }

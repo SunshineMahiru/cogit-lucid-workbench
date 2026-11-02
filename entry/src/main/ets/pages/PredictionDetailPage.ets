@@ -10,6 +10,7 @@ import { PredictionDetailParams, PredictionSettleParams, PredictionCreateParams 
 import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { previewStore } from '../preview/PreviewStore';
 
 /** One label/value row; kept as a child component so async detail reloads re-render it. */
@@ -138,7 +139,37 @@ export struct PredictionDetailPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'prediction_detail',
+      title: '预测详情',
+      content: () => {
+        this.predictionDetailBody();
+      },
+      menus: () => {
+        this.reviseMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        if (context.pathInfo.param === undefined) {
+          this.isLoading = false;
+          this.missing = true;
+          return;
+        }
+        const params = context.pathInfo.param as PredictionDetailParams;
+        this.load(params.predictionId);
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce && this.detail.id.length > 0) {
+          this.load(this.detail.id);
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  predictionDetailBody() {
       if (this.isLoading) {
         Column() {
           LoadingProgress()
@@ -274,26 +305,5 @@ export struct PredictionDetailPage {
         .align(Alignment.Top)
         .backgroundColor(Color.Transparent)
       }
-    }
-    .title('预测详情')
-    .backgroundColor(Color.Transparent)
-    .menus(this.reviseMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      if (context.pathInfo.param === undefined) {
-        this.isLoading = false;
-        this.missing = true;
-        return;
-      }
-      const params = context.pathInfo.param as PredictionDetailParams;
-      this.load(params.predictionId);
-    })
-    .onShown(() => {
-      if (this.hasShownOnce && this.detail.id.length > 0) {
-        this.load(this.detail.id);
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 }

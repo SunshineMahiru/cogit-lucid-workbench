@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { PredictionDetail, PredictionService, todayDateString } from '../prediction';
@@ -138,7 +139,27 @@ export struct PredictionSettlePage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'prediction_settle',
+      title: '结算预测',
+      content: () => {
+        this.predictionSettleBody();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        if (context.pathInfo.param === undefined) {
+          this.isLoading = false;
+          this.missing = true;
+          return;
+        }
+        const params = context.pathInfo.param as PredictionSettleParams;
+        this.load(params.predictionId);
+      }
+    })
+  }
+
+  @Builder
+  predictionSettleBody() {
       if (this.isLoading) {
         Column() {
           LoadingProgress()
@@ -299,18 +320,5 @@ export struct PredictionSettlePage {
         .height('100%')
         .backgroundColor(Color.Transparent)
       }
-    }
-    .title('结算预测')
-    .backgroundColor(Color.Transparent)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      if (context.pathInfo.param === undefined) {
-        this.isLoading = false;
-        this.missing = true;
-        return;
-      }
-      const params = context.pathInfo.param as PredictionSettleParams;
-      this.load(params.predictionId);
-    })
   }
 }

@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import {
   NoteDraft,
   NoteDetail,
@@ -277,7 +278,55 @@ export struct NoteEditPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'note_edit',
+      title: this.isEditing ? '编辑速记' : '速记',
+      content: () => {
+        this.noteEditBody();
+      },
+      menus: () => {
+        this.saveMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        if (context.pathInfo.param !== undefined) {
+          const params = context.pathInfo.param as NoteEditParams;
+          if (params.noteId !== undefined && params.noteId !== null && params.noteId.length > 0) {
+            this.loadNote(params.noteId);
+          } else {
+            this.applyTemplate(params.templateId);
+          }
+        }
+      },
+      onDestinationBackPressed: () => {
+        if (!this.isDirty) {
+          return false;
+        }
+        this.getUIContext().showAlertDialog({
+          title: '放弃这条速记？',
+          message: '已填写的内容不会保存。',
+          primaryButton: {
+            value: '继续编辑',
+            action: () => {
+            }
+          },
+          secondaryButton: {
+            value: '放弃',
+            action: () => {
+              this.isDirty = false;
+              if (this.navStack !== null) {
+                this.navStack.pop();
+              }
+            }
+          }
+        });
+        return true;
+      }
+    })
+  }
+
+  @Builder
+  noteEditBody() {
       Column() {
         Scroll() {
           Column({ space: 16 }) {
@@ -416,44 +465,5 @@ export struct NoteEditPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title(this.isEditing ? '编辑速记' : '速记')
-    .backgroundColor(Color.Transparent)
-    .menus(this.saveMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      if (context.pathInfo.param !== undefined) {
-        const params = context.pathInfo.param as NoteEditParams;
-        if (params.noteId !== undefined && params.noteId !== null && params.noteId.length > 0) {
-          this.loadNote(params.noteId);
-        } else {
-          this.applyTemplate(params.templateId);
-        }
-      }
-    })
-    .onBackPressed(() => {
-      if (!this.isDirty) {
-        return false;
-      }
-      this.getUIContext().showAlertDialog({
-        title: '放弃这条速记？',
-        message: '已填写的内容不会保存。',
-        primaryButton: {
-          value: '继续编辑',
-          action: () => {
-          }
-        },
-        secondaryButton: {
-          value: '放弃',
-          action: () => {
-            this.isDirty = false;
-            if (this.navStack !== null) {
-              this.navStack.pop();
-            }
-          }
-        }
-      });
-      return true;
-    })
   }
 }

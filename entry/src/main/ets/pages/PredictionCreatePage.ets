@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import {
   MAX_JUDGMENT_LENGTH,
@@ -152,7 +153,26 @@ export struct PredictionCreatePage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'prediction_create',
+      title: this.sourceId === null ? '新建预测' : '修改预测',
+      content: () => {
+        this.predictionCreateBody();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        if (context.pathInfo.param !== undefined) {
+          const params = context.pathInfo.param as PredictionCreateParams;
+          if (params.sourcePredictionId !== null) {
+            this.loadSource(params.sourcePredictionId);
+          }
+        }
+      }
+    })
+  }
+
+  @Builder
+  predictionCreateBody() {
       Column() {
         Scroll() {
           Column({ space: 12 }) {
@@ -297,17 +317,5 @@ export struct PredictionCreatePage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title(this.sourceId === null ? '新建预测' : '修改预测')
-    .backgroundColor(Color.Transparent)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      if (context.pathInfo.param !== undefined) {
-        const params = context.pathInfo.param as PredictionCreateParams;
-        if (params.sourcePredictionId !== null) {
-          this.loadSource(params.sourcePredictionId);
-        }
-      }
-    })
   }
 }

@@ -17,6 +17,7 @@ export struct AppDestination {
   };
   @Event onDestinationShown: () => void = () => {
   };
+  @Event onDestinationBackPressed: () => boolean = () => false;
 
   @Builder
   emptyMenus() {
@@ -45,6 +46,9 @@ export struct AppDestination {
     })
     .onShown(() => {
       this.onDestinationShown();
+    })
+    .onBackPressed(() => {
+      return this.onDestinationBackPressed();
     })
   }
 }

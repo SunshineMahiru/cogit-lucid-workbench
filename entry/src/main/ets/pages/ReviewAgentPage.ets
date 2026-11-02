@@ -1,5 +1,6 @@
 import { Anchor } from '../model/Anchor';
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { ReviewAgentPanel } from '../components/ReviewAgentPanel';
 import { ReviewService } from '../review';
@@ -37,7 +38,17 @@ export struct ReviewAgentPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'review_agent',
+      title: '复盘 Agent',
+      content: () => {
+        this.reviewAgentBody();
+      }
+    })
+  }
+
+  @Builder
+  reviewAgentBody() {
       Scroll() {
         Column({ space: 12 }) {
           Text('先写事实与解释，再让 Agent 找差距；结果只作提示，不替代你的判断。')
@@ -138,8 +149,5 @@ export struct ReviewAgentPage {
       .height('100%')
       .scrollBar(BarState.Off)
       .backgroundColor(Color.Transparent)
-    }
-    .title('复盘 Agent')
-    .backgroundColor(Color.Transparent)
   }
 }

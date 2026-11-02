@@ -1,5 +1,6 @@
 import { Anchor } from '../model/Anchor';
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { AnchorService } from '../anchor';
 import { AnchorCard } from '../components/AnchorCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
@@ -102,7 +103,27 @@ export struct AnchorPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'anchor',
+      title: '价值锚点',
+      content: () => {
+        this.anchorBody();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce) {
+          this.load();
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  anchorBody() {
       Column() {
         Column() {
           this.headerCard()
@@ -172,18 +193,5 @@ export struct AnchorPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title('价值锚点')
-    .backgroundColor(Color.Transparent)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-    })
-    .onShown(() => {
-      if (this.hasShownOnce) {
-        this.load();
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 }

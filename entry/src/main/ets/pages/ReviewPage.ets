@@ -1,6 +1,7 @@
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewForm } from '../components/ReviewForm';
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { ROUTES } from '../navigation/Routes';
 
 /** Review session shell: week and month tabs, each owning its own draft. */
@@ -36,7 +37,23 @@ export struct ReviewPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'review',
+      title: '复盘',
+      content: () => {
+        this.reviewBody();
+      },
+      menus: () => {
+        this.actionsMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+      }
+    })
+  }
+
+  @Builder
+  reviewBody() {
       Tabs({ barPosition: BarPosition.Start, index: this.activeTab }) {
         TabContent() {
           ReviewForm({ period: ReviewPeriod.WEEK })
@@ -56,12 +73,5 @@ export struct ReviewPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title('复盘')
-    .backgroundColor(Color.Transparent)
-    .menus(this.actionsMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-    })
   }
 }

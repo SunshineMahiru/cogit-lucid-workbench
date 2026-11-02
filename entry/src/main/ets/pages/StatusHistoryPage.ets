@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { StatusDayRow } from '../components/StatusDayRow';
 import { NoteEmptyState } from '../components/NoteEmptyState';
@@ -120,7 +121,24 @@ export struct StatusHistoryPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'status_history',
+      title: '状态历史',
+      content: () => {
+        this.statusHistoryBody();
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce) {
+          this.refresh();
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  statusHistoryBody() {
       Column() {
         if (this.isLoading) {
           Column() {
@@ -202,15 +220,5 @@ export struct StatusHistoryPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title('状态历史')
-    .backgroundColor(Color.Transparent)
-    .onShown(() => {
-      if (this.hasShownOnce) {
-        this.refresh();
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 }

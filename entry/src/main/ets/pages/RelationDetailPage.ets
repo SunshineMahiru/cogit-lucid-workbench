@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { RelationTrustBadge } from '../components/RelationTrustBadge';
 import { NoteEmptyState } from '../components/NoteEmptyState';
@@ -165,7 +166,30 @@ export struct RelationDetailPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'relation_detail',
+      title: '关系详情',
+      content: () => {
+        this.relationDetailBody();
+      },
+      menus: () => {
+        this.editMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        if (context.pathInfo.param === undefined) {
+          this.isLoading = false;
+          this.missing = true;
+          return;
+        }
+        const params = context.pathInfo.param as RelationDetailParams;
+        this.load(params.relationId);
+      }
+    })
+  }
+
+  @Builder
+  relationDetailBody() {
       if (this.isLoading) {
         Column() {
           LoadingProgress()
@@ -380,19 +404,5 @@ export struct RelationDetailPage {
         .align(Alignment.Top)
         .backgroundColor(Color.Transparent)
       }
-    }
-    .title('关系详情')
-    .backgroundColor(Color.Transparent)
-    .menus(this.editMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      if (context.pathInfo.param === undefined) {
-        this.isLoading = false;
-        this.missing = true;
-        return;
-      }
-      const params = context.pathInfo.param as RelationDetailParams;
-      this.load(params.relationId);
-    })
   }
 }

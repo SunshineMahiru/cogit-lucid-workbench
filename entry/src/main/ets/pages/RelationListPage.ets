@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { RelationCard } from '../components/RelationCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
@@ -180,7 +181,30 @@ export struct RelationListPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'relation',
+      title: '关系层',
+      content: () => {
+        this.relationListBody();
+      },
+      menus: () => {
+        this.graphMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce) {
+          this.refresh();
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  relationListBody() {
       Column() {
         Column() {
           this.headerCard()
@@ -250,19 +274,5 @@ export struct RelationListPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title('关系层')
-    .backgroundColor(Color.Transparent)
-    .menus(this.graphMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-    })
-    .onShown(() => {
-      if (this.hasShownOnce) {
-        this.refresh();
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 }

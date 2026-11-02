@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { NoteListItem, QuickNoteService } from '../note';
 import { NoteDetailParams, NoteEditParams, NoteListParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
@@ -148,7 +149,37 @@ export struct NoteListPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'note_list',
+      title: '速记列表',
+      content: () => {
+        this.noteListBody();
+      },
+      menus: () => {
+        this.addMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        if (context.pathInfo.param !== undefined) {
+          const params = context.pathInfo.param as NoteListParams;
+          this.filter = params.filterType;
+          if (this.service !== null) {
+            this.refresh();
+          }
+        }
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce) {
+          this.refresh();
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  noteListBody() {
       Stack({ alignContent: Alignment.BottomEnd }) {
         Column({ space: 10 }) {
           TextInput({ text: this.search, placeholder: '搜索标题、摘要或标签' })
@@ -253,26 +284,5 @@ export struct NoteListPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title('速记列表')
-    .backgroundColor(Color.Transparent)
-    .menus(this.addMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      if (context.pathInfo.param !== undefined) {
-        const params = context.pathInfo.param as NoteListParams;
-        this.filter = params.filterType;
-        if (this.service !== null) {
-          this.refresh();
-        }
-      }
-    })
-    .onShown(() => {
-      if (this.hasShownOnce) {
-        this.refresh();
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 }

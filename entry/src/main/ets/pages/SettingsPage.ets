@@ -1,5 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 import {
@@ -363,7 +364,25 @@ export struct SettingsPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'settings',
+      title: '设置',
+      content: () => {
+        this.settingsBody();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+      },
+      onDestinationShown: () => {
+        if (this.hostContext !== null) {
+          this.loadBackgrounds(this.hostContext);
+        }
+      }
+    })
+  }
+
+  @Builder
+  settingsBody() {
       if (this.isLoading) {
         Column() {
           LoadingProgress()
@@ -716,16 +735,5 @@ export struct SettingsPage {
           backgroundColor: AppTheme.color.surface
         })
       }
-    }
-    .title('设置')
-    .backgroundColor(Color.Transparent)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-    })
-    .onShown(() => {
-      if (this.hostContext !== null) {
-        this.loadBackgrounds(this.hostContext);
-      }
-    })
   }
 }

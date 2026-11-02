@@ -26,18 +26,14 @@ import { StatusHistoryPage } from './StatusHistoryPage';
 import { StatusEditPage } from './StatusEditPage';
 import { SettingsPage } from './SettingsPage';
 import { BackgroundApplyPage } from './BackgroundApplyPage';
-import { PageBackground } from '../components/PageBackground';
-import { backgroundKeyForRoute, PageBackgroundService } from '../settings/PageBackgroundService';
-import { setPageEmpty } from '../settings/PageBackgroundBus';
+import { PageBackgroundService } from '../settings/PageBackgroundService';
 
 @Entry
 @ComponentV2
 struct Index {
   @Local pathStack: NavPathStack = new NavPathStack();
-  @Local currentGroup: string = 'home';
 
   aboutToAppear(): void {
-    this.trackCurrentPage();
     this.pathStack.pushPathByName(ROUTES.HOME, null, false);
     try {
       const context = this.getUIContext().getHostContext();
@@ -49,26 +45,6 @@ struct Index {
       }
     } catch (error) {
     }
-  }
-
-  /** Keeps the shared background layer on the group of the page currently on top. */
-  private trackCurrentPage(): void {
-    this.pathStack.setInterception({
-        didShow: (from: NavBar | NavDestinationContext, to: NavBar | NavDestinationContext,
-          operation: NavigationOperation) => {
-          this.currentGroup = this.groupOf(to);
-          setPageEmpty(false);
-        }
-    });
-  }
-
-  /** Resolves the group of a destination, falling back to the home group for the navigation bar. */
-  private groupOf(target: NavBar | NavDestinationContext): string {
-    const context = target as NavDestinationContext;
-    if (context.pathInfo !== undefined) {
-      return backgroundKeyForRoute(context.pathInfo.name);
-    }
-    return 'home';
   }
 
   @Builder
@@ -133,7 +109,6 @@ struct Index {
 
   build() {
     Stack() {
-      PageBackground({ route: this.currentGroup })
       Navigation(this.pathStack) {
         Stack() {
         }

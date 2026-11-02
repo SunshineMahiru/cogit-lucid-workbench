@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { RelationGraph } from '../components/RelationGraph';
@@ -91,7 +92,24 @@ export struct RelationGraphPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'relation_graph',
+      title: '关系图谱',
+      content: () => {
+        this.relationGraphBody();
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce) {
+          this.load();
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  relationGraphBody() {
       Column() {
         if (this.isLoading) {
           Column() {
@@ -167,15 +185,5 @@ export struct RelationGraphPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title('关系图谱')
-    .backgroundColor(Color.Transparent)
-    .onShown(() => {
-      if (this.hasShownOnce) {
-        this.load();
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 }

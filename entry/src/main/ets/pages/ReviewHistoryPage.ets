@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewHistoryItem, ReviewService } from '../review';
@@ -45,7 +46,27 @@ export struct ReviewHistoryPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'review_history',
+      title: '复盘历史',
+      content: () => {
+        this.reviewHistoryBody();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce) {
+          this.load();
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  reviewHistoryBody() {
       Column() {
         if (this.isLoading) {
           Column() {
@@ -126,18 +147,5 @@ export struct ReviewHistoryPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title('复盘历史')
-    .backgroundColor(Color.Transparent)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-    })
-    .onShown(() => {
-      if (this.hasShownOnce) {
-        this.load();
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 }

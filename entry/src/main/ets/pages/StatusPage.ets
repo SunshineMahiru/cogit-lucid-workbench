@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { StatusDayRow } from '../components/StatusDayRow';
 import { StatusTrendCard } from '../components/StatusTrendCard';
@@ -144,7 +145,30 @@ export struct StatusPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'status',
+      title: '状态面板',
+      content: () => {
+        this.statusBody();
+      },
+      menus: () => {
+        this.addMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce) {
+          this.refresh();
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  statusBody() {
       Column() {
         if (this.isLoading) {
           Column() {
@@ -288,19 +312,5 @@ export struct StatusPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title('状态面板')
-    .backgroundColor(Color.Transparent)
-    .menus(this.addMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-    })
-    .onShown(() => {
-      if (this.hasShownOnce) {
-        this.refresh();
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 }

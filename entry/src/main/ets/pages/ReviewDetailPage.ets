@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewDetailView, ReviewService } from '../review';
@@ -78,7 +79,27 @@ export struct ReviewDetailPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'review_detail',
+      title: '复盘详情',
+      content: () => {
+        this.reviewDetailBody();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        if (context.pathInfo.param === undefined) {
+          this.isLoading = false;
+          this.missing = true;
+          return;
+        }
+        const params = context.pathInfo.param as ReviewDetailParams;
+        this.load(params.reviewId);
+      }
+    })
+  }
+
+  @Builder
+  reviewDetailBody() {
       if (this.isLoading) {
         Column() {
           LoadingProgress()
@@ -195,18 +216,5 @@ export struct ReviewDetailPage {
         .align(Alignment.Top)
         .backgroundColor(Color.Transparent)
       }
-    }
-    .title('复盘详情')
-    .backgroundColor(Color.Transparent)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      if (context.pathInfo.param === undefined) {
-        this.isLoading = false;
-        this.missing = true;
-        return;
-      }
-      const params = context.pathInfo.param as ReviewDetailParams;
-      this.load(params.reviewId);
-    })
   }
 }

@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { ImageSourceSheet } from '../components/ImageSourceSheet';
 import { fileUri } from '@kit.CoreFileKit';
@@ -22,6 +23,8 @@ export struct BackgroundApplyPage {
   @Local showSourceSheet: boolean = false;
   @Local globalApplied: boolean = false;
   @Local surfaceAlpha: number = 1;
+  /** Hidden until the destination surface supports translucency without transition bleed. */
+  private readonly surfaceAlphaVisible: boolean = false;
   private navStack: NavPathStack = new NavPathStack();
   private hostContext: common.Context | null = null;
 
@@ -300,7 +303,23 @@ export struct BackgroundApplyPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'background',
+      title: '页面背景',
+      content: () => {
+        this.backgroundBody();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+      },
+      onDestinationShown: () => {
+        this.refreshStates();
+      }
+    })
+  }
+
+  @Builder
+  backgroundBody() {
       Column() {
         if (this.isLoading) {
           Column() {
@@ -524,6 +543,7 @@ export struct BackgroundApplyPage {
                 .alignItems(HorizontalAlign.Start)
               }
 
+              if (this.surfaceAlphaVisible) {
               SectionCard() {
                 Column({ space: 8 }) {
                   Text('页面透明度')
@@ -578,6 +598,7 @@ export struct BackgroundApplyPage {
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)
+              }
               }
 
               SectionCard() {
@@ -671,14 +692,5 @@ export struct BackgroundApplyPage {
         dragBar: false,
         backgroundColor: AppTheme.color.surface
       })
-    }
-    .title('页面背景')
-    .backgroundColor(Color.Transparent)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-    })
-    .onShown(() => {
-      this.refreshStates();
-    })
   }
 }

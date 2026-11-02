@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { NoteDetail, QuickNoteService, securityLevelText } from '../note';
 import { NoteDetailParams, NoteEditParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
@@ -131,7 +132,30 @@ export struct NoteDetailPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'note_detail',
+      title: '速记详情',
+      content: () => {
+        this.noteDetailBody();
+      },
+      menus: () => {
+        this.editMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        if (context.pathInfo.param === undefined) {
+          this.isLoading = false;
+          this.missing = true;
+          return;
+        }
+        const params = context.pathInfo.param as NoteDetailParams;
+        this.load(params.noteId);
+      }
+    })
+  }
+
+  @Builder
+  noteDetailBody() {
       if (this.isLoading) {
         Column() {
           LoadingProgress()
@@ -217,19 +241,5 @@ export struct NoteDetailPage {
         .align(Alignment.Top)
         .backgroundColor(Color.Transparent)
       }
-    }
-    .title('速记详情')
-    .backgroundColor(Color.Transparent)
-    .menus(this.editMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      if (context.pathInfo.param === undefined) {
-        this.isLoading = false;
-        this.missing = true;
-        return;
-      }
-      const params = context.pathInfo.param as NoteDetailParams;
-      this.load(params.noteId);
-    })
   }
 }

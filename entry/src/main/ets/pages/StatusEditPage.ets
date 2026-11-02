@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { StatusDayRow, StatusService } from '../status';
 import { StatusEditParams } from '../navigation/RouteParams';
@@ -121,7 +122,25 @@ export struct StatusEditPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'status_edit',
+      title: '记录读数',
+      content: () => {
+        this.statusEditBody();
+      },
+      menus: () => {
+        this.saveMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        const params = context.pathInfo.param as StatusEditParams;
+        this.load(params.date);
+      }
+    })
+  }
+
+  @Builder
+  statusEditBody() {
       if (this.isLoading) {
         Column() {
           LoadingProgress()
@@ -219,15 +238,6 @@ export struct StatusEditPage {
         .scrollBar(BarState.Off)
         .backgroundColor(Color.Transparent)
       }
-    }
-    .title('记录读数')
-    .backgroundColor(Color.Transparent)
-    .menus(this.saveMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      const params = context.pathInfo.param as StatusEditParams;
-      this.load(params.date);
-    })
   }
 }
 

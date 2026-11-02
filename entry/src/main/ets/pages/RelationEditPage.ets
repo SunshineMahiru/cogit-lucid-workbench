@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { RelationService, trustLevelText } from '../relation';
 import { RelationEditParams } from '../navigation/RouteParams';
@@ -140,7 +141,25 @@ export struct RelationEditPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'relation_edit',
+      title: this.relationId === null ? '新建关系' : '编辑关系',
+      content: () => {
+        this.relationEditBody();
+      },
+      menus: () => {
+        this.saveMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        const params = context.pathInfo.param as RelationEditParams;
+        this.load(params.relationId);
+      }
+    })
+  }
+
+  @Builder
+  relationEditBody() {
       if (this.isLoading) {
         Column() {
           LoadingProgress()
@@ -274,14 +293,5 @@ export struct RelationEditPage {
         .scrollBar(BarState.Off)
         .backgroundColor(Color.Transparent)
       }
-    }
-    .title(this.relationId === null ? '新建关系' : '编辑关系')
-    .backgroundColor(Color.Transparent)
-    .menus(this.saveMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      const params = context.pathInfo.param as RelationEditParams;
-      this.load(params.relationId);
-    })
   }
 }
