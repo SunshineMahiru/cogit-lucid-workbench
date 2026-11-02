@@ -1,6 +1,7 @@
 import { common } from '@kit.AbilityKit';
 import { AppTheme } from '../theme/AppTheme';
 import { SectionCard } from '../components/SectionCard';
+import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 import {
   AppSettings,
   LlmProvider,
@@ -258,6 +259,12 @@ export struct SettingsPage {
     } finally {
       this.dataBusy = false;
     }
+  }
+
+  /** Re-reads local records so the home header counters reflect the latest data. */
+  private refreshHome(): void {
+    notifyHomeRefresh();
+    this.showToast('首页数据已刷新');
   }
 
   private async clearData(): Promise<void> {
@@ -596,6 +603,20 @@ export struct SettingsPage {
                       .accessibilityText(this.clearArmed ? '确认清空全部数据' : '清空全部数据，需要二次确认')
                       .onClick(() => {
                         this.clearData();
+                      })
+                  }
+                  .width('100%')
+
+                  Row({ space: 8 }) {
+                    Text('刷新首页数据')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.primary)
+                      .padding({ left: 10, right: 10, top: 7, bottom: 7 })
+                      .backgroundColor(AppTheme.color.tint)
+                      .borderRadius(8)
+                      .accessibilityText('重新读取本地记录并刷新首页摘要')
+                      .onClick(() => {
+                        this.refreshHome();
                       })
                   }
                   .width('100%')
