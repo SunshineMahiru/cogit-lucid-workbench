@@ -14,8 +14,6 @@ import { BackgroundImageSource } from '../settings/PageBackgroundService';
 @ComponentV2
 export struct ProfileHeader {
   @Require @Param pathStack: NavPathStack;
-  @Event onRefresh: () => void = () => {
-  };
   @Local profile: Profile = DEFAULT_PROFILE;
   @Local showEditor: boolean = false;
   @Local busyKey: string = '';
@@ -279,9 +277,9 @@ export struct ProfileHeader {
   }
 
   build() {
-    Row({ space: 12 }) {
-      this.avatar(52)
-      Column({ space: 3 }) {
+    Column({ space: 6 }) {
+      Row({ space: 12 }) {
+        this.avatar(56)
         Row({ space: 6 }) {
           Text(this.profile.nickname)
             .fontSize(17)
@@ -289,55 +287,46 @@ export struct ProfileHeader {
             .fontColor(AppTheme.color.text)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .flexShrink(1)
           Text(this.profile.title)
             .fontSize(10)
             .fontColor(AppTheme.color.accentGold)
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .backgroundColor(AppTheme.color.surfaceWarm)
             .borderRadius(6)
+            .flexShrink(0)
         }
-        .width('100%')
-        Text(this.profile.signature.length > 0 ? this.profile.signature : '写一句留给自己的话')
-          .fontSize(11)
-          .fontColor(AppTheme.color.textSecondary)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Start)
 
-      Column({ space: 6 }) {
         Text('编辑')
           .fontSize(11)
           .fontColor(AppTheme.color.primary)
-          .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-          .backgroundColor(AppTheme.color.tint)
-          .borderRadius(8)
           .accessibilityText('编辑身份信息')
           .onClick(() => {
             this.openEditor();
           })
-        Row({ space: 10 }) {
-          Text('设置')
-            .fontSize(11)
-            .fontColor(AppTheme.color.textSecondary)
-            .accessibilityText('打开设置')
-            .onClick(() => {
-              this.openSettings();
-            })
-          Text('刷新')
-            .fontSize(11)
-            .fontColor(AppTheme.color.textSecondary)
-            .accessibilityText('刷新主页数据')
-            .onClick(() => {
-              this.onRefresh();
-            })
-        }
+        Text('设置')
+          .fontSize(11)
+          .fontColor(AppTheme.color.primary)
+          .accessibilityText('打开设置')
+          .onClick(() => {
+            this.openSettings();
+          })
       }
-      .alignItems(HorizontalAlign.End)
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+
+      Text(this.profile.signature.length > 0 ? this.profile.signature : '写一句留给自己的话')
+        .fontSize(11)
+        .fontColor(AppTheme.color.textSecondary)
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .width('100%')
+        .padding({ left: 68 })
     }
     .width('100%')
-    .padding({ left: 20, right: 20, top: 12, bottom: 10 })
+    .padding({ left: 20, right: 20, top: 12, bottom: 12 })
     .border({ width: { bottom: 0.5 }, color: AppTheme.color.border })
     .bindSheet($$this.showEditor, this.editor(), {
       height: 480,

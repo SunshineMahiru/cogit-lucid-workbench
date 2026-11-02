@@ -3,7 +3,7 @@ import { DashboardView } from '../views/DashboardView';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { HomeDataService } from '../data/HomeDataService';
 import { HomePulse, HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
-import { notifyHomeRefresh, subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
+import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 
 const EMPTY_SUMMARY: HomeSummary = {
   totalNotes: 0, todayNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0,
@@ -51,17 +51,10 @@ export struct HomePage {
     }
   }
 
-  private refreshAll(): void {
-    notifyHomeRefresh();
-  }
-
   build() {
     Column() {
       ProfileHeader({
-        pathStack: this.pathStack,
-        onRefresh: () => {
-          this.refreshAll();
-        }
+        pathStack: this.pathStack
       })
       Row({ space: 8 }) {
         Column({ space: 2 }) {
