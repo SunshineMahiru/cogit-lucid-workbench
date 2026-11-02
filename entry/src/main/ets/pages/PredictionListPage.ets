@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { PredictionListItem, PredictionService, PredictionSummary } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { formatHitRate, hitRateCaption } from '../model/HomeModel';
@@ -191,7 +192,37 @@ export struct PredictionListPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'prediction_list',
+      title: '预测日志',
+      content: () => {
+        this.listBody();
+      },
+      menus: () => {
+        this.actionsMenu();
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        if (context.pathInfo.param !== undefined) {
+          const params = context.pathInfo.param as PredictionListParams;
+          this.filter = params.status;
+          if (this.service !== null) {
+            this.refresh();
+          }
+        }
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce) {
+          this.refresh();
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  listBody() {
       Column({ space: 10 }) {
         this.summaryCard()
 
@@ -265,27 +296,6 @@ export struct PredictionListPage {
       .height('100%')
       .padding({ left: 16, right: 16, top: 12, bottom: 12 })
       .backgroundColor(Color.Transparent)
-    }
-    .title('预测日志')
-    .backgroundColor(Color.Transparent)
-    .menus(this.actionsMenu)
-    .onReady((context: NavDestinationContext) => {
-      this.navStack = context.pathStack;
-      if (context.pathInfo.param !== undefined) {
-        const params = context.pathInfo.param as PredictionListParams;
-        this.filter = params.status;
-        if (this.service !== null) {
-          this.refresh();
-        }
-      }
-    })
-    .onShown(() => {
-      if (this.hasShownOnce) {
-        this.refresh();
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 
   private emptyTitle(): string {

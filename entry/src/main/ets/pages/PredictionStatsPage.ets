@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { PredictionTrendChart } from '../components/PredictionTrendChart';
@@ -90,7 +91,24 @@ export struct PredictionStatsPage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'prediction_stats',
+      title: '预测统计',
+      content: () => {
+        this.statsBody();
+      },
+      onDestinationShown: () => {
+        if (this.hasShownOnce) {
+          this.refresh();
+        } else {
+          this.hasShownOnce = true;
+        }
+      }
+    })
+  }
+
+  @Builder
+  statsBody() {
       Column() {
         if (this.isLoading) {
           Column() {
@@ -254,15 +272,5 @@ export struct PredictionStatsPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
-    }
-    .title('预测统计')
-    .backgroundColor(Color.Transparent)
-    .onShown(() => {
-      if (this.hasShownOnce) {
-        this.refresh();
-      } else {
-        this.hasShownOnce = true;
-      }
-    })
   }
 }

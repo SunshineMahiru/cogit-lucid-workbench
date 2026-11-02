@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
 import { DashboardView } from '../views/DashboardView';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { HomeDataService } from '../data/HomeDataService';
@@ -52,7 +53,17 @@ export struct HomePage {
   }
 
   build() {
-    NavDestination() {
+    AppDestination({
+      route: 'home',
+      hideTitleBar: true,
+      content: () => {
+        this.homeBody();
+      }
+    })
+  }
+
+  @Builder
+  homeBody() {
       Column() {
       ProfileHeader({
         pathStack: this.pathStack
@@ -125,8 +136,5 @@ export struct HomePage {
     }
       .width('100%')
       .height('100%')
-    }
-    .hideTitleBar(true)
-    .backgroundColor(Color.Transparent)
   }
 }
