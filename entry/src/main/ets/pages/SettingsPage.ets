@@ -13,11 +13,9 @@ import {
   sanitizeAppSettings
 } from '../settings';
 import {
-  BackgroundImageSource,
   PAGE_BACKGROUND_GROUPS,
   PageBackgroundService
 } from '../settings/PageBackgroundService';
-import { ImageSourceSheet } from '../components/ImageSourceSheet';
 import { BackupService } from '../settings/BackupService';
 import { ROUTES } from '../navigation/Routes';
 import { ExportService, totalExportRecords } from '../export';
@@ -64,7 +62,6 @@ export struct SettingsPage {
   @Local spentYuan: number = 0;
   @Local backgroundBusy: string = '';
   @Local globalApplied: boolean = false;
-  @Local showSourceSheet: boolean = false;
   @Local dataBusy: boolean = false;
   @Local clearArmed: boolean = false;
   @Local backgroundRows: BackgroundRowState[] = initialBackgroundRows();
@@ -194,30 +191,6 @@ export struct SettingsPage {
       return '尚未设置';
     }
     return this.globalApplied ? `全局默认 · 覆盖 ${total} 个页面` : `已应用到 ${total} 个页面`;
-  }
-
-  private async chooseBackground(source: BackgroundImageSource): Promise<void> {
-    if (this.hostContext === null) {
-      this.showToast('当前环境不支持选择图片');
-      return;
-    }
-    if (this.backgroundBusy.length > 0) {
-      return;
-    }
-    this.backgroundBusy = 'pending';
-    try {
-      const path = await PageBackgroundService.pick(source, this.hostContext);
-      if (path.length === 0) {
-        this.showToast('未选择图片');
-        return;
-      }
-      await this.loadBackgrounds(this.hostContext);
-      this.navStack.pushPathByName(ROUTES.BACKGROUND_APPLY, null);
-    } catch (error) {
-      this.showToast('图片读取失败；换一张 JPG、PNG 或 HEIF 再试');
-    } finally {
-      this.backgroundBusy = '';
-    }
   }
 
   private async shareExport(): Promise<void> {
@@ -351,16 +324,6 @@ export struct SettingsPage {
       .onClick(() => {
         this.withLevel(level);
       })
-  }
-
-  @Builder
-  sourceSheet() {
-    ImageSourceSheet({
-      onPick: (source: BackgroundImageSource) => {
-        this.showSourceSheet = false;
-        this.chooseBackground(source);
-      }
-    })
   }
 
   build() {
@@ -651,21 +614,21 @@ export struct SettingsPage {
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
-                  Text('设置页面背景图与页面透明度，进入下一页选择应用范围；旧格式图片在启动时自动校正。')
+                  Text('设置各页面的背景图与应用范围；进入后可选择图片、应用到指定模块或恢复默认。')
                     .fontSize(11)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Row({ space: 8 }) {
-                    Text(this.backgroundBusy === 'pending' ? '读取中…' : '更换页面背景')
+                    Text(this.backgroundBusy === 'pending' ? '读取中…' : '打开页面背景')
                       .fontSize(12)
                       .fontColor(Color.White)
                       .padding({ left: 14, right: 14, top: 9, bottom: 9 })
                       .backgroundColor(AppTheme.color.primary)
                       .borderRadius(8)
-                      .accessibilityText('选择图片并进入页面背景应用页')
+                      .accessibilityText('打开页面背景设置')
                       .onClick(() => {
-                        this.showSourceSheet = true;
+                        this.navStack.pushPathByName(ROUTES.BACKGROUND_APPLY, null);
                       })
                     Blank()
                     Text(this.appliedSummary())
@@ -729,11 +692,6 @@ export struct SettingsPage {
         .width('100%')
         .height('100%')
         .backgroundColor(Color.Transparent)
-        .bindSheet($$this.showSourceSheet, this.sourceSheet(), {
-          height: 300,
-          dragBar: false,
-          backgroundColor: AppTheme.color.surface
-        })
       }
   }
 }
