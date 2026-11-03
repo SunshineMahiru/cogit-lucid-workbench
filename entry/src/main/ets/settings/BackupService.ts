@@ -39,7 +39,7 @@ export class BackupService {
     const localPath = `${directory}/restore-${Date.now()}.db`;
     await fileIo.copyFile(uris[0], localPath);
     try {
-      if (!BackupService.isSqliteFile(localPath)) {
+      if (!(await BackupService.isDatabaseFile(context, localPath))) {
         throw new Error('选择的文件不是本应用的数据库备份');
       }
       const store = await DbHelper.init(context);
@@ -51,6 +51,21 @@ export class BackupService {
         fileIo.unlinkSync(localPath);
       } catch (error) {
       }
+    }
+  }
+
+  /** Accepts a plaintext SQLite file or an encrypted store backup on devices that support it. */
+  private static async isDatabaseFile(context: common.Context, path: string): Promise<boolean> {
+    if (BackupService.isSqliteFile(path)) {
+      return true;
+    }
+    try {
+      if (!fileIo.accessSync(`${context.filesDir}/.db-encrypted`)) {
+        return false;
+      }
+      return fileIo.statSync(path).size >= 4096;
+    } catch (error) {
+      return false;
     }
   }
 

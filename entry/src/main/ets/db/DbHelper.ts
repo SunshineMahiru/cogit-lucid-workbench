@@ -1,21 +1,27 @@
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
-import { DB_CONFIG, DB_VERSION } from './DbConfig';
+import { fileIo } from '@kit.CoreFileKit';
+import { DB_CONFIG, DB_VERSION, PLAIN_DB_CONFIG } from './DbConfig';
 import { TABLE_CREATE_SQLS } from './schemas';
+
+const META_ENCRYPTED = '/.db-encrypted';
+const META_ATTEMPTED = '/.db-encryption-attempted';
 
 /** Opens and caches the relational store instance. */
 export class DbHelper {
   private static store: relationalStore.RdbStore | null = null;
   private static storePromise: Promise<relationalStore.RdbStore> | null = null;
   private static schemaPromise: Promise<relationalStore.RdbStore> | null = null;
+  private static forcePlain: boolean = false;
 
   static async getStore(context: common.Context): Promise<relationalStore.RdbStore> {
     if (DbHelper.store !== null) {
       return DbHelper.store;
     }
     if (DbHelper.storePromise === null) {
-      DbHelper.storePromise = relationalStore.getRdbStore(context, DB_CONFIG).then(
-        (store: relationalStore.RdbStore) => {
+      DbHelper.storePromise = DbHelper.openStore(context).then(
+        async (store: relationalStore.RdbStore) => {
+          await DbHelper.ensureEncrypted(store, context);
           DbHelper.store = store;
           return store;
         }).catch((error: Error) => {
@@ -24,6 +30,61 @@ export class DbHelper {
       });
     }
     return DbHelper.storePromise;
+  }
+
+  /** Encrypts a database created before this version, once per device. */
+  private static async ensureEncrypted(store: relationalStore.RdbStore, context: common.Context): Promise<void> {
+    if (DbHelper.forcePlain) {
+      return;
+    }
+    const encryptedMarker = `${context.filesDir}${META_ENCRYPTED}`;
+    const attemptedMarker = `${context.filesDir}${META_ATTEMPTED}`;
+    if (fileIo.accessSync(encryptedMarker) || fileIo.accessSync(attemptedMarker)) {
+      return;
+    }
+    try {
+      await store.rekey();
+      DbHelper.writeMarker(encryptedMarker);
+    } catch (error) {
+      DbHelper.writeMarker(attemptedMarker);
+    }
+  }
+
+  private static writeMarker(path: string): void {
+    try {
+      const file = fileIo.openSync(path, fileIo.OpenMode.CREATE | fileIo.OpenMode.WRITE_ONLY);
+      fileIo.closeSync(file);
+    } catch (error) {
+    }
+  }
+
+  /** Opens the encrypted store, migrating a pre-encryption database on the way. */
+  private static async openStore(context: common.Context): Promise<relationalStore.RdbStore> {
+    const config = DbHelper.forcePlain ? PLAIN_DB_CONFIG : DB_CONFIG;
+    try {
+      return await relationalStore.getRdbStore(context, config);
+    } catch (error) {
+      if (DbHelper.forcePlain) {
+        throw error;
+      }
+      try {
+        await DbHelper.rekeyPlainStore(context);
+        return await relationalStore.getRdbStore(context, DB_CONFIG);
+      } catch (migrationError) {
+        DbHelper.forcePlain = true;
+        return relationalStore.getRdbStore(context, PLAIN_DB_CONFIG);
+      }
+    }
+  }
+
+  /** Opens the legacy plaintext database, asks the system to encrypt it, then closes it. */
+  private static async rekeyPlainStore(context: common.Context): Promise<void> {
+    const plain = await relationalStore.getRdbStore(context, PLAIN_DB_CONFIG);
+    try {
+      await plain.rekey();
+    } finally {
+      await plain.close();
+    }
   }
 
   /** Opens the store once, applies the schema version and executes all migrations. */
