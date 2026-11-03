@@ -35,6 +35,7 @@ struct Index {
   @Local pathStack: NavPathStack = new NavPathStack();
 
   aboutToAppear(): void {
+    this.pathStack.disableAnimation(true);
     this.pathStack.pushPathByName(ROUTES.HOME, null, false);
     try {
       const context = this.getUIContext().getHostContext();
