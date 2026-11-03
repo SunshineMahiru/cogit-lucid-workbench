@@ -25,6 +25,7 @@ import { StatusPage } from './StatusPage';
 import { StatusHistoryPage } from './StatusHistoryPage';
 import { StatusEditPage } from './StatusEditPage';
 import { SettingsPage } from './SettingsPage';
+import { IdentityEditPage } from './IdentityEditPage';
 import { BackgroundApplyPage } from './BackgroundApplyPage';
 import { PageBackgroundService } from '../settings/PageBackgroundService';
 
@@ -100,6 +101,8 @@ struct Index {
       StatusEditPage()
     } else if (name === ROUTES.SETTINGS) {
       SettingsPage()
+    } else if (name === ROUTES.IDENTITY_EDIT) {
+      IdentityEditPage()
     } else if (name === ROUTES.BACKGROUND_APPLY) {
       BackgroundApplyPage()
     } else {

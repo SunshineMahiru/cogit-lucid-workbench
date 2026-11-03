@@ -23,5 +23,6 @@ export const ROUTES = {
   STATUS_HISTORY: 'status_history',
   STATUS_EDIT: 'status_edit',
   SETTINGS: 'settings',
+  IDENTITY_EDIT: 'identity_edit',
   BACKGROUND_APPLY: 'background_apply'
 } as const;

@@ -3,6 +3,7 @@ import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
+import { notifyProfileRefresh } from '../app/ProfileRefreshBus';
 import {
   AppSettings,
   LlmProvider,
@@ -254,6 +255,7 @@ export struct SettingsPage {
     try {
       await BackupService.clearAll(this.hostContext);
       notifyHomeRefresh();
+      notifyProfileRefresh();
       this.clearArmed = false;
       this.showToast('全部记录、设置与本地文件已清空');
     } catch (error) {
