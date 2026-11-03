@@ -11,6 +11,7 @@ export struct ProfileHeader {
   @Local profile: Profile = DEFAULT_PROFILE;
   private store: ProfileStore | null = null;
   private listener: (() => void) | null = null;
+  private lastNavAt: number = 0;
 
   aboutToAppear(): void {
     if (this.listener === null) {
@@ -43,11 +44,26 @@ export struct ProfileHeader {
   }
 
   private openEditor(): void {
+    if (!this.canNavigate()) {
+      return;
+    }
     this.pathStack.pushPathByName(ROUTES.IDENTITY_EDIT, null);
   }
 
   private openSettings(): void {
+    if (!this.canNavigate()) {
+      return;
+    }
     this.pathStack.pushPathByName(ROUTES.SETTINGS, null);
+  }
+
+  private canNavigate(): boolean {
+    const now = Date.now();
+    if (now - this.lastNavAt < 600) {
+      return false;
+    }
+    this.lastNavAt = now;
+    return true;
   }
 
   @Builder

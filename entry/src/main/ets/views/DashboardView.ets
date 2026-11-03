@@ -43,6 +43,7 @@ export struct DashboardView {
   @Local moduleItems: HomeModule[] = [];
   @Local dataService: HomeDataService | null = null;
   @Local weekStats: ReviewStats = emptyReviewStats();
+  private lastPushAt: number = 0;
   @Local weekReviewed: boolean = false;
   @Local isLoading: boolean = true;
   @Local loadFailed: boolean = false;
@@ -175,7 +176,8 @@ export struct DashboardView {
   }
 
   private openSettings(): void {
-    this.pathStack.pushPathByName(ROUTES.SETTINGS, null);
+    this.guardedPush(ROUTES.SETTINGS, null, () => {
+    });
   }
 
   private dismissWelcome(): void {
@@ -196,36 +198,45 @@ export struct DashboardView {
     this.openNoteEditor();
   }
 
+  private guardedPush(name: string, param: Object | null, onPop: () => void): void {
+    const now = Date.now();
+    if (now - this.lastPushAt < 600) {
+      return;
+    }
+    this.lastPushAt = now;
+    this.pathStack.pushPathByName(name, param, onPop);
+  }
+
   private openWeeklySettlement(): void {
-    this.pathStack.pushPathByName(ROUTES.REVIEW_WEEKLY, null, () => {
+    this.guardedPush(ROUTES.REVIEW_WEEKLY, null, () => {
       this.refresh();
     });
   }
 
   private openNoteEditor(): void {
     const params: NoteEditParams = { templateId: null };
-    this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params, () => {
+    this.guardedPush(ROUTES.NOTE_EDIT, params, () => {
       this.refresh();
     });
   }
 
   private openNoteList(): void {
     const params: NoteListParams = { filterType: '' };
-    this.pathStack.pushPathByName(ROUTES.NOTE_LIST, params, () => {
+    this.guardedPush(ROUTES.NOTE_LIST, params, () => {
       this.refresh();
     });
   }
 
   private openPredictionList(): void {
     const params: PredictionListParams = { status: null };
-    this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, params, () => {
+    this.guardedPush(ROUTES.PREDICTION_LIST, params, () => {
       this.refresh();
     });
   }
 
   private openPredictionDetail(predictionId: string): void {
     const params: PredictionDetailParams = { predictionId: predictionId };
-    this.pathStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params, () => {
+    this.guardedPush(ROUTES.PREDICTION_DETAIL, params, () => {
       this.refresh();
     });
   }
@@ -239,7 +250,7 @@ export struct DashboardView {
       this.openPredictionList();
       return;
     }
-    this.pathStack.pushPathByName(route, null, () => {
+    this.guardedPush(route, null, () => {
       this.refresh();
     });
   }

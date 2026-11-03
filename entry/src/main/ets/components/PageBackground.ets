@@ -31,17 +31,17 @@ export struct PageBackground {
 
   aboutToAppear(): void {
     this.listener = () => {
-      this.load();
+      this.load(true);
     };
     subscribePageBackground(this.listener);
     this.applyCached();
-    this.load();
+    this.load(false);
   }
 
   @Monitor('route')
   onRouteChanged(): void {
     this.applyCached();
-    this.load();
+    this.load(true);
   }
 
   aboutToDisappear(): void {
@@ -69,7 +69,11 @@ export struct PageBackground {
     return isDarkMode() ? dimmed * PageBackground.DARK_IMAGE_FACTOR : dimmed;
   }
 
-  private async load(): Promise<void> {
+  private async load(force: boolean): Promise<void> {
+    if (!force && surfaceCache.has(this.route)) {
+      this.applyCached();
+      return;
+    }
     const context = this.getUIContext().getHostContext();
     if (context === undefined) {
       this.imagePath = '';
