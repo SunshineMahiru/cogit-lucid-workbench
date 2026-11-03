@@ -38,9 +38,46 @@ export class BackupService {
     }
     const localPath = `${directory}/restore-${Date.now()}.db`;
     await fileIo.copyFile(uris[0], localPath);
-    const store = await DbHelper.init(context);
-    await store.restore(localPath);
-    return true;
+    try {
+      if (!BackupService.isSqliteFile(localPath)) {
+        throw new Error('选择的文件不是本应用的数据库备份');
+      }
+      const store = await DbHelper.init(context);
+      await store.backup(`${directory}/pre-restore-${Date.now()}.db`);
+      await store.restore(localPath);
+      return true;
+    } finally {
+      try {
+        fileIo.unlinkSync(localPath);
+      } catch (error) {
+      }
+    }
+  }
+
+  /** Checks the 16-byte SQLite header before handing a file to the store. */
+  private static isSqliteFile(path: string): boolean {
+    const expected: number[] = [83, 81, 76, 105, 116, 101, 32, 102, 111, 114, 109, 97, 116, 32, 51, 0];
+    try {
+      const file = fileIo.openSync(path, fileIo.OpenMode.READ_ONLY);
+      try {
+        const header = new ArrayBuffer(16);
+        const read = fileIo.readSync(file.fd, header);
+        if (read < 16) {
+          return false;
+        }
+        const bytes = new Uint8Array(header);
+        for (let index = 0; index < expected.length; index++) {
+          if (bytes[index] !== expected[index]) {
+            return false;
+          }
+        }
+        return true;
+      } finally {
+        fileIo.closeSync(file);
+      }
+    } catch (error) {
+      return false;
+    }
   }
 
   static async clearAll(context: common.Context): Promise<void> {

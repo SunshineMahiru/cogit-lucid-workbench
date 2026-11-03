@@ -33,12 +33,10 @@ export class SettingsStore {
     let apiKey = await SecretStore.load();
     if (apiKey.length === 0 && typeof storedApiKey === 'string' && storedApiKey.length > 0) {
       // Migrate the old plaintext value once, then remove it from Preferences.
-      const migrated = await SecretStore.save(storedApiKey);
-      if (migrated) {
-        await this.prefs.put(SETTINGS_KEYS.LLM_API_KEY, '');
-        await this.prefs.flush();
-        apiKey = storedApiKey;
-      }
+      await SecretStore.save(storedApiKey);
+      await this.prefs.put(SETTINGS_KEYS.LLM_API_KEY, '');
+      await this.prefs.flush();
+      apiKey = storedApiKey;
     }
     const model = await this.prefs.get(SETTINGS_KEYS.LLM_MODEL, defaults.llmModel);
     const budget = await this.prefs.get(SETTINGS_KEYS.LLM_MONTHLY_BUDGET, defaults.llmMonthlyBudget);

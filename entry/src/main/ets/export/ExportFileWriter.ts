@@ -20,12 +20,12 @@ export async function writeExportFile(context: common.Context, fileName: string,
     fileIo.mkdirSync(directory, true);
   }
   const filePath = `${directory}/${fileName}`;
-  const file = fileIo.openSync(filePath, fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE |
+  const file = await fileIo.open(filePath, fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE |
     fileIo.OpenMode.TRUNC);
   try {
-    fileIo.writeSync(file.fd, content);
+    await fileIo.write(file.fd, content);
   } finally {
-    fileIo.closeSync(file);
+    await fileIo.close(file);
   }
   return filePath;
 }
