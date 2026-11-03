@@ -253,8 +253,9 @@ export struct SettingsPage {
     this.dataBusy = true;
     try {
       await BackupService.clearAll(this.hostContext);
+      notifyHomeRefresh();
       this.clearArmed = false;
-      this.showToast('全部记录已清空');
+      this.showToast('全部记录、设置与本地文件已清空');
     } catch (error) {
       this.showToast('清空失败，请重试');
     } finally {
