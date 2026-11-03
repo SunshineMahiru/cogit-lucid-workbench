@@ -57,6 +57,19 @@ export class SettingsStore {
     });
   }
 
+  /** Restores non-secret options without touching the device-local model key. */
+  static async savePreferencesOnly(context: common.Context, settings: AppSettings): Promise<void> {
+    const safe = sanitizeAppSettings(settings);
+    const prefs = await preferences.getPreferences(context, { name: SETTINGS_STORE_NAME });
+    await prefs.put(SETTINGS_KEYS.LLM_ENABLED, safe.llmEnabled);
+    await prefs.put(SETTINGS_KEYS.LLM_PROVIDER, safe.llmProvider);
+    await prefs.put(SETTINGS_KEYS.LLM_BASE_URL, safe.llmBaseUrl);
+    await prefs.put(SETTINGS_KEYS.LLM_MODEL, safe.llmModel);
+    await prefs.put(SETTINGS_KEYS.LLM_MONTHLY_BUDGET, safe.llmMonthlyBudget);
+    await prefs.put(SETTINGS_KEYS.DEFAULT_LEVEL, safe.defaultLevel);
+    await prefs.flush();
+  }
+
   /** Persists sanitized options and flushes them to disk. */
   async save(settings: AppSettings): Promise<void> {
     const safe = sanitizeAppSettings(settings);

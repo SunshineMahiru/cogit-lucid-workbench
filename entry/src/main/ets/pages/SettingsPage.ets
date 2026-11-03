@@ -555,7 +555,7 @@ export struct SettingsPage {
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
-                  Text('备份包含全部本地记录；恢复需要选择本应用导出的 .db 文件。')
+                  Text('备份包含记录、身份、设置与本地图片；恢复需选择 .cogitbackup 文件。')
                     .fontSize(11)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
