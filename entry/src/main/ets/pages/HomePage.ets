@@ -18,7 +18,9 @@ export struct HomePage {
   @Require @Param pathStack: NavPathStack;
   @Local summary: HomeSummary = EMPTY_SUMMARY;
   @Local pulse: HomePulse = { streakDays: 0, lastReviewLabel: NO_RATE_TEXT };
+  @Local loadFailed: boolean = false;
   private service: HomeDataService | null = null;
+  private loadToken: number = 0;
   private listener: (() => void) | null = null;
 
   aboutToAppear(): void {
@@ -43,13 +45,26 @@ export struct HomePage {
     if (context === undefined) {
       return;
     }
+    const token = ++this.loadToken;
     try {
       if (this.service === null) {
         this.service = await HomeDataService.open(context);
       }
-      this.summary = await this.service.loadSummary();
-      this.pulse = await this.service.loadPulse();
+      const summary = await this.service.loadSummary();
+      if (token !== this.loadToken) {
+        return;
+      }
+      const pulse = await this.service.loadPulse();
+      if (token !== this.loadToken) {
+        return;
+      }
+      this.summary = summary;
+      this.pulse = pulse;
+      this.loadFailed = false;
     } catch (error) {
+      if (token === this.loadToken) {
+        this.loadFailed = true;
+      }
     }
   }
 
@@ -76,6 +91,17 @@ export struct HomePage {
       ProfileHeader({
         pathStack: this.pathStack
       })
+      if (this.loadFailed) {
+        Text('首页数据读取失败，点此重试')
+          .fontSize(11)
+          .fontColor(AppTheme.color.danger)
+          .width('100%')
+          .textAlign(TextAlign.Center)
+          .padding({ top: 8, bottom: 8 })
+          .onClick(() => {
+            this.load();
+          })
+      }
       Row({ space: 8 }) {
         Column({ space: 2 }) {
           Text(`${this.summary.todayNotes} 条`)
