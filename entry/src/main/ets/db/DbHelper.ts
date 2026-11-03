@@ -3,6 +3,10 @@ import { common } from '@kit.AbilityKit';
 import { fileIo } from '@kit.CoreFileKit';
 import { DB_CONFIG, DB_VERSION, PLAIN_DB_CONFIG } from './DbConfig';
 import { TABLE_CREATE_SQLS } from './schemas';
+import {
+  LegacyPredictionRow,
+  planLegacyPredictionMerges
+} from '../prediction/PredictionLegacyMigration';
 
 const META_ENCRYPTED = '/.db-encrypted';
 const META_ATTEMPTED = '/.db-encryption-attempted';
@@ -55,6 +59,34 @@ export class DbHelper {
       const file = fileIo.openSync(path, fileIo.OpenMode.CREATE | fileIo.OpenMode.WRITE_ONLY);
       fileIo.closeSync(file);
     } catch (error) {
+    }
+  }
+
+  private static async mergeLegacyPredictionRoots(store: relationalStore.RdbStore): Promise<void> {
+    const resultSet = await store.querySql(
+      `SELECT id, target, version, root_id, created_at FROM prediction`);
+    const rows: LegacyPredictionRow[] = [];
+    try {
+      while (resultSet.goToNextRow()) {
+        rows.push({
+          id: resultSet.getString(resultSet.getColumnIndex('id')),
+          target: resultSet.getString(resultSet.getColumnIndex('target')),
+          version: resultSet.getLong(resultSet.getColumnIndex('version')),
+          rootId: resultSet.getString(resultSet.getColumnIndex('root_id')),
+          createdAt: resultSet.getLong(resultSet.getColumnIndex('created_at'))
+        });
+      }
+    } finally {
+      resultSet.close();
+    }
+    for (const plan of planLegacyPredictionMerges(rows)) {
+      const placeholders = plan.ids.map(() => '?').join(', ');
+      try {
+        await store.executeSql(
+          `UPDATE prediction SET root_id = ? WHERE id IN (${placeholders})`,
+          [plan.rootId, ...plan.ids]);
+      } catch (error) {
+      }
     }
   }
 
@@ -136,6 +168,7 @@ export class DbHelper {
       await store.executeSql(`UPDATE prediction SET root_id = id WHERE root_id = ''`);
     } catch (error) {
     }
+    await DbHelper.mergeLegacyPredictionRoots(store);
     const deleteMigrations: string[] = [
       `ALTER TABLE relation ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,
       `ALTER TABLE status_record ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`
