@@ -60,12 +60,15 @@ export class RelationDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.RELATION);
     predicates.equalTo(RELATION_COLS.DELETED, 0);
     const resultSet = await this.store.query(predicates);
-    const relations: Relation[] = [];
-    while (resultSet.goToNextRow()) {
-      relations.push(this.mapRow(resultSet));
+    try {
+      const relations: Relation[] = [];
+      while (resultSet.goToNextRow()) {
+        relations.push(this.mapRow(resultSet));
+      }
+      return relations;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return relations;
   }
 
   /** Returns one active relation by id, or null when it is gone. */
@@ -73,12 +76,15 @@ export class RelationDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.RELATION);
     predicates.equalTo(RELATION_COLS.ID, id).equalTo(RELATION_COLS.DELETED, 0).limitAs(1);
     const resultSet = await this.store.query(predicates);
-    let relation: Relation | null = null;
-    if (resultSet.goToNextRow()) {
-      relation = this.mapRow(resultSet);
+    try {
+      let relation: Relation | null = null;
+      if (resultSet.goToNextRow()) {
+        relation = this.mapRow(resultSet);
+      }
+      return relation;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return relation;
   }
 
   /** Marks a relation as deleted without removing its history. */
@@ -102,12 +108,15 @@ export class RelationDao {
 
   private async queryCount(sql: string): Promise<number> {
     const resultSet = await this.store.querySql(sql);
-    let total = 0;
-    if (resultSet.goToFirstRow()) {
-      total = resultSet.getLong(0);
+    try {
+      let total = 0;
+      if (resultSet.goToFirstRow()) {
+        total = resultSet.getLong(0);
+      }
+      return total;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return total;
   }
 
   async countVisible(): Promise<number> {

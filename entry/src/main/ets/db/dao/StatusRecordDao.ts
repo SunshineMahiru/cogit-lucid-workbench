@@ -46,12 +46,15 @@ export class StatusRecordDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
     predicates.equalTo(STATUS_RECORD_COLS.DELETED, 0);
     const resultSet = await this.store.query(predicates);
-    const records: StatusRecord[] = [];
-    while (resultSet.goToNextRow()) {
-      records.push(this.mapRow(resultSet));
+    try {
+      const records: StatusRecord[] = [];
+      while (resultSet.goToNextRow()) {
+        records.push(this.mapRow(resultSet));
+      }
+      return records;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return records;
   }
 
   /** Returns the status record for one date, or null when absent. */
@@ -59,12 +62,15 @@ export class StatusRecordDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
     predicates.equalTo(STATUS_RECORD_COLS.DATE, date).equalTo(STATUS_RECORD_COLS.DELETED, 0);
     const resultSet = await this.store.query(predicates);
-    let record: StatusRecord | null = null;
-    if (resultSet.goToNextRow()) {
-      record = this.mapRow(resultSet);
+    try {
+      let record: StatusRecord | null = null;
+      if (resultSet.goToNextRow()) {
+        record = this.mapRow(resultSet);
+      }
+      return record;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return record;
   }
 
   /** Returns the most recent active status records, newest first. */
@@ -72,12 +78,15 @@ export class StatusRecordDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
     predicates.equalTo(STATUS_RECORD_COLS.DELETED, 0).orderByDesc(STATUS_RECORD_COLS.DATE).limitAs(limit);
     const resultSet = await this.store.query(predicates);
-    const records: StatusRecord[] = [];
-    while (resultSet.goToNextRow()) {
-      records.push(this.mapRow(resultSet));
+    try {
+      const records: StatusRecord[] = [];
+      while (resultSet.goToNextRow()) {
+        records.push(this.mapRow(resultSet));
+      }
+      return records;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return records;
   }
 
   /** Marks a status record as deleted without removing its history. */

@@ -96,22 +96,28 @@ export class EventDao {
 
   private async queryWith(predicates: relationalStore.RdbPredicates): Promise<Event[]> {
     const resultSet = await this.store.query(predicates);
-    const events: Event[] = [];
-    while (resultSet.goToNextRow()) {
-      events.push(this.mapRow(resultSet));
+    try {
+      const events: Event[] = [];
+      while (resultSet.goToNextRow()) {
+        events.push(this.mapRow(resultSet));
+      }
+      return events;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return events;
   }
 
   private async queryCount(sql: string): Promise<number> {
     const resultSet = await this.store.querySql(sql);
-    let total = 0;
-    if (resultSet.goToFirstRow()) {
-      total = resultSet.getLong(0);
+    try {
+      let total = 0;
+      if (resultSet.goToFirstRow()) {
+        total = resultSet.getLong(0);
+      }
+      return total;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return total;
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): Event {

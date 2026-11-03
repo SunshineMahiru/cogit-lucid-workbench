@@ -6,18 +6,38 @@ import { TABLE_CREATE_SQLS } from './schemas';
 /** Opens and caches the relational store instance. */
 export class DbHelper {
   private static store: relationalStore.RdbStore | null = null;
+  private static storePromise: Promise<relationalStore.RdbStore> | null = null;
+  private static schemaPromise: Promise<relationalStore.RdbStore> | null = null;
 
   static async getStore(context: common.Context): Promise<relationalStore.RdbStore> {
     if (DbHelper.store !== null) {
       return DbHelper.store;
     }
-    const store = await relationalStore.getRdbStore(context, DB_CONFIG);
-    DbHelper.store = store;
-    return store;
+    if (DbHelper.storePromise === null) {
+      DbHelper.storePromise = relationalStore.getRdbStore(context, DB_CONFIG).then(
+        (store: relationalStore.RdbStore) => {
+          DbHelper.store = store;
+          return store;
+        }).catch((error: Error) => {
+        DbHelper.storePromise = null;
+        throw error;
+      });
+    }
+    return DbHelper.storePromise;
   }
 
-  /** Opens the store, applies the schema version and executes all create-table statements. */
+  /** Opens the store once, applies the schema version and executes all migrations. */
   static async init(context: common.Context): Promise<relationalStore.RdbStore> {
+    if (DbHelper.schemaPromise === null) {
+      DbHelper.schemaPromise = DbHelper.setup(context).catch((error: Error) => {
+        DbHelper.schemaPromise = null;
+        throw error;
+      });
+    }
+    return DbHelper.schemaPromise;
+  }
+
+  private static async setup(context: common.Context): Promise<relationalStore.RdbStore> {
     const store = await DbHelper.getStore(context);
     store.version = DB_VERSION;
     for (const sql of TABLE_CREATE_SQLS) {

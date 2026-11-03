@@ -43,22 +43,28 @@ export class DecisionDao {
   async queryAll(): Promise<Decision[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.DECISION);
     const resultSet = await this.store.query(predicates);
-    const decisions: Decision[] = [];
-    while (resultSet.goToNextRow()) {
-      decisions.push(this.mapRow(resultSet));
+    try {
+      const decisions: Decision[] = [];
+      while (resultSet.goToNextRow()) {
+        decisions.push(this.mapRow(resultSet));
+      }
+      return decisions;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return decisions;
   }
 
   private async queryCount(sql: string): Promise<number> {
     const resultSet = await this.store.querySql(sql);
-    let total = 0;
-    if (resultSet.goToFirstRow()) {
-      total = resultSet.getLong(0);
+    try {
+      let total = 0;
+      if (resultSet.goToFirstRow()) {
+        total = resultSet.getLong(0);
+      }
+      return total;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return total;
   }
 
   async countVisible(): Promise<number> {

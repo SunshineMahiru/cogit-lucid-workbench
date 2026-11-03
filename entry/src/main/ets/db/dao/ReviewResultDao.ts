@@ -34,12 +34,15 @@ export class ReviewResultDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.REVIEW_RESULT);
     predicates.orderByDesc(REVIEW_COLS.CREATED_AT).limitAs(limit);
     const resultSet = await this.store.query(predicates);
-    const results: ReviewResult[] = [];
-    while (resultSet.goToNextRow()) {
-      results.push(this.mapRow(resultSet));
+    try {
+      const results: ReviewResult[] = [];
+      while (resultSet.goToNextRow()) {
+        results.push(this.mapRow(resultSet));
+      }
+      return results;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return results;
   }
 
   /** Returns one saved review by id, or null when it does not exist. */
@@ -47,12 +50,15 @@ export class ReviewResultDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.REVIEW_RESULT);
     predicates.equalTo(REVIEW_COLS.ID, id).limitAs(1);
     const resultSet = await this.store.query(predicates);
-    let result: ReviewResult | null = null;
-    if (resultSet.goToNextRow()) {
-      result = this.mapRow(resultSet);
+    try {
+      let result: ReviewResult | null = null;
+      if (resultSet.goToNextRow()) {
+        result = this.mapRow(resultSet);
+      }
+      return result;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return result;
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): ReviewResult {

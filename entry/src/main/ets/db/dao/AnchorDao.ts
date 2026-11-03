@@ -28,22 +28,28 @@ export class AnchorDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.ANCHOR);
     predicates.orderByAsc(ANCHOR_COLS.ORDER);
     const resultSet = await this.store.query(predicates);
-    const anchors: Anchor[] = [];
-    while (resultSet.goToNextRow()) {
-      anchors.push(this.mapRow(resultSet));
+    try {
+      const anchors: Anchor[] = [];
+      while (resultSet.goToNextRow()) {
+        anchors.push(this.mapRow(resultSet));
+      }
+      return anchors;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return anchors;
   }
 
   private async queryCount(sql: string): Promise<number> {
     const resultSet = await this.store.querySql(sql);
-    let total = 0;
-    if (resultSet.goToFirstRow()) {
-      total = resultSet.getLong(0);
+    try {
+      let total = 0;
+      if (resultSet.goToFirstRow()) {
+        total = resultSet.getLong(0);
+      }
+      return total;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return total;
   }
 
   async countVisible(): Promise<number> {

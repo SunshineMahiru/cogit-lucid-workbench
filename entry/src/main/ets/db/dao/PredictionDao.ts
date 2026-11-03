@@ -98,12 +98,15 @@ export class PredictionDao {
 
   private async queryWith(predicates: relationalStore.RdbPredicates): Promise<Prediction[]> {
     const resultSet = await this.store.query(predicates);
-    const predictions: Prediction[] = [];
-    while (resultSet.goToNextRow()) {
-      predictions.push(this.mapRow(resultSet));
+    try {
+      const predictions: Prediction[] = [];
+      while (resultSet.goToNextRow()) {
+        predictions.push(this.mapRow(resultSet));
+      }
+      return predictions;
+    } finally {
+      resultSet.close();
     }
-    resultSet.close();
-    return predictions;
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): Prediction {
