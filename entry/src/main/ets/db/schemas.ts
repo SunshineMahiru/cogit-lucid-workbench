@@ -48,6 +48,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     actual_result TEXT NOT NULL,
     hit INTEGER,
     version INTEGER NOT NULL,
+    root_id TEXT NOT NULL DEFAULT '',
     level TEXT NOT NULL DEFAULT 'local_only',
     created_at INTEGER NOT NULL
   )`,

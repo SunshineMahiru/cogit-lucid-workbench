@@ -128,6 +128,7 @@ class PreviewStore {
     prediction.reason = draft.reason.trim();
     prediction.settlementDate = draft.settlementDate.trim();
     prediction.version = source.version + 1;
+    prediction.rootId = source.rootId !== undefined && source.rootId.length > 0 ? source.rootId : source.id;
     this.predictions.unshift(prediction);
     return toPredictionDetail(prediction);
   }

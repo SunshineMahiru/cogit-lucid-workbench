@@ -93,6 +93,7 @@ export class PredictionService {
     prediction.reason = draft.reason.trim();
     prediction.settlementDate = draft.settlementDate.trim();
     prediction.version = existing.version + 1;
+    prediction.rootId = existing.rootId !== undefined && existing.rootId.length > 0 ? existing.rootId : existing.id;
     prediction.createdAt = now;
     await this.predictionDao.insert(prediction);
     return toPredictionDetail(prediction);

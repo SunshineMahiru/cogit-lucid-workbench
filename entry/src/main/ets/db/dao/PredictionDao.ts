@@ -25,27 +25,32 @@ export class PredictionDao {
       [PREDICTION_COLS.ACTUAL_RESULT]: prediction.actualResult,
       [PREDICTION_COLS.HIT]: prediction.hit === null ? null : (prediction.hit ? 1 : 0),
       [PREDICTION_COLS.VERSION]: prediction.version,
+      [PREDICTION_COLS.ROOT_ID]: prediction.rootId ?? prediction.id,
       [PREDICTION_COLS.LEVEL]: prediction.level ?? SecurityLevel.LOCAL_ONLY,
       [PREDICTION_COLS.CREATED_AT]: prediction.createdAt
     };
     return this.store.insert(DB_TABLES.PREDICTION, values);
   }
 
-  /** Settles a prediction: updates status, actualResult, hit. */
+  /** Settles the newest version of a prediction: updates status, actualResult, hit. */
   async settle(id: string, actualResult: string, hit: boolean): Promise<number> {
+    const latest = await this.queryById(id);
+    if (latest === null) {
+      return 0;
+    }
     const values: relationalStore.ValuesBucket = {
       [PREDICTION_COLS.STATUS]: PredictionStatus.SETTLED,
       [PREDICTION_COLS.ACTUAL_RESULT]: actualResult,
       [PREDICTION_COLS.HIT]: hit ? 1 : 0
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
-    predicates.equalTo(PREDICTION_COLS.ID, id);
+    predicates.equalTo(PREDICTION_COLS.ID, latest.id);
     return this.store.update(values, predicates);
   }
 
-  /** Returns all predictions. */
+  /** Returns the newest version of every prediction. */
   async queryAll(): Promise<Prediction[]> {
-    return this.queryWith(new relationalStore.RdbPredicates(DB_TABLES.PREDICTION));
+    return this.latestByRoot(await this.queryWith(new relationalStore.RdbPredicates(DB_TABLES.PREDICTION)));
   }
 
   /** Returns predictions of one status. */
@@ -59,16 +64,36 @@ export class PredictionDao {
     if (status !== null) {
       predicates.equalTo(PREDICTION_COLS.STATUS, status);
     }
-    predicates.orderByAsc(PREDICTION_COLS.SETTLEMENT_DATE).limitAs(limit).offsetAs(offset);
-    return this.queryWith(predicates);
+    predicates.orderByAsc(PREDICTION_COLS.SETTLEMENT_DATE);
+    const latest = this.latestByRoot(await this.queryWith(predicates));
+    return latest.slice(Math.max(0, offset), Math.max(0, offset) + limit);
   }
 
-  /** Returns one prediction by id, or null when it does not exist. */
+  /** Returns the newest version of one prediction by any version id, or null when it does not exist. */
   async queryById(id: string): Promise<Prediction | null> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
     predicates.equalTo(PREDICTION_COLS.ID, id).limitAs(1);
-    const predictions = await this.queryWith(predicates);
-    return predictions.length > 0 ? predictions[0] : null;
+    const rows = await this.queryWith(predicates);
+    if (rows.length === 0) {
+      return null;
+    }
+    const rootId = rows[0].rootId !== undefined && rows[0].rootId.length > 0 ? rows[0].rootId : rows[0].id;
+    const versions = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
+    versions.equalTo(PREDICTION_COLS.ROOT_ID, rootId).orderByDesc(PREDICTION_COLS.VERSION).limitAs(1);
+    const latest = await this.queryWith(versions);
+    return latest.length > 0 ? latest[0] : rows[0];
+  }
+
+  private latestByRoot(predictions: Prediction[]): Prediction[] {
+    const newest: Map<string, Prediction> = new Map();
+    for (const prediction of predictions) {
+      const root = prediction.rootId !== undefined && prediction.rootId.length > 0 ? prediction.rootId : prediction.id;
+      const current = newest.get(root);
+      if (current === undefined || prediction.version > current.version) {
+        newest.set(root, prediction);
+      }
+    }
+    return Array.from(newest.values());
   }
 
   private async queryWith(predicates: relationalStore.RdbPredicates): Promise<Prediction[]> {
@@ -95,6 +120,7 @@ export class PredictionDao {
       actualResult: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.ACTUAL_RESULT)),
       hit: hitValue,
       version: resultSet.getLong(resultSet.getColumnIndex(PREDICTION_COLS.VERSION)),
+      rootId: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.ROOT_ID)),
       level: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.LEVEL)) as SecurityLevel,
       createdAt: resultSet.getLong(resultSet.getColumnIndex(PREDICTION_COLS.CREATED_AT))
     };

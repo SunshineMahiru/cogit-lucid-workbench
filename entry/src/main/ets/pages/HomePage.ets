@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { common } from '@kit.AbilityKit';
 import { AppDestination } from '../components/AppDestination';
 import { DashboardView } from '../views/DashboardView';
 import { ProfileHeader } from '../components/ProfileHeader';
@@ -58,6 +59,13 @@ export struct HomePage {
       hideTitleBar: true,
       content: () => {
         this.homeBody();
+      },
+      onDestinationBackPressed: () => {
+        const context = this.getUIContext().getHostContext();
+        if (context !== undefined) {
+          (context as common.UIAbilityContext).terminateSelf();
+        }
+        return true;
       }
     })
   }

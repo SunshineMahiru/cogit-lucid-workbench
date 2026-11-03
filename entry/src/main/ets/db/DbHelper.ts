@@ -46,6 +46,15 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Prediction revisions need a stable root so the latest version can be resolved.
+    try {
+      await store.executeSql(`ALTER TABLE prediction ADD COLUMN root_id TEXT NOT NULL DEFAULT ''`);
+    } catch (error) {
+    }
+    try {
+      await store.executeSql(`UPDATE prediction SET root_id = id WHERE root_id = ''`);
+    } catch (error) {
+    }
     const deleteMigrations: string[] = [
       `ALTER TABLE relation ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,
       `ALTER TABLE status_record ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`

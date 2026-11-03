@@ -65,8 +65,10 @@ export function createRelation(): Relation {
 
 /** Creates a default Prediction. */
 export function createPrediction(): Prediction {
+  const id = newId('pr');
   return {
-    id: newId('pr'),
+    id: id,
+    rootId: id,
     target: '',
     judgment: '',
     confidence: 0,

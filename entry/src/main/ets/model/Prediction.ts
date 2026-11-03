@@ -21,6 +21,8 @@ export interface Prediction {
   hit: boolean | null;
   /** Version: edits are append-only, not in-place */
   version: number;
+  /** Id of the first version; all revisions share it so the latest can be resolved */
+  rootId?: string;
   /** Security level controlling aggregation and export; absent values are local-only */
   level?: SecurityLevel;
   /** Commit timestamp in milliseconds */

@@ -62,6 +62,7 @@ export const PREDICTION_COLS = {
   ACTUAL_RESULT: 'actual_result',
   HIT: 'hit',
   VERSION: 'version',
+  ROOT_ID: 'root_id',
   LEVEL: 'level',
   CREATED_AT: 'created_at'
 } as const;
