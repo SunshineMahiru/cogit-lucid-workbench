@@ -13,6 +13,7 @@ import { PageBackgroundStore, GLOBAL_BACKGROUND_KEY } from './PageBackgroundStor
 import { PAGE_BACKGROUND_GROUPS } from './PageBackgroundService';
 import { notifyPageBackgroundChanged } from './PageBackgroundBus';
 import { notifyProfileRefresh } from '../app/ProfileRefreshBus';
+import { profileCache } from '../profile/ProfileCache';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 const BUNDLE_VERSION = 1;
@@ -173,12 +174,14 @@ export class BackupService {
       await BackupService.writeBytes(avatarPath, BackupService.decode(profile.avatarData));
     }
     const store = await ProfileStore.open(context);
-    await store.save({
+    const restored: Profile = {
       nickname: profile.nickname,
       signature: profile.signature,
       title: profile.title,
       avatarPath: avatarPath
-    });
+    };
+    await store.save(restored);
+    profileCache.set(restored);
   }
 
   private static async restoreBackgrounds(context: common.Context, bundle: BackupBundle,

@@ -4,6 +4,7 @@ import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 import { notifyProfileRefresh } from '../app/ProfileRefreshBus';
+import { profileCache } from '../profile/ProfileCache';
 import {
   AppSettings,
   LlmProvider,
@@ -254,6 +255,7 @@ export struct SettingsPage {
     this.dataBusy = true;
     try {
       await BackupService.clearAll(this.hostContext);
+      profileCache.reset();
       notifyHomeRefresh();
       notifyProfileRefresh();
       this.clearArmed = false;

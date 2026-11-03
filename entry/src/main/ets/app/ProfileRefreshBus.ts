@@ -1,21 +1,27 @@
-/** Lets the home identity band reload after the profile is changed elsewhere. */
-const listeners: Array<() => void> = [];
+import { Profile } from '../profile/ProfileStore';
 
-export function subscribeProfileRefresh(listener: () => void): void {
-  if (listeners.indexOf(listener) < 0) {
+type ProfileListener = (profile?: Profile) => void;
+
+const listeners: ProfileListener[] = [];
+
+/** Registers the identity band reload callback; duplicate registrations are ignored. */
+export function subscribeProfileRefresh(listener: ProfileListener): void {
+  if (!listeners.includes(listener)) {
     listeners.push(listener);
   }
 }
 
-export function unsubscribeProfileRefresh(listener: () => void): void {
+/** Removes one identity band reload callback. */
+export function unsubscribeProfileRefresh(listener: ProfileListener): void {
   const index = listeners.indexOf(listener);
   if (index >= 0) {
     listeners.splice(index, 1);
   }
 }
 
-export function notifyProfileRefresh(): void {
+/** Carries the saved profile so the band can update before the pop animation starts. */
+export function notifyProfileRefresh(profile?: Profile): void {
   for (const listener of listeners.slice()) {
-    listener();
+    listener(profile);
   }
 }

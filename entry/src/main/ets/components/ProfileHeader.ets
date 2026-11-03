@@ -1,26 +1,40 @@
 import { fileUri } from '@kit.CoreFileKit';
+import { common } from '@kit.AbilityKit';
 import { AppTheme } from '../theme/AppTheme';
 import { ROUTES } from '../navigation/Routes';
-import { DEFAULT_PROFILE, Profile, ProfileStore } from '../profile/ProfileStore';
+import { profileCache } from '../profile/ProfileCache';
+import { Profile } from '../profile/ProfileStore';
 import { subscribeProfileRefresh, unsubscribeProfileRefresh } from '../app/ProfileRefreshBus';
 
 /** Identity band on the home page: avatar, nickname, signature, title and the two page actions. */
 @ComponentV2
 export struct ProfileHeader {
   @Require @Param pathStack: NavPathStack;
-  @Local profile: Profile = DEFAULT_PROFILE;
-  private store: ProfileStore | null = null;
-  private listener: (() => void) | null = null;
+  @Local profile: Profile = profileCache.profile;
+  private listener: ((profile?: Profile) => void) | null = null;
   private lastNavAt: number = 0;
 
   aboutToAppear(): void {
+    this.profile = profileCache.profile;
     if (this.listener === null) {
-      this.listener = () => {
-        this.load();
+      this.listener = (updated?: Profile) => {
+        if (updated !== undefined) {
+          this.profile = updated;
+        } else {
+          this.load();
+        }
       };
       subscribeProfileRefresh(this.listener);
     }
-    this.load();
+    const context = this.getUIContext().getHostContext();
+    if (context !== undefined) {
+      this.syncCache(context);
+    }
+  }
+
+  private async syncCache(context: common.Context): Promise<void> {
+    await profileCache.ensure(context);
+    this.profile = profileCache.profile;
   }
 
   aboutToDisappear(): void {
@@ -35,12 +49,8 @@ export struct ProfileHeader {
     if (context === undefined) {
       return;
     }
-    try {
-      this.store = await ProfileStore.open(context);
-      this.profile = await this.store.load();
-    } catch (error) {
-      this.profile = DEFAULT_PROFILE;
-    }
+    await profileCache.reload(context);
+    this.profile = profileCache.profile;
   }
 
   private openEditor(): void {
@@ -82,6 +92,7 @@ export struct ProfileHeader {
             title: this.profile.title,
             avatarPath: ''
           };
+          profileCache.set(this.profile);
         })
     } else {
       Column() {

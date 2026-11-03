@@ -11,6 +11,7 @@ import {
 import { pickAvatarUri, removeAvatar, saveAvatar } from '../profile/AvatarService';
 import { BackgroundImageSource } from '../settings/PageBackgroundService';
 import { notifyProfileRefresh } from '../app/ProfileRefreshBus';
+import { profileCache } from '../profile/ProfileCache';
 
 /** Full-screen identity editor; a destination so it shares the shell transition instead of a sheet. */
 @ComponentV2
@@ -34,7 +35,8 @@ export struct IdentityEditPage {
     }
     try {
       this.store = await ProfileStore.open(context);
-      this.profile = await this.store.load();
+      await profileCache.ensure(context);
+      this.profile = profileCache.profile;
       this.draftNickname = this.profile.nickname;
       this.draftSignature = this.profile.signature;
       this.draftTitle = this.profile.title;
@@ -80,10 +82,11 @@ export struct IdentityEditPage {
         avatarPath: this.draftAvatar
       });
       await store.save(next);
+      profileCache.set(next);
       if (this.profile.avatarPath.length > 0 && this.profile.avatarPath !== next.avatarPath) {
         removeAvatar(this.profile.avatarPath);
       }
-      notifyProfileRefresh();
+      notifyProfileRefresh(next);
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
