@@ -61,6 +61,13 @@ export class EventDao {
     return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed'`);
   }
 
+  /** Counts visible notes whose local calendar day matches the given YYYY-MM-DD. */
+  async countVisibleOn(date: string): Promise<number> {
+    return this.queryCount(
+      `SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed' ` +
+      `AND date(timestamp / 1000, 'unixepoch', 'localtime') = '${date}'`);
+  }
+
   /** Returns one event by id, or null when it does not exist. */
   async queryById(id: string): Promise<Event | null> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);

@@ -62,8 +62,9 @@ export class ReviewAgent {
       };
     }
 
-    try {
-      if (this.settings.llmMonthlyBudget <= 0) {
+    return ReviewAgent.runExclusive(async (): Promise<AgentOutcome> => {
+      try {
+        if (this.settings.llmMonthlyBudget <= 0) {
         throw new Error('budget is zero');
       }
       const inputChars = this.settings.llmProvider === 'mock' ? 0 : this.inputChars(input);
@@ -95,13 +96,32 @@ export class ReviewAgent {
         fellBack: false,
         message: this.settings.llmProvider === 'mock' ? '本地模拟 LLM' : '模型端点'
       };
-    } catch (error) {
-      return {
-        candidates: await this.template.analyze(input, { now: now }),
-        provider: 'template',
-        fellBack: true,
-        message: '模型或预算不可用，已回退模板'
-      };
+      } catch (error) {
+        return {
+          candidates: await this.template.analyze(input, { now: now }),
+          provider: 'template',
+          fellBack: true,
+          message: '模型或预算不可用，已回退模板'
+        };
+      }
+    });
+  }
+
+  private static gate: Promise<void> = Promise.resolve();
+
+  /** Serializes budget check, request and recording so concurrent runs cannot overspend. */
+  private static async runExclusive(work: () => Promise<AgentOutcome>): Promise<AgentOutcome> {
+    const previous = ReviewAgent.gate;
+    let release: () => void = () => {
+    };
+    ReviewAgent.gate = new Promise<void>((resolve: () => void) => {
+      release = resolve;
+    });
+    await previous;
+    try {
+      return await work();
+    } finally {
+      release();
     }
   }
 

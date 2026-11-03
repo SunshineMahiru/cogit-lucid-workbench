@@ -49,14 +49,12 @@ export class HomeDataService {
     const today = formatDate(new Date());
     const status = await this.statusRecordDao.queryByDate(today);
     const visibleStatus = status === null || status.level === SecurityLevel.SEALED ? null : status;
-    const recentEvents = await this.eventDao.queryRecent(100);
-    const todayEvents = recentEvents.filter(e =>
-      e.level !== SecurityLevel.SEALED && formatDate(new Date(e.timestamp)) === today);
+    const todayCount = await this.eventDao.countVisibleOn(today);
 
     const readings: BodyReading[] = [
       { label: '睡眠', value: visibleStatus ? String(visibleStatus.sleepHours) : '--', unit: ' 小时' },
       { label: '运动', value: visibleStatus ? String(visibleStatus.exerciseCount) : '--', unit: ' 次' },
-      { label: '速记', value: String(todayEvents.length), unit: ' 条' }
+      { label: '速记', value: String(todayCount), unit: ' 条' }
     ];
     return readings;
   }
@@ -85,9 +83,7 @@ export class HomeDataService {
   async loadSummary(): Promise<HomeSummary> {
     const totalNotes = await this.eventDao.countVisible();
     const today = formatDate(new Date());
-    const recentEvents = await this.eventDao.queryRecent(100);
-    const todayNotes = recentEvents.filter(e =>
-      e.level !== SecurityLevel.SEALED && formatDate(new Date(e.timestamp)) === today).length;
+    const todayNotes = await this.eventDao.countVisibleOn(today);
     const unreviewedDecisions = await this.decisionDao.countUnreviewed();
     const totalRelations = await this.relationDao.countVisible();
     const allPredictions = (await this.predictionDao.queryAll()).filter(p => p.level !== SecurityLevel.SEALED);

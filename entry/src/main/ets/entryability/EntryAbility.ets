@@ -14,7 +14,7 @@ export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onCreate');
     DbHelper.init(this.context).catch((error: Error) => {
-      hilog.error(DOMAIN, TAG, 'DbHelper.init failed: %{public}s', error.message);
+      hilog.error(DOMAIN, TAG, 'DbHelper.init failed: %{private}s', error.message);
     });
   }
 
@@ -39,7 +39,7 @@ export default class EntryAbility extends UIAbility {
       statusBarColor: '#00000000',
       statusBarContentColor: dark ? '#FFFFFF' : '#000000'
     }).catch((error: Error) => {
-      hilog.error(DOMAIN, TAG, 'setWindowSystemBarProperties failed: %{public}s', error.message);
+      hilog.error(DOMAIN, TAG, 'setWindowSystemBarProperties failed: %{private}s', error.message);
     });
   }
 
@@ -48,7 +48,7 @@ export default class EntryAbility extends UIAbility {
 
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
-        hilog.error(DOMAIN, TAG, 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
+        hilog.error(DOMAIN, TAG, 'Failed to load the content. Cause: %{private}s', JSON.stringify(err));
         return;
       }
       hilog.info(DOMAIN, TAG, 'Succeeded in loading the content.');
@@ -60,7 +60,7 @@ export default class EntryAbility extends UIAbility {
       mainWindow.setWindowBackgroundColor('#00000000');
       this.applySystemBar(this.context.config.colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
     }).catch((error: Error) => {
-      hilog.error(DOMAIN, TAG, 'setWindowBackgroundColor failed: %{public}s', error.message);
+      hilog.error(DOMAIN, TAG, 'setWindowBackgroundColor failed: %{private}s', error.message);
     });
   }
 
