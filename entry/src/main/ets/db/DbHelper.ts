@@ -50,7 +50,12 @@ export class DbHelper {
       await store.rekey();
       DbHelper.writeMarker(encryptedMarker);
     } catch (error) {
-      DbHelper.writeMarker(attemptedMarker);
+      try {
+        await store.rekeyEx({ encryptionKey: new Uint8Array(0) });
+        DbHelper.writeMarker(encryptedMarker);
+      } catch (exError) {
+        DbHelper.writeMarker(attemptedMarker);
+      }
     }
   }
 
