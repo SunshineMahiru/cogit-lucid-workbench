@@ -9,6 +9,7 @@ import { NoteDetailPage } from './NoteDetailPage';
 import { PredictionListPage } from './PredictionListPage';
 import { PredictionDetailPage } from './PredictionDetailPage';
 import { PredictionStatsPage } from './PredictionStatsPage';
+import { AnalyticsPage } from './AnalyticsPage';
 import { PredictionCreatePage } from './PredictionCreatePage';
 import { PredictionSettlePage } from './PredictionSettlePage';
 import { ReviewPage } from './ReviewPage';
@@ -70,6 +71,8 @@ struct Index {
       PredictionDetailPage()
     } else if (name === ROUTES.PREDICTION_STATS) {
       PredictionStatsPage()
+    } else if (name === ROUTES.ANALYTICS) {
+      AnalyticsPage()
     } else if (name === ROUTES.PREDICTION_CREATE) {
       PredictionCreatePage()
     } else if (name === ROUTES.PREDICTION_SETTLE) {
