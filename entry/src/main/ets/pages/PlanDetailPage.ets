@@ -5,7 +5,8 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { Plan } from '../model/Plan';
 import { PlanNode } from '../model/PlanNode';
 import { PlanProject } from '../model/PlanProject';
-import { PlanNodeStatus } from '../model/PlanStatus';import { PlanService } from '../plan';
+import { PlanNodeStatus } from '../model/PlanStatus';
+import { PlanService } from '../plan';
 import { PlanDetailParams, PlanEditParams, PlanNodeParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
@@ -23,6 +24,7 @@ export struct PlanDetailPage {
   @Local nodes: PlanNodeView[] = [];
   @Local projects: PlanProject[] = [];
   @Local newProjectName: string = '';
+  @Local editingProjectId: string = '';
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   @Local isPreview: boolean = false;
@@ -164,25 +166,108 @@ export struct PlanDetailPage {
     });
   }
 
-  private async createProject(): Promise<void> {
+  private async submitProject(): Promise<void> {
     if (this.plan === null || this.newProjectName.trim().length === 0) {
       return;
     }
     try {
       if (this.isPreview) {
-        planPreviewStore.createProject(this.plan.id, this.newProjectName);
+        if (this.editingProjectId.length > 0) {
+          planPreviewStore.renameProject(this.editingProjectId, this.newProjectName);
+        } else {
+          planPreviewStore.createProject(this.plan.id, this.newProjectName);
+        }
         this.projects = planPreviewStore.projects(this.plan.id);
       } else if (this.service !== null) {
-        await this.service.createProject(this.plan.id, this.newProjectName);
+        if (this.editingProjectId.length > 0) {
+          await this.service.renameProject(this.editingProjectId, this.newProjectName);
+        } else {
+          await this.service.createProject(this.plan.id, this.newProjectName);
+        }
         this.projects = await this.service.listProjects(this.plan.id);
       }
       this.newProjectName = '';
+      this.editingProjectId = '';
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: '项目创建失败，请重试' });
+      this.getUIContext().getPromptAction().showToast({
+        message: this.editingProjectId.length > 0 ? '项目改名失败，请重试' : '项目创建失败，请重试'
+      });
     }
   }
 
-  private async archivePlan(): Promise<void> {    if (this.plan === null) {
+  private beginRenameProject(project: PlanProject): void {
+    this.editingProjectId = project.id;
+    this.newProjectName = project.name;
+  }
+
+  private cancelRenameProject(): void {
+    this.editingProjectId = '';
+    this.newProjectName = '';
+  }
+
+  private confirmDeleteProject(project: PlanProject): void {
+    this.getUIContext().showAlertDialog({
+      title: `删除项目「${project.name}」？`,
+      message: '项目下的周节点会回到未分组，节点与清单内容都保留。',
+      primaryButton: {
+        value: '保留',
+        action: () => {
+        }
+      },
+      secondaryButton: {
+        value: '删除',
+        action: () => {
+          this.deleteProject(project);
+        }
+      }
+    });
+  }
+
+  private async deleteProject(project: PlanProject): Promise<void> {
+    if (this.plan === null) {
+      return;
+    }
+    try {
+      if (this.isPreview) {
+        planPreviewStore.deleteProject(this.plan.id, project.id);
+        this.projects = planPreviewStore.projects(this.plan.id);
+        this.loadPreview();
+      } else if (this.service !== null) {
+        await this.service.deleteProject(this.plan.id, project.id);
+        await this.refresh();
+      }
+      if (this.editingProjectId === project.id) {
+        this.cancelRenameProject();
+      }
+      this.getUIContext().getPromptAction().showToast({ message: '项目已删除' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '项目删除失败，请重试' });
+    }
+  }
+
+  private confirmArchive(): void {
+    if (this.plan === null) {
+      return;
+    }
+    this.getUIContext().showAlertDialog({
+      title: `归档「${this.plan.title}」？`,
+      message: '归档后目标从首页列表移出，可在计划列表的已归档区恢复。',
+      primaryButton: {
+        value: '继续推进',
+        action: () => {
+        }
+      },
+      secondaryButton: {
+        value: '归档',
+        action: () => {
+          this.archivePlan();
+        }
+      }
+    });
+  }
+
+  private async archivePlan(): Promise<void> {
+    if (this.plan === null) {
       return;
     }
     try {
@@ -218,7 +303,7 @@ export struct PlanDetailPage {
         .padding({ left: 8, right: 16 })
         .height(56)
         .onClick(() => {
-          this.archivePlan();
+          this.confirmArchive();
         })
     }
     .alignItems(VerticalAlign.Center)
@@ -333,16 +418,37 @@ export struct PlanDetailPage {
                   .width('100%')
               } else {
                 ForEach(this.projects, (project: PlanProject) => {
-                  Text(project.name)
-                    .fontSize(12)
-                    .fontColor(AppTheme.color.text)
-                    .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-                    .backgroundColor(AppTheme.color.surfaceAlt)
-                    .borderRadius(8)
+                  Row({ space: 6 }) {
+                    Text(project.name)
+                      .fontSize(12)
+                      .fontColor(AppTheme.color.text)
+                      .layoutWeight(1)
+                    Text('改名')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.primary)
+                      .padding({ left: 6, right: 6, top: 4, bottom: 4 })
+                      .onClick(() => {
+                        this.beginRenameProject(project);
+                      })
+                    Text('删除')
+                      .fontSize(11)
+                      .fontColor(AppTheme.color.danger)
+                      .padding({ left: 6, right: 6, top: 4, bottom: 4 })
+                      .onClick(() => {
+                        this.confirmDeleteProject(project);
+                      })
+                  }
+                  .width('100%')
+                  .padding({ left: 8, right: 4, top: 4, bottom: 4 })
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .borderRadius(8)
                 }, (project: PlanProject) => project.id)
               }
               Row({ space: 8 }) {
-                TextInput({ text: this.newProjectName, placeholder: '新项目名称' })
+                TextInput({
+                  text: this.newProjectName,
+                  placeholder: this.editingProjectId.length > 0 ? '新的项目名称' : '新项目名称'
+                })
                   .id('plan_project_input')
                   .maxLength(30)
                   .layoutWeight(1)
@@ -350,12 +456,20 @@ export struct PlanDetailPage {
                   .onChange((value: string) => {
                     this.newProjectName = value;
                   })
-                Text('添加')
+                if (this.editingProjectId.length > 0) {
+                  Text('取消')
+                    .fontSize(12)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .onClick(() => {
+                      this.cancelRenameProject();
+                    })
+                }
+                Text(this.editingProjectId.length > 0 ? '保存' : '添加')
                   .id('plan_project_add')
                   .fontSize(12)
                   .fontColor(AppTheme.color.primary)
                   .onClick(() => {
-                    this.createProject();
+                    this.submitProject();
                   })
               }
               .width('100%')

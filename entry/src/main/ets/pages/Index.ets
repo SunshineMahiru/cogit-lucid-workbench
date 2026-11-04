@@ -15,6 +15,7 @@ import { PlanEditPage } from './PlanEditPage';
 import { PlanDetailPage } from './PlanDetailPage';
 import { PlanNodePage } from './PlanNodePage';
 import { PlanLinkPickerPage } from './PlanLinkPickerPage';
+import { PlanAttachPage } from './PlanAttachPage';
 import { PredictionCreatePage } from './PredictionCreatePage';
 import { PredictionSettlePage } from './PredictionSettlePage';
 import { ReviewPage } from './ReviewPage';
@@ -88,6 +89,8 @@ struct Index {
       PlanNodePage()
     } else if (name === ROUTES.PLAN_LINK_PICKER) {
       PlanLinkPickerPage()
+    } else if (name === ROUTES.PLAN_ATTACH) {
+      PlanAttachPage()
     } else if (name === ROUTES.PREDICTION_CREATE) {
       PredictionCreatePage()
     } else if (name === ROUTES.PREDICTION_SETTLE) {

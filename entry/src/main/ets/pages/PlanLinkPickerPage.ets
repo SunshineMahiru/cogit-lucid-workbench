@@ -20,12 +20,16 @@ const MODULES: PlanLinkModule[] = [
   PlanLinkModule.STATUS
 ];
 
+const PAGE_SIZE = 30;
+
 /** Selects records from the six modules for one plan node. */
 @ComponentV2
 export struct PlanLinkPickerPage {
   @Local module: PlanLinkModule = PlanLinkModule.NOTE;
   @Local candidates: LinkCandidate[] = [];
   @Local selectedKeys: string[] = [];
+  @Local keyword: string = '';
+  @Local visibleCount: number = PAGE_SIZE;
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
   @Local isPreview: boolean = false;
@@ -98,12 +102,29 @@ export struct PlanLinkPickerPage {
 
   private visibleCandidates(): LinkCandidate[] {
     const rows: LinkCandidate[] = [];
+    const key = this.keyword.trim().toLowerCase();
     for (const item of this.candidates) {
-      if (item.module === this.module) {
+      if (item.module !== this.module) {
+        continue;
+      }
+      if (key.length === 0 || matchesKeyword(item, key)) {
         rows.push(item);
       }
     }
     return rows;
+  }
+
+  /** 当前页显示的候选；关键词与模块变化时重置到第一页。 */
+  private pagedCandidates(): LinkCandidate[] {
+    return this.visibleCandidates().slice(0, this.visibleCount);
+  }
+
+  private hasMore(): boolean {
+    return this.visibleCandidates().length > this.visibleCount;
+  }
+
+  private resetPaging(): void {
+    this.visibleCount = PAGE_SIZE;
   }
 
   private isSelected(item: LinkCandidate): boolean {
@@ -193,6 +214,7 @@ export struct PlanLinkPickerPage {
       .borderRadius(14)
       .onClick(() => {
         this.module = module;
+        this.resetPaging();
       })
   }
 
@@ -261,6 +283,15 @@ export struct PlanLinkPickerPage {
         .scrollBar(BarState.Off)
         .width('100%')
 
+        TextInput({ text: this.keyword, placeholder: '搜索标题、说明或标签' })
+          .id('plan_link_search')
+          .maxLength(40)
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .onChange((value: string) => {
+            this.keyword = value;
+            this.resetPaging();
+          })
+
         if (this.errorText.length > 0) {
           Column({ space: 8 }) {
             Text(this.errorText)
@@ -281,8 +312,10 @@ export struct PlanLinkPickerPage {
         } else if (this.visibleCandidates().length === 0) {
           Column() {
             NoteEmptyState({
-              title: `${planLinkModuleLabel(this.module)}暂无记录`,
-              hint: '先到对应模块记一条，再回来关联',
+              title: this.keyword.trim().length > 0
+                ? '没有匹配的记录'
+                : `${planLinkModuleLabel(this.module)}暂无记录`,
+              hint: this.keyword.trim().length > 0 ? '换一个关键词再试' : '先到对应模块记一条，再回来关联',
               dashed: true
             })
           }
@@ -292,9 +325,21 @@ export struct PlanLinkPickerPage {
         } else {
           Scroll() {
             Column() {
-              ForEach(this.visibleCandidates(), (item: LinkCandidate) => {
+              ForEach(this.pagedCandidates(), (item: LinkCandidate) => {
                 this.candidateRow(item)
               }, (item: LinkCandidate) => this.keyOf(item))
+              if (this.hasMore()) {
+                Text(`加载更多（还有 ${this.visibleCandidates().length - this.visibleCount} 条）`)
+                  .id('plan_link_more')
+                  .fontSize(11)
+                  .fontColor(AppTheme.color.primary)
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+                  .padding({ top: 10, bottom: 10 })
+                  .onClick(() => {
+                    this.visibleCount = this.visibleCount + PAGE_SIZE;
+                  })
+              }
             }
             .width('100%')
           }
@@ -336,4 +381,19 @@ export struct PlanLinkPickerPage {
       }
     })
   }
+}
+
+function matchesKeyword(item: LinkCandidate, keyword: string): boolean {
+  if (item.title.toLowerCase().includes(keyword)) {
+    return true;
+  }
+  if (item.subtitle.toLowerCase().includes(keyword)) {
+    return true;
+  }
+  for (const tag of item.tags) {
+    if (tag.toLowerCase().includes(keyword)) {
+      return true;
+    }
+  }
+  return false;
 }

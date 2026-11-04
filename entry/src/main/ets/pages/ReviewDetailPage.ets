@@ -5,7 +5,9 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewDetailView, ReviewService } from '../review';
 import { Anchor } from '../model/Anchor';
 import { ReviewPeriod } from '../model/ReviewPeriod';
-import { ReviewDetailParams } from '../navigation/RouteParams';
+import { ReviewDetailParams, PlanNodeParams, PlanAttachParams } from '../navigation/RouteParams';
+import { PlanLinkModule } from '../model/PlanLinkModule';
+import { ROUTES } from '../navigation/Routes';
 import { previewStore } from '../preview/PreviewStore';
 
 /** Read-only four-step review with the anchors it actually referenced. */
@@ -78,12 +80,39 @@ export struct ReviewDetailPage {
     }
   }
 
+  private openAttach(): void {
+    if (this.navStack === null || this.detail.id.length === 0) {
+      return;
+    }
+    const params: PlanAttachParams = {
+      module: PlanLinkModule.REVIEW,
+      targetId: this.detail.id,
+      label: `${this.detail.periodLabel} ${this.detail.rangeLabel}`
+    };
+    this.navStack.pushPathByName(ROUTES.PLAN_ATTACH, params);
+  }
+
+  @Builder
+  planMenu() {
+    Text('计划')
+      .fontSize(14)
+      .fontColor(AppTheme.color.primary)
+      .padding({ left: 12, right: 16 })
+      .height(56)
+      .onClick(() => {
+        this.openAttach();
+      })
+  }
+
   build() {
     AppDestination({
       route: 'review_detail',
       title: '复盘详情',
       content: () => {
         this.reviewDetailBody();
+      },
+      menus: () => {
+        this.planMenu();
       },
       onDestinationReady: (context: NavDestinationContext) => {
         this.navStack = context.pathStack;
@@ -154,6 +183,18 @@ export struct ReviewDetailPage {
                   .fontSize(10)
                   .fontColor(AppTheme.color.warning)
                   .width('100%')
+                if (this.detail.planNodeId !== undefined) {
+                  Text('返回计划节点 ›')
+                    .fontSize(11)
+                    .fontColor(AppTheme.color.primary)
+                    .width('100%')
+                    .onClick(() => {
+                      if (this.navStack !== null && this.detail.planNodeId !== undefined) {
+                        const params: PlanNodeParams = { nodeId: this.detail.planNodeId };
+                        this.navStack.pushPathByName(ROUTES.PLAN_NODE, params);
+                      }
+                    })
+                }
               }
               .width('100%')
               .alignItems(HorizontalAlign.Start)

@@ -5,6 +5,8 @@ import { AnchorService } from '../anchor';
 import { AnchorCard } from '../components/AnchorCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ROUTES } from '../navigation/Routes';
+import { PlanAttachParams } from '../navigation/RouteParams';
+import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PREVIEW_ANCHORS } from '../preview/PreviewData';
 import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
@@ -97,10 +99,23 @@ export struct AnchorPage {
     }
   }
 
-  private openReview(): void {    if (this.navStack === null) {
+  private openReview(): void {
+    if (this.navStack === null) {
       return;
     }
     this.navStack.pushPathByName(ROUTES.REVIEW, null);
+  }
+
+  private openAttach(anchor: Anchor): void {
+    if (this.navStack === null) {
+      return;
+    }
+    const params: PlanAttachParams = {
+      module: PlanLinkModule.ANCHOR,
+      targetId: anchor.id,
+      label: anchor.text
+    };
+    this.navStack.pushPathByName(ROUTES.PLAN_ATTACH, params);
   }
 
   @Builder
@@ -209,7 +224,13 @@ export struct AnchorPage {
           Scroll() {
             Column({ space: 8 }) {
               ForEach(this.anchors, (anchor: Anchor, index: number) => {
-                AnchorCard({ anchor: anchor, index: index + 1 })
+                AnchorCard({
+                  anchor: anchor,
+                  index: index + 1,
+                  onAttachPlan: () => {
+                    this.openAttach(anchor);
+                  }
+                })
               }, (anchor: Anchor) => anchor.id)
             }
             .width('100%')

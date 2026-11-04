@@ -28,6 +28,7 @@ export const ROUTES = {
   PLAN_DETAIL: 'plan_detail',
   PLAN_NODE: 'plan_node',
   PLAN_LINK_PICKER: 'plan_link_picker',
+  PLAN_ATTACH: 'plan_attach',
   SETTINGS: 'settings',
   IDENTITY_EDIT: 'identity_edit',
   BACKGROUND_APPLY: 'background_apply'

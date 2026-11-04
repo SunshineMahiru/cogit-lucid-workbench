@@ -16,7 +16,8 @@ import {
 } from '../preview/PreviewData';
 import { LinkCandidate } from './PlanLinkCandidate';
 
-const ITEM_LIMIT = 20;
+/** 选择器一次加载的上限；页面用关键词过滤并分页显示，历史记录仍可被找到。 */
+const CANDIDATE_LIMIT = 200;
 
 /** Loads candidate records from the six modules, or from preview data without a database. */
 export async function loadPlanLinkCandidates(
@@ -61,7 +62,7 @@ function previewCandidates(): LinkCandidate[] {
 async function databaseCandidates(context: common.Context): Promise<LinkCandidate[]> {
   const items: LinkCandidate[] = [];
   const noteService = await QuickNoteService.open(context);
-  const notes: NoteListItem[] = await noteService.listRecentPage(ITEM_LIMIT, 0);
+  const notes: NoteListItem[] = await noteService.listRecentPage(CANDIDATE_LIMIT, 0);
   for (const note of notes) {
     items.push(candidate(PlanLinkModule.NOTE, note.id, note.title, note.type, note.timestamp, note.tags,
       note.relatedRelationIds ?? []));
@@ -69,13 +70,13 @@ async function databaseCandidates(context: common.Context): Promise<LinkCandidat
 
   const predictionService = await PredictionService.open(context);
   const predictions: PredictionListItem[] = await predictionService.list(null);
-  for (const prediction of predictions.slice(0, ITEM_LIMIT)) {
+  for (const prediction of predictions) {
     items.push(candidate(PlanLinkModule.PREDICTION, prediction.id, prediction.target,
       `${prediction.confidence}% · ${prediction.status}`, prediction.createdAt, [prediction.status]));
   }
 
   const reviewService = await ReviewService.open(context);
-  const reviews: ReviewHistoryItem[] = await reviewService.history(ITEM_LIMIT);
+  const reviews: ReviewHistoryItem[] = await reviewService.history(CANDIDATE_LIMIT);
   for (const review of reviews) {
     items.push(candidate(PlanLinkModule.REVIEW, review.id, `${review.periodLabel} ${review.rangeLabel}`,
       review.action, review.createdAt ?? 0, []));
@@ -89,14 +90,14 @@ async function databaseCandidates(context: common.Context): Promise<LinkCandidat
 
   const relationService = await RelationService.open(context);
   const relations: RelationListItem[] = await relationService.list(null);
-  for (const relation of relations.slice(0, ITEM_LIMIT)) {
+  for (const relation of relations) {
     items.push(candidate(PlanLinkModule.RELATION, relation.id, relation.name,
       `${relation.trustLevel} · ${relation.interactionCount} 次互动`, relation.lastInteractionAt,
       [relation.trustLevel], [relation.id]));
   }
 
   const statusService = await StatusService.open(context);
-  const rows: StatusDayRow[] = await statusService.history(30);
+  const rows: StatusDayRow[] = await statusService.history(CANDIDATE_LIMIT);
   for (const row of rows) {
     const timestamp = new Date(`${row.date}T00:00:00`).getTime();
     items.push(candidate(PlanLinkModule.STATUS, row.id, row.date,

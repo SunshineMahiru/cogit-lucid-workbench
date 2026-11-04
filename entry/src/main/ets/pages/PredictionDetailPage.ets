@@ -6,7 +6,8 @@ import {
   todayDateString
 } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
-import { PredictionDetailParams, PredictionSettleParams, PredictionCreateParams } from '../navigation/RouteParams';
+import { PredictionDetailParams, PredictionSettleParams, PredictionCreateParams, PlanAttachParams } from '../navigation/RouteParams';
+import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { AppTheme } from '../theme/AppTheme';
@@ -77,13 +78,32 @@ export struct PredictionDetailPage {
     });
   }
 
+  private openAttach(): void {
+    if (this.navStack === null || this.detail.id.length === 0) {
+      return;
+    }
+    const params: PlanAttachParams = {
+      module: PlanLinkModule.PREDICTION,
+      targetId: this.detail.id,
+      label: this.detail.target
+    };
+    this.navStack.pushPathByName(ROUTES.PLAN_ATTACH, params);
+  }
+
   @Builder
   reviseMenu() {
     Row() {
+      Text('计划')
+        .fontSize(14)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 12, right: 6 })
+        .onClick(() => {
+          this.openAttach();
+        })
       Text('修改')
         .fontSize(14)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 12, right: 16 })
+        .padding({ left: 6, right: 16 })
         .onClick(() => {
           this.openRevise();
         })

@@ -1,5 +1,6 @@
 import { NoteTemplateId } from '../note/NoteTemplateId';
 import { PredictionStatus } from '../model/PredictionStatus';
+import { PlanLinkModule } from '../model/PlanLinkModule';
 
 /** Parameters accepted by the note editor route. */
 export interface NoteEditParams {
@@ -66,6 +67,12 @@ export interface PlanDetailParams {
   planId: string;
 }
 
+/** Optional plan context when opening a review from a node. */
+export interface PlanReviewParams {
+  planId: string;
+  nodeId: string;
+}
+
 /** Parameters accepted by the seven-day node route. */
 export interface PlanNodeParams {
   nodeId: string;
@@ -77,6 +84,13 @@ export interface PlanLinkPickerParams {
   nodeId: string;
   weekStart: string;
   weekEnd: string;
+}
+
+/** Parameters accepted by the reverse attach page. */
+export interface PlanAttachParams {
+  module: PlanLinkModule;
+  targetId: string;
+  label: string;
 }
 
 /** Parameters accepted by the status editor; null uses today. */

@@ -15,6 +15,7 @@ import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import { PlanLinkPickerParams, PlanNodeParams } from '../navigation/RouteParams';
 import {
   NoteDetailParams,
+  PlanReviewParams,
   PredictionDetailParams,
   RelationDetailParams,
   ReviewDetailParams,
@@ -246,7 +247,7 @@ export struct PlanNodePage {
       const hostContext = this.getUIContext().getHostContext();
       if (hostContext !== undefined && !this.isPreview) {
         try {
-          await writePlanReviewDraft(hostContext, facts);
+          await writePlanReviewDraft(hostContext, facts, closedNode.planId, closedNode.id);
         } catch (draftError) {
           this.getUIContext().getPromptAction().showToast({ message: '周复盘草稿写入失败，可稍后重试' });
         }
@@ -509,8 +510,9 @@ export struct PlanNodePage {
               .textAlign(TextAlign.Center)
               .padding({ top: 6, bottom: 10 })
               .onClick(() => {
-                if (this.navStack !== null) {
-                  this.navStack.pushPathByName(ROUTES.REVIEW, null);
+                if (this.navStack !== null && this.node !== null) {
+                  const params: PlanReviewParams = { planId: this.node.planId, nodeId: this.node.id };
+                  this.navStack.pushPathByName(ROUTES.REVIEW, params);
                 }
               })
           }

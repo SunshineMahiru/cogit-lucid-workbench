@@ -1,7 +1,8 @@
 import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import { NoteDetail, QuickNoteService, securityLevelText } from '../note';
-import { NoteDetailParams, NoteEditParams } from '../navigation/RouteParams';
+import { NoteDetailParams, NoteEditParams, PlanAttachParams } from '../navigation/RouteParams';
+import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { previewStore } from '../preview/PreviewStore';
@@ -84,8 +85,19 @@ export struct NoteDetailPage {
     }
   }
 
-  private openEdit(): void {
+  private openAttach(): void {
     if (this.detail === null || this.navStack === null) {
+      return;
+    }
+    const params: PlanAttachParams = {
+      module: PlanLinkModule.NOTE,
+      targetId: this.detail.id,
+      label: this.detail.title
+    };
+    this.navStack.pushPathByName(ROUTES.PLAN_ATTACH, params);
+  }
+
+  private openEdit(): void {    if (this.detail === null || this.navStack === null) {
       return;
     }
     const params: NoteEditParams = { templateId: null, noteId: this.detail.id };
@@ -106,6 +118,13 @@ export struct NoteDetailPage {
         .accessibilityText('编辑速记')
         .onClick(() => {
           this.openEdit();
+        })
+      Text('计划')
+        .fontSize(14)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 4, right: 8 })
+        .onClick(() => {
+          this.openAttach();
         })
       Text('删除')
         .fontSize(14)

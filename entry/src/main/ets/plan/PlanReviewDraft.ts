@@ -42,7 +42,8 @@ export function buildPlanReviewFacts(planTitle: string, node: PlanNode, items: P
 }
 
 /** Writes the plan summary into the weekly review draft, preserving existing text. */
-export async function writePlanReviewDraft(context: common.Context, facts: string): Promise<void> {
+export async function writePlanReviewDraft(context: common.Context, facts: string,
+  planId: string = '', planNodeId: string = ''): Promise<void> {
   const store = await ReviewDraftStore.open(context);
-  await store.prefillWeekly(facts);
+  await store.prefillWeekly(facts, planId, planNodeId);
 }

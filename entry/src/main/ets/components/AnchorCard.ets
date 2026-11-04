@@ -1,11 +1,12 @@
 import { Anchor } from '../model/Anchor';
 import { AppTheme } from '../theme/AppTheme';
 
-/** One read-only anchor row with its display index. */
+/** One read-only anchor row with its display index and a plan shortcut. */
 @ComponentV2
 export struct AnchorCard {
   @Param anchor: Anchor = { id: '', text: '', source: '', order: 0 };
   @Param index: number = 1;
+  @Event onAttachPlan: () => void = () => {};
 
   build() {
     Row({ space: 12 }) {
@@ -32,6 +33,14 @@ export struct AnchorCard {
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
+
+      Text('关联计划')
+        .fontSize(11)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 6 })
+        .onClick(() => {
+          this.onAttachPlan();
+        })
     }
     .width('100%')
     .padding(14)

@@ -2,7 +2,9 @@ import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { StatusDayRow, StatusService } from '../status';
-import { StatusEditParams } from '../navigation/RouteParams';
+import { StatusEditParams, PlanAttachParams } from '../navigation/RouteParams';
+import { ROUTES } from '../navigation/Routes';
+import { PlanLinkModule } from '../model/PlanLinkModule';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Creates or edits one day's physiological reading. */
@@ -17,6 +19,7 @@ export struct StatusEditPage {
   @Local isSaving: boolean = false;
   @Local isPreview: boolean = false;
   @Local errorText: string = '';
+  @Local recordId: string = '';
   private navStack: NavPathStack | null = null;
 
   private async load(date: string | null): Promise<void> {
@@ -33,6 +36,7 @@ export struct StatusEditPage {
       const service = await StatusService.open(hostContext);
       const row = await service.find(this.date);
       if (row !== null) {
+        this.recordId = row.id;
         this.sleepHours = String(row.sleepHours);
         this.exerciseCount = String(row.exerciseCount);
         this.alertCount = String(row.alertCount);
@@ -90,13 +94,33 @@ export struct StatusEditPage {
     }
   }
 
+  private openAttach(): void {
+    if (this.navStack === null || this.recordId.length === 0) {
+      this.getUIContext().getPromptAction().showToast({ message: '先保存读数再关联计划' });
+      return;
+    }
+    const params: PlanAttachParams = {
+      module: PlanLinkModule.STATUS,
+      targetId: this.recordId,
+      label: this.date
+    };
+    this.navStack.pushPathByName(ROUTES.PLAN_ATTACH, params);
+  }
+
   @Builder
   saveMenu() {
     Row() {
+      Text('计划')
+        .fontSize(14)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 12, right: 6 })
+        .onClick(() => {
+          this.openAttach();
+        })
       Text(this.isSaving ? '保存中' : '保存')
         .fontSize(14)
         .fontColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
-        .padding({ left: 12, right: 16 })
+        .padding({ left: 6, right: 16 })
         .onClick(() => {
           this.save();
         })

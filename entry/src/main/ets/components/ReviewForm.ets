@@ -33,6 +33,9 @@ const STEP_PLACEHOLDERS: string[] = [
 @ComponentV2
 export struct ReviewForm {
   @Param period: ReviewPeriod = ReviewPeriod.WEEK;
+  @Param planId: string = '';
+  @Param planNodeId: string = '';
+  @Event onBackToPlan: () => void = () => {};
   @Local stats: ReviewStats = emptyReviewStats();
   @Local anchors: Anchor[] = [];
   @Local step: number = 0;
@@ -68,7 +71,7 @@ export struct ReviewForm {
       this.stats = await this.service.loadStats(this.period);
       this.anchors = await this.service.loadAnchors(3);
       this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
-      const draft = await this.draftStore.load(this.period);
+      const draft = await this.draftStore.loadFor(this.period, this.planNodeId);
       if (draft !== null) {
         this.facts = draft.facts;
         this.interpretation = draft.interpretation;
@@ -94,9 +97,11 @@ export struct ReviewForm {
       interpretation: this.interpretation,
       contradiction: this.contradiction,
       action: this.action,
-      anchorIds: this.selectedAnchorIds.slice()
+      anchorIds: this.selectedAnchorIds.slice(),
+      planId: this.planId,
+      planNodeId: this.planNodeId
     };
-    this.draftStore.save(this.period, draft).catch(() => {
+    this.draftStore.saveFor(this.period, this.planNodeId, draft).catch(() => {
     });
   }
 
@@ -173,7 +178,9 @@ export struct ReviewForm {
         interpretation: this.interpretation,
         contradiction: this.contradiction,
         action: this.action,
-        anchorIds: this.selectedAnchorIds.slice()
+        anchorIds: this.selectedAnchorIds.slice(),
+        planId: this.planId,
+        planNodeId: this.planNodeId
       };
       previewStore.saveReview(this.period, draft, this.stats.rangeLabel);
       notifyHomeRefresh();
@@ -192,11 +199,13 @@ export struct ReviewForm {
         interpretation: this.interpretation,
         contradiction: this.contradiction,
         action: this.action,
-        anchorIds: this.selectedAnchorIds.slice()
+        anchorIds: this.selectedAnchorIds.slice(),
+        planId: this.planId,
+        planNodeId: this.planNodeId
       };
-      await this.service.save(this.period, draft, this.stats.rangeLabel);
+      await this.service.save(this.period, draft, this.stats.rangeLabel, this.planId, this.planNodeId);
       if (this.draftStore !== null) {
-        await this.draftStore.clear(this.period);
+        await this.draftStore.clearFor(this.period, this.planNodeId);
       }
       notifyHomeRefresh();
       this.saved = true;
@@ -216,7 +225,7 @@ export struct ReviewForm {
     this.action = '';
     this.saved = false;
     if (this.draftStore !== null) {
-      this.draftStore.clear(this.period).catch(() => {
+      this.draftStore.clearFor(this.period, this.planNodeId).catch(() => {
       });
     }
     this.load();
@@ -263,6 +272,22 @@ export struct ReviewForm {
 
   build() {
     Column() {
+      if (this.planNodeId.length > 0) {
+        Row({ space: 8 }) {
+          Text('来自计划节点')
+            .fontSize(10)
+            .fontColor(AppTheme.color.textMuted)
+          Blank()
+          Text('返回节点 ›')
+            .fontSize(11)
+            .fontColor(AppTheme.color.primary)
+            .onClick(() => {
+              this.onBackToPlan();
+            })
+        }
+        .width('100%')
+        .padding({ left: 16, right: 16, top: 6, bottom: 2 })
+      }
       if (this.isLoading) {
         Column() {
           LoadingProgress()

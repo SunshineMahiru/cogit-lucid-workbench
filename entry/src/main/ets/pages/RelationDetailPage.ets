@@ -8,7 +8,8 @@ import { InteractionLog } from '../model/Relation';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
 import { securityLevelText } from '../note';
-import { RelationDetailParams, RelationEditParams } from '../navigation/RouteParams';
+import { RelationDetailParams, RelationEditParams, PlanAttachParams } from '../navigation/RouteParams';
+import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
 import { findPreviewRelation } from '../preview/PreviewData';
 
@@ -113,6 +114,18 @@ export struct RelationDetailPage {
     }
   }
 
+  private openAttach(): void {
+    if (this.navStack === null || this.detail.id.length === 0) {
+      return;
+    }
+    const params: PlanAttachParams = {
+      module: PlanLinkModule.RELATION,
+      targetId: this.detail.id,
+      label: this.detail.name
+    };
+    this.navStack.pushPathByName(ROUTES.PLAN_ATTACH, params);
+  }
+
   private async addInteraction(): Promise<void> {
     const text = this.newInteraction.trim();
     if (text.length === 0 || this.isAdding) {
@@ -167,6 +180,13 @@ export struct RelationDetailPage {
   @Builder
   editMenu() {
     Row({ space: 4 }) {
+      Text('计划')
+        .fontSize(14)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 10, right: 6 })
+        .onClick(() => {
+          this.openAttach();
+        })
       Text('编辑')
         .fontSize(14)
         .fontColor(AppTheme.color.primary)
