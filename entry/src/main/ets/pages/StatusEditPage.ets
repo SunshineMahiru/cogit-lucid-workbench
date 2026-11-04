@@ -19,7 +19,7 @@ export struct StatusEditPage {
   @Local isSaving: boolean = false;
   @Local isPreview: boolean = false;
   @Local errorText: string = '';
-  @Local recordId: string = '';
+  private service: StatusService | null = null;
   private navStack: NavPathStack | null = null;
 
   private async load(date: string | null): Promise<void> {
@@ -34,9 +34,9 @@ export struct StatusEditPage {
     }
     try {
       const service = await StatusService.open(hostContext);
+      this.service = service;
       const row = await service.find(this.date);
       if (row !== null) {
-        this.recordId = row.id;
         this.sleepHours = String(row.sleepHours);
         this.exerciseCount = String(row.exerciseCount);
         this.alertCount = String(row.alertCount);
@@ -94,15 +94,24 @@ export struct StatusEditPage {
     }
   }
 
-  private openAttach(): void {
-    if (this.navStack === null || this.recordId.length === 0) {
+  private async openAttach(): Promise<void> {
+    if (this.navStack === null) {
+      return;
+    }
+    const day = this.date.trim();
+    if (this.service === null) {
       this.getUIContext().getPromptAction().showToast({ message: '先保存读数再关联计划' });
+      return;
+    }
+    const row = await this.service.find(day);
+    if (row === null) {
+      this.getUIContext().getPromptAction().showToast({ message: '先保存当前日期的读数再关联计划' });
       return;
     }
     const params: PlanAttachParams = {
       module: PlanLinkModule.STATUS,
-      targetId: this.recordId,
-      label: this.date
+      targetId: row.id,
+      label: day
     };
     this.navStack.pushPathByName(ROUTES.PLAN_ATTACH, params);
   }
