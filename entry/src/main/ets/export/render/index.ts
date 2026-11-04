@@ -7,6 +7,7 @@ import { renderPredictionSection } from './PredictionSection';
 import { renderAnchorSection } from './AnchorSection';
 import { renderStatusSection } from './StatusSection';
 import { renderReviewSection } from './ReviewSection';
+import { renderPlanSection } from './PlanSection';
 
 export {
   renderDocumentHeader,
@@ -29,7 +30,8 @@ export function renderExportDocument(bundle: ExportBundle): string {
     renderPredictionSection(bundle.predictions),
     renderAnchorSection(bundle.anchors),
     renderStatusSection(bundle.statusRecords),
-    renderReviewSection(bundle.reviews, bundle.anchors)
+    renderReviewSection(bundle.reviews, bundle.anchors),
+    renderPlanSection(bundle.plans ?? [])
   ];
   const blocks: string[] = [];
   for (const section of sections) {

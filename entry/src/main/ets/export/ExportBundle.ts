@@ -5,6 +5,7 @@ import { Prediction } from '../model/Prediction';
 import { Relation } from '../model/Relation';
 import { ReviewResult } from '../model/ReviewResult';
 import { StatusRecord } from '../model/StatusRecord';
+import { PlanExport } from './PlanExport';
 
 /** All records collected for one Markdown export. */
 export interface ExportBundle {
@@ -15,6 +16,8 @@ export interface ExportBundle {
   anchors: Anchor[];
   statusRecords: StatusRecord[];
   reviews: ReviewResult[];
+  /** Optional plan section; absent in older callers */
+  plans?: PlanExport[];
   /** Export time in milliseconds */
   exportedAt: number;
 }

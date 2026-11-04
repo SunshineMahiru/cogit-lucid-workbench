@@ -1,4 +1,5 @@
 export type { ExportBundle, ExportCounts } from './ExportBundle';
+export type { PlanExport } from './PlanExport';
 export { countExportBundle, totalExportRecords } from './ExportBundle';
 export { isExportable, prepareExportBundle } from './ExportFilter';
 export {

@@ -242,6 +242,22 @@ export class PlanDao {
     }
   }
 
+  async queryLinksByPlan(planId: string): Promise<PlanLink[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
+    predicates.equalTo(PLAN_LINK_COLS.PLAN_ID, planId);
+    predicates.orderByDesc(PLAN_LINK_COLS.CREATED_AT);
+    const resultSet = await this.store.query(predicates);
+    try {
+      const rows: PlanLink[] = [];
+      while (resultSet.goToNextRow()) {
+        rows.push(this.mapLink(resultSet));
+      }
+      return rows;
+    } finally {
+      resultSet.close();
+    }
+  }
+
   async deleteLink(id: string): Promise<number> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
     predicates.equalTo(PLAN_LINK_COLS.ID, id);

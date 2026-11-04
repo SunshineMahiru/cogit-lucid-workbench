@@ -6,7 +6,9 @@ import { Relation } from '../model/Relation';
 import { ReviewResult } from '../model/ReviewResult';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { StatusRecord } from '../model/StatusRecord';
+import { PlanItem } from '../model/PlanItem';
 import { ExportBundle } from './ExportBundle';
+import { PlanExport } from './PlanExport';
 
 /** Sealed records never leave the device, so exports drop them. */
 export function isExportable(level: SecurityLevel): boolean {
@@ -23,6 +25,7 @@ export function prepareExportBundle(bundle: ExportBundle): ExportBundle {
     anchors: prepareAnchors(bundle.anchors),
     statusRecords: prepareStatusRecords(bundle.statusRecords),
     reviews: prepareReviews(bundle.reviews),
+    plans: preparePlans(bundle.plans ?? []),
     exportedAt: bundle.exportedAt
   };
 }
@@ -101,6 +104,24 @@ function prepareReviews(reviews: ReviewResult[]): ReviewResult[] {
   }
   items.sort((left, right) => right.createdAt - left.createdAt);
   return items;
+}
+
+function preparePlans(plans: PlanExport[]): PlanExport[] {
+  const rows: PlanExport[] = [];
+  for (const entry of plans) {
+    if (!isExportable(entry.plan.level ?? SecurityLevel.LOCAL_ONLY)) {
+      continue;
+    }
+    const items: PlanItem[] = [];
+    for (const item of entry.items) {
+      if (isExportable(item.level ?? SecurityLevel.LOCAL_ONLY)) {
+        items.push(item);
+      }
+    }
+    rows.push({ plan: entry.plan, nodes: entry.nodes, items: items, links: entry.links });
+  }
+  rows.sort((left, right) => right.plan.createdAt - left.plan.createdAt);
+  return rows;
 }
 
 function compareDateDesc(left: string, right: string): number {

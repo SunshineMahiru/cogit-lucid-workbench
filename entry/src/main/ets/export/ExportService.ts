@@ -8,7 +8,10 @@ import { PredictionDao } from '../db/dao/PredictionDao';
 import { RelationDao } from '../db/dao/RelationDao';
 import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
+import { PlanDao } from '../db/dao/PlanDao';
 import { DbHelper } from '../db/DbHelper';
+import { PlanItem } from '../model/PlanItem';
+import { PlanExport } from './PlanExport';
 import { countExportBundle, ExportBundle, ExportCounts } from './ExportBundle';
 import { prepareExportBundle } from './ExportFilter';
 import { buildExportFileName, writeExportFile } from './ExportFileWriter';
@@ -32,6 +35,7 @@ export class ExportService {
   private anchorDao: AnchorDao;
   private statusRecordDao: StatusRecordDao;
   private reviewDao: ReviewResultDao;
+  private planDao: PlanDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.eventDao = new EventDao(store);
@@ -41,6 +45,7 @@ export class ExportService {
     this.anchorDao = new AnchorDao(store);
     this.statusRecordDao = new StatusRecordDao(store);
     this.reviewDao = new ReviewResultDao(store);
+    this.planDao = new PlanDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -93,6 +98,23 @@ export class ExportService {
   }
 
   private async loadPreparedBundle(exportedAt: number): Promise<ExportBundle> {
+    const plans: PlanExport[] = [];
+    for (const plan of await this.planDao.queryPlans()) {
+      const nodes = await this.planDao.queryNodes(plan.id);
+      const items: PlanItem[] = [];
+      for (const node of nodes) {
+        const nodeItems = await this.planDao.queryItems(node.id);
+        for (const item of nodeItems) {
+          items.push(item);
+        }
+      }
+      plans.push({
+        plan: plan,
+        nodes: nodes,
+        items: items,
+        links: await this.planDao.queryLinksByPlan(plan.id)
+      });
+    }
     const bundle: ExportBundle = {
       events: await this.eventDao.queryAll(),
       decisions: await this.decisionDao.queryAll(),
@@ -101,6 +123,7 @@ export class ExportService {
       anchors: await this.anchorDao.queryAll(),
       statusRecords: await this.statusRecordDao.queryAll(),
       reviews: await this.reviewDao.queryRecent(1000),
+      plans: plans,
       exportedAt: exportedAt
     };
     return prepareExportBundle(bundle);
