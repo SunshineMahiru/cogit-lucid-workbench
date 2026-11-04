@@ -16,7 +16,7 @@ export struct AppDestination {
   @Require @Param route: string;
   @Param title: string = '';
   @Param hideTitleBar: boolean = false;
-  @BuilderParam content: () => void;
+  @BuilderParam content: () => void = this.emptyContent;
   @BuilderParam menus: () => void = this.emptyMenus;
   @Event onDestinationReady: (context: NavDestinationContext) => void = () => {
   };
@@ -32,6 +32,10 @@ export struct AppDestination {
 
   aboutToAppear(): void {
     this.registerHooks(this.route);
+  }
+
+  @Builder
+  emptyContent() {
   }
 
   @Builder
