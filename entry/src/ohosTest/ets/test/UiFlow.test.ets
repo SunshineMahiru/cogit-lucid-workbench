@@ -24,9 +24,10 @@ export default function analyticsFlowTest() {
 
     it('switchesMonth', 0, async () => {
       const driver = Driver.create();
-      const firstMonth = await driver.findComponent(ON.id('analytics_month_first'));
-      expect(firstMonth !== null).assertTrue();
-      await firstMonth.click();
+      const secondMonth = await driver.findComponent(ON.id('analytics_month_second'));
+      expect(secondMonth !== null).assertTrue();
+      await secondMonth.click();
+      await driver.waitForComponent(ON.text('当前月份 2026-10'), 3000);
       await driver.waitForComponent(ON.text('数据看板'), 3000);
     });
 

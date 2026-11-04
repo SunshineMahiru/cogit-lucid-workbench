@@ -60,6 +60,13 @@ export struct AnalyticsPage {
     return null;
   }
 
+  private monthsForPicker(): StatsMonth[] {
+    if (this.stats === null) {
+      return [];
+    }
+    return this.stats.months.slice().reverse();
+  }
+
   private monthSeries(): ChartSeries[] {
     if (this.stats === null) {
       return [];
@@ -263,9 +270,9 @@ export struct AnalyticsPage {
   monthPicker() {
     Scroll() {
       Row({ space: 6 }) {
-        ForEach(this.stats !== null ? this.stats.months : [], (month: StatsMonth, index: number) => {
+        ForEach(this.monthsForPicker(), (month: StatsMonth, index: number) => {
           Text(month.label)
-            .id(index === 0 ? 'analytics_month_first' : `analytics_month_${month.label}`)
+            .id(index === 0 ? 'analytics_month_first' : (index === 1 ? 'analytics_month_second' : `analytics_month_${month.label}`))
             .fontSize(11)
             .fontColor(this.selectedMonth === month.label ? Color.White : AppTheme.color.textSecondary)
             .padding({ left: 10, right: 10, top: 6, bottom: 6 })
