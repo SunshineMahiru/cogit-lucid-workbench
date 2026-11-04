@@ -13,6 +13,9 @@ export interface ReviewResult {
   action: string;
   /** Anchors quoted during the contradiction step */
   anchorIds: string[];
+  /** Optional plan context when the review came from a plan node */
+  planId?: string;
+  planNodeId?: string;
   /** Security level controlling aggregation and export; absent values are local-only */
   level?: SecurityLevel;
   createdAt: number;

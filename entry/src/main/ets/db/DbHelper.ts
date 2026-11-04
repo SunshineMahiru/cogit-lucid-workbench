@@ -164,6 +164,16 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    const planContextMigrations: string[] = [
+      `ALTER TABLE review_result ADD COLUMN plan_id TEXT`,
+      `ALTER TABLE review_result ADD COLUMN plan_node_id TEXT`
+    ];
+    for (const sql of planContextMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     // Prediction revisions need a stable root so the latest version can be resolved.
     try {
       await store.executeSql(`ALTER TABLE prediction ADD COLUMN root_id TEXT NOT NULL DEFAULT ''`);

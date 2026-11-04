@@ -3,6 +3,7 @@ import { InteractionLog, Relation } from '../../model/Relation';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { TrustLevel } from '../../model/TrustLevel';
 import { DB_TABLES, RELATION_COLS } from '../DbConstants';
+import { parseInteractionLog } from '../SafeJson';
 
 /** Data access for the relation table. */
 export class RelationDao {
@@ -129,7 +130,7 @@ export class RelationDao {
       id: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.ID)),
       name: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.NAME)),
       trustLevel: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.TRUST_LEVEL)) as TrustLevel,
-      interactionLog: JSON.parse(resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.INTERACTION_LOG))) as InteractionLog[],
+      interactionLog: parseInteractionLog(resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.INTERACTION_LOG))),
       rawMaterialTest: resultSet.getLong(resultSet.getColumnIndex(RELATION_COLS.RAW_MATERIAL_TEST)) === 1,
       forbidAnalysis: resultSet.getLong(resultSet.getColumnIndex(RELATION_COLS.FORBID_ANALYSIS)) === 1,
       level: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.LEVEL)) as SecurityLevel,

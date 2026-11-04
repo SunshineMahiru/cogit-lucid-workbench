@@ -49,13 +49,13 @@ export class PlanService {
     return null;
   }
 
-  /** Creates a goal; it becomes primary when no active primary goal exists. */
+  /** Creates a goal and its first week atomically; it becomes primary when no active primary goal exists. */
   async createPlan(title: string, startDate: string): Promise<Plan> {
     const existing = await this.dao.queryPlans();
     const plan = createPlan(title, startDate);
     plan.isPrimary = !this.hasActivePrimary(existing);
-    await this.dao.insertPlan(plan);
-    await this.createNextNode(plan.id);
+    const firstNode = createPlanNode(plan.id, 1, plan.startDate);
+    await this.dao.insertPlanWithFirstNode(plan, firstNode);
     return plan;
   }
 
@@ -129,6 +129,19 @@ export class PlanService {
     const project = createPlanProject(planId, name, existing.length);
     await this.dao.insertProject(project);
     return project;
+  }
+
+  async renameProject(projectId: string, name: string): Promise<void> {
+    const trimmed = name.trim();
+    if (trimmed.length === 0) {
+      throw new Error('project name required');
+    }
+    await this.dao.renameProject(projectId, trimmed);
+  }
+
+  /** Deletes a project; its nodes fall back to ungrouped and keep every item. */
+  async deleteProject(planId: string, projectId: string): Promise<void> {
+    await this.dao.deleteProject(planId, projectId);
   }
 
   async listNodes(planId: string): Promise<PlanNode[]> {
@@ -229,6 +242,10 @@ export class PlanService {
 
   async listLinks(nodeId: string): Promise<PlanLink[]> {
     return this.dao.queryLinks(nodeId);
+  }
+
+  async listLinksByTarget(module: PlanLinkModule, targetId: string): Promise<PlanLink[]> {
+    return this.dao.queryLinksByTarget(module, targetId);
   }
 
   async addLink(planId: string, nodeId: string, module: PlanLinkModule,

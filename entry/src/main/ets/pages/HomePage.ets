@@ -6,6 +6,7 @@ import { ProfileHeader } from '../components/ProfileHeader';
 import { HomeDataService } from '../data/HomeDataService';
 import { HomePulse, HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
+import { consumeJsonIssues } from '../db/SafeJson';
 import { previewStore } from '../preview/PreviewStore';
 import { ROUTES } from '../navigation/Routes';
 
@@ -20,6 +21,7 @@ export struct HomePage {
   @Local pulse: HomePulse = { streakDays: 0, lastReviewLabel: NO_RATE_TEXT };
   @Local loadFailed: boolean = false;
   @Local isPreview: boolean = false;
+  @Local dataNotice: string = '';
   private service: HomeDataService | null = null;
   private loadToken: number = 0;
   private listener: (() => void) | null = null;
@@ -61,6 +63,7 @@ export struct HomePage {
       }
       this.summary = summary;
       this.pulse = pulse;
+      this.dataNotice = consumeJsonIssues() > 0 ? '部分记录格式异常，已跳过' : '';
       this.loadFailed = false;
       this.isPreview = false;
     } catch (error) {
@@ -110,6 +113,13 @@ export struct HomePage {
         Text('演示数据 · 数据库不可用')
           .fontSize(10)
           .fontColor(AppTheme.color.textMuted)
+          .width('100%')
+          .textAlign(TextAlign.Center)
+          .padding({ top: 6, bottom: 2 })
+      } else if (this.dataNotice.length > 0) {
+        Text(this.dataNotice)
+          .fontSize(10)
+          .fontColor(AppTheme.color.warning)
           .width('100%')
           .textAlign(TextAlign.Center)
           .padding({ top: 6, bottom: 2 })

@@ -2,6 +2,7 @@ import { relationalStore } from '@kit.ArkData';
 import { Decision } from '../../model/Decision';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, DECISION_COLS } from '../DbConstants';
+import { parseStringArray } from '../SafeJson';
 
 /** Data access for the decision table. */
 export class DecisionDao {
@@ -80,12 +81,12 @@ export class DecisionDao {
       id: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.ID)),
       title: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.TITLE)),
       background: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.BACKGROUND)),
-      options: JSON.parse(resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.OPTIONS))) as string[],
+      options: parseStringArray(resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.OPTIONS))),
       choice: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.CHOICE)),
       expectedOutcome: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.EXPECTED_OUTCOME)),
       timestamp: resultSet.getLong(resultSet.getColumnIndex(DECISION_COLS.TIMESTAMP)),
-      relatedEventIds: JSON.parse(resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.RELATED_EVENT_IDS))) as string[],
-      relatedRelationIds: JSON.parse(resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.RELATED_RELATION_IDS))) as string[],
+      relatedEventIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.RELATED_EVENT_IDS))),
+      relatedRelationIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.RELATED_RELATION_IDS))),
       level: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.LEVEL)) as SecurityLevel,
       reviewed: resultSet.getLong(resultSet.getColumnIndex(DECISION_COLS.REVIEWED)) === 1
     };

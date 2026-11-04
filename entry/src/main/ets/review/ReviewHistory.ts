@@ -12,6 +12,8 @@ export interface ReviewHistoryItem {
   createdAtLabel: string;
   /** Milliseconds; used for plan link suggestions */
   createdAt?: number;
+  planId?: string;
+  planNodeId?: string;
   anchorCount: number;
 }
 
@@ -25,7 +27,7 @@ export interface ReviewDetailView extends ReviewHistoryItem {
 
 /** Projects a saved result into a history row. */
 export function toReviewHistoryItem(result: ReviewResult): ReviewHistoryItem {
-  return {
+  const item: ReviewHistoryItem = {
     id: result.id,
     period: result.period,
     periodLabel: result.period === ReviewPeriod.WEEK ? '周复盘' : '月复盘',
@@ -35,6 +37,13 @@ export function toReviewHistoryItem(result: ReviewResult): ReviewHistoryItem {
     createdAt: result.createdAt,
     anchorCount: result.anchorIds.length
   };
+  if (result.planId !== undefined) {
+    item.planId = result.planId;
+  }
+  if (result.planNodeId !== undefined) {
+    item.planNodeId = result.planNodeId;
+  }
+  return item;
 }
 
 /** Resolves anchor ids in their saved order and drops ids that no longer exist. */
@@ -53,6 +62,9 @@ export function toReviewDetailView(result: ReviewResult, anchors: Anchor[]): Rev
     rangeLabel: result.rangeLabel,
     action: result.action,
     createdAtLabel: formatReviewTime(result.createdAt),
+    createdAt: result.createdAt,
+    planId: result.planId,
+    planNodeId: result.planNodeId,
     anchorCount: result.anchorIds.length,
     facts: result.facts,
     interpretation: result.interpretation,

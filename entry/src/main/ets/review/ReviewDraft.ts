@@ -29,6 +29,9 @@ export interface ReviewDraft {
   contradiction: string;
   action: string;
   anchorIds: string[];
+  /** Plan context when the draft belongs to one plan node */
+  planId?: string;
+  planNodeId?: string;
 }
 
 /** Returns an empty draft with no anchors referenced. */

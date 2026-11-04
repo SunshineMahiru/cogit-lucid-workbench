@@ -5,8 +5,9 @@ import { ReviewDraft } from './ReviewDraft';
 
 const STORE_NAME = 'review_draft_store';
 const KEY_PREFIX = 'draft_';
+const NODE_PREFIX = 'node_';
 
-/** Persists one unfinished review draft per period. */
+/** Persists one unfinished review draft per period, or one per plan node. */
 export class ReviewDraftStore {
   private prefs: preferences.Preferences;
 
@@ -19,8 +20,16 @@ export class ReviewDraftStore {
     return new ReviewDraftStore(prefs);
   }
 
+  private keyFor(period: ReviewPeriod, planNodeId: string): string {
+    return planNodeId.length > 0 ? `${NODE_PREFIX}${planNodeId}` : `${KEY_PREFIX}${period}`;
+  }
+
   async load(period: ReviewPeriod): Promise<ReviewDraft | null> {
-    const raw = await this.prefs.get(KEY_PREFIX + period, '');
+    return this.loadFor(period, '');
+  }
+
+  async loadFor(period: ReviewPeriod, planNodeId: string): Promise<ReviewDraft | null> {
+    const raw = await this.prefs.get(this.keyFor(period, planNodeId), '');
     if (typeof raw !== 'string' || raw.length === 0) {
       return null;
     }
@@ -31,43 +40,62 @@ export class ReviewDraftStore {
       const contradiction = parsed['contradiction'];
       const action = parsed['action'];
       const anchorIds = parsed['anchorIds'];
-      return {
+      const planId = parsed['planId'];
+      const nodeId = parsed['planNodeId'];
+      const draft: ReviewDraft = {
         facts: typeof facts === 'string' ? facts : '',
         interpretation: typeof interpretation === 'string' ? interpretation : '',
         contradiction: typeof contradiction === 'string' ? contradiction : '',
         action: typeof action === 'string' ? action : '',
         anchorIds: Array.isArray(anchorIds) ? anchorIds as string[] : []
       };
+      if (typeof planId === 'string' && planId.length > 0) {
+        draft.planId = planId;
+      }
+      if (typeof nodeId === 'string' && nodeId.length > 0) {
+        draft.planNodeId = nodeId;
+      }
+      return draft;
     } catch (error) {
       return null;
     }
   }
 
   async save(period: ReviewPeriod, draft: ReviewDraft): Promise<void> {
-    await this.prefs.put(KEY_PREFIX + period, JSON.stringify(draft));
+    await this.saveFor(period, '', draft);
+  }
+
+  async saveFor(period: ReviewPeriod, planNodeId: string, draft: ReviewDraft): Promise<void> {
+    await this.prefs.put(this.keyFor(period, planNodeId), JSON.stringify(draft));
     await this.prefs.flush();
   }
 
   async clear(period: ReviewPeriod): Promise<void> {
-    await this.prefs.put(KEY_PREFIX + period, '');
+    await this.clearFor(period, '');
+  }
+
+  async clearFor(period: ReviewPeriod, planNodeId: string): Promise<void> {
+    await this.prefs.put(this.keyFor(period, planNodeId), '');
     await this.prefs.flush();
   }
 
   /**
-   * Appends a plan-node summary to the weekly draft.
-   * Existing text is preserved; an empty draft is filled in place.
+   * Creates or appends the weekly draft for one plan node.
+   * A node with no draft gets a new one; an existing node draft keeps its text.
    */
-  async prefillWeekly(facts: string): Promise<void> {
-    const existing = await this.load(ReviewPeriod.WEEK);
+  async prefillWeekly(facts: string, planId: string = '', planNodeId: string = ''): Promise<void> {
+    const existing = await this.loadFor(ReviewPeriod.WEEK, planNodeId);
     if (existing === null) {
       const draft: ReviewDraft = {
         facts: facts,
         interpretation: '',
         contradiction: '',
         action: '',
-        anchorIds: []
+        anchorIds: [],
+        planId: planId,
+        planNodeId: planNodeId
       };
-      await this.save(ReviewPeriod.WEEK, draft);
+      await this.saveFor(ReviewPeriod.WEEK, planNodeId, draft);
       return;
     }
     if (existing.facts.trim().length === 0) {
@@ -75,6 +103,8 @@ export class ReviewDraftStore {
     } else if (!existing.facts.includes(facts)) {
       existing.facts = `${existing.facts.trimEnd()}\n\n${facts}`;
     }
-    await this.save(ReviewPeriod.WEEK, existing);
+    existing.planId = planId;
+    existing.planNodeId = planNodeId;
+    await this.saveFor(ReviewPeriod.WEEK, planNodeId, existing);
   }
 }

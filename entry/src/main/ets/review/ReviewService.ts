@@ -67,7 +67,8 @@ export class ReviewService {
   }
 
   /** Persists a completed session and returns its id. */
-  async save(period: ReviewPeriod, draft: ReviewDraft, rangeLabel: string): Promise<string> {
+  async save(period: ReviewPeriod, draft: ReviewDraft, rangeLabel: string,
+    planId: string = '', planNodeId: string = ''): Promise<string> {
     const result = createReviewResult();
     result.period = period;
     result.rangeLabel = rangeLabel;
@@ -76,6 +77,12 @@ export class ReviewService {
     result.contradiction = draft.contradiction.trim();
     result.action = draft.action.trim();
     result.anchorIds = draft.anchorIds.slice();
+    if (planId.length > 0) {
+      result.planId = planId;
+    }
+    if (planNodeId.length > 0) {
+      result.planNodeId = planNodeId;
+    }
     await this.reviewDao.insert(result);
     return result.id;
   }

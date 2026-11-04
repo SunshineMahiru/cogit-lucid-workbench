@@ -39,6 +39,19 @@ export class PlanDao {
     return this.store.insert(DB_TABLES.PLAN, values);
   }
 
+  /** Inserts a goal together with its first week inside one transaction. */
+  async insertPlanWithFirstNode(plan: Plan, node: PlanNode): Promise<void> {
+    this.store.beginTransaction();
+    try {
+      await this.insertPlan(plan);
+      await this.insertNode(node);
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
+  }
+
   async updatePlan(plan: Plan): Promise<number> {
     const values: relationalStore.ValuesBucket = {
       [PLAN_COLS.TITLE]: plan.title,
@@ -120,6 +133,32 @@ export class PlanDao {
     }
   }
 
+  async renameProject(id: string, name: string): Promise<number> {
+    const values: relationalStore.ValuesBucket = { [PLAN_PROJECT_COLS.NAME]: name };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_PROJECT);
+    predicates.equalTo(PLAN_PROJECT_COLS.ID, id);
+    return this.store.update(values, predicates);
+  }
+
+  /** Deletes one project and unlinks its nodes inside a transaction; nodes and items stay. */
+  async deleteProject(planId: string, projectId: string): Promise<void> {
+    this.store.beginTransaction();
+    try {
+      const clear: relationalStore.ValuesBucket = { [PLAN_NODE_COLS.PROJECT_ID]: '' };
+      const nodes = new relationalStore.RdbPredicates(DB_TABLES.PLAN_NODE);
+      nodes.equalTo(PLAN_NODE_COLS.PLAN_ID, planId);
+      nodes.equalTo(PLAN_NODE_COLS.PROJECT_ID, projectId);
+      await this.store.update(clear, nodes);
+      const target = new relationalStore.RdbPredicates(DB_TABLES.PLAN_PROJECT);
+      target.equalTo(PLAN_PROJECT_COLS.ID, projectId);
+      await this.store.delete(target);
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
+  }
+
   async insertNode(node: PlanNode): Promise<number> {
     const values: relationalStore.ValuesBucket = {
       [PLAN_NODE_COLS.ID]: node.id,
@@ -170,7 +209,8 @@ export class PlanDao {
     return this.store.update(values, predicates);
   }
 
-  async closeNode(id: string, reviewId: string): Promise<number> {    const values: relationalStore.ValuesBucket = {
+  async closeNode(id: string, reviewId: string): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
       [PLAN_NODE_COLS.STATUS]: PlanNodeStatus.CLOSED,
       [PLAN_NODE_COLS.REVIEW_ID]: reviewId
     };
@@ -254,6 +294,22 @@ export class PlanDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
     predicates.equalTo(PLAN_LINK_COLS.PLAN_ID, planId);
     predicates.orderByDesc(PLAN_LINK_COLS.CREATED_AT);
+    const resultSet = await this.store.query(predicates);
+    try {
+      const rows: PlanLink[] = [];
+      while (resultSet.goToNextRow()) {
+        rows.push(this.mapLink(resultSet));
+      }
+      return rows;
+    } finally {
+      resultSet.close();
+    }
+  }
+
+  async queryLinksByTarget(module: string, targetId: string): Promise<PlanLink[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
+    predicates.equalTo(PLAN_LINK_COLS.MODULE, module);
+    predicates.equalTo(PLAN_LINK_COLS.TARGET_ID, targetId);
     const resultSet = await this.store.query(predicates);
     try {
       const rows: PlanLink[] = [];

@@ -96,6 +96,30 @@ class PlanPreviewStore {
     return project;
   }
 
+  renameProject(projectId: string, name: string): void {
+    for (const project of this.planProjects) {
+      if (project.id === projectId) {
+        project.name = name;
+        return;
+      }
+    }
+  }
+
+  deleteProject(planId: string, projectId: string): void {
+    for (const node of this.planNodes) {
+      if (node.planId === planId && node.projectId === projectId) {
+        node.projectId = '';
+      }
+    }
+    const rows: PlanProject[] = [];
+    for (const project of this.planProjects) {
+      if (project.id !== projectId) {
+        rows.push(project);
+      }
+    }
+    this.planProjects = rows;
+  }
+
   archive(id: string): void {
     const plan = this.find(id);
     if (plan !== null) {

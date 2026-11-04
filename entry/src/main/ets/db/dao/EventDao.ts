@@ -2,6 +2,7 @@ import { relationalStore } from '@kit.ArkData';
 import { Event } from '../../model/Event';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, EVENT_COLS } from '../DbConstants';
+import { parseStringArray } from '../SafeJson';
 
 /** Data access for the event table. */
 export class EventDao {
@@ -134,10 +135,10 @@ export class EventDao {
       content: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.CONTENT)),
       type: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.TYPE)),
       timestamp: resultSet.getLong(resultSet.getColumnIndex(EVENT_COLS.TIMESTAMP)),
-      tags: JSON.parse(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.TAGS))) as string[],
+      tags: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.TAGS))),
       level: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.LEVEL)) as SecurityLevel,
-      relatedDecisionIds: JSON.parse(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_DECISION_IDS))) as string[],
-      relatedRelationIds: JSON.parse(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_RELATION_IDS))) as string[]
+      relatedDecisionIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_DECISION_IDS))),
+      relatedRelationIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_RELATION_IDS)))
     };
   }
 }

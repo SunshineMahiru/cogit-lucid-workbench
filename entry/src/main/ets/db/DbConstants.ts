@@ -103,6 +103,8 @@ export const REVIEW_COLS = {
   CONTRADICTION: 'contradiction',
   ACTION: 'next_action',
   ANCHOR_IDS: 'anchor_ids',
+  PLAN_ID: 'plan_id',
+  PLAN_NODE_ID: 'plan_node_id',
   LEVEL: 'level',
   CREATED_AT: 'created_at'
 } as const;

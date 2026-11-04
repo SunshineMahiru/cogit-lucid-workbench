@@ -3,6 +3,7 @@ import { ReviewPeriod } from '../../model/ReviewPeriod';
 import { ReviewResult } from '../../model/ReviewResult';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, REVIEW_COLS } from '../DbConstants';
+import { parseStringArray } from '../SafeJson';
 
 /** Data access for saved review sessions. */
 export class ReviewResultDao {
@@ -23,6 +24,8 @@ export class ReviewResultDao {
       [REVIEW_COLS.CONTRADICTION]: result.contradiction,
       [REVIEW_COLS.ACTION]: result.action,
       [REVIEW_COLS.ANCHOR_IDS]: JSON.stringify(result.anchorIds),
+      [REVIEW_COLS.PLAN_ID]: result.planId ?? '',
+      [REVIEW_COLS.PLAN_NODE_ID]: result.planNodeId ?? '',
       [REVIEW_COLS.LEVEL]: result.level ?? SecurityLevel.LOCAL_ONLY,
       [REVIEW_COLS.CREATED_AT]: result.createdAt
     };
@@ -62,7 +65,9 @@ export class ReviewResultDao {
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): ReviewResult {
-    return {
+    const planId = resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.PLAN_ID));
+    const planNodeId = resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.PLAN_NODE_ID));
+    const result: ReviewResult = {
       id: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.ID)),
       period: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.PERIOD)) as ReviewPeriod,
       rangeLabel: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.RANGE_LABEL)),
@@ -70,9 +75,16 @@ export class ReviewResultDao {
       interpretation: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.INTERPRETATION)),
       contradiction: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.CONTRADICTION)),
       action: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.ACTION)),
-      anchorIds: JSON.parse(resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.ANCHOR_IDS))) as string[],
+      anchorIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.ANCHOR_IDS))),
       level: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.LEVEL)) as SecurityLevel,
       createdAt: resultSet.getLong(resultSet.getColumnIndex(REVIEW_COLS.CREATED_AT))
     };
+    if (planId.length > 0) {
+      result.planId = planId;
+    }
+    if (planNodeId.length > 0) {
+      result.planNodeId = planNodeId;
+    }
+    return result;
   }
 }

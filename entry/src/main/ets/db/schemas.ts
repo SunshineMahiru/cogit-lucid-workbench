@@ -78,6 +78,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     contradiction TEXT NOT NULL,
     next_action TEXT NOT NULL,
     anchor_ids TEXT NOT NULL,
+    plan_id TEXT,
+    plan_node_id TEXT,
     level TEXT NOT NULL DEFAULT 'local_only',
     created_at INTEGER NOT NULL
   )`,
