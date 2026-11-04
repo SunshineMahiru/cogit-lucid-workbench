@@ -12,6 +12,6 @@ export interface PlanNode {
   /** Sunday, YYYY-MM-DD */
   endDate: string;
   status: PlanNodeStatus;
-  /** Weekly review draft created when the node closes */
+  /** Reserved for a persisted weekly review id; closing writes the shared weekly draft */
   reviewId?: string;
 }
