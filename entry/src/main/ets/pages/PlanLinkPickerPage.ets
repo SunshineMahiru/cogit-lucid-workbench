@@ -5,7 +5,7 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PlanLink } from '../model/PlanLink';
 import { PlanService } from '../plan';
-import { LinkCandidate } from '../plan/PlanLinkCandidate';
+import { LinkCandidate, markLinkSuggestions } from '../plan/PlanLinkCandidate';
 import { loadPlanLinkCandidates, planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import { PlanLinkPickerParams } from '../navigation/RouteParams';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
@@ -65,10 +65,32 @@ export struct PlanLinkPickerPage {
     this.selectedKeys = keys;
     try {
       this.candidates = await loadPlanLinkCandidates(hostContext, weekStart, weekEnd);
+      this.applySuggestions(links);
     } catch (error) {
       this.candidates = [];
     }
     this.isLoading = false;
+  }
+
+  private applySuggestions(links: PlanLink[]): void {
+    const relationIds: string[] = [];
+    const tags: string[] = [];
+    for (const link of links) {
+      if (link.module === PlanLinkModule.RELATION) {
+        relationIds.push(link.targetId);
+      }
+      for (const item of this.candidates) {
+        if (item.module === link.module && item.targetId === link.targetId) {
+          for (const relationId of item.relationIds) {
+            relationIds.push(relationId);
+          }
+          for (const tag of item.tags) {
+            tags.push(tag);
+          }
+        }
+      }
+    }
+    this.candidates = markLinkSuggestions(this.candidates, this.weekStart, this.weekEnd, relationIds, tags);
   }
 
   private visibleCandidates(): LinkCandidate[] {

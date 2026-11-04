@@ -10,6 +10,8 @@ export interface ReviewHistoryItem {
   rangeLabel: string;
   action: string;
   createdAtLabel: string;
+  /** Milliseconds; used for plan link suggestions */
+  createdAt?: number;
   anchorCount: number;
 }
 
@@ -30,6 +32,7 @@ export function toReviewHistoryItem(result: ReviewResult): ReviewHistoryItem {
     rangeLabel: result.rangeLabel,
     action: result.action,
     createdAtLabel: formatReviewTime(result.createdAt),
+    createdAt: result.createdAt,
     anchorCount: result.anchorIds.length
   };
 }

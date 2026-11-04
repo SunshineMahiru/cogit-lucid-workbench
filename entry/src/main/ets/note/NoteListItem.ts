@@ -9,6 +9,8 @@ export interface NoteListItem {
   /** Event type, matching the template label or the free-form type */
   type: string;
   tags: string[];
+  /** Relation ids referenced by the note; used by plan link suggestions */
+  relatedRelationIds?: string[];
   level: SecurityLevel;
   timestamp: number;
   /** Short display time: HH:mm for today, MM-DD HH:mm otherwise */

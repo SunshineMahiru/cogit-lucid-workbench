@@ -14,7 +14,7 @@ import {
   PREVIEW_PREDICTION_ITEMS,
   PREVIEW_RELATION_ITEMS
 } from '../preview/PreviewData';
-import { LinkCandidate, markLinkSuggestions } from './PlanLinkCandidate';
+import { LinkCandidate } from './PlanLinkCandidate';
 
 const ITEM_LIMIT = 20;
 
@@ -25,13 +25,14 @@ export async function loadPlanLinkCandidates(
   weekEnd: string
 ): Promise<LinkCandidate[]> {
   const items = context === undefined ? previewCandidates() : await databaseCandidates(context);
-  return markLinkSuggestions(items, weekStart, weekEnd);
+  return items;
 }
 
 function previewCandidates(): LinkCandidate[] {
   const items: LinkCandidate[] = [];
   for (const note of PREVIEW_NOTE_ITEMS) {
-    items.push(candidate(PlanLinkModule.NOTE, note.id, note.title, note.type, note.timestamp, note.tags));
+    items.push(candidate(PlanLinkModule.NOTE, note.id, note.title, note.type, note.timestamp, note.tags,
+      note.relatedRelationIds ?? []));
   }
   for (const prediction of PREVIEW_PREDICTION_ITEMS) {
     items.push(candidate(PlanLinkModule.PREDICTION, prediction.id, prediction.target,
@@ -39,7 +40,7 @@ function previewCandidates(): LinkCandidate[] {
   }
   for (const review of previewStore.reviewHistory()) {
     items.push(candidate(PlanLinkModule.REVIEW, review.id, `${review.periodLabel} ${review.rangeLabel}`,
-      review.action, 0, []));
+      review.action, review.createdAt ?? 0, []));
   }
   for (const anchor of PREVIEW_ANCHORS) {
     items.push(candidate(PlanLinkModule.ANCHOR, anchor.id, anchor.text, anchor.source, 0, []));
@@ -47,7 +48,7 @@ function previewCandidates(): LinkCandidate[] {
   for (const relation of PREVIEW_RELATION_ITEMS) {
     items.push(candidate(PlanLinkModule.RELATION, relation.id, relation.name,
       `${relation.trustLevel} · ${relation.interactionCount} 次互动`, relation.lastInteractionAt,
-      [relation.trustLevel]));
+      [relation.trustLevel], [relation.id]));
   }
   for (const record of MOCK_STATUS_RECORDS.slice(0, 5)) {
     const timestamp = new Date(`${record.date}T00:00:00`).getTime();
@@ -62,7 +63,8 @@ async function databaseCandidates(context: common.Context): Promise<LinkCandidat
   const noteService = await QuickNoteService.open(context);
   const notes: NoteListItem[] = await noteService.listRecentPage(ITEM_LIMIT, 0);
   for (const note of notes) {
-    items.push(candidate(PlanLinkModule.NOTE, note.id, note.title, note.type, note.timestamp, note.tags));
+    items.push(candidate(PlanLinkModule.NOTE, note.id, note.title, note.type, note.timestamp, note.tags,
+      note.relatedRelationIds ?? []));
   }
 
   const predictionService = await PredictionService.open(context);
@@ -76,7 +78,7 @@ async function databaseCandidates(context: common.Context): Promise<LinkCandidat
   const reviews: ReviewHistoryItem[] = await reviewService.history(ITEM_LIMIT);
   for (const review of reviews) {
     items.push(candidate(PlanLinkModule.REVIEW, review.id, `${review.periodLabel} ${review.rangeLabel}`,
-      review.action, 0, []));
+      review.action, review.createdAt ?? 0, []));
   }
 
   const anchorService = await AnchorService.open(context);
@@ -90,7 +92,7 @@ async function databaseCandidates(context: common.Context): Promise<LinkCandidat
   for (const relation of relations.slice(0, ITEM_LIMIT)) {
     items.push(candidate(PlanLinkModule.RELATION, relation.id, relation.name,
       `${relation.trustLevel} · ${relation.interactionCount} 次互动`, relation.lastInteractionAt,
-      [relation.trustLevel]));
+      [relation.trustLevel], [relation.id]));
   }
 
   const statusService = await StatusService.open(context);
@@ -104,7 +106,7 @@ async function databaseCandidates(context: common.Context): Promise<LinkCandidat
 }
 
 function candidate(module: PlanLinkModule, targetId: string, title: string, subtitle: string,
-  timestamp: number, tags: string[]): LinkCandidate {
+  timestamp: number, tags: string[], relationIds: string[] = []): LinkCandidate {
   return {
     module: module,
     targetId: targetId,
@@ -112,7 +114,9 @@ function candidate(module: PlanLinkModule, targetId: string, title: string, subt
     subtitle: subtitle,
     timestamp: timestamp,
     tags: tags,
-    suggested: false
+    relationIds: relationIds,
+    suggested: false,
+    score: 0
   };
 }
 
