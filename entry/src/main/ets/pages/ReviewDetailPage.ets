@@ -150,6 +150,10 @@ export struct ReviewDetailPage {
                   .fontSize(10)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
+                Text('已完成记录不可修改')
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.warning)
+                  .width('100%')
               }
               .width('100%')
               .alignItems(HorizontalAlign.Start)

@@ -2,6 +2,7 @@ import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { Anchor } from '../model/Anchor';
 import { MOCK_ANCHORS } from '../model/mockData';
+import { createAnchor } from '../model/factories';
 import { DbHelper } from '../db/DbHelper';
 import { AnchorDao } from '../db/dao/AnchorDao';
 
@@ -22,6 +23,21 @@ export class AnchorService {
   /** Returns anchors ordered by their display order. */
   async list(): Promise<Anchor[]> {
     return this.anchorDao.queryAll();
+  }
+
+  /** Adds one user-written anchor; saved anchors stay read-only. */
+  async create(text: string): Promise<Anchor> {
+    const value = text.trim();
+    if (value.length === 0) {
+      throw new Error('empty anchor');
+    }
+    const existing = await this.anchorDao.queryAll();
+    const anchor = createAnchor();
+    anchor.text = value;
+    anchor.source = '自写';
+    anchor.order = existing.length;
+    await this.anchorDao.insert(anchor);
+    return anchor;
   }
 
   /**

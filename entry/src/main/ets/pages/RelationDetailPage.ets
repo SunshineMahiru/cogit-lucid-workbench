@@ -37,6 +37,8 @@ export struct RelationDetailPage {
   @Local isPreview: boolean = false;
   @Local deleted: boolean = false;
   @Local undoVisible: boolean = false;
+  @Local newInteraction: string = '';
+  @Local isAdding: boolean = false;
   private navStack: NavPathStack | null = null;
   private service: RelationService | null = null;
 
@@ -108,6 +110,43 @@ export struct RelationDetailPage {
       this.getUIContext().getPromptAction().showToast({ message: '已恢复关系' });
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '恢复失败，请重试' });
+    }
+  }
+
+  private async addInteraction(): Promise<void> {
+    const text = this.newInteraction.trim();
+    if (text.length === 0 || this.isAdding) {
+      return;
+    }
+    this.isAdding = true;
+    try {
+      if (this.isPreview) {
+        const now = Date.now();
+        const entry: InteractionLog = { timestamp: now, content: text };
+        const log: InteractionLog[] = [entry].concat(this.detail.interactionLog);
+        this.detail = {
+          id: this.detail.id,
+          name: this.detail.name,
+          trustLevel: this.detail.trustLevel,
+          interactionCount: log.length,
+          lastInteractionLabel: formatInteractionTime(now),
+          lastInteractionAt: now,
+          rawMaterialTest: this.detail.rawMaterialTest,
+          forbidAnalysis: this.detail.forbidAnalysis,
+          level: this.detail.level,
+          notes: this.detail.notes,
+          interactionLog: log,
+          linkedEvents: this.detail.linkedEvents,
+          linkedDecisions: this.detail.linkedDecisions
+        };
+      } else if (this.service !== null) {
+        this.detail = await this.service.addInteraction(this.detail.id, text);
+      }
+      this.newInteraction = '';
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '互动记录保存失败，请重试' });
+    } finally {
+      this.isAdding = false;
     }
   }
 
@@ -367,6 +406,24 @@ export struct RelationDetailPage {
                   .fontSize(11)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
+                Row({ space: 8 }) {
+                  TextInput({ text: this.newInteraction, placeholder: '补一条互动记录' })
+                    .id('relation_interaction_input')
+                    .maxLength(200)
+                    .layoutWeight(1)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.newInteraction = value;
+                    })
+                  Text(this.isAdding ? '保存中' : '添加')
+                    .id('relation_interaction_add')
+                    .fontSize(12)
+                    .fontColor(AppTheme.color.primary)
+                    .onClick(() => {
+                      this.addInteraction();
+                    })
+                }
+                .width('100%')
                 if (this.detail.interactionLog.length === 0) {
                   Text('暂无互动记录')
                     .fontSize(12)

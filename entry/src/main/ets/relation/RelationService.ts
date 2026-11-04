@@ -83,6 +83,20 @@ export class RelationService {
     await this.relationDao.restore(id);
   }
 
+  /** Appends one interaction to the relation log and returns the refreshed detail. */
+  async addInteraction(id: string, content: string): Promise<RelationDetail> {
+    const relation = await this.requireRelation(id);
+    const text = content.trim();
+    if (text.length === 0) {
+      throw new Error('empty interaction');
+    }
+    const log = relation.interactionLog.slice();
+    log.push({ timestamp: Date.now(), content: text });
+    await this.relationDao.update(id, log, relation.notes);
+    relation.interactionLog = log;
+    return toRelationDetail(relation);
+  }
+
   private async requireRelation(id: string): Promise<Relation> {
     const relation = await this.relationDao.queryById(id);
     if (relation === null) {

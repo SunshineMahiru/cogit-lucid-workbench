@@ -16,6 +16,8 @@ export struct AnchorPage {
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
   @Local isPreview: boolean = false;
+  @Local newAnchorText: string = '';
+  @Local isAdding: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -67,8 +69,35 @@ export struct AnchorPage {
     }
   }
 
-  private openReview(): void {
-    if (this.navStack === null) {
+  private async addAnchor(): Promise<void> {
+    const text = this.newAnchorText.trim();
+    if (text.length === 0 || this.isAdding) {
+      return;
+    }
+    this.isAdding = true;
+    try {
+      if (this.isPreview) {
+        const next = this.anchors.slice();
+        next.push({
+          id: `local_anchor_${Date.now()}`,
+          text: text,
+          source: '自写',
+          order: next.length
+        });
+        this.anchors = next;
+      } else if (this.service !== null) {
+        await this.service.create(text);
+        this.anchors = await this.service.list();
+      }
+      this.newAnchorText = '';
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '锚点保存失败，请重试' });
+    } finally {
+      this.isAdding = false;
+    }
+  }
+
+  private openReview(): void {    if (this.navStack === null) {
       return;
     }
     this.navStack.pushPathByName(ROUTES.REVIEW, null);
@@ -89,11 +118,30 @@ export struct AnchorPage {
       }
       .width('100%')
 
-      Text('复盘第三步用来对照的稳定句子，只读。')
+      Text('复盘第三步用来对照的稳定句子；新建后只读。')
         .fontSize(12)
         .lineHeight(18)
         .fontColor(AppTheme.color.textSecondary)
         .width('100%')
+
+      Row({ space: 8 }) {
+        TextInput({ text: this.newAnchorText, placeholder: '写一条自己的锚点' })
+          .id('anchor_input')
+          .maxLength(80)
+          .layoutWeight(1)
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .onChange((value: string) => {
+            this.newAnchorText = value;
+          })
+        Text(this.isAdding ? '保存中' : '添加')
+          .id('anchor_add')
+          .fontSize(12)
+          .fontColor(AppTheme.color.primary)
+          .onClick(() => {
+            this.addAnchor();
+          })
+      }
+      .width('100%')
     }
     .width('100%')
     .padding(14)
