@@ -23,10 +23,20 @@ export function formatPlanDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-/** Parses YYYY-MM-DD as a local date. */
+/** Parses YYYY-MM-DD as a local date; returns an invalid date for impossible values. */
 export function parsePlanDate(value: string): Date {
   const parts = value.split('-');
-  return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  if (parts.length !== 3) {
+    return new Date(NaN);
+  }
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return new Date(NaN);
+  }
+  return date;
 }
 
 /** Returns the Monday of the week containing the given date. */

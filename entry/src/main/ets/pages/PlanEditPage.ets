@@ -270,8 +270,8 @@ export struct PlanEditPage {
       },
       onDestinationReady: (context: NavDestinationContext) => {
         this.navStack = context.pathStack;
-        const params = context.pathInfo.param as PlanEditParams;
-        this.load(params.planId);
+        const params = context.pathInfo.param === undefined ? null : context.pathInfo.param as PlanEditParams;
+        this.load(params === null ? null : params.planId);
       }
     })
   }

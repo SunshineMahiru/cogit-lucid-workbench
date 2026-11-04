@@ -424,6 +424,11 @@ export struct PlanDetailPage {
       },
       onDestinationReady: (context: NavDestinationContext) => {
         this.navStack = context.pathStack;
+        if (context.pathInfo.param === undefined) {
+          this.missing = true;
+          this.isLoading = false;
+          return;
+        }
         const params = context.pathInfo.param as PlanDetailParams;
         this.load(params.planId);
       },

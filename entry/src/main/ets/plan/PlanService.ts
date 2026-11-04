@@ -49,12 +49,13 @@ export class PlanService {
     return null;
   }
 
-  /** Creates a goal; the first active goal becomes the primary one. */
+  /** Creates a goal; it becomes primary when no active primary goal exists. */
   async createPlan(title: string, startDate: string): Promise<Plan> {
     const existing = await this.dao.queryPlans();
     const plan = createPlan(title, startDate);
-    plan.isPrimary = existing.length === 0;
+    plan.isPrimary = !this.hasActivePrimary(existing);
     await this.dao.insertPlan(plan);
+    await this.createNextNode(plan.id);
     return plan;
   }
 
@@ -63,6 +64,10 @@ export class PlanService {
   }
 
   async setPrimary(id: string): Promise<void> {
+    const plan = await this.dao.findPlan(id);
+    if (plan === null || plan.status === PlanStatus.ARCHIVED) {
+      return;
+    }
     await this.dao.setPrimary(id);
   }
 
@@ -71,9 +76,13 @@ export class PlanService {
     if (plan === null) {
       return;
     }
+    const wasPrimary = plan.isPrimary;
     plan.status = PlanStatus.ARCHIVED;
     plan.isPrimary = false;
     await this.dao.updatePlan(plan);
+    if (wasPrimary) {
+      await this.promoteFirstActive(id);
+    }
   }
 
   async restore(id: string): Promise<void> {
@@ -82,7 +91,30 @@ export class PlanService {
       return;
     }
     plan.status = PlanStatus.ACTIVE;
+    const plans = await this.dao.queryPlans();
+    if (!this.hasActivePrimary(plans)) {
+      plan.isPrimary = true;
+    }
     await this.dao.updatePlan(plan);
+  }
+
+  private hasActivePrimary(plans: Plan[]): boolean {
+    for (const plan of plans) {
+      if (plan.isPrimary && plan.status === PlanStatus.ACTIVE) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private async promoteFirstActive(exceptId: string): Promise<void> {
+    const plans = await this.dao.queryPlans();
+    for (const plan of plans) {
+      if (plan.id !== exceptId && plan.status === PlanStatus.ACTIVE) {
+        await this.dao.setPrimary(plan.id);
+        return;
+      }
+    }
   }
 
   async listProjects(planId: string): Promise<PlanProject[]> {
@@ -90,6 +122,9 @@ export class PlanService {
   }
 
   async createProject(planId: string, name: string): Promise<PlanProject> {
+    if (name.trim().length === 0) {
+      throw new Error('project name required');
+    }
     const existing = await this.dao.queryProjects(planId);
     const project = createPlanProject(planId, name, existing.length);
     await this.dao.insertProject(project);
@@ -102,6 +137,10 @@ export class PlanService {
 
   async findNode(nodeId: string): Promise<PlanNode | null> {
     return this.dao.findNode(nodeId);
+  }
+
+  async setNodeProject(nodeId: string, projectId: string): Promise<void> {
+    await this.dao.setNodeProject(nodeId, projectId);
   }
 
   /** Returns the first node, creating it when the plan has none yet. */
@@ -201,5 +240,10 @@ export class PlanService {
 
   async removeLink(id: string): Promise<void> {
     await this.dao.deleteLink(id);
+  }
+
+  /** Replaces every link on one node atomically. */
+  async replaceLinks(nodeId: string, links: PlanLink[]): Promise<void> {
+    await this.dao.replaceLinks(nodeId, links);
   }
 }
