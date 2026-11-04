@@ -29,15 +29,15 @@ The launch screen opens with an identity band — avatar, nickname, signature, a
 
 ## Project status
 
-The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings with page backgrounds and surface opacity, export, and a remote analytics dashboard. Both a light and a dark palette ship, and the interface follows the system colour mode. The home page is a normal destination on one navigation stack, so forward and back animate both pages. When `relationalStore` is unavailable in the DevEco Previewer, the home page reads the in-memory preview store and labels the data as demo content. The project is still being refined.
+The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings with page backgrounds and surface opacity, export, and a remote analytics dashboard. Both a light and a dark palette ship, and the interface follows the system colour mode. The home page is a normal destination on one navigation stack, so forward and back animate both pages. When `relationalStore` cannot be opened, as in the DevEco Previewer, the home page reads the in-memory preview store and labels the data as demo content. The project is still being refined.
 
 ## Highlights
 
 | Highlight | What it gives you |
 |---|---|
 | Frozen prediction log | Target, judgment, confidence 0-100, reason, and a settlement date written once; settlement fills the outcome and marks hit or miss. |
-| Hit-rate statistics | Overall rate, a monthly trend over the last 6 or 12 months, and a hit/miss donut, drawn with `@ohos/mpchart`. |
-| Analytics dashboard | Ten charts over a remote JSON payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. The 6/12-month switch refetches the payload. |
+| Hit-rate statistics | Overall rate, a monthly trend over the last six months, and a hit/miss donut, drawn with `@ohos/mpchart`. |
+| Analytics dashboard | Ten charts over a remote JSON payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. The 6/12-month switch refetches the payload. The dashboard renders the remote example payload and does not read local records. |
 | Preview fallback | In the DevEco Previewer, where `relationalStore` is unavailable, the home page falls back to the in-memory preview store and marks the counters as demo data. |
 | Four-step review | Facts, interpretation, contradiction, action. The contradiction step can quote up to three anchors. |
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
@@ -85,9 +85,9 @@ The code is organised as six layers with a single dependency direction, plus a s
 
 ## Usage Example
 
-The home page opens with the identity band and four counters; today's readings, a weekly settlement card, and the grid of six modules follow below. `编辑` and `设置` sit on the right of the identity band.
+The home page opens with the identity band and four counters; today's readings, a weekly settlement or onboarding card, and the grid of six modules follow below. `编辑` and `设置` sit on the right of the identity band.
 
-<img src="./docs/images/debug/home.jpeg" width="300" alt="Dashboard with sleep, exercise and note readings, a weekly settlement card, and a grid of six modules">
+<img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard link, today's readings, an onboarding card and the six-module grid">
 
 ### Set your identity
 
@@ -111,7 +111,7 @@ Expected result: after two or three settled predictions the statistics page draw
 ### Open the analytics dashboard
 
 1. On the home page, tap `数据看板` under the four counters.
-2. The page requests `stats-6m.json` from `docs/mock/` in the public repository and draws ten charts: monthly hit rate, calibration curve, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap.
+2. The page requests `stats-6m.json` from `docs/mock/` in the public repository and draws ten charts: monthly hit rate, calibration curve, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. It does not read local records.
 3. Tap `12 月` to request `stats-12m.json`; tap `刷新` to request the current range again.
 4. If both the Gitee and GitHub requests fail, the page keeps the error message and a retry action.
 
@@ -140,7 +140,15 @@ Settings (`设置`) writes the whole record set to `cogit-export-YYYYMMDD-HHMM.m
 
 ## Screens
 
-Screenshots come from a Mate 70 Pro emulator. Every record in them is synthetic. They were captured before the identity band was added; the current home page carries that band above the content shown here, plus a `数据看板` link under the counters. The rest of the captured pages are unchanged.
+Screenshots come from a Mate 70 Pro emulator. Every record in them is synthetic. The new home and dashboard captures use the current build in dark mode; the feature table below was captured earlier in light mode. Those feature pages keep their layout, while the home page now adds the identity band and the `数据看板` link.
+
+| Home | Analytics, 6 months |
+|---|---|
+| <img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard link, today's readings and the module grid"> | <img src="./docs/images/debug/analytics-6m.jpeg" width="300" alt="Analytics dashboard in dark mode showing the remote data timestamp, the six-month hit-rate line, the calibration curve and the outcome donut"> |
+| **Analytics, 12 months** | **Analytics, heatmaps** |
+| <img src="./docs/images/debug/analytics-12m.jpeg" width="300" alt="Analytics dashboard after switching to twelve months, with more monthly points on the hit-rate line"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the analytics dashboard with sleep buckets, interaction bars, a coverage heatmap and an activity heatmap, both labelled by weekday"> |
+
+The older feature captures follow; their page content still matches the current build apart from the identity band noted above.
 
 | Prediction statistics | Review complete |
 |---|---|
@@ -212,7 +220,7 @@ It listens on `0.0.0.0:4523`; set `PORT` to change the port.
 
 ### Remote analytics data
 
-The dashboard reads static JSON from `docs/mock/` in the public repository. No key is involved, and the page labels the payload as example data.
+The dashboard reads static JSON from `docs/mock/` in the public repository. No key is involved, and the page labels the payload as example data. It does not read the local database; these files are the only source for its charts.
 
 | File | Content |
 |---|---|
