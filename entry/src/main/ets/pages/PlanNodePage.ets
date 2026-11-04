@@ -5,9 +5,12 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { Plan } from '../model/Plan';
 import { PlanNode } from '../model/PlanNode';
 import { PlanItem } from '../model/PlanItem';
+import { PlanLink } from '../model/PlanLink';
 import { PlanNodeStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
-import { PlanNodeParams } from '../navigation/RouteParams';
+import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
+import { PlanLinkPickerParams, PlanNodeParams } from '../navigation/RouteParams';
+import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
 
 /** One seven-day node: checklist, carry-over marks and closing action. */
@@ -16,6 +19,7 @@ export struct PlanNodePage {
   @Local node: PlanNode | null = null;
   @Local plan: Plan | null = null;
   @Local items: PlanItem[] = [];
+  @Local links: PlanLink[] = [];
   @Local newText: string = '';
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
@@ -42,6 +46,7 @@ export struct PlanNodePage {
       this.node = node;
       this.plan = await service.findPlan(node.planId);
       this.items = await service.listItems(nodeId);
+      this.links = await service.listLinks(nodeId);
     } catch (error) {
       this.loadPreview();
     } finally {
@@ -55,6 +60,7 @@ export struct PlanNodePage {
     if (this.node !== null) {
       this.plan = planPreviewStore.find(this.node.planId);
       this.items = planPreviewStore.listItems(this.nodeId);
+      this.links = planPreviewStore.links(this.nodeId);
     }
     this.isLoading = false;
   }
@@ -115,8 +121,53 @@ export struct PlanNodePage {
     }
   }
 
-  private async closeWeek(): Promise<void> {
-    if (this.node === null || this.node.status === PlanNodeStatus.CLOSED || this.isSaving) {
+  private openLinkPicker(): void {
+    if (this.navStack === null || this.node === null) {
+      return;
+    }
+    const params: PlanLinkPickerParams = {
+      planId: this.node.planId,
+      nodeId: this.node.id,
+      weekStart: this.node.startDate,
+      weekEnd: this.node.endDate
+    };
+    this.navStack.pushPathByName(ROUTES.PLAN_LINK_PICKER, params, () => {
+      this.reloadLinks();
+    });
+  }
+
+  private async reloadLinks(): Promise<void> {
+    if (this.isPreview) {
+      this.links = planPreviewStore.links(this.nodeId);
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    this.links = await this.service.listLinks(this.nodeId);
+  }
+
+  private async refreshNode(): Promise<void> {
+    if (this.nodeId.length === 0) {
+      return;
+    }
+    if (this.isPreview) {
+      this.loadPreview();
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    const node = await this.service.findNode(this.nodeId);
+    if (node === null) {
+      return;
+    }
+    this.node = node;
+    this.items = await this.service.listItems(this.nodeId);
+    this.links = await this.service.listLinks(this.nodeId);
+  }
+
+  private async closeWeek(): Promise<void> {    if (this.node === null || this.node.status === PlanNodeStatus.CLOSED || this.isSaving) {
       return;
     }
     this.isSaving = true;
@@ -257,6 +308,43 @@ export struct PlanNodePage {
           }
 
           SectionCard() {
+            Column({ space: 5 }) {
+              Row({ space: 8 }) {
+                Text('关联记录')
+                  .fontSize(13)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppTheme.color.text)
+                  .layoutWeight(1)
+                Text('选择记录')
+                  .id('plan_link_open')
+                  .fontSize(11)
+                  .fontColor(AppTheme.color.primary)
+                  .onClick(() => {
+                    this.openLinkPicker();
+                  })
+              }
+              .width('100%')
+              if (this.links.length === 0) {
+                Text('还没有关联速记、预测、复盘、锚点、关系或状态')
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+              } else {
+                ForEach(this.links, (link: PlanLink) => {
+                  Text(`${planLinkModuleLabel(link.module)} · ${link.label}`)
+                    .fontSize(11)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                    .maxLines(1)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                }, (link: PlanLink) => link.id)
+              }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
             Row({ space: 8 }) {
               TextInput({ text: this.newText, placeholder: '加一条本周要做的事' })
                 .id('plan_item_input')
@@ -320,6 +408,11 @@ export struct PlanNodePage {
         this.navStack = context.pathStack;
         const params = context.pathInfo.param as PlanNodeParams;
         this.load(params.nodeId);
+      },
+      onDestinationShown: () => {
+        if (this.nodeId.length > 0 && !this.isLoading) {
+          this.refreshNode();
+        }
       }
     })
   }

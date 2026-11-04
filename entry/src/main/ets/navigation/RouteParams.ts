@@ -71,6 +71,14 @@ export interface PlanNodeParams {
   nodeId: string;
 }
 
+/** Parameters accepted by the record link picker. */
+export interface PlanLinkPickerParams {
+  planId: string;
+  nodeId: string;
+  weekStart: string;
+  weekEnd: string;
+}
+
 /** Parameters accepted by the status editor; null uses today. */
 export interface StatusEditParams {
   date: string | null;

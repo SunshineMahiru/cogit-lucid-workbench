@@ -1,14 +1,17 @@
 import { Plan } from '../model/Plan';
 import { PlanNode } from '../model/PlanNode';
 import { PlanItem } from '../model/PlanItem';
+import { PlanLink } from '../model/PlanLink';
+import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PlanNodeStatus, PlanStatus } from '../model/PlanStatus';
-import { addPlanDays, createPlan, createPlanItem, createPlanNode } from '../plan/PlanFactory';
+import { addPlanDays, createPlan, createPlanItem, createPlanLink, createPlanNode } from '../plan/PlanFactory';
 
 /** In-memory plans used only when the DevEco Previewer cannot open the database. */
 class PlanPreviewStore {
   private plans: Plan[] = [];
   private planNodes: PlanNode[] = [];
   private planItems: PlanItem[] = [];
+  private planLinks: PlanLink[] = [];
 
   constructor() {
     const seed = createPlan('本周计划', '2026-11-02');
@@ -136,6 +139,30 @@ class PlanPreviewStore {
       }
     }
     this.planItems = rows;
+  }
+
+  links(nodeId: string): PlanLink[] {
+    const rows: PlanLink[] = [];
+    for (const link of this.planLinks) {
+      if (link.nodeId === nodeId) {
+        rows.push(link);
+      }
+    }
+    return rows;
+  }
+
+  clearLinks(nodeId: string): void {
+    const rows: PlanLink[] = [];
+    for (const link of this.planLinks) {
+      if (link.nodeId !== nodeId) {
+        rows.push(link);
+      }
+    }
+    this.planLinks = rows;
+  }
+
+  addLink(planId: string, nodeId: string, module: PlanLinkModule, targetId: string, label: string): void {
+    this.planLinks.push(createPlanLink(planId, nodeId, module, targetId, label));
   }
 
   /** Closes one node, appends the next week and copies every unfinished item. */
