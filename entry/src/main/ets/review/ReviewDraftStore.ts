@@ -52,4 +52,29 @@ export class ReviewDraftStore {
     await this.prefs.put(KEY_PREFIX + period, '');
     await this.prefs.flush();
   }
+
+  /**
+   * Appends a plan-node summary to the weekly draft.
+   * Existing text is preserved; an empty draft is filled in place.
+   */
+  async prefillWeekly(facts: string): Promise<void> {
+    const existing = await this.load(ReviewPeriod.WEEK);
+    if (existing === null) {
+      const draft: ReviewDraft = {
+        facts: facts,
+        interpretation: '',
+        contradiction: '',
+        action: '',
+        anchorIds: []
+      };
+      await this.save(ReviewPeriod.WEEK, draft);
+      return;
+    }
+    if (existing.facts.trim().length === 0) {
+      existing.facts = facts;
+    } else if (!existing.facts.includes(facts)) {
+      existing.facts = `${existing.facts.trimEnd()}\n\n${facts}`;
+    }
+    await this.save(ReviewPeriod.WEEK, existing);
+  }
 }

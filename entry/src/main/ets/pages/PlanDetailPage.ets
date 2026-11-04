@@ -9,6 +9,7 @@ import { PlanService } from '../plan';
 import { PlanDetailParams, PlanEditParams, PlanNodeParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
+import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 
 interface PlanNodeView {
   node: PlanNode;
@@ -27,9 +28,22 @@ export struct PlanDetailPage {
   private planId: string = '';
   private service: PlanService | null = null;
   private navStack: NavPathStack | null = null;
+  private listener: (() => void) | null = null;
 
   aboutToAppear(): void {
-    // The id arrives through onDestinationReady.
+    if (this.listener === null) {
+      this.listener = () => {
+        this.refresh();
+      };
+      subscribeHomeRefresh(this.listener);
+    }
+  }
+
+  aboutToDisappear(): void {
+    if (this.listener !== null) {
+      unsubscribeHomeRefresh(this.listener);
+      this.listener = null;
+    }
   }
 
   private async load(planId: string): Promise<void> {

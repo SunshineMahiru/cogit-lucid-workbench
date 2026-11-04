@@ -8,10 +8,12 @@ import { PlanItem } from '../model/PlanItem';
 import { PlanLink } from '../model/PlanLink';
 import { PlanNodeStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
+import { buildPlanReviewFacts, writePlanReviewDraft } from '../plan/PlanReviewDraft';
 import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import { PlanLinkPickerParams, PlanNodeParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
+import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 /** One seven-day node: checklist, carry-over marks and closing action. */
 @ComponentV2
@@ -167,17 +169,33 @@ export struct PlanNodePage {
     this.links = await this.service.listLinks(this.nodeId);
   }
 
-  private async closeWeek(): Promise<void> {    if (this.node === null || this.node.status === PlanNodeStatus.CLOSED || this.isSaving) {
+  private async closeWeek(): Promise<void> {
+    if (this.node === null || this.node.status === PlanNodeStatus.CLOSED || this.isSaving) {
       return;
     }
     this.isSaving = true;
+    const closedNode = this.node;
+    const closedItems = this.items;
     try {
+      let next: PlanNode | null = null;
       if (this.isPreview) {
-        planPreviewStore.closeAndCarry(this.node.id);
+        next = planPreviewStore.closeAndCarry(closedNode.id);
       } else if (this.service !== null) {
-        await this.service.closeNodeAndCarry(this.node.id);
+        next = await this.service.closeNodeAndCarry(closedNode.id);
       }
-      this.getUIContext().getPromptAction().showToast({ message: '本周已结束，未完成项已带入下一周' });
+      const facts = buildPlanReviewFacts(closedNode, closedItems, next);
+      const hostContext = this.getUIContext().getHostContext();
+      if (hostContext !== undefined && !this.isPreview) {
+        try {
+          await writePlanReviewDraft(hostContext, facts);
+        } catch (draftError) {
+          this.getUIContext().getPromptAction().showToast({ message: '周复盘草稿写入失败，可稍后重试' });
+        }
+      }
+      this.getUIContext().getPromptAction().showToast({
+        message: next === null ? '本周已结束' : '本周已结束，清单已写入周复盘草稿'
+      });
+      notifyHomeRefresh();
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
@@ -379,7 +397,7 @@ export struct PlanNodePage {
                 this.closeWeek();
               })
           } else {
-            Text('本周已结束')
+            Text(this.isPreview ? '本周已结束' : '本周已结束，清单已写入周复盘草稿')
               .fontSize(12)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
