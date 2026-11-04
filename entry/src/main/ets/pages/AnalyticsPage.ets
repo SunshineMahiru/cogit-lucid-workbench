@@ -33,7 +33,7 @@ export struct AnalyticsPage {
     this.isLoading = true;
     this.errorText = '';
     try {
-      this.stats = await this.repository.fetch('12m');
+      this.stats = await this.repository.fetch();
       if (this.stats.months.length > 0 && this.selectedMonth.length === 0) {
         this.selectedMonth = this.stats.months[this.stats.months.length - 1].label;
       }
