@@ -17,13 +17,6 @@ import { PredictionCreateParams } from '../navigation/RouteParams';
 import { previewStore } from '../preview/PreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
-const EMPTY_ERRORS: PredictionDraftErrors = {
-  target: '',
-  judgment: '',
-  confidence: '',
-  settlementDate: ''
-};
-
 /** Creates one prediction; nothing is persisted until the commit button is pressed. */
 @ComponentV2
 export struct PredictionCreatePage {
@@ -32,7 +25,12 @@ export struct PredictionCreatePage {
   @Local reason: string = '';
   @Local confidence: number = 70;
   @Local settlementDate: string = '';
-  @Local errors: PredictionDraftErrors = EMPTY_ERRORS;
+  @Local errors: PredictionDraftErrors = {
+    target: '',
+    judgment: '',
+    confidence: '',
+    settlementDate: ''
+  };
   @Local isSaving: boolean = false;
   @Local sourceId: string | null = null;
   @Local sourceVersion: number = 0;

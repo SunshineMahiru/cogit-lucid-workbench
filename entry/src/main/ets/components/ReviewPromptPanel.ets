@@ -27,7 +27,7 @@ const LOCAL_PROMPTS: ReviewPrompt[] = [
 @ComponentV2
 export struct ReviewPromptPanel {
   @Param period: ReviewPeriod = ReviewPeriod.WEEK;
-  @Local state: string = STATE_LOADING;
+  @Local state: string = 'loading';
   @Local prompts: ReviewPrompt[] = [];
   @Local isRealDevice: boolean = false;
   @Local hasConfiguredHost: boolean = false;

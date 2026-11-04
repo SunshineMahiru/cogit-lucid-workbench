@@ -16,7 +16,12 @@ import { profileCache } from '../profile/ProfileCache';
 /** Full-screen identity editor; a destination so it shares the shell transition instead of a sheet. */
 @ComponentV2
 export struct IdentityEditPage {
-  @Local profile: Profile = DEFAULT_PROFILE;
+  @Local profile: Profile = {
+    nickname: '记录者',
+    signature: '把判断留下来，过一段时间再看',
+    title: '未命名',
+    avatarPath: ''
+  };
   @Local draftNickname: string = '';
   @Local draftSignature: string = '';
   @Local draftTitle: string = '';
