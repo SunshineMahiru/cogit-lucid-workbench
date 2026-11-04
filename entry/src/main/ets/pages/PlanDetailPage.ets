@@ -513,7 +513,7 @@ export struct PlanDetailPage {
               .width('100%')
             ForEach(this.nodes, (view: PlanNodeView) => {
               this.nodeCard(view)
-            }, (view: PlanNodeView) => view.node.id)
+            }, (view: PlanNodeView) => `${view.node.id}_${view.done}_${view.total}_${view.node.status}`)
           }
         }
         .width('100%')

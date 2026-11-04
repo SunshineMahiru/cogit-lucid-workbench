@@ -238,7 +238,7 @@ export struct PlanAttachPage {
             .onClick(() => {
               this.toggle(index);
             })
-          }, (row: AttachTarget) => row.nodeId)
+          }, (row: AttachTarget) => `${row.nodeId}_${row.selected ? 1 : 0}`)
         }
         .width('100%')
         .padding({ left: 20, right: 20, top: 10, bottom: 24 })

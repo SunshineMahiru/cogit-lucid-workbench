@@ -312,7 +312,7 @@ export struct PlanLinkPickerPage {
             Column() {
               ForEach(this.pagedCandidates(), (item: LinkCandidate) => {
                 this.candidateRow(item)
-              }, (item: LinkCandidate) => this.keyOf(item))
+              }, (item: LinkCandidate) => `${this.keyOf(item)}_${this.isSelected(item) ? 1 : 0}`)
               if (this.hasMore()) {
                 Text(`加载更多（还有 ${this.visibleCandidates().length - this.visibleCount} 条）`)
                   .id('plan_link_more')

@@ -393,7 +393,8 @@ export struct PlanNodePage {
                         .onClick(() => {
                           this.assignProject(project.id);
                         })
-                    }, (project: PlanProject) => project.id)
+                    }, (project: PlanProject) =>
+                      `${project.id}_${this.selectedProjectId === project.id ? 1 : 0}`)
                   }
                 }
                 .scrollable(ScrollDirection.Horizontal)
@@ -421,7 +422,7 @@ export struct PlanNodePage {
               } else {
                 ForEach(this.items, (item: PlanItem) => {
                   this.itemRow(item)
-                }, (item: PlanItem) => item.id)
+                }, (item: PlanItem) => `${item.id}_${item.done ? 1 : 0}`)
               }
             }
             .width('100%')
