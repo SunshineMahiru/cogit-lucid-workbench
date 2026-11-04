@@ -5,6 +5,7 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PlanLink } from '../model/PlanLink';
 import { PlanService } from '../plan';
+import { createPlanLink } from '../plan/PlanFactory';
 import { LinkCandidate, markLinkSuggestions } from '../plan/PlanLinkCandidate';
 import { loadPlanLinkCandidates, planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import { PlanLinkPickerParams } from '../navigation/RouteParams';
@@ -139,16 +140,14 @@ export struct PlanLinkPickerPage {
           }
         }
       } else {
-        const existing = await this.service.listLinks(this.nodeId);
-        for (const link of existing) {
-          await this.service.removeLink(link.id);
-        }
+        const links: PlanLink[] = [];
         for (const key of this.selectedKeys) {
           const item = this.findByKey(key);
           if (item !== null) {
-            await this.service.addLink(this.planId, this.nodeId, item.module, item.targetId, item.title);
+            links.push(createPlanLink(this.planId, this.nodeId, item.module, item.targetId, item.title));
           }
         }
+        await this.service.replaceLinks(this.nodeId, links);
       }
       if (this.navStack !== null) {
         this.navStack.pop(true);
@@ -309,6 +308,10 @@ export struct PlanLinkPickerPage {
       },
       onDestinationReady: (context: NavDestinationContext) => {
         this.navStack = context.pathStack;
+        if (context.pathInfo.param === undefined) {
+          this.isLoading = false;
+          return;
+        }
         const params = context.pathInfo.param as PlanLinkPickerParams;
         this.load(params.planId, params.nodeId, params.weekStart, params.weekEnd);
       }

@@ -161,8 +161,16 @@ export class PlanDao {
     }
   }
 
-  async closeNode(id: string, reviewId: string): Promise<number> {
+  async setNodeProject(id: string, projectId: string): Promise<number> {
     const values: relationalStore.ValuesBucket = {
+      [PLAN_NODE_COLS.PROJECT_ID]: projectId
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_NODE);
+    predicates.equalTo(PLAN_NODE_COLS.ID, id);
+    return this.store.update(values, predicates);
+  }
+
+  async closeNode(id: string, reviewId: string): Promise<number> {    const values: relationalStore.ValuesBucket = {
       [PLAN_NODE_COLS.STATUS]: PlanNodeStatus.CLOSED,
       [PLAN_NODE_COLS.REVIEW_ID]: reviewId
     };
@@ -255,6 +263,23 @@ export class PlanDao {
       return rows;
     } finally {
       resultSet.close();
+    }
+  }
+
+  /** Replaces every link on one node inside a transaction, so a failure keeps the old set. */
+  async replaceLinks(nodeId: string, links: PlanLink[]): Promise<void> {
+    this.store.beginTransaction();
+    try {
+      const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
+      predicates.equalTo(PLAN_LINK_COLS.NODE_ID, nodeId);
+      await this.store.delete(predicates);
+      for (const link of links) {
+        await this.insertLink(link);
+      }
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
     }
   }
 

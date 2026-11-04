@@ -61,6 +61,7 @@ class PlanPreviewStore {
     const plan = createPlan(title, startDate);
     plan.isPrimary = this.plans.length === 0;
     this.plans.push(plan);
+    this.planNodes.push(createPlanNode(plan.id, 1, plan.startDate));
     return plan;
   }
 
@@ -107,6 +108,9 @@ class PlanPreviewStore {
     const plan = this.find(id);
     if (plan !== null) {
       plan.status = PlanStatus.ACTIVE;
+      if (this.primary() === null) {
+        plan.isPrimary = true;
+      }
     }
   }
 
@@ -129,8 +133,14 @@ class PlanPreviewStore {
     return null;
   }
 
-  ensureFirstNode(planId: string): PlanNode | null {
-    const plan = this.find(planId);
+  setNodeProject(nodeId: string, projectId: string): void {
+    const node = this.findNode(nodeId);
+    if (node !== null) {
+      node.projectId = projectId;
+    }
+  }
+
+  ensureFirstNode(planId: string): PlanNode | null {    const plan = this.find(planId);
     if (plan === null) {
       return null;
     }

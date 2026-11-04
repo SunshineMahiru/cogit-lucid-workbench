@@ -4,6 +4,7 @@ import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { Plan } from '../model/Plan';
 import { PlanNode } from '../model/PlanNode';
+import { PlanProject } from '../model/PlanProject';
 import { PlanItem } from '../model/PlanItem';
 import { PlanLink } from '../model/PlanLink';
 import { PlanNodeStatus } from '../model/PlanStatus';
@@ -22,6 +23,8 @@ export struct PlanNodePage {
   @Local plan: Plan | null = null;
   @Local items: PlanItem[] = [];
   @Local links: PlanLink[] = [];
+  @Local projects: PlanProject[] = [];
+  @Local selectedProjectId: string = '';
   @Local newText: string = '';
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
@@ -47,6 +50,8 @@ export struct PlanNodePage {
       }
       this.node = node;
       this.plan = await service.findPlan(node.planId);
+      this.projects = await service.listProjects(node.planId);
+      this.selectedProjectId = node.projectId ?? '';
       this.items = await service.listItems(nodeId);
       this.links = await service.listLinks(nodeId);
     } catch (error) {
@@ -61,6 +66,8 @@ export struct PlanNodePage {
     this.node = planPreviewStore.findNode(this.nodeId);
     if (this.node !== null) {
       this.plan = planPreviewStore.find(this.node.planId);
+      this.projects = planPreviewStore.projects(this.node.planId);
+      this.selectedProjectId = this.node.projectId ?? '';
       this.items = planPreviewStore.listItems(this.nodeId);
       this.links = planPreviewStore.links(this.nodeId);
     }
@@ -123,8 +130,26 @@ export struct PlanNodePage {
     }
   }
 
-  private openLinkPicker(): void {
-    if (this.navStack === null || this.node === null) {
+  private async assignProject(projectId: string): Promise<void> {
+    if (this.node === null) {
+      return;
+    }
+    try {
+      if (this.isPreview) {
+        planPreviewStore.setNodeProject(this.node.id, projectId);
+      } else if (this.service !== null) {
+        await this.service.setNodeProject(this.node.id, projectId);
+      }
+      this.selectedProjectId = projectId;
+      if (this.node !== null) {
+        this.node.projectId = projectId.length > 0 ? projectId : undefined;
+      }
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '项目归属保存失败' });
+    }
+  }
+
+  private openLinkPicker(): void {    if (this.navStack === null || this.node === null) {
       return;
     }
     const params: PlanLinkPickerParams = {
@@ -165,6 +190,8 @@ export struct PlanNodePage {
       return;
     }
     this.node = node;
+    this.projects = await this.service.listProjects(node.planId);
+    this.selectedProjectId = node.projectId ?? '';
     this.items = await this.service.listItems(this.nodeId);
     this.links = await this.service.listLinks(this.nodeId);
   }
@@ -297,6 +324,40 @@ export struct PlanNodePage {
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
               }
+              if (this.node.status === PlanNodeStatus.OPEN && this.projects.length > 0) {
+                Text('所属项目')
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+                  .padding({ top: 2 })
+                Scroll() {
+                  Row({ space: 6 }) {
+                    Text('不分组')
+                      .fontSize(10)
+                      .fontColor(this.selectedProjectId.length === 0 ? Color.White : AppTheme.color.textSecondary)
+                      .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                      .backgroundColor(this.selectedProjectId.length === 0 ? AppTheme.color.primary : AppTheme.color.chip)
+                      .borderRadius(10)
+                      .onClick(() => {
+                        this.assignProject('');
+                      })
+                    ForEach(this.projects, (project: PlanProject) => {
+                      Text(project.name)
+                        .fontSize(10)
+                        .fontColor(this.selectedProjectId === project.id ? Color.White : AppTheme.color.textSecondary)
+                        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                        .backgroundColor(this.selectedProjectId === project.id ? AppTheme.color.primary : AppTheme.color.chip)
+                        .borderRadius(10)
+                        .onClick(() => {
+                          this.assignProject(project.id);
+                        })
+                    }, (project: PlanProject) => project.id)
+                  }
+                }
+                .scrollable(ScrollDirection.Horizontal)
+                .scrollBar(BarState.Off)
+                .width('100%')
+              }
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)
@@ -362,25 +423,27 @@ export struct PlanNodePage {
             .alignItems(HorizontalAlign.Start)
           }
 
-          SectionCard() {
-            Row({ space: 8 }) {
-              TextInput({ text: this.newText, placeholder: '加一条本周要做的事' })
-                .id('plan_item_input')
-                .maxLength(120)
-                .layoutWeight(1)
-                .backgroundColor(AppTheme.color.surfaceAlt)
-                .onChange((value: string) => {
-                  this.newText = value;
-                })
-              Text('添加')
-                .id('plan_item_add')
-                .fontSize(12)
-                .fontColor(AppTheme.color.primary)
-                .onClick(() => {
-                  this.addItem();
-                })
+          if (this.node.status === PlanNodeStatus.OPEN) {
+            SectionCard() {
+              Row({ space: 8 }) {
+                TextInput({ text: this.newText, placeholder: '加一条本周要做的事' })
+                  .id('plan_item_input')
+                  .maxLength(120)
+                  .layoutWeight(1)
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .onChange((value: string) => {
+                    this.newText = value;
+                  })
+                Text('添加')
+                  .id('plan_item_add')
+                  .fontSize(12)
+                  .fontColor(AppTheme.color.primary)
+                  .onClick(() => {
+                    this.addItem();
+                  })
+              }
+              .width('100%')
             }
-            .width('100%')
           }
 
           if (this.node.status === PlanNodeStatus.OPEN) {
@@ -424,6 +487,10 @@ export struct PlanNodePage {
       },
       onDestinationReady: (context: NavDestinationContext) => {
         this.navStack = context.pathStack;
+        if (context.pathInfo.param === undefined) {
+          this.isLoading = false;
+          return;
+        }
         const params = context.pathInfo.param as PlanNodeParams;
         this.load(params.nodeId);
       },
