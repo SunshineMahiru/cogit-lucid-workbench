@@ -174,7 +174,7 @@ export struct RelationEditPage {
       } else {
         Scroll() {
           Column({ space: 12 }) {
-            Text('关系名称用脱敏化名；互动记录在详情页维护。')
+            Text('课程版只保存化名。先给这段关系一个称呼，再标出你能谈到哪一层；互动记录在详情页补充。')
               .fontSize(11)
               .lineHeight(18)
               .fontColor(AppTheme.color.textSecondary)
@@ -185,6 +185,10 @@ export struct RelationEditPage {
                 Text('名称')
                   .fontSize(11)
                   .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                Text('用化名或代号，列表与导出都用它。')
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                 TextInput({ text: this.name, placeholder: '例如：朋友 A' })
                   .maxLength(40)
@@ -203,6 +207,11 @@ export struct RelationEditPage {
                   .fontSize(11)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
+                Text('友好：日常往来；真诚：能谈真实想法；透明：能看未加工的材料。')
+                  .fontSize(10)
+                  .lineHeight(15)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
                 Row({ space: 8 }) {
                   this.trustChip(TrustLevel.FRIENDLY)
                   this.trustChip(TrustLevel.SINCERE)
@@ -219,6 +228,11 @@ export struct RelationEditPage {
                   .fontSize(11)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
+                Text('本地：只在设备上；可分析：切到模型档后可进入上下文；封存：不进入汇总与导出。')
+                  .fontSize(10)
+                  .lineHeight(15)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
                 Row({ space: 8 }) {
                   this.levelChip(SecurityLevel.LOCAL_ONLY)
                   this.levelChip(SecurityLevel.ANALYZABLE)
@@ -234,6 +248,11 @@ export struct RelationEditPage {
                 Text('分析边界')
                   .fontSize(11)
                   .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                Text('未加工材料测试：对方是否看过你未整理的材料；禁止动机分析：复盘 Agent 不推测对方动机。')
+                  .fontSize(10)
+                  .lineHeight(15)
+                  .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                 Row({ space: 8 }) {
                   this.flagChip('未加工材料测试', this.rawMaterialTest, () => {
@@ -253,6 +272,10 @@ export struct RelationEditPage {
                 Text('关系备注')
                   .fontSize(11)
                   .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                Text('只写与复盘边界有关的信息，不写隐私细节。')
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                 TextArea({ text: this.notes, placeholder: '只写与复盘边界有关的信息' })
                   .height(100)

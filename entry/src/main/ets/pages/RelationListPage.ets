@@ -19,6 +19,7 @@ export struct RelationListPage {
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
   @Local isPreview: boolean = false;
+  @Local showHelp: boolean = false;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -169,11 +170,43 @@ export struct RelationListPage {
         }
         .width('100%')
 
-        Text('可维护 · 按信任层级排序；互动记录用于复盘时判断可分析边界。')
-          .fontSize(11)
-          .lineHeight(17)
-          .fontColor(AppTheme.color.textSecondary)
+        Row({ space: 8 }) {
+          Text('记录你愿意长期观察的关系。列表用化名，信任层级决定复盘时能谈到哪一层。')
+            .fontSize(11)
+            .lineHeight(17)
+            .fontColor(AppTheme.color.textSecondary)
+            .layoutWeight(1)
+          Text(this.showHelp ? '收起' : '怎么用')
+            .fontSize(11)
+            .fontColor(AppTheme.color.primary)
+            .onClick(() => {
+              this.showHelp = !this.showHelp;
+            })
+        }
+        .width('100%')
+
+        if (this.showHelp) {
+          Column({ space: 4 }) {
+            Text('1. 新建：给关系起一个化名，再选友好、真诚或透明。')
+              .fontSize(10)
+              .lineHeight(16)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            Text('2. 说明：备注写清分析边界，不写隐私细节。')
+              .fontSize(10)
+              .lineHeight(16)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            Text('3. 维护：在详情页追加互动记录，复盘时回看变化。')
+              .fontSize(10)
+              .lineHeight(16)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+          }
           .width('100%')
+          .alignItems(HorizontalAlign.Start)
+          .padding({ top: 2 })
+        }
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
