@@ -31,6 +31,7 @@ export interface ExportCounts {
   anchors: number;
   statusRecords: number;
   reviews: number;
+  plans: number;
 }
 
 /** Counts every section of the bundle. */
@@ -42,12 +43,13 @@ export function countExportBundle(bundle: ExportBundle): ExportCounts {
     predictions: bundle.predictions.length,
     anchors: bundle.anchors.length,
     statusRecords: bundle.statusRecords.length,
-    reviews: bundle.reviews.length
+    reviews: bundle.reviews.length,
+    plans: (bundle.plans ?? []).length
   };
 }
 
 /** Sums the counts into the number shown as the record total. */
 export function totalExportRecords(counts: ExportCounts): number {
   return counts.events + counts.decisions + counts.relations + counts.predictions + counts.anchors +
-    counts.statusRecords + counts.reviews;
+    counts.statusRecords + counts.reviews + counts.plans;
 }
