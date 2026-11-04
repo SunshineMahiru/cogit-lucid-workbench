@@ -25,7 +25,7 @@ Three design choices separate it from a journal:
 
 The interface is Chinese only. The display name is set in `entry/src/main/ets/theme/AppIdentity.ts` and the launcher label in `AppScope/resources/base/element/string.json`.
 
-The launch screen opens with an identity band — avatar, nickname, signature, and a hand-written title — followed by four counters: notes today, pending settlements, consecutive record days, and the latest review date. Readings, the weekly card, and the module grid sit below it. A `数据看板` link under the counters opens the analytics dashboard.
+The launch screen opens with an identity band — avatar, nickname, signature, and a hand-written title — followed by four counters: notes today, pending settlements, consecutive record days, and the latest review date. Readings, the weekly card, and the module grid sit below it. A `数据看板` button under the counters opens the analytics dashboard.
 
 ## Project status
 
@@ -87,7 +87,7 @@ The code is organised as six layers with a single dependency direction, plus a s
 
 The home page opens with the identity band and four counters; today's readings, a weekly settlement or onboarding card, and the grid of six modules follow below. `编辑` and `设置` sit on the right of the identity band.
 
-<img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard link, today's readings, an onboarding card and the six-module grid">
+<img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard button, today's readings, an onboarding card and the six-module grid">
 
 ### Set your identity
 
@@ -144,7 +144,7 @@ Screenshots come from a Mate 70 Pro emulator. Every record in them is synthetic.
 
 | Home | Analytics, 6 months |
 |---|---|
-| <img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard link, today's readings and the module grid"> | <img src="./docs/images/debug/analytics-6m.jpeg" width="300" alt="Analytics dashboard in dark mode showing the remote data timestamp, the six-month hit-rate line, the calibration curve and the outcome donut"> |
+| <img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard button, today's readings and the module grid"> | <img src="./docs/images/debug/analytics-6m.jpeg" width="300" alt="Analytics dashboard in dark mode showing the remote data timestamp, the six-month hit-rate line, the calibration curve and the outcome donut"> |
 | **Analytics, 12 months** | **Analytics, heatmaps** |
 | <img src="./docs/images/debug/analytics-12m.jpeg" width="300" alt="Analytics dashboard after switching to twelve months, with more monthly points on the hit-rate line"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the analytics dashboard with sleep buckets, interaction bars, a coverage heatmap and an activity heatmap, both labelled by weekday"> |
 

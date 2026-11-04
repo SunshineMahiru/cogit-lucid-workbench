@@ -175,17 +175,20 @@ export struct HomePage {
       .padding({ left: 20, right: 20, top: 8, bottom: 4 })
 
       Row() {
-        Text('数据看板')
+        Text('数据看板 ›')
           .id('home_dashboard_entry')
           .fontSize(11)
           .fontColor(AppTheme.color.primary)
+          .padding({ left: 12, right: 12, top: 10, bottom: 10 })
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .borderRadius(18)
           .onClick(() => {
             this.pathStack.pushPathByName(ROUTES.ANALYTICS, null);
           })
       }
       .width('100%')
       .justifyContent(FlexAlign.End)
-      .padding({ left: 20, right: 20, bottom: 4 })
+      .padding({ left: 20, right: 20, top: 2, bottom: 6 })
 
       Column() {
         DashboardView({ pathStack: this.pathStack, showTitleBar: false })

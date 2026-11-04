@@ -374,7 +374,7 @@ export struct DashboardView {
       if (this.isLoading) {
         this.loadingView()
       } else {
-        Stack({ alignContent: Alignment.BottomEnd }) {
+        Column() {
           Scroll() {
             Column({ space: 16 }) {
               if (this.showWelcome) {
@@ -607,24 +607,28 @@ export struct DashboardView {
               .borderRadius(14)
             }
             .width('100%')
-            .padding({ left: 20, right: 20, bottom: 96 })
+            .padding({ left: 20, right: 20, bottom: 24 })
           }
           .width('100%')
-          .height('100%')
+          .layoutWeight(1)
           .scrollBar(BarState.Auto)
 
-          // Persistent capture entry, one tap away from any scroll position
-          Text('＋ 速记')
-            .fontSize(14)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
-            .padding({ left: 20, right: 20, top: 12, bottom: 12 })
-            .backgroundColor(AppTheme.color.primary)
-            .borderRadius(24)
-            .margin({ right: 20, bottom: 24 })
-            .onClick(() => {
-              this.openNoteEditor();
-            })
+          Row() {
+            Text('＋ 速记')
+              .fontSize(13)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(Color.White)
+              .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+              .backgroundColor(AppTheme.color.primary)
+              .borderRadius(22)
+              .onClick(() => {
+                this.openNoteEditor();
+              })
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.End)
+          .padding({ left: 20, right: 20, top: 8, bottom: 20 })
+          .backgroundColor(AppTheme.color.page)
         }
         .width('100%')
         .layoutWeight(1)
