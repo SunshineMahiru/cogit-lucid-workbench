@@ -6,7 +6,12 @@ export const DB_TABLES = {
   PREDICTION: 'prediction',
   ANCHOR: 'anchor',
   STATUS_RECORD: 'status_record',
-  REVIEW_RESULT: 'review_result'
+  REVIEW_RESULT: 'review_result',
+  PLAN: 'plan',
+  PLAN_PROJECT: 'plan_project',
+  PLAN_NODE: 'plan_node',
+  PLAN_ITEM: 'plan_item',
+  PLAN_LINK: 'plan_link'
 } as const;
 
 /** Column names for the event table. */
@@ -99,5 +104,62 @@ export const REVIEW_COLS = {
   ACTION: 'next_action',
   ANCHOR_IDS: 'anchor_ids',
   LEVEL: 'level',
+  CREATED_AT: 'created_at'
+} as const;
+
+/** Column names for the plan goal table. */
+export const PLAN_COLS = {
+  ID: 'id',
+  TITLE: 'title',
+  GOAL: 'goal',
+  PROJECT_ID: 'project_id',
+  START_DATE: 'start_date',
+  STATUS: 'status',
+  IS_PRIMARY: 'is_primary',
+  LEVEL: 'level',
+  CREATED_AT: 'created_at'
+} as const;
+
+/** Column names for the optional plan project table. */
+export const PLAN_PROJECT_COLS = {
+  ID: 'id',
+  PLAN_ID: 'plan_id',
+  NAME: 'name',
+  GOAL: 'goal',
+  STATUS: 'status',
+  SORT_ORDER: 'sort_order'
+} as const;
+
+/** Column names for the seven-day node table. */
+export const PLAN_NODE_COLS = {
+  ID: 'id',
+  PLAN_ID: 'plan_id',
+  PROJECT_ID: 'project_id',
+  WEEK_INDEX: 'week_index',
+  START_DATE: 'start_date',
+  END_DATE: 'end_date',
+  STATUS: 'status',
+  REVIEW_ID: 'review_id'
+} as const;
+
+/** Column names for the checklist item table. */
+export const PLAN_ITEM_COLS = {
+  ID: 'id',
+  NODE_ID: 'node_id',
+  TEXT: 'text',
+  DONE: 'done',
+  CARRIED_FROM: 'carried_from',
+  SORT_ORDER: 'sort_order',
+  LEVEL: 'level'
+} as const;
+
+/** Column names for the record link table. */
+export const PLAN_LINK_COLS = {
+  ID: 'id',
+  PLAN_ID: 'plan_id',
+  NODE_ID: 'node_id',
+  MODULE: 'module',
+  TARGET_ID: 'target_id',
+  LABEL: 'label',
   CREATED_AT: 'created_at'
 } as const;

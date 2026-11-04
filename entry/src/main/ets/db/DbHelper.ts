@@ -188,7 +188,11 @@ export class DbHelper {
       `CREATE INDEX IF NOT EXISTS idx_event_timestamp ON event(timestamp)`,
       `CREATE INDEX IF NOT EXISTS idx_prediction_status_date ON prediction(status, settlement_date)`,
       `CREATE INDEX IF NOT EXISTS idx_status_record_date ON status_record(date)`,
-      `CREATE INDEX IF NOT EXISTS idx_review_result_created ON review_result(created_at)`
+      `CREATE INDEX IF NOT EXISTS idx_review_result_created ON review_result(created_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_plan_status ON plan(status, is_primary)`,
+      `CREATE INDEX IF NOT EXISTS idx_plan_node_plan ON plan_node(plan_id, week_index)`,
+      `CREATE INDEX IF NOT EXISTS idx_plan_item_node ON plan_item(node_id, sort_order)`,
+      `CREATE INDEX IF NOT EXISTS idx_plan_link_node ON plan_link(node_id, module)`
     ];
     for (const sql of indexSqls) {
       try {

@@ -80,5 +80,52 @@ export const TABLE_CREATE_SQLS: string[] = [
     anchor_ids TEXT NOT NULL,
     level TEXT NOT NULL DEFAULT 'local_only',
     created_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN} (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    goal TEXT NOT NULL,
+    project_id TEXT,
+    start_date TEXT NOT NULL,
+    status TEXT NOT NULL,
+    is_primary INTEGER NOT NULL DEFAULT 0,
+    level TEXT NOT NULL DEFAULT 'local_only',
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN_PROJECT} (
+    id TEXT PRIMARY KEY,
+    plan_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    goal TEXT NOT NULL,
+    status TEXT NOT NULL,
+    sort_order INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN_NODE} (
+    id TEXT PRIMARY KEY,
+    plan_id TEXT NOT NULL,
+    project_id TEXT,
+    week_index INTEGER NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    status TEXT NOT NULL,
+    review_id TEXT
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN_ITEM} (
+    id TEXT PRIMARY KEY,
+    node_id TEXT NOT NULL,
+    text TEXT NOT NULL,
+    done INTEGER NOT NULL DEFAULT 0,
+    carried_from TEXT,
+    sort_order INTEGER NOT NULL,
+    level TEXT NOT NULL DEFAULT 'local_only'
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN_LINK} (
+    id TEXT PRIMARY KEY,
+    plan_id TEXT NOT NULL,
+    node_id TEXT,
+    module TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    label TEXT NOT NULL,
+    created_at INTEGER NOT NULL
   )`
 ];

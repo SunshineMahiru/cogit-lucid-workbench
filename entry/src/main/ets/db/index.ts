@@ -6,7 +6,12 @@ export {
   PREDICTION_COLS,
   ANCHOR_COLS,
   STATUS_RECORD_COLS,
-  REVIEW_COLS
+  REVIEW_COLS,
+  PLAN_COLS,
+  PLAN_PROJECT_COLS,
+  PLAN_NODE_COLS,
+  PLAN_ITEM_COLS,
+  PLAN_LINK_COLS
 } from './DbConstants';
 export { DB_CONFIG, DB_VERSION } from './DbConfig';
 export { DbHelper } from './DbHelper';
@@ -18,3 +23,4 @@ export { PredictionDao } from './dao/PredictionDao';
 export { AnchorDao } from './dao/AnchorDao';
 export { StatusRecordDao } from './dao/StatusRecordDao';
 export { ReviewResultDao } from './dao/ReviewResultDao';
+export { PlanDao } from './dao/PlanDao';
