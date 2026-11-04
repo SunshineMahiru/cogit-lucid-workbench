@@ -61,6 +61,19 @@ export interface StatsActivity {
   count: number;
 }
 
+export interface StatsMonthDetail {
+  month: string;
+  calibration: StatsCalibration[];
+  outcomes: StatsOutcome;
+  confidence: StatsConfidence[];
+  horizon: StatsHorizon[];
+  readings: StatsReading[];
+  sleepBuckets: StatsSleepBucket[];
+  interactions: StatsInteraction[];
+  coverage: StatsCoverage[];
+  activity: StatsActivity[];
+}
+
 export interface RemoteStats {
   generatedAt: string;
   range: string;
@@ -74,6 +87,7 @@ export interface RemoteStats {
   interactions: StatsInteraction[];
   coverage: StatsCoverage[];
   activity: StatsActivity[];
+  monthly: StatsMonthDetail[];
 }
 
 interface RemoteStatsPayload {
@@ -89,6 +103,7 @@ interface RemoteStatsPayload {
   interactions?: StatsInteraction[];
   coverage?: StatsCoverage[];
   activity?: StatsActivity[];
+  monthly?: StatsMonthDetail[];
 }
 
 function needArray(value: Object | undefined, name: string): void {
@@ -109,6 +124,7 @@ export function parseRemoteStats(body: string): RemoteStats {
   needArray(payload.interactions, 'interactions');
   needArray(payload.coverage, 'coverage');
   needArray(payload.activity, 'activity');
+  needArray(payload.monthly, 'monthly');
   if (payload.outcomes === undefined) {
     throw new Error('invalid stats payload: outcomes');
   }
@@ -124,6 +140,7 @@ export function parseRemoteStats(body: string): RemoteStats {
     sleepBuckets: payload.sleepBuckets as StatsSleepBucket[],
     interactions: payload.interactions as StatsInteraction[],
     coverage: payload.coverage as StatsCoverage[],
-    activity: payload.activity as StatsActivity[]
+    activity: payload.activity as StatsActivity[],
+    monthly: payload.monthly as StatsMonthDetail[]
   };
 }

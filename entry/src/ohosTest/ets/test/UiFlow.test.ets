@@ -22,11 +22,11 @@ export default function analyticsFlowTest() {
       await driver.waitForComponent(ON.id('analytics_range_12m'), 3000);
     });
 
-    it('switchesToTwelveMonths', 0, async () => {
+    it('switchesMonth', 0, async () => {
       const driver = Driver.create();
-      const twelveMonths = await driver.findComponent(ON.id('analytics_range_12m'));
-      expect(twelveMonths !== null).assertTrue();
-      await twelveMonths.click();
+      const firstMonth = await driver.findComponent(ON.id('analytics_month_first'));
+      expect(firstMonth !== null).assertTrue();
+      await firstMonth.click();
       await driver.waitForComponent(ON.text('数据看板'), 3000);
     });
 
