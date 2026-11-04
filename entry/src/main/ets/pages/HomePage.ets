@@ -6,19 +6,20 @@ import { ProfileHeader } from '../components/ProfileHeader';
 import { HomeDataService } from '../data/HomeDataService';
 import { HomePulse, HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
-
-const EMPTY_SUMMARY: HomeSummary = {
-  totalNotes: 0, todayNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0,
-  hitRate: 0, unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0
-};
+import { previewStore } from '../preview/PreviewStore';
+import { ROUTES } from '../navigation/Routes';
 
 /** Launch page: identity band and four live counters above the existing dashboard content. */
 @ComponentV2
 export struct HomePage {
   @Require @Param pathStack: NavPathStack;
-  @Local summary: HomeSummary = EMPTY_SUMMARY;
+  @Local summary: HomeSummary = {
+    totalNotes: 0, todayNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0,
+    hitRate: 0, unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0
+  };
   @Local pulse: HomePulse = { streakDays: 0, lastReviewLabel: NO_RATE_TEXT };
   @Local loadFailed: boolean = false;
+  @Local isPreview: boolean = false;
   private service: HomeDataService | null = null;
   private loadToken: number = 0;
   private listener: (() => void) | null = null;
@@ -61,9 +62,13 @@ export struct HomePage {
       this.summary = summary;
       this.pulse = pulse;
       this.loadFailed = false;
+      this.isPreview = false;
     } catch (error) {
       if (token === this.loadToken) {
-        this.loadFailed = true;
+        this.summary = previewStore.homeSummary();
+        this.pulse = previewStore.homePulse();
+        this.isPreview = true;
+        this.loadFailed = false;
       }
     }
   }
@@ -101,6 +106,13 @@ export struct HomePage {
           .onClick(() => {
             this.load();
           })
+      } else if (this.isPreview) {
+        Text('演示数据 · 数据库不可用')
+          .fontSize(10)
+          .fontColor(AppTheme.color.textMuted)
+          .width('100%')
+          .textAlign(TextAlign.Center)
+          .padding({ top: 6, bottom: 2 })
       }
       Row({ space: 8 }) {
         Column({ space: 2 }) {
@@ -160,7 +172,19 @@ export struct HomePage {
         .borderRadius(8)
       }
       .width('100%')
-      .padding({ left: 20, right: 20, top: 8, bottom: 8 })
+      .padding({ left: 20, right: 20, top: 8, bottom: 4 })
+
+      Row() {
+        Text('数据看板')
+          .fontSize(11)
+          .fontColor(AppTheme.color.primary)
+          .onClick(() => {
+            this.pathStack.pushPathByName(ROUTES.ANALYTICS, null);
+          })
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.End)
+      .padding({ left: 20, right: 20, bottom: 4 })
 
       Column() {
         DashboardView({ pathStack: this.pathStack, showTitleBar: false })
