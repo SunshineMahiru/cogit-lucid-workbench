@@ -71,6 +71,33 @@ export struct PlanListPage {
     return rows;
   }
 
+  private archivedPlans(): Plan[] {
+    const rows: Plan[] = [];
+    for (const plan of this.plans) {
+      if (plan.status === PlanStatus.ARCHIVED) {
+        rows.push(plan);
+      }
+    }
+    return rows;
+  }
+
+  private async restore(planId: string): Promise<void> {
+    if (this.isPreview) {
+      planPreviewStore.restore(planId);
+      await this.refresh();
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    try {
+      await this.service.restore(planId);
+      await this.refresh();
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '恢复失败，请重试' });
+    }
+  }
+
   private openEditor(planId: string | null): void {
     if (this.navStack === null) {
       return;
@@ -212,6 +239,35 @@ export struct PlanListPage {
   }
 
   @Builder
+  archivedRow(plan: Plan) {
+    SectionCard() {
+      Row({ space: 8 }) {
+        Column({ space: 3 }) {
+          Text(plan.title)
+            .fontSize(13)
+            .fontColor(AppTheme.color.textSecondary)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .width('100%')
+          Text(`归档 · 起始 ${plan.startDate}`)
+            .fontSize(10)
+            .fontColor(AppTheme.color.textMuted)
+            .width('100%')
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+        Text('恢复')
+          .fontSize(11)
+          .fontColor(AppTheme.color.primary)
+          .onClick(() => {
+            this.restore(plan.id);
+          })
+      }
+      .width('100%')
+    }
+  }
+
+  @Builder
   listBody() {
     if (this.isLoading) {
       Column() {
@@ -270,6 +326,16 @@ export struct PlanListPage {
               .width('100%')
             ForEach(this.otherPlans(), (plan: Plan) => {
               this.planRow(plan)
+            }, (plan: Plan) => plan.id)
+          }
+
+          if (this.archivedPlans().length > 0) {
+            Text('已归档')
+              .fontSize(12)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            ForEach(this.archivedPlans(), (plan: Plan) => {
+              this.archivedRow(plan)
             }, (plan: Plan) => plan.id)
           }
         }

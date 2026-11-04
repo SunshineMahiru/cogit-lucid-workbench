@@ -76,6 +76,15 @@ export class PlanService {
     await this.dao.updatePlan(plan);
   }
 
+  async restore(id: string): Promise<void> {
+    const plan = await this.dao.findPlan(id);
+    if (plan === null) {
+      return;
+    }
+    plan.status = PlanStatus.ACTIVE;
+    await this.dao.updatePlan(plan);
+  }
+
   async listProjects(planId: string): Promise<PlanProject[]> {
     return this.dao.queryProjects(planId);
   }

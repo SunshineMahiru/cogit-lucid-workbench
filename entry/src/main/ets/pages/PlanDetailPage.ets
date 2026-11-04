@@ -4,8 +4,8 @@ import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { Plan } from '../model/Plan';
 import { PlanNode } from '../model/PlanNode';
-import { PlanNodeStatus } from '../model/PlanStatus';
-import { PlanService } from '../plan';
+import { PlanProject } from '../model/PlanProject';
+import { PlanNodeStatus } from '../model/PlanStatus';import { PlanService } from '../plan';
 import { PlanDetailParams, PlanEditParams, PlanNodeParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
@@ -22,6 +22,8 @@ interface PlanNodeView {
 export struct PlanDetailPage {
   @Local plan: Plan | null = null;
   @Local nodes: PlanNodeView[] = [];
+  @Local projects: PlanProject[] = [];
+  @Local newProjectName: string = '';
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   @Local isPreview: boolean = false;
@@ -61,6 +63,7 @@ export struct PlanDetailPage {
         this.missing = true;
         return;
       }
+      this.projects = await service.listProjects(planId);
       const nodes = await service.listNodes(planId);
       if (nodes.length === 0) {
         await service.ensureFirstNode(planId);
@@ -83,6 +86,7 @@ export struct PlanDetailPage {
       return;
     }
     planPreviewStore.ensureFirstNode(this.planId);
+    this.projects = planPreviewStore.projects(this.planId);
     const nodes = planPreviewStore.nodes(this.planId);
     const views: PlanNodeView[] = [];
     for (const node of nodes) {
@@ -123,6 +127,7 @@ export struct PlanDetailPage {
       return;
     }
     this.plan = await this.service.findPlan(this.planId);
+    this.projects = await this.service.listProjects(this.planId);
     const nodes = await this.service.listNodes(this.planId);
     await this.applyNodes(this.service, nodes);
   }
@@ -160,16 +165,63 @@ export struct PlanDetailPage {
     });
   }
 
+  private async createProject(): Promise<void> {
+    if (this.plan === null || this.newProjectName.trim().length === 0) {
+      return;
+    }
+    try {
+      if (this.isPreview) {
+        planPreviewStore.createProject(this.plan.id, this.newProjectName);
+        this.projects = planPreviewStore.projects(this.plan.id);
+      } else if (this.service !== null) {
+        await this.service.createProject(this.plan.id, this.newProjectName);
+        this.projects = await this.service.listProjects(this.plan.id);
+      }
+      this.newProjectName = '';
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '项目创建失败，请重试' });
+    }
+  }
+
+  private async archivePlan(): Promise<void> {    if (this.plan === null) {
+      return;
+    }
+    try {
+      if (this.isPreview) {
+        planPreviewStore.archive(this.plan.id);
+      } else if (this.service !== null) {
+        await this.service.archive(this.plan.id);
+      }
+      this.getUIContext().getPromptAction().showToast({ message: '目标已归档' });
+      if (this.navStack !== null) {
+        this.navStack.pop(true);
+      }
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '归档失败，请重试' });
+    }
+  }
+
   @Builder
   editMenu() {
-    Text('编辑')
-      .fontSize(14)
-      .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
-      .height(56)
-      .onClick(() => {
-        this.openEditor();
-      })
+    Row({ space: 4 }) {
+      Text('编辑')
+        .fontSize(14)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: 10, right: 8 })
+        .height(56)
+        .onClick(() => {
+          this.openEditor();
+        })
+      Text('归档')
+        .fontSize(14)
+        .fontColor(AppTheme.color.textSecondary)
+        .padding({ left: 8, right: 16 })
+        .height(56)
+        .onClick(() => {
+          this.archivePlan();
+        })
+    }
+    .alignItems(VerticalAlign.Center)
   }
 
   @Builder
@@ -263,6 +315,50 @@ export struct PlanDetailPage {
                 .fontSize(10)
                 .fontColor(AppTheme.color.textMuted)
                 .width('100%')
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Column({ space: 6 }) {
+              Text('项目')
+                .fontSize(12)
+                .fontColor(AppTheme.color.textSecondary)
+                .width('100%')
+              if (this.projects.length === 0) {
+                Text('还没有项目分组；项目是可选的，不影响周节点。')
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+              } else {
+                ForEach(this.projects, (project: PlanProject) => {
+                  Text(project.name)
+                    .fontSize(12)
+                    .fontColor(AppTheme.color.text)
+                    .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .borderRadius(8)
+                }, (project: PlanProject) => project.id)
+              }
+              Row({ space: 8 }) {
+                TextInput({ text: this.newProjectName, placeholder: '新项目名称' })
+                  .id('plan_project_input')
+                  .maxLength(30)
+                  .layoutWeight(1)
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .onChange((value: string) => {
+                    this.newProjectName = value;
+                  })
+                Text('添加')
+                  .id('plan_project_add')
+                  .fontSize(12)
+                  .fontColor(AppTheme.color.primary)
+                  .onClick(() => {
+                    this.createProject();
+                  })
+              }
+              .width('100%')
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)

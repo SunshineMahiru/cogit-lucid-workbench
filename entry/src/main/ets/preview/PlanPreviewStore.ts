@@ -3,8 +3,16 @@ import { PlanNode } from '../model/PlanNode';
 import { PlanItem } from '../model/PlanItem';
 import { PlanLink } from '../model/PlanLink';
 import { PlanLinkModule } from '../model/PlanLinkModule';
+import { PlanProject } from '../model/PlanProject';
 import { PlanNodeStatus, PlanStatus } from '../model/PlanStatus';
-import { addPlanDays, createPlan, createPlanItem, createPlanLink, createPlanNode } from '../plan/PlanFactory';
+import {
+  addPlanDays,
+  createPlan,
+  createPlanItem,
+  createPlanLink,
+  createPlanNode,
+  createPlanProject
+} from '../plan/PlanFactory';
 
 /** In-memory plans used only when the DevEco Previewer cannot open the database. */
 class PlanPreviewStore {
@@ -12,6 +20,7 @@ class PlanPreviewStore {
   private planNodes: PlanNode[] = [];
   private planItems: PlanItem[] = [];
   private planLinks: PlanLink[] = [];
+  private planProjects: PlanProject[] = [];
 
   constructor() {
     const seed = createPlan('本周计划', '2026-11-02');
@@ -67,6 +76,37 @@ class PlanPreviewStore {
   setPrimary(id: string): void {
     for (const plan of this.plans) {
       plan.isPrimary = plan.id === id;
+    }
+  }
+
+  projects(planId: string): PlanProject[] {
+    const rows: PlanProject[] = [];
+    for (const project of this.planProjects) {
+      if (project.planId === planId) {
+        rows.push(project);
+      }
+    }
+    return rows;
+  }
+
+  createProject(planId: string, name: string): PlanProject {
+    const project = createPlanProject(planId, name, this.projects(planId).length);
+    this.planProjects.push(project);
+    return project;
+  }
+
+  archive(id: string): void {
+    const plan = this.find(id);
+    if (plan !== null) {
+      plan.status = PlanStatus.ARCHIVED;
+      plan.isPrimary = false;
+    }
+  }
+
+  restore(id: string): void {
+    const plan = this.find(id);
+    if (plan !== null) {
+      plan.status = PlanStatus.ACTIVE;
     }
   }
 
