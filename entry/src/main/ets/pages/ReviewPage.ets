@@ -52,6 +52,11 @@ export struct ReviewPage {
     if (this.navStack === null || this.planNodeId.length === 0) {
       return;
     }
+    const names = this.navStack.getAllPathName();
+    if (names.length > 1 && names[names.length - 2] === ROUTES.PLAN_NODE) {
+      this.navStack.pop();
+      return;
+    }
     const params: PlanNodeParams = { nodeId: this.planNodeId };
     this.navStack.pushPathByName(ROUTES.PLAN_NODE, params);
   }
