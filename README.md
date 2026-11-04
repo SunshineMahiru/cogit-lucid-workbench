@@ -25,11 +25,11 @@ Three design choices separate it from a journal:
 
 The interface is Chinese only. The display name is set in `entry/src/main/ets/theme/AppIdentity.ts` and the launcher label in `AppScope/resources/base/element/string.json`.
 
-The launch screen opens with an identity band — avatar, nickname, signature, and a hand-written title — followed by four counters: notes today, pending settlements, consecutive record days, and the latest review date. Readings, the weekly card, and the module grid sit below it. A `数据看板` button under the counters opens the analytics dashboard.
+The launch screen opens with an identity band — avatar, nickname, signature, and a hand-written title — followed by four counters: notes today, pending settlements, consecutive record days, and the latest review date. Readings, the weekly card, the plan card, and the module grid sit below it. A `数据看板` button under the counters opens the analytics dashboard.
 
 ## Project status
 
-The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings with page backgrounds and surface opacity, export, and a remote analytics dashboard. Both a light and a dark palette ship, and the interface follows the system colour mode. The home page is a normal destination on one navigation stack, so forward and back animate both pages. When `relationalStore` cannot be opened, as in the DevEco Previewer, the home page reads the in-memory preview store and labels the data as demo content. The project is still being refined.
+The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, plans with weekly nodes, settings with page backgrounds and surface opacity, export, and a remote analytics dashboard. Both a light and a dark palette ship, and the interface follows the system colour mode. The home page is a normal destination on one navigation stack, so forward and back animate both pages. When `relationalStore` cannot be opened, as in the DevEco Previewer, the home page reads the in-memory preview store and labels the data as demo content. The project is still being refined.
 
 ## Highlights
 
@@ -40,9 +40,11 @@ The current build covers notes, predictions and settlement, review and the agent
 | Analytics dashboard | Ten charts over a remote JSON payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. A month picker selects one of the twelve months; every chart reads that month's detail. The dashboard renders the remote example payload and does not read local records. |
 | Preview fallback | In the DevEco Previewer, where `relationalStore` is unavailable, the home page falls back to the in-memory preview store and marks the counters as demo data. |
 | Four-step review | Facts, interpretation, contradiction, action. The contradiction step can quote up to three anchors. |
+| Plan ladder | A goal, an optional project group, seven-day nodes, and a checklist. Only one goal is primary; closing a node carries unfinished items into the next week and writes a review draft. |
+| Two-way record links | A plan node picks records from any of the six modules, and every record detail page can attach itself to a plan node. |
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
-| Markdown export | Seven record groups render into one Markdown file inside the app sandbox. |
+| Markdown export | Eight record groups render into one Markdown file inside the app sandbox; plan links to sealed records print a placeholder instead of their titles. |
 | Home identity band | Avatar, nickname, signature, and a hand-written title sit above four counters: notes today, pending settlements, record streak, and the latest review. |
 | Backgrounds and page opacity | Set one default picture or one per module, taken from the gallery, the camera or the file picker. The page surface itself takes 0-60% transparency, so the setting works with or without a picture. |
 
@@ -56,7 +58,7 @@ The code is organised as six layers with a single dependency direction, plus a s
 │               render and route dispatch                     │
 ├─────────────────────────────────────────────────────────────┤
 │ domain        note/  prediction/  review/  anchor/          │
-│               relation/  status/                            │
+│               relation/  status/  plan/                     │
 │               validation, composition, projection           │
 ├─────────────────────────────────────────────────────────────┤
 │ data/         dashboard aggregate, cross-entity reads       │
@@ -71,13 +73,13 @@ The code is organised as six layers with a single dependency direction, plus a s
 │ records       db/  settings/  export/                       │
 │               relationalStore, Preferences, Markdown        │
 ├─────────────────────────────────────────────────────────────┤
-│ model/        seven entity types, enums, factories          │
+│ model/        entity types, enums, factories                │
 │               no imports outside model/                     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 - ArkTS pages with state management V2 (`@ComponentV2`, `@Local`, `@Param`); entity models and services in plain TypeScript.
-- Navigation with `NavPathStack`; 26 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
+- Navigation with `NavPathStack`; 32 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
 - `relationalStore` is the single source of truth, `Preferences` holds non-secret options, the model key is stored in the system asset service, and `fileIo` writes the Markdown export.
 - `@ohos/mpchart` 3.1.0-rc.0 is the only runtime dependency. Icons come from system glyphs rather than an icon pack.
 - `components/charts/` wraps mpchart for lines, bars, and pies, and draws the two heatmaps on Canvas. `network/RemoteStatsRepository` reads the analytics JSON from Gitee first and GitHub second.
@@ -85,7 +87,7 @@ The code is organised as six layers with a single dependency direction, plus a s
 
 ## Usage Example
 
-The home page opens with the identity band and four counters; today's readings, a weekly settlement or onboarding card, and the grid of six modules follow below. `编辑` and `设置` sit on the right of the identity band.
+The home page opens with the identity band and four counters; today's readings, a weekly settlement or onboarding card, the plan card, and the grid of six modules follow below. `编辑` and `设置` sit on the right of the identity band.
 
 <img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard button, today's readings, an onboarding card and the six-module grid">
 
@@ -124,6 +126,17 @@ Expected result: the header states the remote data timestamp and the selected mo
 3. In the contradiction step, tick up to three anchors to check the explanation against.
 4. Optionally open the agent panel to generate contradiction candidates. Template mode is offline; mock and model modes call an endpoint.
 5. Save. The period shows as complete and the session is kept in review history.
+
+### Plan one week
+
+1. The plan card sits on the home page under the weekly settlement card. Tap `新建目标` when no goal exists; later taps open the current goal.
+2. Give the goal a title and a start date. The start date snaps to the Monday of that week, because every node runs Monday to Sunday.
+3. Open this week's node and add checklist items; tap an item to mark it done.
+4. Optionally create a project inside the goal and give the node that project group. A project can be renamed or deleted; deleting it sends its nodes back to ungrouped and keeps every item.
+5. Tap `结束本周`. Unfinished items carry into the next week, and a review draft is prefilled for the closed node. `去复盘` opens the review page with the node context, and the review page keeps a `返回节点` action.
+6. Tap `关联记录` to pick records from any of the six modules. The picker marks records from the same week, ranks them by shared relation and tag, and offers a keyword search plus a `加载更多` action for older records.
+
+Expected result: only one goal carries the `主目标` badge; the home card shows the current week with its done/total count; a closed node shows `已结束` and keeps its link into the review flow.
 
 ### Set a page background
 
@@ -295,7 +308,7 @@ To sign locally:
 
 ### Export
 
-Settings writes a single Markdown file covering events, decisions, relations, predictions, anchors, status readings, and review results. The file stays in the app sandbox, so copying it out is a manual step.
+Settings writes a single Markdown file covering events, decisions, relations, predictions, anchors, status readings, review results, and plans. The file stays in the app sandbox, so copying it out is a manual step. Sealed records are dropped, and a plan link that points at a sealed record prints `已封存记录` instead of the record title.
 
 ## Project Layout
 
@@ -306,17 +319,17 @@ cogit-lucid-workbench/
 │   ├── src/main/
 │       ├── ets/
 │       │   ├── entryability/     ability entry
-│       │   ├── pages/            26 route names, home, analytics, placeholder fallback
+│       │   ├── pages/            34 page files over 32 route names
 │       │   ├── views/            dashboard composition
-│       │   ├── components/       33 reusable pieces
+│       │   ├── components/       29 reusable pieces
 │       │   │   └── charts/       line, bar, pie wrappers and Canvas heatmaps
 │       │   ├── navigation/       route names and parameter types
 │       │   ├── model/            entity types, enums, factories, demo data
 │       │   ├── data/             dashboard aggregate and cross-entity reads
 │       │   ├── profile/          identity store and avatar pipeline
-│       │   ├── note/ prediction/ review/ anchor/ relation/ status/
+│       │   ├── note/ prediction/ review/ anchor/ relation/ status/ plan/
 │       │   ├── analysis/         rules, analyzers, LLM adapters
-│       │   ├── db/               schema, helpers, seven DAOs
+│       │   ├── db/               schema, helpers, eight DAOs, tolerant JSON readers
 │       │   ├── settings/         Preferences keys, asset-backed key, budget ledger
 │       │   ├── export/           Markdown sections and file writer
 │       │   ├── network/          prompt and stats repositories, HTTP, LLM clients
