@@ -10,8 +10,11 @@ export function consumeJsonIssues(): number {
   return total;
 }
 
-/** 读取 JSON 文本；损坏时记一次异常并返回 null。 */
+/** 读取 JSON 文本；空文本视为空列，损坏时记一次异常并返回 null。 */
 function readJson(raw: string): Object | null {
+  if (raw.trim().length === 0) {
+    return null;
+  }
   try {
     return JSON.parse(raw) as Object;
   } catch (error) {
