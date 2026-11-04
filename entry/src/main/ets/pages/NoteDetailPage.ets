@@ -97,7 +97,8 @@ export struct NoteDetailPage {
     this.navStack.pushPathByName(ROUTES.PLAN_ATTACH, params);
   }
 
-  private openEdit(): void {    if (this.detail === null || this.navStack === null) {
+  private openEdit(): void {
+    if (this.detail === null || this.navStack === null) {
       return;
     }
     const params: NoteEditParams = { templateId: null, noteId: this.detail.id };

@@ -9,7 +9,7 @@ import { PlanEditParams } from '../navigation/RouteParams';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
-/** Creates or edits one plan goal; nodes and checklist items come in the next stage. */
+/** Creates or edits one plan goal; the first week is created together with a new goal. */
 @ComponentV2
 export struct PlanEditPage {
   @Local title: string = '';
