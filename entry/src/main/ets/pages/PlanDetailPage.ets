@@ -9,8 +9,7 @@ import { PlanNodeStatus } from '../model/PlanStatus';import { PlanService } from
 import { PlanDetailParams, PlanEditParams, PlanNodeParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
-import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
-
+import { notifyHomeRefresh, subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 interface PlanNodeView {
   node: PlanNode;
   done: number;
@@ -193,6 +192,7 @@ export struct PlanDetailPage {
         await this.service.archive(this.plan.id);
       }
       this.getUIContext().getPromptAction().showToast({ message: '目标已归档' });
+      notifyHomeRefresh();
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }

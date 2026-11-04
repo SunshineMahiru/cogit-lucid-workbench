@@ -8,6 +8,7 @@ import { PlanService } from '../plan';
 import { PlanDetailParams, PlanEditParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
+import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Lists the single primary goal and the other plans. */
 @ComponentV2
@@ -15,12 +16,27 @@ export struct PlanListPage {
   @Local plans: Plan[] = [];
   @Local isLoading: boolean = true;
   @Local isPreview: boolean = false;
+  @Local listVersion: number = 0;
   private service: PlanService | null = null;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
+  private listener: (() => void) | null = null;
 
   aboutToAppear(): void {
     this.load();
+    if (this.listener === null) {
+      this.listener = () => {
+        this.refresh();
+      };
+      subscribeHomeRefresh(this.listener);
+    }
+  }
+
+  aboutToDisappear(): void {
+    if (this.listener !== null) {
+      unsubscribeHomeRefresh(this.listener);
+      this.listener = null;
+    }
   }
 
   private async load(): Promise<void> {
@@ -45,11 +61,14 @@ export struct PlanListPage {
   }
 
   async refresh(): Promise<void> {
+    this.plans = [];
     if (this.isPreview || this.service === null) {
       this.plans = planPreviewStore.list();
+      this.listVersion += 1;
       return;
     }
     this.plans = await this.service.listPlans();
+    this.listVersion += 1;
   }
 
   private primaryPlan(): Plan | null {
@@ -59,6 +78,11 @@ export struct PlanListPage {
       }
     }
     return null;
+  }
+
+  private primaryPlans(): Plan[] {
+    const plan = this.primaryPlan();
+    return plan === null ? [] : [plan];
   }
 
   private otherPlans(): Plan[] {
@@ -119,6 +143,7 @@ export struct PlanListPage {
   }
 
   private async setPrimary(planId: string): Promise<void> {
+    this.plans = [];
     if (this.isPreview) {
       planPreviewStore.setPrimary(planId);
       await this.refresh();
@@ -315,8 +340,10 @@ export struct PlanListPage {
             .alignItems(HorizontalAlign.Start)
           }
 
-          if (this.primaryPlan() !== null) {
-            this.primaryCard(this.primaryPlan() as Plan)
+          if (this.primaryPlans().length > 0) {
+            ForEach(this.primaryPlans(), (plan: Plan) => {
+              this.primaryCard(plan)
+            }, (plan: Plan) => `${plan.id}_${this.listVersion}`)
           }
 
           if (this.otherPlans().length > 0) {
@@ -326,7 +353,7 @@ export struct PlanListPage {
               .width('100%')
             ForEach(this.otherPlans(), (plan: Plan) => {
               this.planRow(plan)
-            }, (plan: Plan) => plan.id)
+            }, (plan: Plan) => `${plan.id}_${this.listVersion}`)
           }
 
           if (this.archivedPlans().length > 0) {
@@ -336,7 +363,7 @@ export struct PlanListPage {
               .width('100%')
             ForEach(this.archivedPlans(), (plan: Plan) => {
               this.archivedRow(plan)
-            }, (plan: Plan) => plan.id)
+            }, (plan: Plan) => `${plan.id}_${this.listVersion}`)
           }
         }
         .width('100%')
