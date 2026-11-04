@@ -322,6 +322,24 @@ export class PlanDao {
     }
   }
 
+  /** Replaces every link that points at one record inside a transaction, so retries cannot duplicate rows. */
+  async replaceLinksByTarget(module: string, targetId: string, links: PlanLink[]): Promise<void> {
+    this.store.beginTransaction();
+    try {
+      const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
+      predicates.equalTo(PLAN_LINK_COLS.MODULE, module);
+      predicates.equalTo(PLAN_LINK_COLS.TARGET_ID, targetId);
+      await this.store.delete(predicates);
+      for (const link of links) {
+        await this.insertLink(link);
+      }
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
+  }
+
   /** Replaces every link on one node inside a transaction, so a failure keeps the old set. */
   async replaceLinks(nodeId: string, links: PlanLink[]): Promise<void> {
     this.store.beginTransaction();
@@ -337,12 +355,6 @@ export class PlanDao {
       this.store.rollBack();
       throw error;
     }
-  }
-
-  async deleteLink(id: string): Promise<number> {
-    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
-    predicates.equalTo(PLAN_LINK_COLS.ID, id);
-    return this.store.delete(predicates);
   }
 
   private mapPlan(resultSet: relationalStore.ResultSet): Plan {

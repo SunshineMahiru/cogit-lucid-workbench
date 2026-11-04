@@ -164,7 +164,8 @@ class PlanPreviewStore {
     }
   }
 
-  ensureFirstNode(planId: string): PlanNode | null {    const plan = this.find(planId);
+  ensureFirstNode(planId: string): PlanNode | null {
+    const plan = this.find(planId);
     if (plan === null) {
       return null;
     }
@@ -231,6 +232,20 @@ class PlanPreviewStore {
       if (link.nodeId !== nodeId) {
         rows.push(link);
       }
+    }
+    this.planLinks = rows;
+  }
+
+  /** Replaces every node that points at one record. */
+  replaceLinksForTarget(module: PlanLinkModule, targetId: string, links: PlanLink[]): void {
+    const rows: PlanLink[] = [];
+    for (const link of this.planLinks) {
+      if (link.module !== module || link.targetId !== targetId) {
+        rows.push(link);
+      }
+    }
+    for (const link of links) {
+      rows.push(link);
     }
     this.planLinks = rows;
   }

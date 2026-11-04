@@ -13,7 +13,6 @@ import {
   addPlanDays,
   createPlan,
   createPlanItem,
-  createPlanLink,
   createPlanNode,
   createPlanProject
 } from './PlanFactory';
@@ -248,19 +247,13 @@ export class PlanService {
     return this.dao.queryLinksByTarget(module, targetId);
   }
 
-  async addLink(planId: string, nodeId: string, module: PlanLinkModule,
-    targetId: string, label: string): Promise<PlanLink> {
-    const link = createPlanLink(planId, nodeId, module, targetId, label);
-    await this.dao.insertLink(link);
-    return link;
-  }
-
-  async removeLink(id: string): Promise<void> {
-    await this.dao.deleteLink(id);
-  }
-
   /** Replaces every link on one node atomically. */
   async replaceLinks(nodeId: string, links: PlanLink[]): Promise<void> {
     await this.dao.replaceLinks(nodeId, links);
+  }
+
+  /** Replaces every node that points at one record atomically. */
+  async replaceLinksByTarget(module: PlanLinkModule, targetId: string, links: PlanLink[]): Promise<void> {
+    await this.dao.replaceLinksByTarget(module, targetId, links);
   }
 }

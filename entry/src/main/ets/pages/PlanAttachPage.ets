@@ -3,7 +3,10 @@ import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { PlanLinkModule } from '../model/PlanLinkModule';
+import { PlanLink } from '../model/PlanLink';
+import { PlanStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
+import { createPlanLink } from '../plan/PlanFactory';
 import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import { PlanAttachParams } from '../navigation/RouteParams';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
@@ -15,7 +18,6 @@ interface AttachTarget {
   weekIndex: number;
   startDate: string;
   selected: boolean;
-  linkId: string;
 }
 
 /** Reverse entry: attach one existing record to any plan node. */
@@ -45,14 +47,17 @@ export struct PlanAttachPage {
       const service = await PlanService.open(hostContext);
       this.service = service;
       const links = await service.listLinksByTarget(module, targetId);
-      const selected = new Map<string, string>();
+      const linkedNodeIds: string[] = [];
       for (const link of links) {
         if (link.nodeId !== undefined) {
-          selected.set(link.nodeId, link.id);
+          linkedNodeIds.push(link.nodeId);
         }
       }
       const rows: AttachTarget[] = [];
       for (const plan of await service.listPlans()) {
+        if (plan.status === PlanStatus.ARCHIVED) {
+          continue;
+        }
         const nodes = await service.listNodes(plan.id);
         for (const node of nodes) {
           rows.push({
@@ -61,8 +66,7 @@ export struct PlanAttachPage {
             title: plan.title,
             weekIndex: node.weekIndex,
             startDate: node.startDate,
-            selected: selected.has(node.id),
-            linkId: selected.get(node.id) ?? ''
+            selected: linkedNodeIds.includes(node.id)
           });
         }
       }
@@ -78,6 +82,9 @@ export struct PlanAttachPage {
   private previewTargets(): AttachTarget[] {
     const rows: AttachTarget[] = [];
     for (const plan of planPreviewStore.list()) {
+      if (plan.status === PlanStatus.ARCHIVED) {
+        continue;
+      }
       for (const node of planPreviewStore.nodes(plan.id)) {
         rows.push({
           planId: plan.id,
@@ -85,8 +92,7 @@ export struct PlanAttachPage {
           title: plan.title,
           weekIndex: node.weekIndex,
           startDate: node.startDate,
-          selected: false,
-          linkId: ''
+          selected: false
         });
       }
     }
@@ -103,8 +109,7 @@ export struct PlanAttachPage {
         title: row.title,
         weekIndex: row.weekIndex,
         startDate: row.startDate,
-        selected: i === index ? !row.selected : row.selected,
-        linkId: row.linkId
+        selected: i === index ? !row.selected : row.selected
       });
     }
     this.targets = next;
@@ -116,18 +121,19 @@ export struct PlanAttachPage {
     }
     this.isSaving = true;
     try {
+      const links: PlanLink[] = [];
+      for (const row of this.targets) {
+        if (row.selected) {
+          links.push(createPlanLink(row.planId, row.nodeId, this.module, this.targetId, this.label));
+        }
+      }
       if (this.service === null) {
+        planPreviewStore.replaceLinksForTarget(this.module, this.targetId, links);
         this.getUIContext().getPromptAction().showToast({ message: '预览器仅展示关联列表' });
         this.isSaving = false;
         return;
       }
-      for (const row of this.targets) {
-        if (row.selected && row.linkId.length === 0) {
-          await this.service.addLink(row.planId, row.nodeId, this.module, this.targetId, this.label);
-        } else if (!row.selected && row.linkId.length > 0) {
-          await this.service.removeLink(row.linkId);
-        }
-      }
+      await this.service.replaceLinksByTarget(this.module, this.targetId, links);
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
