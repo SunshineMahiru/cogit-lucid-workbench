@@ -21,6 +21,7 @@ import { AppTheme } from '../theme/AppTheme';
 import { ReviewPeriod, ReviewService, ReviewStats, emptyReviewStats } from '../review';
 import { ReviewPromptPanel } from '../components/ReviewPromptPanel';
 import { WelcomeCard } from '../components/WelcomeCard';
+import { PlanHomeCard } from '../components/PlanHomeCard';
 import { OnboardingStore } from '../settings/OnboardingStore';
 import { PREVIEW_BANNER } from '../preview/PreviewMode';
 import { previewStore } from '../preview/PreviewStore';
@@ -491,6 +492,8 @@ export struct DashboardView {
               .onClick(() => {
                 this.openWeeklySettlement();
               })
+
+              PlanHomeCard({ pathStack: this.pathStack })
 
               ReviewPromptPanel({ period: ReviewPeriod.WEEK })
 

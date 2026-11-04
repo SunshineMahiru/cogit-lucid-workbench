@@ -180,19 +180,19 @@ export struct PlanHomeCard {
         Text('读取计划…').fontSize(10).fontColor(AppTheme.color.textMuted)
       }
       .width('100%')
-      .padding({ left: 20, right: 20, top: 4, bottom: 4 })
+      .padding({ top: 2, bottom: 2 })
     } else if (this.plan === null || this.plan.status !== PlanStatus.ACTIVE) {
       Column() {
         this.emptyCard()
       }
       .width('100%')
-      .padding({ left: 20, right: 20, top: 4, bottom: 4 })
+      .padding({ top: 2, bottom: 2 })
     } else {
       Column() {
         this.planCard(this.plan)
       }
       .width('100%')
-      .padding({ left: 20, right: 20, top: 4, bottom: 4 })
+      .padding({ top: 2, bottom: 2 })
     }
   }
 }
