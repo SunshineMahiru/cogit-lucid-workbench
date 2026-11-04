@@ -37,7 +37,7 @@ The current build covers notes, predictions and settlement, review and the agent
 |---|---|
 | Frozen prediction log | Target, judgment, confidence 0-100, reason, and a settlement date written once; settlement fills the outcome and marks hit or miss. |
 | Hit-rate statistics | Overall rate, a monthly trend over the last six months, and a hit/miss donut, drawn with `@ohos/mpchart`. |
-| Analytics dashboard | Ten charts over a remote JSON payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. The 6/12-month switch refetches the payload. The dashboard renders the remote example payload and does not read local records. |
+| Analytics dashboard | Ten charts over a remote JSON payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. A month picker selects one of the twelve months; every chart reads that month's detail. The dashboard renders the remote example payload and does not read local records. |
 | Preview fallback | In the DevEco Previewer, where `relationalStore` is unavailable, the home page falls back to the in-memory preview store and marks the counters as demo data. |
 | Four-step review | Facts, interpretation, contradiction, action. The contradiction step can quote up to three anchors. |
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
@@ -111,11 +111,11 @@ Expected result: after two or three settled predictions the statistics page draw
 ### Open the analytics dashboard
 
 1. On the home page, tap `数据看板` under the four counters.
-2. The page requests `stats-6m.json` from `docs/mock/` in the public repository and draws ten charts: monthly hit rate, calibration curve, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. It does not read local records.
-3. Tap `12 月` to request `stats-12m.json`; tap `刷新` to request the current range again.
+2. The page requests `stats-12m.json` from `docs/mock/` in the public repository and draws ten charts: monthly hit rate, calibration curve, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. It does not read local records.
+3. Pick a month chip; the header and every chart switch to that month's detail. Tap `刷新` to request the payload again.
 4. If both the Gitee and GitHub requests fail, the page keeps the error message and a retry action.
 
-Expected result: the header states the remote data timestamp. The calibration line sits against a 45-degree reference, the 12-month switch adds six earlier months, and the two heatmaps label weekdays and columns.
+Expected result: the header states the remote data timestamp and the selected month. The calibration line sits against a 45-degree reference; choosing another month changes calibration, outcomes, readings and both heatmaps; the two heatmaps label weekdays and columns.
 
 ### Run one review
 
@@ -142,11 +142,11 @@ Settings (`设置`) writes the whole record set to `cogit-export-YYYYMMDD-HHMM.m
 
 Screenshots come from a Mate 70 Pro emulator. Every record in them is synthetic. The new home and dashboard captures use the current build in dark mode; the feature table below was captured earlier in light mode. Those feature pages keep their layout, while the home page now adds the identity band and the `数据看板` link.
 
-| Home | Analytics, 6 months |
+| Home | Analytics, current month |
 |---|---|
-| <img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard button, today's readings and the module grid"> | <img src="./docs/images/debug/analytics-6m.jpeg" width="300" alt="Analytics dashboard in dark mode showing the remote data timestamp, the six-month hit-rate line, the calibration curve and the outcome donut"> |
-| **Analytics, 12 months** | **Analytics, heatmaps** |
-| <img src="./docs/images/debug/analytics-12m.jpeg" width="300" alt="Analytics dashboard after switching to twelve months, with more monthly points on the hit-rate line"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the analytics dashboard with sleep buckets, interaction bars, a coverage heatmap and an activity heatmap, both labelled by weekday"> |
+| <img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard button, today's readings and the module grid"> | <img src="./docs/images/debug/analytics-month.jpeg" width="300" alt="Analytics dashboard in dark mode with month chips, the current month highlighted, the hit-rate line, the calibration curve and the outcome donut"> |
+| **Analytics, mid-page** | **Analytics, heatmaps** |
+| <img src="./docs/images/debug/analytics-mid.jpeg" width="300" alt="Middle of the analytics dashboard with the outcome donut, confidence bars and horizon buckets for the selected month"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the analytics dashboard with interaction bars, a coverage heatmap and weekday labels"> |
 
 The older feature captures follow; their page content still matches the current build apart from the identity band noted above.
 
@@ -194,7 +194,7 @@ node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p 
 3. Select the `entry` module and run.
 4. On the dashboard, open notes (`速记`), write one line, and save.
 5. The note appears under recent notes, and the dashboard counters move off zero.
-6. Tap `数据看板`, then `12 月`, to confirm the remote payload loads and the range switch redraws the charts.
+6. Tap `数据看板`, then pick a month chip, to confirm the remote payload loads and the charts switch to that month.
 
 Expected result: the dashboard reports one note today and one in total, the weekly settlement card starts counting it, and the analytics page shows a remote timestamp with ten charts.
 
@@ -224,15 +224,14 @@ The dashboard reads static JSON from `docs/mock/` in the public repository. No k
 
 | File | Content |
 |---|---|
-| `stats-6m.json` | Six months of monthly hit rates, calibration buckets, outcome totals, confidence buckets, horizon buckets, 84 days of coverage and the readings recorded in them, sleep buckets, interaction counts, and activity cells |
-| `stats-12m.json` | The same shape with twelve months of monthly points |
+| `stats-12m.json` | Twelve months of monthly points, plus one detail block per month: calibration, outcomes, confidence, horizon, readings, coverage, sleep buckets, interactions, and activity cells |
 
 Base URLs:
 
 - Gitee: `https://gitee.com/theangelnextdoor/cogit-lucid-workbench/raw/main/docs/mock/`
 - GitHub: `https://raw.githubusercontent.com/SunshineMahiru/cogit-lucid-workbench/main/docs/mock/`
 
-`RemoteStatsRepository` requests the range file from Gitee first and GitHub second, adding a cache-busting `t` parameter. If both fail, the page shows the error and a retry action. Switching 6/12 months issues a new request.
+`RemoteStatsRepository` requests `stats-12m.json` from Gitee first and GitHub second, adding a cache-busting `t` parameter. If both fail, the page shows the error and a retry action. Switching months filters the monthly detail already loaded; it does not issue a new request.
 
 ### Pointing the app at the server
 
@@ -337,7 +336,7 @@ cogit-lucid-workbench/
 
 `hvigorw test` runs the local Hypium unit tests in `entry/src/test`.
 
-The device suite in `entry/src/ohosTest` has seven cases: four analysis rules in `Analysis.test.ets` and three analytics flow cases in `UiFlow.test.ets`. The flow covers opening the dashboard from the home page, switching to 12 months, and returning to the home page. Install both HAPs on the emulator, then run:
+The device suite in `entry/src/ohosTest` has seven cases: four analysis rules in `Analysis.test.ets` and three analytics flow cases in `UiFlow.test.ets`. The flow covers opening the dashboard from the home page, switching month, and returning to the home page. Install both HAPs on the emulator, then run:
 
 ```bash
 node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p module=entry@ohosTest -p product=default --no-daemon
@@ -362,7 +361,7 @@ Expected result: `Tests run: 7, Failure: 0, Error: 0, Pass: 7`.
 The DevEco previewer does not provide `relationalStore`. When the store cannot be opened, the home page reads the in-memory preview store and marks the counters as demo data; other data-backed pages use their own fallback. Run on an emulator or a phone to see real records.
 
 **The analytics dashboard shows example data.**
-The dashboard reads `docs/mock/stats-6m.json` or `stats-12m.json` from the public repository, trying Gitee first and GitHub second. The values are synthetic and labelled as example data in the header. Edit those files to change what the charts show.
+The dashboard reads `docs/mock/stats-12m.json` from the public repository, trying Gitee first and GitHub second. The values are synthetic and labelled as example data in the header. Each month has its own detail block; edit the file to change what the charts show.
 
 **The emulator cannot reach the mock server.**
 `127.0.0.1` inside the emulator is the emulator itself. Run `hdc rport tcp:4523 tcp:4523` before launching, or open settings and point the model base URL at the host address.

@@ -37,7 +37,7 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 |---|---|
 | 预测日志 | 目标、判断、0–100 置信度、理由、结算日一次写定；结算时补上结果并标记命中与否。 |
 | 命中率统计 | 整体命中率、最近六个月的逐月趋势、命中与未命中的环图，用 `@ohos/mpchart` 绘制。 |
-| 数据看板 | 十张图共用一份远端 JSON：校准曲线、月度命中率、结果分布、置信度分布、期限分档、读数趋势、睡眠分组命中率、互动频率、读数覆盖率与速记时段热力图；切换 6/12 月会重新请求。看板只渲染远端示例 JSON，不读取本地记录。 |
+| 数据看板 | 十张图共用一份远端 JSON：校准曲线、月度命中率、结果分布、置信度分布、期限分档、读数趋势、睡眠分组命中率、互动频率、读数覆盖率与速记时段热力图；月份 chip 选择 12 个月中的一个月，所有图读取该月明细。看板只渲染远端示例 JSON，不读取本地记录。 |
 | 预览回退 | DevEco 预览器不提供 `relationalStore`，首页改读内存预览数据，并标明摘要为演示数据。 |
 | 四步复盘 | 事实、解释、矛盾、行动；矛盾这一步最多引用三条锚点。 |
 | 三层信任 | 每条关系带友好、真诚、透明之一的分层，以我为中心画成星图。 |
@@ -111,11 +111,11 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 ### 打开数据看板
 
 1. 在首页四项摘要下方点 `数据看板`。
-2. 页面会请求公开仓 `docs/mock/` 下的 `stats-6m.json`，画出十张图：月度命中率、校准曲线、结果分布、置信度分布、期限分档、读数趋势、睡眠分组命中率、互动频率、读数覆盖率与速记时段热力图；看板不读取本地记录。
-3. 点 `12 月` 会请求 `stats-12m.json`；点 `刷新` 会重新请求当前区间。
+2. 页面会请求公开仓 `docs/mock/` 下的 `stats-12m.json`，画出十张图：月度命中率、校准曲线、结果分布、置信度分布、期限分档、读数趋势、睡眠分组命中率、互动频率、读数覆盖率与速记时段热力图；看板不读取本地记录。
+3. 点月份 chip 切换月份，页头与所有图都会读取该月明细；点 `刷新` 重新请求远端数据。
 4. Gitee 与 GitHub 都请求失败时，页面保留错误文案与重试入口。
 
-预期结果：页头显示远端数据时间；校准曲线沿 45 度参考线展开；切到 12 月会多出前六个月的数据；两张热力图带星期与列标签。
+预期结果：页头显示远端数据时间与当前月份；校准曲线沿 45 度参考线展开；切换月份后校准、结果、读数与两张热力图一起变化；热力图带星期与列标签。
 
 ### 做一次复盘
 
@@ -142,11 +142,11 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 
 截图来自 Mate 70 Pro 模拟器，其中记录均为合成示例。新的首页与看板截图使用当前版本、深色模式；下方功能页表格拍摄较早，为浅色模式。这些页面的布局保持不变，首页新增了身份区与 `数据看板` 入口。
 
-| 首页 | 看板 · 6 月 |
+| 首页 | 看板 · 当前月 |
 |---|---|
-| <img src="./docs/images/debug/home.jpeg" width="300" alt="当前首页，含身份区、四项摘要、数据看板入口、当天读数与模块网格"> | <img src="./docs/images/debug/analytics-6m.jpeg" width="300" alt="深色模式下的数据看板，显示远端数据时间、六个月命中率折线、校准曲线与结果环图"> |
-| **看板 · 12 月** | **看板 · 热力图** |
-| <img src="./docs/images/debug/analytics-12m.jpeg" width="300" alt="切换到 12 月后的数据看板，命中率折线增加更多月份"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="看板下半部分，含睡眠分组、互动频率横向条、读数覆盖率热力图与速记时段热力图，均带星期标签"> |
+| <img src="./docs/images/debug/home.jpeg" width="300" alt="当前首页，含身份区、四项摘要、数据看板入口、当天读数与模块网格"> | <img src="./docs/images/debug/analytics-month.jpeg" width="300" alt="深色模式下的单月看板，月份 chip 中当前月高亮，显示命中率折线、校准曲线与结果环图"> |
+| **看板 · 中部** | **看板 · 热力图** |
+| <img src="./docs/images/debug/analytics-mid.jpeg" width="300" alt="单月看板中部，显示结果环图、置信度柱状图与期限分档"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="单月看板底部，显示互动频率横向条与读数覆盖率热力图，均带星期标签"> |
 
 下面是较早的功能页截图；除上文提到的身份区外，页面内容与当前版本一致。
 
@@ -194,7 +194,7 @@ node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p 
 3. 选中 `entry` 模块，点运行。
 4. 在首页进入速记（`速记`），写一行，保存。
 5. 这条记录出现在最近速记里，首页的计数随之变化。
-6. 点 `数据看板`，再点 `12 月`，确认远端数据加载、区间切换后图表重绘。
+6. 点 `数据看板`，再点一个月份 chip，确认远端数据加载、切月后图表重绘。
 
 预期结果：首页显示今日速记 1 条、共 1 条，本周结算卡开始把它算进去；看板显示远端时间与十张图。
 
@@ -224,15 +224,14 @@ node mock-server/server.js
 
 | 文件 | 内容 |
 |---|---|
-| `stats-6m.json` | 最近 6 个月的逐月命中率、校准分档、结果合计、置信度分档、期限分档、84 天覆盖率与其中的读数、睡眠分组、互动次数与时段格子 |
-| `stats-12m.json` | 同样的结构，逐月数据扩到 12 个月 |
+| `stats-12m.json` | 12 个月的逐月数据，以及每个月一份明细：校准、结果、置信度、期限、读数、覆盖、睡眠分组、互动与时段格子 |
 
 基础地址：
 
 - Gitee：`https://gitee.com/theangelnextdoor/cogit-lucid-workbench/raw/main/docs/mock/`
 - GitHub：`https://raw.githubusercontent.com/SunshineMahiru/cogit-lucid-workbench/main/docs/mock/`
 
-`RemoteStatsRepository` 先请求 Gitee，再请求 GitHub，并带上用于跳过缓存的 `t` 参数。两边都失败时，页面显示错误与重试入口；切换 6/12 月会重新发起请求。
+`RemoteStatsRepository` 先请求 Gitee，再请求 GitHub，并带上用于跳过缓存的 `t` 参数。两边都失败时，页面显示错误与重试入口；切换月份只过滤已加载的月度明细，不会重新发起请求。
 
 ### 让应用连上服务
 
@@ -337,7 +336,7 @@ cogit-lucid-workbench/
 
 `hvigorw test` 运行 `entry/src/test` 下的本地 Hypium 单元测试。
 
-`entry/src/ohosTest` 的设备套件共 7 条：`Analysis.test.ets` 里 4 条分析规则，`UiFlow.test.ets` 里 3 条看板流程。流程覆盖从首页进入看板、切到 12 月、返回首页。把应用包与测试包装到模拟器后运行：
+`entry/src/ohosTest` 的设备套件共 7 条：`Analysis.test.ets` 里 4 条分析规则，`UiFlow.test.ets` 里 3 条看板流程。流程覆盖从首页进入看板、切换月份、返回首页。把应用包与测试包装到模拟器后运行：
 
 ```bash
 node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p module=entry@ohosTest -p product=default --no-daemon
@@ -362,7 +361,7 @@ hdc shell aa test -b com.sunshinemahiru.cogitlucid -m entry_test -s unittest Ope
 DevEco 预览器不提供 `relationalStore`。数据库打不开时，首页改读内存预览数据，并在摘要下方标明演示数据；其他依赖数据的页面各有回退。要看真实记录请用模拟器或手机。
 
 **看板里的数据是示例数据。**
-看板读取公开仓 `docs/mock/` 下的 `stats-6m.json` 或 `stats-12m.json`，先请求 Gitee、再请求 GitHub；页头标明这是示例数据。修改这两份文件就能改变图表展示。
+看板读取公开仓 `docs/mock/` 下的 `stats-12m.json`，先请求 Gitee、再请求 GitHub；页头标明这是示例数据。每个月有独立明细，修改该文件就能改变图表展示。
 
 **模拟器连不上 Mock 服务。**
 模拟器里的 `127.0.0.1` 指向模拟器自己。启动前执行 `hdc rport tcp:4523 tcp:4523` 做端口转发，或者在设置里把接口地址改成宿主机地址。
