@@ -61,6 +61,16 @@ export interface PlanEditParams {
   planId: string | null;
 }
 
+/** Parameters accepted by the plan detail route. */
+export interface PlanDetailParams {
+  planId: string;
+}
+
+/** Parameters accepted by the seven-day node route. */
+export interface PlanNodeParams {
+  nodeId: string;
+}
+
 /** Parameters accepted by the status editor; null uses today. */
 export interface StatusEditParams {
   date: string | null;

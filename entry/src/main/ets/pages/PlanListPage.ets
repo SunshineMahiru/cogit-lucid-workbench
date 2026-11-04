@@ -5,7 +5,7 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { Plan } from '../model/Plan';
 import { PlanStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
-import { PlanEditParams } from '../navigation/RouteParams';
+import { PlanDetailParams, PlanEditParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
 
@@ -81,6 +81,16 @@ export struct PlanListPage {
     });
   }
 
+  private openDetail(planId: string): void {
+    if (this.navStack === null) {
+      return;
+    }
+    const params: PlanDetailParams = { planId: planId };
+    this.navStack.pushPathByName(ROUTES.PLAN_DETAIL, params, () => {
+      this.refresh();
+    });
+  }
+
   private async setPrimary(planId: string): Promise<void> {
     if (this.isPreview) {
       planPreviewStore.setPrimary(planId);
@@ -124,12 +134,20 @@ export struct PlanListPage {
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(6)
           Blank()
-          Text('编辑')
-            .fontSize(11)
-            .fontColor(AppTheme.color.primary)
-            .onClick(() => {
-              this.openEditor(plan.id);
-            })
+          Row({ space: 10 }) {
+            Text('查看 ›')
+              .fontSize(11)
+              .fontColor(AppTheme.color.primary)
+              .onClick(() => {
+                this.openDetail(plan.id);
+              })
+            Text('编辑')
+              .fontSize(11)
+              .fontColor(AppTheme.color.textSecondary)
+              .onClick(() => {
+                this.openEditor(plan.id);
+              })
+          }
         }
         .width('100%')
 
@@ -170,7 +188,7 @@ export struct PlanListPage {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .onClick(() => {
-              this.openEditor(plan.id);
+              this.openDetail(plan.id);
             })
           Text('设为主目标')
             .fontSize(10)

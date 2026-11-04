@@ -8,7 +8,7 @@ import { PlanNode } from '../model/PlanNode';
 import { PlanItem } from '../model/PlanItem';
 import { PlanLink } from '../model/PlanLink';
 import { PlanLinkModule } from '../model/PlanLinkModule';
-import { PlanStatus } from '../model/PlanStatus';
+import { PlanNodeStatus, PlanStatus } from '../model/PlanStatus';
 import {
   addPlanDays,
   createPlan,
@@ -89,6 +89,58 @@ export class PlanService {
 
   async listNodes(planId: string): Promise<PlanNode[]> {
     return this.dao.queryNodes(planId);
+  }
+
+  async findNode(nodeId: string): Promise<PlanNode | null> {
+    return this.dao.findNode(nodeId);
+  }
+
+  /** Returns the first node, creating it when the plan has none yet. */
+  async ensureFirstNode(planId: string): Promise<PlanNode | null> {
+    const nodes = await this.dao.queryNodes(planId);
+    if (nodes.length > 0) {
+      return nodes[0];
+    }
+    return this.createNextNode(planId);
+  }
+
+  /** Returns the latest open node, or the last node when every node is closed. */
+  async currentNode(planId: string): Promise<PlanNode | null> {
+    const nodes = await this.dao.queryNodes(planId);
+    let latest: PlanNode | null = null;
+    for (const node of nodes) {
+      if (node.status === PlanNodeStatus.OPEN) {
+        latest = node;
+      }
+    }
+    if (latest === null && nodes.length > 0) {
+      latest = nodes[nodes.length - 1];
+    }
+    return latest;
+  }
+
+  /**
+   * Closes a node and appends the next week. Every unfinished item is copied
+   * into the new node with carriedFrom pointing at the source item.
+   */
+  async closeNodeAndCarry(nodeId: string, reviewId: string = ''): Promise<PlanNode | null> {
+    const node = await this.dao.findNode(nodeId);
+    if (node === null || node.status === PlanNodeStatus.CLOSED) {
+      return null;
+    }
+    await this.dao.closeNode(nodeId, reviewId);
+    const nodes = await this.dao.queryNodes(node.planId);
+    const next = createPlanNode(node.planId, nodes.length + 1, addPlanDays(node.startDate, 7), node.projectId);
+    await this.dao.insertNode(next);
+    const items = await this.dao.queryItems(nodeId);
+    let order = 0;
+    for (const item of items) {
+      if (!item.done) {
+        await this.dao.insertItem(createPlanItem(next.id, item.text, order, item.id));
+        order += 1;
+      }
+    }
+    return next;
   }
 
   /** Appends the next Monday-to-Sunday node to a plan. */

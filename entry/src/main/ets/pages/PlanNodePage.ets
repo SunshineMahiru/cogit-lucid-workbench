@@ -1,0 +1,326 @@
+import { AppTheme } from '../theme/AppTheme';
+import { AppDestination } from '../components/AppDestination';
+import { SectionCard } from '../components/SectionCard';
+import { NoteEmptyState } from '../components/NoteEmptyState';
+import { Plan } from '../model/Plan';
+import { PlanNode } from '../model/PlanNode';
+import { PlanItem } from '../model/PlanItem';
+import { PlanNodeStatus } from '../model/PlanStatus';
+import { PlanService } from '../plan';
+import { PlanNodeParams } from '../navigation/RouteParams';
+import { planPreviewStore } from '../preview/PlanPreviewStore';
+
+/** One seven-day node: checklist, carry-over marks and closing action. */
+@ComponentV2
+export struct PlanNodePage {
+  @Local node: PlanNode | null = null;
+  @Local plan: Plan | null = null;
+  @Local items: PlanItem[] = [];
+  @Local newText: string = '';
+  @Local isLoading: boolean = true;
+  @Local isSaving: boolean = false;
+  @Local isPreview: boolean = false;
+  private nodeId: string = '';
+  private service: PlanService | null = null;
+  private navStack: NavPathStack | null = null;
+
+  private async load(nodeId: string): Promise<void> {
+    this.nodeId = nodeId;
+    const hostContext = this.getUIContext().getHostContext();
+    if (hostContext === undefined) {
+      this.loadPreview();
+      return;
+    }
+    try {
+      const service = await PlanService.open(hostContext);
+      this.service = service;
+      const node = await service.findNode(nodeId);
+      if (node === null) {
+        this.isLoading = false;
+        return;
+      }
+      this.node = node;
+      this.plan = await service.findPlan(node.planId);
+      this.items = await service.listItems(nodeId);
+    } catch (error) {
+      this.loadPreview();
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  private loadPreview(): void {
+    this.isPreview = true;
+    this.node = planPreviewStore.findNode(this.nodeId);
+    if (this.node !== null) {
+      this.plan = planPreviewStore.find(this.node.planId);
+      this.items = planPreviewStore.listItems(this.nodeId);
+    }
+    this.isLoading = false;
+  }
+
+  private async addItem(): Promise<void> {
+    if (this.newText.trim().length === 0 || this.isSaving) {
+      return;
+    }
+    this.isSaving = true;
+    try {
+      if (this.isPreview) {
+        planPreviewStore.addItem(this.nodeId, this.newText);
+        this.items = planPreviewStore.listItems(this.nodeId);
+      } else if (this.service !== null) {
+        await this.service.addItem(this.nodeId, this.newText);
+        this.items = await this.service.listItems(this.nodeId);
+      }
+      this.newText = '';
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '添加失败，请重试' });
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  private async toggle(item: PlanItem): Promise<void> {
+    const next = !item.done;
+    if (this.isPreview) {
+      planPreviewStore.setItemDone(item.id, next);
+      this.items = planPreviewStore.listItems(this.nodeId);
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    try {
+      await this.service.setItemDone(item.id, next);
+      this.items = await this.service.listItems(this.nodeId);
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '更新失败，请重试' });
+    }
+  }
+
+  private async remove(item: PlanItem): Promise<void> {
+    if (this.isPreview) {
+      planPreviewStore.removeItem(item.id);
+      this.items = planPreviewStore.listItems(this.nodeId);
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    try {
+      await this.service.removeItem(item.id);
+      this.items = await this.service.listItems(this.nodeId);
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '删除失败，请重试' });
+    }
+  }
+
+  private async closeWeek(): Promise<void> {
+    if (this.node === null || this.node.status === PlanNodeStatus.CLOSED || this.isSaving) {
+      return;
+    }
+    this.isSaving = true;
+    try {
+      if (this.isPreview) {
+        planPreviewStore.closeAndCarry(this.node.id);
+      } else if (this.service !== null) {
+        await this.service.closeNodeAndCarry(this.node.id);
+      }
+      this.getUIContext().getPromptAction().showToast({ message: '本周已结束，未完成项已带入下一周' });
+      if (this.navStack !== null) {
+        this.navStack.pop(true);
+      }
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '结束本周失败，请重试' });
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  @Builder
+  itemRow(item: PlanItem) {
+    Row({ space: 8 }) {
+      Text(item.done ? '✓' : '○')
+        .fontSize(16)
+        .fontColor(item.done ? AppTheme.color.success : AppTheme.color.textMuted)
+        .width(26)
+        .textAlign(TextAlign.Center)
+        .onClick(() => {
+          this.toggle(item);
+        })
+      Column({ space: 2 }) {
+        Text(item.text)
+          .fontSize(13)
+          .fontColor(item.done ? AppTheme.color.textMuted : AppTheme.color.text)
+          .decoration({ type: item.done ? TextDecorationType.LineThrough : TextDecorationType.None })
+          .width('100%')
+        if (item.carriedFrom !== undefined) {
+          Text('上周延续')
+            .fontSize(9)
+            .fontColor(AppTheme.color.warning)
+            .width('100%')
+        }
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+      Text('删除')
+        .fontSize(10)
+        .fontColor(AppTheme.color.textMuted)
+        .onClick(() => {
+          this.remove(item);
+        })
+    }
+    .width('100%')
+    .padding({ top: 7, bottom: 7 })
+  }
+
+  @Builder
+  nodeBody() {
+    if (this.isLoading) {
+      Column() {
+        LoadingProgress().width(32).height(32).color(AppTheme.color.primary)
+      }
+      .width('100%')
+      .height('100%')
+      .justifyContent(FlexAlign.Center)
+    } else if (this.node === null) {
+      Column() {
+        NoteEmptyState({
+          title: '节点不存在',
+          hint: '可能已经被移除',
+          actionLabel: '返回',
+          onAction: () => {
+            if (this.navStack !== null) {
+              this.navStack.pop();
+            }
+          }
+        })
+      }
+      .width('100%')
+      .height('100%')
+      .justifyContent(FlexAlign.Center)
+    } else {
+      Scroll() {
+        Column({ space: 12 }) {
+          SectionCard() {
+            Column({ space: 5 }) {
+              Row() {
+                Text(`第 ${this.node.weekIndex} 周`)
+                  .fontSize(20)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(AppTheme.color.text)
+                  .layoutWeight(1)
+                Text(this.node.status === PlanNodeStatus.OPEN ? '进行中' : '已结束')
+                  .fontSize(10)
+                  .fontColor(this.node.status === PlanNodeStatus.OPEN ? AppTheme.color.success : AppTheme.color.textMuted)
+                  .padding({ left: 7, right: 7, top: 2, bottom: 2 })
+                  .backgroundColor(this.node.status === PlanNodeStatus.OPEN ? AppTheme.color.successSurface : AppTheme.color.chip)
+                  .borderRadius(6)
+              }
+              .width('100%')
+              Text(`${this.node.startDate} 至 ${this.node.endDate}`)
+                .fontSize(10)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+              if (this.plan !== null) {
+                Text(this.plan.title)
+                  .fontSize(12)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+              }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Column({ space: 4 }) {
+              Text('本周清单')
+                .fontSize(13)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(AppTheme.color.text)
+                .width('100%')
+              if (this.items.length === 0) {
+                Text('还没有清单项，先加一条')
+                  .fontSize(11)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+                  .padding({ top: 6, bottom: 6 })
+              } else {
+                ForEach(this.items, (item: PlanItem) => {
+                  this.itemRow(item)
+                }, (item: PlanItem) => item.id)
+              }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Row({ space: 8 }) {
+              TextInput({ text: this.newText, placeholder: '加一条本周要做的事' })
+                .id('plan_item_input')
+                .maxLength(120)
+                .layoutWeight(1)
+                .backgroundColor(AppTheme.color.surfaceAlt)
+                .onChange((value: string) => {
+                  this.newText = value;
+                })
+              Text('添加')
+                .id('plan_item_add')
+                .fontSize(12)
+                .fontColor(AppTheme.color.primary)
+                .onClick(() => {
+                  this.addItem();
+                })
+            }
+            .width('100%')
+          }
+
+          if (this.node.status === PlanNodeStatus.OPEN) {
+            Text(this.isSaving ? '处理中…' : '结束本周，未完成带入下周')
+              .id('plan_node_close')
+              .fontSize(14)
+              .fontColor(Color.White)
+              .width('100%')
+              .textAlign(TextAlign.Center)
+              .padding({ top: 12, bottom: 12 })
+              .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
+              .borderRadius(12)
+              .onClick(() => {
+                this.closeWeek();
+              })
+          } else {
+            Text('本周已结束')
+              .fontSize(12)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+              .textAlign(TextAlign.Center)
+              .padding({ top: 10, bottom: 10 })
+          }
+        }
+        .width('100%')
+        .padding({ left: 20, right: 20, top: 10, bottom: 24 })
+      }
+      .width('100%')
+      .height('100%')
+      .align(Alignment.TopStart)
+      .scrollBar(BarState.Off)
+    }
+  }
+
+  build() {
+    AppDestination({
+      route: 'plan_node',
+      title: '七日节点',
+      content: () => {
+        this.nodeBody()
+      },
+      onDestinationReady: (context: NavDestinationContext) => {
+        this.navStack = context.pathStack;
+        const params = context.pathInfo.param as PlanNodeParams;
+        this.load(params.nodeId);
+      }
+    })
+  }
+}

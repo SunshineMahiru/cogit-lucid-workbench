@@ -12,6 +12,8 @@ import { PredictionStatsPage } from './PredictionStatsPage';
 import { AnalyticsPage } from './AnalyticsPage';
 import { PlanListPage } from './PlanListPage';
 import { PlanEditPage } from './PlanEditPage';
+import { PlanDetailPage } from './PlanDetailPage';
+import { PlanNodePage } from './PlanNodePage';
 import { PredictionCreatePage } from './PredictionCreatePage';
 import { PredictionSettlePage } from './PredictionSettlePage';
 import { ReviewPage } from './ReviewPage';
@@ -79,6 +81,10 @@ struct Index {
       PlanListPage()
     } else if (name === ROUTES.PLAN_EDIT) {
       PlanEditPage()
+    } else if (name === ROUTES.PLAN_DETAIL) {
+      PlanDetailPage()
+    } else if (name === ROUTES.PLAN_NODE) {
+      PlanNodePage()
     } else if (name === ROUTES.PREDICTION_CREATE) {
       PredictionCreatePage()
     } else if (name === ROUTES.PREDICTION_SETTLE) {
