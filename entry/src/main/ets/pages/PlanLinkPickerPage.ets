@@ -29,6 +29,7 @@ export struct PlanLinkPickerPage {
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
   @Local isPreview: boolean = false;
+  @Local errorText: string = '';
   private planId: string = '';
   private nodeId: string = '';
   private weekStart: string = '';
@@ -69,6 +70,7 @@ export struct PlanLinkPickerPage {
       this.applySuggestions(links);
     } catch (error) {
       this.candidates = [];
+      this.errorText = '关联候选加载失败';
     }
     this.isLoading = false;
   }
@@ -259,7 +261,24 @@ export struct PlanLinkPickerPage {
         .scrollBar(BarState.Off)
         .width('100%')
 
-        if (this.visibleCandidates().length === 0) {
+        if (this.errorText.length > 0) {
+          Column({ space: 8 }) {
+            Text(this.errorText)
+              .fontSize(11)
+              .fontColor(AppTheme.color.danger)
+            Text('重试')
+              .fontSize(11)
+              .fontColor(AppTheme.color.primary)
+              .onClick(() => {
+                this.errorText = '';
+                this.isLoading = true;
+                this.load(this.planId, this.nodeId, this.weekStart, this.weekEnd);
+              })
+          }
+          .width('100%')
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
+        } else if (this.visibleCandidates().length === 0) {
           Column() {
             NoteEmptyState({
               title: `${planLinkModuleLabel(this.module)}暂无记录`,
