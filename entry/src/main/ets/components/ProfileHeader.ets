@@ -156,7 +156,6 @@ export struct ProfileHeader {
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .width('100%')
-        .padding({ left: 68 })
     }
     .width('100%')
     .padding({ left: 20, right: 20, top: 12, bottom: 12 })

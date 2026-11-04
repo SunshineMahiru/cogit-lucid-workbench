@@ -40,36 +40,40 @@ export struct AppDestination {
 
   @Builder
   header() {
-    Row({ space: 4 }) {
-      Text('‹')
-        .fontSize(28)
-        .fontColor(AppTheme.color.text)
-        .width(40)
-        .height(40)
-        .textAlign(TextAlign.Center)
-        .accessibilityText('返回')
-        .onClick(() => {
-          this.goBack();
-        })
+    Stack({ alignContent: Alignment.Center }) {
       Text(this.title)
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
         .fontColor(AppTheme.color.text)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .layoutWeight(1)
+        .width('100%')
+        .padding({ left: 72, right: 72 })
         .textAlign(TextAlign.Center)
-      Row({ space: 8 }) {
-        this.menus()
+      Row() {
+        Text('‹')
+          .fontSize(28)
+          .fontColor(AppTheme.color.text)
+          .width(40)
+          .height(40)
+          .textAlign(TextAlign.Center)
+          .accessibilityText('返回')
+          .onClick(() => {
+            this.goBack();
+          })
+        Blank()
+        Row({ space: 4 }) {
+          this.menus()
+        }
+        .height('100%')
       }
-      .width(56)
-      .height(40)
-      .justifyContent(FlexAlign.End)
+      .width('100%')
+      .height('100%')
+      .padding({ left: 8, right: 8 })
+      .alignItems(VerticalAlign.Center)
     }
     .width('100%')
-    .height(52)
-    .padding({ left: 8, right: 8 })
-    .alignItems(VerticalAlign.Center)
+    .height(56)
   }
 
   private goBack(): void {

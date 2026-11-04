@@ -202,6 +202,7 @@ export struct IdentityEditPage {
       }
       .width('100%')
       .height('100%')
+      .align(Alignment.Top)
       .scrollBar(BarState.Off)
       .bindSheet($$this.showSourceSheet, this.sourceSheet(), {
         height: 300,
