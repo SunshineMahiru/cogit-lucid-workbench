@@ -6,16 +6,27 @@ import { AppTheme } from '../theme/AppTheme';
 export struct NoteTemplatePicker {
   @Param selected: NoteTemplateId | null = null;
   @Event onSelect: (templateId: NoteTemplateId | null) => void = () => {};
+  @Local activeId: NoteTemplateId | null = null;
+
+  aboutToAppear(): void {
+    this.activeId = this.selected;
+  }
+
+  @Monitor('selected')
+  onSelectedChanged(): void {
+    this.activeId = this.selected;
+  }
 
   @Builder
-  chip(label: string, active: boolean, templateId: NoteTemplateId | null) {
+  chip(label: string, templateId: NoteTemplateId | null) {
     Text(label)
       .fontSize(13)
-      .fontColor(active ? Color.White : AppTheme.color.textStrong)
+      .fontColor(this.activeId === templateId ? Color.White : AppTheme.color.textStrong)
       .padding({ left: 14, right: 14, top: 7, bottom: 7 })
-      .backgroundColor(active ? AppTheme.color.primary : AppTheme.color.chip)
+      .backgroundColor(this.activeId === templateId ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(16)
       .onClick(() => {
+        this.activeId = templateId;
         this.onSelect(templateId);
       })
   }
@@ -23,9 +34,9 @@ export struct NoteTemplatePicker {
   build() {
     Scroll() {
       Row({ space: 8 }) {
-        this.chip('自由', this.selected === null, null)
+        this.chip('自由', null)
         ForEach(NOTE_TEMPLATES, (template: NoteTemplate) => {
-          this.chip(template.label, this.selected === template.id, template.id)
+          this.chip(template.label, template.id)
         }, (template: NoteTemplate) => template.id)
       }
     }

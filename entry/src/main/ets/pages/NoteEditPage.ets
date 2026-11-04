@@ -331,7 +331,7 @@ export struct NoteEditPage {
         Scroll() {
           Column({ space: 16 }) {
             Column({ space: 6 }) {
-              Text('模板')
+              Text('类别')
                 .fontSize(12)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
