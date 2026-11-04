@@ -182,7 +182,8 @@ export struct PlanNodePage {
     }
   }
 
-  private openLinkPicker(): void {    if (this.navStack === null || this.node === null) {
+  private openLinkPicker(): void {
+    if (this.navStack === null || this.node === null) {
       return;
     }
     const params: PlanLinkPickerParams = {
@@ -236,6 +237,7 @@ export struct PlanNodePage {
     this.isSaving = true;
     const closedNode = this.node;
     const closedItems = this.items;
+    let draftFailed = false;
     try {
       let next: PlanNode | null = null;
       if (this.isPreview) {
@@ -249,11 +251,11 @@ export struct PlanNodePage {
         try {
           await writePlanReviewDraft(hostContext, facts, closedNode.planId, closedNode.id);
         } catch (draftError) {
-          this.getUIContext().getPromptAction().showToast({ message: '周复盘草稿写入失败，可稍后重试' });
+          draftFailed = true;
         }
       }
       this.getUIContext().getPromptAction().showToast({
-        message: next === null ? '本周已结束' : '本周已结束，清单已写入周复盘草稿'
+        message: this.closeMessage(next, draftFailed)
       });
       notifyHomeRefresh();
       if (this.navStack !== null) {
@@ -264,6 +266,13 @@ export struct PlanNodePage {
     } finally {
       this.isSaving = false;
     }
+  }
+
+  private closeMessage(next: PlanNode | null, draftFailed: boolean): string {
+    if (draftFailed) {
+      return '本周已结束，草稿写入失败，可稍后重试';
+    }
+    return next === null ? '本周已结束' : '本周已结束，清单已写入周复盘草稿';
   }
 
   @Builder
