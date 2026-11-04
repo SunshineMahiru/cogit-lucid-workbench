@@ -19,6 +19,9 @@ export struct SimpleLineChart {
   @Param minValue: number = 0;
   @Param maxValue: number = 100;
   @Param chartHeight: number = 170;
+  @Param showXLabels: boolean = true;
+  @Param xMin: number = 0;
+  @Param xMax: number = 0;
   private model: LineChartModel = new LineChartModel();
 
   aboutToAppear(): void {
@@ -40,7 +43,8 @@ export struct SimpleLineChart {
     for (const item of this.series) {
       const values: JArrayList<EntryOhos> = new JArrayList<EntryOhos>();
       for (let index = 0; index < item.points.length; index += 1) {
-        values.add(new EntryOhos(index, item.points[index].value));
+        const point = item.points[index];
+        values.add(new EntryOhos(point.x !== undefined ? point.x : index, point.value));
       }
       const dataSet = new LineDataSet(values, item.name);
       dataSet.setColorByColor(item.color);
@@ -80,6 +84,10 @@ export struct SimpleLineChart {
       xAxis.setDrawLabels(false);
       xAxis.setDrawGridLines(false);
       xAxis.setGranularity(1);
+      if (this.xMax > 0) {
+        xAxis.setAxisMinimum(this.xMin);
+        xAxis.setAxisMaximum(this.xMax);
+      }
     }
   }
 
@@ -100,18 +108,20 @@ export struct SimpleLineChart {
           }
           .width('100%')
         }
-        Row() {
-          ForEach(this.series.length > 0 ? this.series[0].points : [], (point: ChartPoint) => {
-            Text(point.label)
-              .fontSize(9)
-              .fontColor(AppTheme.color.textMuted)
-              .layoutWeight(1)
-              .textAlign(TextAlign.Center)
-              .maxLines(1)
-          }, (point: ChartPoint) => point.label)
+        if (this.showXLabels) {
+          Row() {
+            ForEach(this.series.length > 0 ? this.series[0].points : [], (point: ChartPoint) => {
+              Text(point.label)
+                .fontSize(9)
+                .fontColor(AppTheme.color.textMuted)
+                .layoutWeight(1)
+                .textAlign(TextAlign.Center)
+                .maxLines(1)
+            }, (point: ChartPoint) => point.label)
+          }
+          .width('100%')
+          .padding({ left: 34, right: 8 })
         }
-        .width('100%')
-        .padding({ left: 34, right: 8 })
       }
       .width('100%')
     } else {

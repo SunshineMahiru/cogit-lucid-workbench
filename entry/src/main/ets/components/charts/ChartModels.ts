@@ -3,6 +3,7 @@ export interface ChartPoint {
   label: string;
   value: number;
   note: string;
+  x?: number;
 }
 
 export interface ChartSeries {

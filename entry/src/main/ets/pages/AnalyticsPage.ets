@@ -66,20 +66,22 @@ export struct AnalyticsPage {
       return [];
     }
     const perfect: ChartPoint[] = [
-      { label: '0', value: 0, note: '' },
-      { label: '100', value: 100, note: '' }
+      { label: '0%', value: 0, note: '', x: 0 },
+      { label: '100%', value: 100, note: '', x: 100 }
     ];
     const actual: ChartPoint[] = [];
     for (const bucket of this.stats.calibration) {
+      const confidence = Math.round(bucket.predicted * 100);
       actual.push({
-        label: bucket.bucket,
+        label: `${confidence}%`,
         value: Math.round(bucket.actual * 100),
-        note: `${bucket.samples} 条`
+        note: `${bucket.samples} 条`,
+        x: confidence
       });
     }
     return [
-      { name: '理想校准', color: REF_COLOR, points: perfect },
-      { name: '实际命中', color: HIT_COLOR, points: actual }
+      { name: '实际命中', color: HIT_COLOR, points: actual },
+      { name: '理想校准', color: REF_COLOR, points: perfect }
     ];
   }
 
@@ -204,10 +206,6 @@ export struct AnalyticsPage {
   header() {
     Row({ space: 8 }) {
       Column({ space: 2 }) {
-        Text('数据看板')
-          .fontSize(20)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(AppTheme.color.text)
         Text(this.stats !== null ? `远端示例数据 · ${this.stats.generatedAt}` : '等待远端数据')
           .fontSize(10)
           .fontColor(AppTheme.color.textMuted)
@@ -216,6 +214,7 @@ export struct AnalyticsPage {
       .alignItems(HorizontalAlign.Start)
       Row({ space: 6 }) {
         Text('6 月')
+          .id('analytics_range_6m')
           .fontSize(11)
           .fontColor(this.range === '6m' ? AppTheme.color.primary : AppTheme.color.textMuted)
           .padding({ left: 9, right: 9, top: 5, bottom: 5 })
@@ -223,6 +222,7 @@ export struct AnalyticsPage {
           .borderRadius(12)
           .onClick(() => this.switchRange('6m'))
         Text('12 月')
+          .id('analytics_range_12m')
           .fontSize(11)
           .fontColor(this.range === '12m' ? AppTheme.color.primary : AppTheme.color.textMuted)
           .padding({ left: 9, right: 9, top: 5, bottom: 5 })
@@ -230,6 +230,7 @@ export struct AnalyticsPage {
           .borderRadius(12)
           .onClick(() => this.switchRange('12m'))
         Text('刷新')
+          .id('analytics_refresh')
           .fontSize(11)
           .fontColor(AppTheme.color.primary)
           .onClick(() => this.load())
@@ -257,6 +258,7 @@ export struct AnalyticsPage {
           .fontSize(10)
           .fontColor(AppTheme.color.textMuted)
         Text('重试')
+          .id('analytics_retry')
           .fontSize(11)
           .fontColor(AppTheme.color.primary)
           .onClick(() => this.load())
@@ -283,8 +285,15 @@ export struct AnalyticsPage {
           ChartSection({ title: '月度命中率', hint: '折线为命中率，标签为月份；样本量见下方结果分布' }) {
             SimpleLineChart({ series: this.monthSeries(), maxValue: 100, minValue: 0 })
           }
-          ChartSection({ title: '校准曲线', hint: '横轴为置信度档位，纵轴为实际命中率；细线为理想校准' }) {
-            SimpleLineChart({ series: this.calibrationSeries(), maxValue: 100, minValue: 0 })
+              ChartSection({ title: '校准曲线', hint: '横轴为提交置信度，纵轴为实际命中率；斜线为理想校准' }) {
+                SimpleLineChart({
+                  series: this.calibrationSeries(),
+                  maxValue: 100,
+                  minValue: 0,
+                  showXLabels: false,
+                  xMin: 0,
+                  xMax: 100
+                })
             Text(`校准共 ${this.stats !== null ? this.stats.calibration.length : 0} 档，样本不足 20 条时仅作观察`)
               .fontSize(9)
               .fontColor(AppTheme.color.textMuted)
@@ -294,13 +303,13 @@ export struct AnalyticsPage {
             SimplePieChart({ slices: this.outcomeSlices(), centerText: this.outcomeCenter() })
           }
           ChartSection({ title: '置信度分布', hint: '预测提交时的信心分布，观察是否集中在高自信区' }) {
-            SimpleBarChart({ points: this.confidencePoints(), color: HIT_COLOR, chartHeight: 140 })
+            SimpleBarChart({ points: this.confidencePoints(), color: HIT_COLOR, maxValue: 10, chartHeight: 140 })
           }
           ChartSection({ title: '期限分档命中率', hint: '期限越长，命中率是否下降' }) {
-            SimpleBarChart({ points: this.horizonPoints(), color: LINE_COLOR, horizontal: true, chartHeight: 150 })
+            SimpleBarChart({ points: this.horizonPoints(), color: LINE_COLOR, maxValue: 100, horizontal: true, chartHeight: 150 })
           }
           ChartSection({ title: '读数趋势', hint: '最近 14 天的睡眠时长，用于对照判断状态' }) {
-            SimpleLineChart({ series: [{ name: '睡眠', color: LINE_COLOR, points: this.sleepPoints() }], minValue: 4, maxValue: 9 })
+            SimpleLineChart({ series: [{ name: '睡眠', color: LINE_COLOR, points: this.sleepPoints() }], minValue: 4, maxValue: 9, showXLabels: false })
           }
           ChartSection({ title: '睡眠分组命中率', hint: '睡眠不足与充足两组的命中率对比' }) {
             SimpleBarChart({ points: this.sleepBucketPoints(), color: HIT_COLOR, maxValue: 100, chartHeight: 140 })

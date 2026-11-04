@@ -6,6 +6,7 @@ export struct HeatmapGrid {
   @Param data: HeatmapData = { rows: [], columns: [], cells: [], legend: '' };
   @Param maxValue: number = 1;
   @Param gridHeight: number = 150;
+  @Param showColumnLabels: boolean = true;
   @Local canvasWidth: number = 320;
   private settings: RenderingContextSettings = new RenderingContextSettings(true);
   private context: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings);
@@ -57,20 +58,50 @@ export struct HeatmapGrid {
         .width('100%')
         .padding({ top: 16, bottom: 16 })
     } else {
-      Column({ space: 6 }) {
-        Canvas(this.context)
-          .width('100%')
+      Column({ space: 4 }) {
+        Row({ space: 4 }) {
+          Column() {
+            ForEach(this.data.rows, (label: string) => {
+              Text(label)
+                .fontSize(8)
+                .fontColor('#6B6A63')
+                .textAlign(TextAlign.Center)
+                .layoutWeight(1)
+            }, (label: string) => label)
+          }
+          .width(16)
           .height(this.gridHeight)
-          .onReady(() => {
-            this.draw();
-          })
-          .onAreaChange((oldValue: Area, newValue: Area) => {
-            const next = Number(newValue.width);
-            if (!Number.isNaN(next) && next > 0) {
-              this.canvasWidth = next;
+
+          Canvas(this.context)
+            .layoutWeight(1)
+            .height(this.gridHeight)
+            .onReady(() => {
               this.draw();
-            }
-          })
+            })
+            .onAreaChange((oldValue: Area, newValue: Area) => {
+              const next = Number(newValue.width);
+              if (!Number.isNaN(next) && next > 0) {
+                this.canvasWidth = next;
+                this.draw();
+              }
+            })
+        }
+        .width('100%')
+        .alignItems(VerticalAlign.Top)
+
+        if (this.showColumnLabels) {
+          Row() {
+            Blank().width(20)
+            ForEach(this.data.columns, (label: string) => {
+              Text(label)
+                .fontSize(8)
+                .fontColor('#6B6A63')
+                .textAlign(TextAlign.Center)
+                .layoutWeight(1)
+            }, (label: string) => label)
+          }
+          .width('100%')
+        }
         Row({ space: 10 }) {
           Text(this.data.legend)
             .fontSize(9)

@@ -176,6 +176,7 @@ export struct HomePage {
 
       Row() {
         Text('数据看板')
+          .id('home_dashboard_entry')
           .fontSize(11)
           .fontColor(AppTheme.color.primary)
           .onClick(() => {

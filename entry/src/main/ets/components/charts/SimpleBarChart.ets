@@ -75,6 +75,10 @@ export struct SimpleBarChart {
       if (description) {
         description.setEnabled(false);
       }
+      const legend = this.horizontalModel.getLegend();
+      if (legend) {
+        legend.setEnabled(false);
+      }
     } else {
       this.verticalModel.setData(data);
       const left = this.verticalModel.getAxisLeft();
@@ -98,6 +102,10 @@ export struct SimpleBarChart {
       const description = this.verticalModel.getDescription();
       if (description) {
         description.setEnabled(false);
+      }
+      const legend = this.verticalModel.getLegend();
+      if (legend) {
+        legend.setEnabled(false);
       }
     }
   }
