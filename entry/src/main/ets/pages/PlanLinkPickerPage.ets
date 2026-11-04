@@ -5,7 +5,7 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PlanLink } from '../model/PlanLink';
 import { PlanService } from '../plan';
-import { createPlanLink } from '../plan/PlanFactory';
+import { mergePlanLinks } from '../plan/PlanLinkSelection';
 import { LinkCandidate, markLinkSuggestions } from '../plan/PlanLinkCandidate';
 import { loadPlanLinkCandidates, planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import { PlanLinkPickerParams } from '../navigation/RouteParams';
@@ -40,6 +40,7 @@ export struct PlanLinkPickerPage {
   private weekEnd: string = '';
   private service: PlanService | null = null;
   private navStack: NavPathStack | null = null;
+  private existingLinks: PlanLink[] = [];
 
   private keyOf(item: LinkCandidate): string {
     return `${item.module}:${item.targetId}`;
@@ -69,6 +70,7 @@ export struct PlanLinkPickerPage {
       keys.push(`${link.module}:${link.targetId}`);
     }
     this.selectedKeys = keys;
+    this.existingLinks = links;
     try {
       this.candidates = await loadPlanLinkCandidates(hostContext, weekStart, weekEnd);
       this.applySuggestions(links);
@@ -154,22 +156,14 @@ export struct PlanLinkPickerPage {
     }
     this.isSaving = true;
     try {
+      const links = mergePlanLinks(this.planId, this.nodeId, this.existingLinks, this.candidates,
+        this.selectedKeys);
       if (this.isPreview || this.service === null) {
         planPreviewStore.clearLinks(this.nodeId);
-        for (const key of this.selectedKeys) {
-          const item = this.findByKey(key);
-          if (item !== null) {
-            planPreviewStore.addLink(this.planId, this.nodeId, item.module, item.targetId, item.title);
-          }
+        for (const link of links) {
+          planPreviewStore.addLink(link.planId, this.nodeId, link.module, link.targetId, link.label);
         }
       } else {
-        const links: PlanLink[] = [];
-        for (const key of this.selectedKeys) {
-          const item = this.findByKey(key);
-          if (item !== null) {
-            links.push(createPlanLink(this.planId, this.nodeId, item.module, item.targetId, item.title));
-          }
-        }
         await this.service.replaceLinks(this.nodeId, links);
       }
       if (this.navStack !== null) {
@@ -180,15 +174,6 @@ export struct PlanLinkPickerPage {
     } finally {
       this.isSaving = false;
     }
-  }
-
-  private findByKey(key: string): LinkCandidate | null {
-    for (const item of this.candidates) {
-      if (this.keyOf(item) === key) {
-        return item;
-      }
-    }
-    return null;
   }
 
   @Builder
