@@ -4,7 +4,8 @@ import { PlanNode } from '../model/PlanNode';
 import { ReviewDraftStore } from '../review/ReviewDraftStore';
 
 /** Builds the facts block written into the weekly review draft when a node closes. */
-export function buildPlanReviewFacts(node: PlanNode, items: PlanItem[], next: PlanNode | null): string {
+export function buildPlanReviewFacts(planTitle: string, node: PlanNode, items: PlanItem[],
+  next: PlanNode | null): string {
   const done: string[] = [];
   const pending: string[] = [];
   for (const item of items) {
@@ -15,6 +16,7 @@ export function buildPlanReviewFacts(node: PlanNode, items: PlanItem[], next: Pl
     }
   }
   const lines: string[] = [
+    `【计划：${planTitle.length > 0 ? planTitle : '未命名目标'} · 第 ${node.weekIndex} 周】`,
     `第 ${node.weekIndex} 周（${node.startDate} 至 ${node.endDate}）计划清单：`,
     `完成 ${done.length} 项，未完成 ${pending.length} 项。`
   ];

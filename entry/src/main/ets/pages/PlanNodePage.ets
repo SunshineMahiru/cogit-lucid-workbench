@@ -183,7 +183,7 @@ export struct PlanNodePage {
       } else if (this.service !== null) {
         next = await this.service.closeNodeAndCarry(closedNode.id);
       }
-      const facts = buildPlanReviewFacts(closedNode, closedItems, next);
+      const facts = buildPlanReviewFacts(this.plan !== null ? this.plan.title : '', closedNode, closedItems, next);
       const hostContext = this.getUIContext().getHostContext();
       if (hostContext !== undefined && !this.isPreview) {
         try {
