@@ -89,6 +89,10 @@ export struct PredictionCreatePage {
     const errors = validatePredictionDraft(draft);
     this.errors = errors;
     if (hasPredictionErrors(errors)) {
+      const first = errors.target.length > 0 ? errors.target :
+        (errors.judgment.length > 0 ? errors.judgment :
+          (errors.confidence.length > 0 ? errors.confidence : errors.settlementDate));
+      this.getUIContext().getPromptAction().showToast({ message: first });
       return;
     }
 
