@@ -8,7 +8,7 @@ import { PlanService } from '../plan';
 import { PlanDetailParams, PlanEditParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
-import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
+import { notifyHomeRefresh, subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Lists the single primary goal and the other plans. */
 @ComponentV2
@@ -109,6 +109,7 @@ export struct PlanListPage {
     if (this.isPreview) {
       planPreviewStore.restore(planId);
       await this.refresh();
+      notifyHomeRefresh();
       return;
     }
     if (this.service === null) {
@@ -117,6 +118,7 @@ export struct PlanListPage {
     try {
       await this.service.restore(planId);
       await this.refresh();
+      notifyHomeRefresh();
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '恢复失败，请重试' });
     }
@@ -147,6 +149,7 @@ export struct PlanListPage {
     if (this.isPreview) {
       planPreviewStore.setPrimary(planId);
       await this.refresh();
+      notifyHomeRefresh();
       return;
     }
     if (this.service === null) {
@@ -155,6 +158,7 @@ export struct PlanListPage {
     try {
       await this.service.setPrimary(planId);
       await this.refresh();
+      notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '已切换主目标' });
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '切换失败，请重试' });
@@ -330,7 +334,7 @@ export struct PlanListPage {
                 .fontWeight(FontWeight.Medium)
                 .fontColor(AppTheme.color.text)
                 .width('100%')
-              Text('首页只展示主目标；其他目标可以随时切换为主目标。节点与清单在下一步接入。')
+              Text('首页只展示主目标；其他目标可以随时切换为主目标。进入目标即可管理周节点、清单与关联记录。')
                 .fontSize(11)
                 .lineHeight(17)
                 .fontColor(AppTheme.color.textSecondary)
