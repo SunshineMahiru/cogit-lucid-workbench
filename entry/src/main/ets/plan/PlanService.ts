@@ -35,6 +35,20 @@ export class PlanService {
     return this.dao.queryPlans();
   }
 
+  async findPlan(id: string): Promise<Plan | null> {
+    return this.dao.findPlan(id);
+  }
+
+  async primaryPlan(): Promise<Plan | null> {
+    const plans = await this.dao.queryPlans();
+    for (const plan of plans) {
+      if (plan.isPrimary && plan.status === PlanStatus.ACTIVE) {
+        return plan;
+      }
+    }
+    return null;
+  }
+
   /** Creates a goal; the first active goal becomes the primary one. */
   async createPlan(title: string, startDate: string): Promise<Plan> {
     const existing = await this.dao.queryPlans();

@@ -56,6 +56,11 @@ export interface RelationEditParams {
   relationId: string | null;
 }
 
+/** Parameters accepted by the plan editor; null creates a new goal. */
+export interface PlanEditParams {
+  planId: string | null;
+}
+
 /** Parameters accepted by the status editor; null uses today. */
 export interface StatusEditParams {
   date: string | null;

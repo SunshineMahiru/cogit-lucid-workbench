@@ -23,6 +23,8 @@ export const ROUTES = {
   STATUS: 'status',
   STATUS_HISTORY: 'status_history',
   STATUS_EDIT: 'status_edit',
+  PLAN: 'plan',
+  PLAN_EDIT: 'plan_edit',
   SETTINGS: 'settings',
   IDENTITY_EDIT: 'identity_edit',
   BACKGROUND_APPLY: 'background_apply'

@@ -3,6 +3,7 @@ import { common } from '@kit.AbilityKit';
 import { AppDestination } from '../components/AppDestination';
 import { DashboardView } from '../views/DashboardView';
 import { ProfileHeader } from '../components/ProfileHeader';
+import { PlanHomeCard } from '../components/PlanHomeCard';
 import { HomeDataService } from '../data/HomeDataService';
 import { HomePulse, HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
@@ -173,6 +174,8 @@ export struct HomePage {
       }
       .width('100%')
       .padding({ left: 20, right: 20, top: 8, bottom: 4 })
+
+      PlanHomeCard({ pathStack: this.pathStack })
 
       Row() {
         Text('数据看板 ›')
