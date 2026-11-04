@@ -25,18 +25,20 @@ Three design choices separate it from a journal:
 
 The interface is Chinese only. The display name is set in `entry/src/main/ets/theme/AppIdentity.ts` and the launcher label in `AppScope/resources/base/element/string.json`.
 
-The launch screen opens with an identity band — avatar, nickname, signature, and a hand-written title — followed by four counters: notes today, pending settlements, consecutive record days, and the latest review date. Readings, the weekly card, and the module grid sit below it.
+The launch screen opens with an identity band — avatar, nickname, signature, and a hand-written title — followed by four counters: notes today, pending settlements, consecutive record days, and the latest review date. Readings, the weekly card, and the module grid sit below it. A `数据看板` link under the counters opens the analytics dashboard.
 
 ## Project status
 
-The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings with page backgrounds and surface opacity, and export. Both a light and a dark palette ship, and the interface follows the system colour mode. The home page is a normal destination on one navigation stack, so forward and back animate both pages. The project is still being refined.
+The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, settings with page backgrounds and surface opacity, export, and a remote analytics dashboard. Both a light and a dark palette ship, and the interface follows the system colour mode. The home page is a normal destination on one navigation stack, so forward and back animate both pages. When `relationalStore` is unavailable in the DevEco Previewer, the home page reads the in-memory preview store and labels the data as demo content. The project is still being refined.
 
 ## Highlights
 
 | Highlight | What it gives you |
 |---|---|
 | Frozen prediction log | Target, judgment, confidence 0-100, reason, and a settlement date written once; settlement fills the outcome and marks hit or miss. |
-| Hit-rate statistics | Overall rate, a monthly trend limited to the last six months, and a hit/miss donut, drawn with `@ohos/mpchart`. |
+| Hit-rate statistics | Overall rate, a monthly trend over the last 6 or 12 months, and a hit/miss donut, drawn with `@ohos/mpchart`. |
+| Analytics dashboard | Ten charts over a remote JSON payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. The 6/12-month switch refetches the payload. |
+| Preview fallback | In the DevEco Previewer, where `relationalStore` is unavailable, the home page falls back to the in-memory preview store and marks the counters as demo data. |
 | Four-step review | Facts, interpretation, contradiction, action. The contradiction step can quote up to three anchors. |
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
@@ -63,8 +65,8 @@ The code is organised as six layers with a single dependency direction, plus a s
 │               status rules   llm adapter                    │
 │               imports model/ only                           │
 ├─────────────────────────────────────────────────────────────┤
-│ network/      prompt repository  OpenAI-compatible          │
-│               local mock client  cleartext blocked by default│
+│ network/      prompt + stats repositories  OpenAI-compatible│
+│               local mock client  cleartext blocked          │
 ├─────────────────────────────────────────────────────────────┤
 │ records       db/  settings/  export/                       │
 │               relationalStore, Preferences, Markdown        │
@@ -75,9 +77,10 @@ The code is organised as six layers with a single dependency direction, plus a s
 ```
 
 - ArkTS pages with state management V2 (`@ComponentV2`, `@Local`, `@Param`); entity models and services in plain TypeScript.
-- Navigation with `NavPathStack`; 24 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
+- Navigation with `NavPathStack`; 26 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
 - `relationalStore` is the single source of truth, `Preferences` holds non-secret options, the model key is stored in the system asset service, and `fileIo` writes the Markdown export.
 - `@ohos/mpchart` 3.1.0-rc.0 is the only runtime dependency. Icons come from system glyphs rather than an icon pack.
+- `components/charts/` wraps mpchart for lines, bars, and pies, and draws the two heatmaps on Canvas. `network/RemoteStatsRepository` reads the analytics JSON from Gitee first and GitHub second.
 - `profile/` holds the home identity: a Preferences store for the four text fields plus a 320 px avatar pipeline.
 
 ## Usage Example
@@ -105,6 +108,15 @@ Expected result: the header shows the new avatar and text; an empty nickname or 
 
 Expected result: after two or three settled predictions the statistics page draws a trend line and a donut around the rate. With nothing settled yet, the rate shows a dash rather than 0 percent, and the sample count is stated next to it.
 
+### Open the analytics dashboard
+
+1. On the home page, tap `数据看板` under the four counters.
+2. The page requests `stats-6m.json` from `docs/mock/` in the public repository and draws ten charts: monthly hit rate, calibration curve, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap.
+3. Tap `12 月` to request `stats-12m.json`; tap `刷新` to request the current range again.
+4. If both the Gitee and GitHub requests fail, the page keeps the error message and a retry action.
+
+Expected result: the header states the remote data timestamp. The calibration line sits against a 45-degree reference, the 12-month switch adds six earlier months, and the two heatmaps label weekdays and columns.
+
 ### Run one review
 
 1. Open the review module (`复盘`) and pick the week or month tab. Each tab keeps its own draft.
@@ -128,7 +140,7 @@ Settings (`设置`) writes the whole record set to `cogit-export-YYYYMMDD-HHMM.m
 
 ## Screens
 
-Screenshots come from a Mate 70 Pro emulator. Every record in them is synthetic. They were captured before the identity band was added; the current home page carries that band above the content shown here, and the rest of the layout is unchanged.
+Screenshots come from a Mate 70 Pro emulator. Every record in them is synthetic. They were captured before the identity band was added; the current home page carries that band above the content shown here, plus a `数据看板` link under the counters. The rest of the captured pages are unchanged.
 
 | Prediction statistics | Review complete |
 |---|---|
@@ -174,8 +186,9 @@ node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p 
 3. Select the `entry` module and run.
 4. On the dashboard, open notes (`速记`), write one line, and save.
 5. The note appears under recent notes, and the dashboard counters move off zero.
+6. Tap `数据看板`, then `12 月`, to confirm the remote payload loads and the range switch redraws the charts.
 
-Expected result: the dashboard reports one note today and one in total, and the weekly settlement card starts counting it.
+Expected result: the dashboard reports one note today and one in total, the weekly settlement card starts counting it, and the analytics page shows a remote timestamp with ten charts.
 
 ## Configuration
 
@@ -196,6 +209,22 @@ It listens on `0.0.0.0:4523`; set `PORT` to change the port.
 | GET | `/review-prompts?period=month` | `{ "prompts": [...] }` |
 | POST | `/llm/complete` | Mock completion used by the local mock client |
 | POST | `/v1/chat/completions` | OpenAI-compatible `choices[0].message.content` |
+
+### Remote analytics data
+
+The dashboard reads static JSON from `docs/mock/` in the public repository. No key is involved, and the page labels the payload as example data.
+
+| File | Content |
+|---|---|
+| `stats-6m.json` | Six months of monthly hit rates, calibration buckets, outcome totals, confidence buckets, horizon buckets, 84 days of coverage and the readings recorded in them, sleep buckets, interaction counts, and activity cells |
+| `stats-12m.json` | The same shape with twelve months of monthly points |
+
+Base URLs:
+
+- Gitee: `https://gitee.com/theangelnextdoor/cogit-lucid-workbench/raw/main/docs/mock/`
+- GitHub: `https://raw.githubusercontent.com/SunshineMahiru/cogit-lucid-workbench/main/docs/mock/`
+
+`RemoteStatsRepository` requests the range file from Gitee first and GitHub second, adding a cache-busting `t` parameter. If both fail, the page shows the error and a retry action. Switching 6/12 months issues a new request.
 
 ### Pointing the app at the server
 
@@ -270,9 +299,10 @@ cogit-lucid-workbench/
 │   ├── src/main/
 │       ├── ets/
 │       │   ├── entryability/     ability entry
-│       │   ├── pages/            24 route names, home destination, placeholder fallback
+│       │   ├── pages/            26 route names, home, analytics, placeholder fallback
 │       │   ├── views/            dashboard composition
-│       │   ├── components/       27 reusable pieces
+│       │   ├── components/       33 reusable pieces
+│       │   │   └── charts/       line, bar, pie wrappers and Canvas heatmaps
 │       │   ├── navigation/       route names and parameter types
 │       │   ├── model/            entity types, enums, factories, demo data
 │       │   ├── data/             dashboard aggregate and cross-entity reads
@@ -282,10 +312,11 @@ cogit-lucid-workbench/
 │       │   ├── db/               schema, helpers, seven DAOs
 │       │   ├── settings/         Preferences keys, asset-backed key, budget ledger
 │       │   ├── export/           Markdown sections and file writer
-│       │   ├── network/          prompt repository, HTTP, LLM clients
+│       │   ├── network/          prompt and stats repositories, HTTP, LLM clients
 │       │   └── theme/            design tokens, app identity
 │       └── resources/            strings, colours, icons, network config
-│   └── src/test/                 Hypium unit tests
+│   ├── src/test/                 Hypium unit tests
+│   └── src/ohosTest/             device tests, including the analytics UiTest flow
 ├── mock-server/                  zero-dependency Node mock server
 ├── signing/                      local-only signing config and material (ignored)
 ├── docs/                         UI freeze record, debug screenshots, signing template
@@ -296,7 +327,18 @@ cogit-lucid-workbench/
 
 ## Tests
 
-`hvigorw test` runs the Hypium unit tests in `entry/src/test/List.test.ets`; the current suite covers prediction validation, confidence calibration, and sealed-record export filtering (4 cases).
+`hvigorw test` runs the local Hypium unit tests in `entry/src/test`.
+
+The device suite in `entry/src/ohosTest` has seven cases: four analysis rules in `Analysis.test.ets` and three analytics flow cases in `UiFlow.test.ets`. The flow covers opening the dashboard from the home page, switching to 12 months, and returning to the home page. Install both HAPs on the emulator, then run:
+
+```bash
+node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p module=entry@ohosTest -p product=default --no-daemon
+hdc install -r entry/build/default/outputs/default/entry-default-signed.hap
+hdc install -r entry/build/default/outputs/ohosTest/entry-ohosTest-signed.hap
+hdc shell aa test -b com.sunshinemahiru.cogitlucid -m entry_test -s unittest OpenHarmonyTestRunner -w 10000
+```
+
+Expected result: `Tests run: 7, Failure: 0, Error: 0, Pass: 7`.
 
 ## Documentation
 
@@ -309,7 +351,10 @@ cogit-lucid-workbench/
 ## FAQ
 
 **The previewer shows an empty dashboard or a database error.**
-The DevEco previewer does not provide `relationalStore`, so data-backed pages fall back. Run on an emulator or a phone to see real records.
+The DevEco previewer does not provide `relationalStore`. When the store cannot be opened, the home page reads the in-memory preview store and marks the counters as demo data; other data-backed pages use their own fallback. Run on an emulator or a phone to see real records.
+
+**The analytics dashboard shows example data.**
+The dashboard reads `docs/mock/stats-6m.json` or `stats-12m.json` from the public repository, trying Gitee first and GitHub second. The values are synthetic and labelled as example data in the header. Edit those files to change what the charts show.
 
 **The emulator cannot reach the mock server.**
 `127.0.0.1` inside the emulator is the emulator itself. Run `hdc rport tcp:4523 tcp:4523` before launching, or open settings and point the model base URL at the host address.

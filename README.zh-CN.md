@@ -25,18 +25,20 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 
 界面目前只有中文。应用显示名在 `entry/src/main/ets/theme/AppIdentity.ts`，桌面标签在 `AppScope/resources/base/element/string.json`。
 
-启动页先显示身份区（头像、昵称、签名与手填头衔），下面是四项摘要：今日速记、待结算、连续记录天数与最近复盘日期；再往下才是读数、本周结算卡与模块网格。
+启动页先显示身份区（头像、昵称、签名与手填头衔），下面是四项摘要：今日速记、待结算、连续记录天数与最近复盘日期；再往下才是读数、本周结算卡与模块网格。摘要下方的 `数据看板` 入口打开统计看板。
 
 ## 项目状态
 
-当前版本覆盖速记、预测与结算、复盘与 Agent、关系、锚点、状态、带页面背景与页面透明度的设置，以及导出；浅色与深色两套配色都已就绪，界面跟随系统深浅色。首页是导航栈里的普通目标页，前进与返回都会同时移动两页。项目仍在持续完善。
+当前版本覆盖速记、预测与结算、复盘与 Agent、关系、锚点、状态、带页面背景与页面透明度的设置、导出，以及远端数据看板；浅色与深色两套配色都已就绪，界面跟随系统深浅色。首页是导航容器里的普通目标页，前进与返回都会同时移动两页。DevEco 预览器不提供 `relationalStore` 时，首页改读内存预览数据，并在摘要下方标明演示数据。项目仍在持续完善。
 
 ## 核心功能
 
 | 功能 | 作用 |
 |---|---|
 | 预测日志 | 目标、判断、0–100 置信度、理由、结算日一次写定；结算时补上结果并标记命中与否。 |
-| 命中率统计 | 整体命中率、最近六个月的逐月趋势、命中与未命中的环图，用 `@ohos/mpchart` 绘制。 |
+| 命中率统计 | 整体命中率、最近 6 或 12 个月的逐月趋势、命中与未命中的环图，用 `@ohos/mpchart` 绘制。 |
+| 数据看板 | 十张图共用一份远端 JSON：校准曲线、月度命中率、结果分布、置信度分布、期限分档、读数趋势、睡眠分组命中率、互动频率、读数覆盖率与速记时段热力图；切换 6/12 月会重新请求。 |
+| 预览回退 | DevEco 预览器不提供 `relationalStore`，首页改读内存预览数据，并标明摘要为演示数据。 |
 | 四步复盘 | 事实、解释、矛盾、行动；矛盾这一步最多引用三条锚点。 |
 | 三层信任 | 每条关系带友好、真诚、透明之一的分层，以我为中心画成星图。 |
 | 阈值读数 | 睡眠低于 6.5 小时、运动为零、凌晨报警一次，任一命中就在状态面板提示。 |
@@ -63,7 +65,7 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 │               status rules   llm adapter                    │
 │               imports model/ only                           │
 ├─────────────────────────────────────────────────────────────┤
-│ network/      prompt repository  OpenAI-compatible          │
+│ network/      prompt + stats repositories  OpenAI-compatible│
 │               local mock client  默认阻止明文                 │
 ├─────────────────────────────────────────────────────────────┤
 │ records       db/  settings/  export/                       │
@@ -75,9 +77,10 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 ```
 
 - 页面用 ArkTS 与状态管理 V2（`@ComponentV2`、`@Local`、`@Param`）；实体模型与服务用普通 TypeScript。
-- 路由走 `NavPathStack`，24 个路由名集中在 `entry/src/main/ets/navigation/Routes.ts`，新增页面只往 `Index.pageMap` 加一个分支。
+- 路由走 `NavPathStack`，26 个路由名集中在 `entry/src/main/ets/navigation/Routes.ts`，新增页面只往 `Index.pageMap` 加一个分支。
 - `relationalStore` 是唯一事实源，`Preferences` 存非敏感设置，模型密钥存入系统资产库，`fileIo` 写 Markdown 导出。
 - 运行时依赖只有 `@ohos/mpchart` 3.1.0-rc.0。图标用系统字形，没有引入图标包。
+- `components/charts/` 在 mpchart 之上封装折线、柱状与饼图，两张热力图用 Canvas 绘制；`network/RemoteStatsRepository` 先取 Gitee、再取 GitHub 的统计 JSON。
 - `profile/` 承担主页身份：四个文本字段走 Preferences，头像单独走 320 方形图流程。
 
 ## 使用示例
@@ -93,7 +96,7 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 3. 填昵称（最多 12 字）、签名（24 字）、头衔（8 字）。
 4. 点 `保存`。身份区立即更新，重启后仍然保留。
 
-预期结果：顶栏换成新的头像与文字；昵称或头衔留空时分别回落到 `记录者` 与 `未命名`。
+预期结果：顶栏换成新的头像与文字；昵称或头衔留空时分别显示为 `记录者` 与 `未命名`。
 
 ### 记一条预测
 
@@ -104,6 +107,15 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 5. 进预测统计（`预测统计`）看整体命中率、趋势和命中占比。
 
 预期结果：结算过两三条之后，统计页会画出趋势线和环图；一条都没结算时命中率显示破折号，旁边标明样本量。
+
+### 打开数据看板
+
+1. 在首页四项摘要下方点 `数据看板`。
+2. 页面会请求公开仓 `docs/mock/` 下的 `stats-6m.json`，画出十张图：月度命中率、校准曲线、结果分布、置信度分布、期限分档、读数趋势、睡眠分组命中率、互动频率、读数覆盖率与速记时段热力图。
+3. 点 `12 月` 会请求 `stats-12m.json`；点 `刷新` 会重新请求当前区间。
+4. Gitee 与 GitHub 都请求失败时，页面保留错误文案与重试入口。
+
+预期结果：页头显示远端数据时间；校准曲线沿 45 度参考线展开；切到 12 月会多出前六个月的数据；两张热力图带星期与列标签。
 
 ### 做一次复盘
 
@@ -128,7 +140,7 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，设备上显示为 *
 
 ## 运行截图
 
-截图来自 Mate 70 Pro 模拟器，其中记录均为合成示例。截图拍摄于加入身份区之前；当前首页会在这些内容上方多一条身份区，其余布局不变。
+截图来自 Mate 70 Pro 模拟器，其中记录均为合成示例。截图拍摄于加入身份区之前；当前首页会在这些内容上方多一条身份区，摘要下方还多一个 `数据看板` 入口，其余截图里的页面布局不变。
 
 | 预测统计 | 复盘已完成 |
 |---|---|
@@ -174,8 +186,9 @@ node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p 
 3. 选中 `entry` 模块，点运行。
 4. 在首页进入速记（`速记`），写一行，保存。
 5. 这条记录出现在最近速记里，首页的计数随之变化。
+6. 点 `数据看板`，再点 `12 月`，确认远端数据加载、区间切换后图表重绘。
 
-预期结果：首页显示今日速记 1 条、共 1 条，本周结算卡开始把它算进去。
+预期结果：首页显示今日速记 1 条、共 1 条，本周结算卡开始把它算进去；看板显示远端时间与十张图。
 
 ## 配置
 
@@ -196,6 +209,22 @@ node mock-server/server.js
 | GET | `/review-prompts?period=month` | `{ "prompts": [...] }` |
 | POST | `/llm/complete` | 本地模拟客户端用的补全结果 |
 | POST | `/v1/chat/completions` | OpenAI 兼容的 `choices[0].message.content` |
+
+### 远端统计 JSON
+
+看板读取公开仓 `docs/mock/` 里的静态 JSON，不需要密钥，页面会标明这是示例数据。
+
+| 文件 | 内容 |
+|---|---|
+| `stats-6m.json` | 最近 6 个月的逐月命中率、校准分档、结果合计、置信度分档、期限分档、84 天覆盖率与其中的读数、睡眠分组、互动次数与时段格子 |
+| `stats-12m.json` | 同样的结构，逐月数据扩到 12 个月 |
+
+基础地址：
+
+- Gitee：`https://gitee.com/theangelnextdoor/cogit-lucid-workbench/raw/main/docs/mock/`
+- GitHub：`https://raw.githubusercontent.com/SunshineMahiru/cogit-lucid-workbench/main/docs/mock/`
+
+`RemoteStatsRepository` 先请求 Gitee，再请求 GitHub，并带上用于跳过缓存的 `t` 参数。两边都失败时，页面显示错误与重试入口；切换 6/12 月会重新发起请求。
 
 ### 让应用连上服务
 
@@ -222,7 +251,7 @@ node mock-server/server.js
 | 项 | 说明 |
 |---|---|
 | 入口 | 身份区右侧的 `编辑` |
-| 字段 | 昵称最多 12 字，签名 24 字，头衔 8 字；昵称或头衔留空时回落到 `记录者` / `未命名` |
+| 字段 | 昵称最多 12 字，签名 24 字，头衔 8 字；昵称或头衔留空时显示为 `记录者` / `未命名` |
 | 头像 | 相册、拍照或文件；居中裁成 320×320 PNG，存进 `${filesDir}/profile`，替换时删除旧图 |
 | 存储 | Preferences 库 `cogit_profile`，四个字段都不涉及密钥 |
 | 刷新 | 设置 → `数据管理` → `刷新首页数据`，重新读取四项摘要 |
@@ -270,9 +299,10 @@ cogit-lucid-workbench/
 │   ├── src/main/
 │       ├── ets/
 │       │   ├── entryability/     应用入口
-│       │   ├── pages/            24 个路由名、首页与占位页
+│       │   ├── pages/            26 个路由名、首页、数据看板与占位页
 │       │   ├── views/            首页组合视图
-│       │   ├── components/       27 个可复用组件
+│       │   ├── components/       33 个可复用组件
+│       │   │   └── charts/       折线、柱状、饼图封装与 Canvas 热力图
 │       │   ├── navigation/       路由名与参数类型
 │       │   ├── model/            实体类型、枚举、工厂、示例数据
 │       │   ├── data/             首页聚合、跨实体读取
@@ -282,10 +312,11 @@ cogit-lucid-workbench/
 │       │   ├── db/               表结构、工具、七个 DAO
 │       │   ├── settings/         Preferences 键、资产库密钥、LLM 预算账本
 │       │   ├── export/           Markdown 分段与写文件
-│       │   ├── network/          提示仓库、HTTP、LLM 客户端
+│       │   ├── network/          提示与统计仓库、HTTP、LLM 客户端
 │       │   └── theme/            设计令牌、应用标识
 │       └── resources/            字符串、颜色、图标、网络配置
-│   └── src/test/                 Hypium 单元测试
+│   ├── src/test/                 Hypium 单元测试
+│   └── src/ohosTest/             设备测试，含看板 UiTest 流程
 ├── mock-server/                  零依赖 Node Mock 服务
 ├── signing/                      本地签名配置和材料（忽略）
 ├── docs/                         UI 冻结记录、调试截图、签名模板
@@ -296,7 +327,18 @@ cogit-lucid-workbench/
 
 ## 测试
 
-`hvigorw test` 运行 `entry/src/test/List.test.ets` 中的 Hypium 用例，覆盖预测校验、置信度校准和 SEALED 导出过滤，共 4 条。
+`hvigorw test` 运行 `entry/src/test` 下的本地 Hypium 单元测试。
+
+`entry/src/ohosTest` 的设备套件共 7 条：`Analysis.test.ets` 里 4 条分析规则，`UiFlow.test.ets` 里 3 条看板流程。流程覆盖从首页进入看板、切到 12 月、返回首页。把应用包与测试包装到模拟器后运行：
+
+```bash
+node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p module=entry@ohosTest -p product=default --no-daemon
+hdc install -r entry/build/default/outputs/default/entry-default-signed.hap
+hdc install -r entry/build/default/outputs/ohosTest/entry-ohosTest-signed.hap
+hdc shell aa test -b com.sunshinemahiru.cogitlucid -m entry_test -s unittest OpenHarmonyTestRunner -w 10000
+```
+
+预期结果：`Tests run: 7, Failure: 0, Error: 0, Pass: 7`。
 
 ## 文档
 
@@ -309,7 +351,10 @@ cogit-lucid-workbench/
 ## 常见问题
 
 **预览器里首页空白，或者报数据库错误。**
-DevEco 预览器不提供 `relationalStore`，依赖数据的页面会走兜底。要看真实记录请用模拟器或手机。
+DevEco 预览器不提供 `relationalStore`。数据库打不开时，首页改读内存预览数据，并在摘要下方标明演示数据；其他依赖数据的页面各有回退。要看真实记录请用模拟器或手机。
+
+**看板里的数据是示例数据。**
+看板读取公开仓 `docs/mock/` 下的 `stats-6m.json` 或 `stats-12m.json`，先请求 Gitee、再请求 GitHub；页头标明这是示例数据。修改这两份文件就能改变图表展示。
 
 **模拟器连不上 Mock 服务。**
 模拟器里的 `127.0.0.1` 指向模拟器自己。启动前执行 `hdc rport tcp:4523 tcp:4523` 做端口转发，或者在设置里把接口地址改成宿主机地址。
