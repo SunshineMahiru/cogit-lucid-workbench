@@ -68,7 +68,7 @@ export struct ReviewPromptPanel {
       this.state = prompts.length > 0 ? STATE_READY : STATE_EMPTY;
     } catch (error) {
       this.prompts = LOCAL_PROMPTS;
-      this.state = STATE_ERROR;
+      this.state = STATE_LOCAL;
     }
   }
 
@@ -139,11 +139,20 @@ export struct ReviewPromptPanel {
             .fontColor(AppTheme.color.textMuted)
         } else {
           if (this.state === STATE_LOCAL) {
-            Text('真机未配置 Mock，以下为内置示例提示')
-              .fontSize(10)
-              .lineHeight(15)
-              .fontColor(AppTheme.color.textMuted)
-              .width('100%')
+            Row({ space: 8 }) {
+              Text('当前离线，以下为内置示例提示')
+                .fontSize(10)
+                .lineHeight(15)
+                .fontColor(AppTheme.color.textMuted)
+                .layoutWeight(1)
+              Text('重试连接')
+                .fontSize(10)
+                .fontColor(AppTheme.color.primary)
+                .onClick(() => {
+                  this.load();
+                })
+            }
+            .width('100%')
           }
           ForEach(this.prompts, (prompt: ReviewPrompt) => {
             Text(`· ${prompt.text}`)
