@@ -7,11 +7,19 @@ import { PlanNode } from '../model/PlanNode';
 import { PlanProject } from '../model/PlanProject';
 import { PlanItem } from '../model/PlanItem';
 import { PlanLink } from '../model/PlanLink';
+import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PlanNodeStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
 import { buildPlanReviewFacts, writePlanReviewDraft } from '../plan/PlanReviewDraft';
 import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import { PlanLinkPickerParams, PlanNodeParams } from '../navigation/RouteParams';
+import {
+  NoteDetailParams,
+  PredictionDetailParams,
+  RelationDetailParams,
+  ReviewDetailParams,
+  StatusEditParams
+} from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
@@ -146,6 +154,30 @@ export struct PlanNodePage {
       }
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '项目归属保存失败' });
+    }
+  }
+
+  private openLinkedRecord(link: PlanLink): void {
+    if (this.navStack === null) {
+      return;
+    }
+    if (link.module === PlanLinkModule.NOTE) {
+      const params: NoteDetailParams = { noteId: link.targetId };
+      this.navStack.pushPathByName(ROUTES.NOTE_DETAIL, params);
+    } else if (link.module === PlanLinkModule.PREDICTION) {
+      const params: PredictionDetailParams = { predictionId: link.targetId };
+      this.navStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params);
+    } else if (link.module === PlanLinkModule.REVIEW) {
+      const params: ReviewDetailParams = { reviewId: link.targetId };
+      this.navStack.pushPathByName(ROUTES.REVIEW_DETAIL, params);
+    } else if (link.module === PlanLinkModule.ANCHOR) {
+      this.navStack.pushPathByName(ROUTES.ANCHOR, null);
+    } else if (link.module === PlanLinkModule.RELATION) {
+      const params: RelationDetailParams = { relationId: link.targetId };
+      this.navStack.pushPathByName(ROUTES.RELATION_DETAIL, params);
+    } else if (link.module === PlanLinkModule.STATUS) {
+      const params: StatusEditParams = { date: link.label };
+      this.navStack.pushPathByName(ROUTES.STATUS_EDIT, params);
     }
   }
 
@@ -412,10 +444,13 @@ export struct PlanNodePage {
                 ForEach(this.links, (link: PlanLink) => {
                   Text(`${planLinkModuleLabel(link.module)} · ${link.label}`)
                     .fontSize(11)
-                    .fontColor(AppTheme.color.textSecondary)
+                    .fontColor(AppTheme.color.primary)
                     .width('100%')
                     .maxLines(1)
                     .textOverflow({ overflow: TextOverflow.Ellipsis })
+                    .onClick(() => {
+                      this.openLinkedRecord(link);
+                    })
                 }, (link: PlanLink) => link.id)
               }
             }
@@ -465,7 +500,19 @@ export struct PlanNodePage {
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 10, bottom: 10 })
+              .padding({ top: 10, bottom: 6 })
+            Text('去复盘')
+              .id('plan_node_review')
+              .fontSize(13)
+              .fontColor(AppTheme.color.primary)
+              .width('100%')
+              .textAlign(TextAlign.Center)
+              .padding({ top: 6, bottom: 10 })
+              .onClick(() => {
+                if (this.navStack !== null) {
+                  this.navStack.pushPathByName(ROUTES.REVIEW, null);
+                }
+              })
           }
         }
         .width('100%')
