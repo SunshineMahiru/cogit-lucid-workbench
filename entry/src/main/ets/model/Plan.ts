@@ -10,6 +10,8 @@ export interface Plan {
   projectId?: string;
   /** Monday of the first seven-day node, YYYY-MM-DD */
   startDate: string;
+  /** Optional end date used by the settlement progress; empty means no deadline */
+  targetDate?: string;
   status: PlanStatus;
   isPrimary: boolean;
   /** Security level controlling aggregation and export */

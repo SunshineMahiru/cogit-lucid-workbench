@@ -49,9 +49,9 @@ export class PlanService {
   }
 
   /** Creates a goal and its first week atomically; it becomes primary when no active primary goal exists. */
-  async createPlan(title: string, startDate: string): Promise<Plan> {
+  async createPlan(title: string, startDate: string, targetDate: string = ''): Promise<Plan> {
     const existing = await this.dao.queryPlans();
-    const plan = createPlan(title, startDate);
+    const plan = createPlan(title, startDate, targetDate);
     plan.isPrimary = !this.hasActivePrimary(existing);
     const firstNode = createPlanNode(plan.id, 1, plan.startDate);
     await this.dao.insertPlanWithFirstNode(plan, firstNode);
@@ -241,6 +241,11 @@ export class PlanService {
 
   async listLinks(nodeId: string): Promise<PlanLink[]> {
     return this.dao.queryLinks(nodeId);
+  }
+
+  /** Returns every link of one goal, across all of its nodes. */
+  async listLinksByPlan(planId: string): Promise<PlanLink[]> {
+    return this.dao.queryLinksByPlan(planId);
   }
 
   async listLinksByTarget(module: PlanLinkModule, targetId: string): Promise<PlanLink[]> {

@@ -57,8 +57,8 @@ class PlanPreviewStore {
     return null;
   }
 
-  create(title: string, startDate: string): Plan {
-    const plan = createPlan(title, startDate);
+  create(title: string, startDate: string, targetDate: string = ''): Plan {
+    const plan = createPlan(title, startDate, targetDate);
     plan.isPrimary = this.plans.length === 0;
     this.plans.push(plan);
     this.planNodes.push(createPlanNode(plan.id, 1, plan.startDate));
@@ -220,6 +220,17 @@ class PlanPreviewStore {
     const rows: PlanLink[] = [];
     for (const link of this.planLinks) {
       if (link.nodeId === nodeId) {
+        rows.push(link);
+      }
+    }
+    return rows;
+  }
+
+  /** Returns every link of one goal. */
+  linksByPlan(planId: string): PlanLink[] {
+    const rows: PlanLink[] = [];
+    for (const link of this.planLinks) {
+      if (link.planId === planId) {
         rows.push(link);
       }
     }

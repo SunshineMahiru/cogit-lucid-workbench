@@ -89,6 +89,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     goal TEXT NOT NULL,
     project_id TEXT,
     start_date TEXT NOT NULL,
+    target_date TEXT,
     status TEXT NOT NULL,
     is_primary INTEGER NOT NULL DEFAULT 0,
     level TEXT NOT NULL DEFAULT 'local_only',

@@ -116,6 +116,7 @@ export const PLAN_COLS = {
   GOAL: 'goal',
   PROJECT_ID: 'project_id',
   START_DATE: 'start_date',
+  TARGET_DATE: 'target_date',
   STATUS: 'status',
   IS_PRIMARY: 'is_primary',
   LEVEL: 'level',

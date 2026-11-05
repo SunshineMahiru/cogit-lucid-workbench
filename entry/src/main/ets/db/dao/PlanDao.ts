@@ -31,6 +31,7 @@ export class PlanDao {
       [PLAN_COLS.GOAL]: plan.goal,
       [PLAN_COLS.PROJECT_ID]: plan.projectId ?? '',
       [PLAN_COLS.START_DATE]: plan.startDate,
+      [PLAN_COLS.TARGET_DATE]: plan.targetDate ?? '',
       [PLAN_COLS.STATUS]: plan.status,
       [PLAN_COLS.IS_PRIMARY]: plan.isPrimary ? 1 : 0,
       [PLAN_COLS.LEVEL]: plan.level ?? SecurityLevel.LOCAL_ONLY,
@@ -58,6 +59,7 @@ export class PlanDao {
       [PLAN_COLS.GOAL]: plan.goal,
       [PLAN_COLS.PROJECT_ID]: plan.projectId ?? '',
       [PLAN_COLS.START_DATE]: plan.startDate,
+      [PLAN_COLS.TARGET_DATE]: plan.targetDate ?? '',
       [PLAN_COLS.STATUS]: plan.status,
       [PLAN_COLS.IS_PRIMARY]: plan.isPrimary ? 1 : 0,
       [PLAN_COLS.LEVEL]: plan.level ?? SecurityLevel.LOCAL_ONLY
@@ -359,6 +361,7 @@ export class PlanDao {
 
   private mapPlan(resultSet: relationalStore.ResultSet): Plan {
     const projectId = resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.PROJECT_ID));
+    const targetDate = resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.TARGET_DATE));
     const plan: Plan = {
       id: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.ID)),
       title: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.TITLE)),
@@ -371,6 +374,9 @@ export class PlanDao {
     };
     if (projectId.length > 0) {
       plan.projectId = projectId;
+    }
+    if (targetDate.length > 0) {
+      plan.targetDate = targetDate;
     }
     return plan;
   }

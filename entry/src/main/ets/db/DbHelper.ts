@@ -166,7 +166,8 @@ export class DbHelper {
     }
     const planContextMigrations: string[] = [
       `ALTER TABLE review_result ADD COLUMN plan_id TEXT`,
-      `ALTER TABLE review_result ADD COLUMN plan_node_id TEXT`
+      `ALTER TABLE review_result ADD COLUMN plan_node_id TEXT`,
+      `ALTER TABLE plan ADD COLUMN target_date TEXT`
     ];
     for (const sql of planContextMigrations) {
       try {

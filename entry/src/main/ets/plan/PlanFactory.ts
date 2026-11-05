@@ -55,8 +55,8 @@ export function addPlanDays(value: string, days: number): string {
 }
 
 /** Creates a new goal, normalized to the Monday of its first week. */
-export function createPlan(title: string, startDate: string): Plan {
-  return {
+export function createPlan(title: string, startDate: string, targetDate: string = ''): Plan {
+  const plan: Plan = {
     id: newId('pl'),
     title: title.trim(),
     goal: '',
@@ -66,6 +66,10 @@ export function createPlan(title: string, startDate: string): Plan {
     level: SecurityLevel.LOCAL_ONLY,
     createdAt: Date.now()
   };
+  if (targetDate.length > 0) {
+    plan.targetDate = targetDate;
+  }
+  return plan;
 }
 
 /** Creates an optional project under a goal. */

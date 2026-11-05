@@ -15,6 +15,7 @@ export struct PlanEditPage {
   @Local title: string = '';
   @Local goal: string = '';
   @Local startDate: string = '';
+  @Local targetDate: string = '';
   @Local errorText: string = '';
   @Local isSaving: boolean = false;
   @Local isPreview: boolean = false;
@@ -56,6 +57,7 @@ export struct PlanEditPage {
     this.title = plan.title;
     this.goal = plan.goal;
     this.startDate = plan.startDate;
+    this.targetDate = plan.targetDate ?? '';
   }
 
   private validDate(value: string): boolean {
@@ -74,6 +76,15 @@ export struct PlanEditPage {
       this.errorText = '起始日期格式应为 YYYY-MM-DD';
       return;
     }
+    const target = this.targetDate.trim();
+    if (target.length > 0 && !this.validDate(target)) {
+      this.errorText = '结束日期格式应为 YYYY-MM-DD，或留空';
+      return;
+    }
+    if (target.length > 0 && target < this.startDate) {
+      this.errorText = '结束日期不能早于起始日期';
+      return;
+    }
     if (this.isSaving) {
       return;
     }
@@ -83,13 +94,14 @@ export struct PlanEditPage {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined || this.isPreview) {
       if (this.planId === null) {
-        planPreviewStore.create(this.title, monday);
+        planPreviewStore.create(this.title, monday, target);
       } else {
         const plan = planPreviewStore.find(this.planId);
         if (plan !== null) {
           plan.title = this.title.trim();
           plan.goal = this.goal.trim();
           plan.startDate = monday;
+          plan.targetDate = target.length > 0 ? target : undefined;
           planPreviewStore.update(plan);
         }
       }
@@ -117,7 +129,7 @@ export struct PlanEditPage {
 
   private async createInStore(context: common.Context): Promise<void> {
     const service = await PlanService.open(context);
-    await service.createPlan(this.title, mondayOf(this.startDate));
+    await service.createPlan(this.title, mondayOf(this.startDate), this.targetDate.trim());
   }
 
   private async updateInStore(context: common.Context): Promise<void> {
@@ -129,6 +141,8 @@ export struct PlanEditPage {
     plan.title = this.title.trim();
     plan.goal = this.goal.trim();
     plan.startDate = mondayOf(this.startDate);
+    const target = this.targetDate.trim();
+    plan.targetDate = target.length > 0 ? target : undefined;
     await service.updatePlan(plan);
   }
 
@@ -223,6 +237,28 @@ export struct PlanEditPage {
                 this.startDate = value;
               })
             Text('保存后按周一至周日生成第一个七日节点。')
+              .fontSize(10)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+          }
+          .width('100%')
+          .alignItems(HorizontalAlign.Start)
+        }
+
+        SectionCard() {
+          Column({ space: 6 }) {
+            Text('结束日期（可选）')
+              .fontSize(11)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            TextInput({ text: this.targetDate, placeholder: '留空表示不设结束日' })
+              .id('plan_target')
+              .maxLength(10)
+              .backgroundColor(AppTheme.color.surfaceAlt)
+              .onChange((value: string) => {
+                this.targetDate = value;
+              })
+            Text('设了结束日，目标详情才会显示剩余天数与完成百分比。')
               .fontSize(10)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
