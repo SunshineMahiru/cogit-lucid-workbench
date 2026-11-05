@@ -426,7 +426,6 @@ hdc shell aa test -b com.sunshinemahiru.cogitlucid -m entry_test -s unittest Ope
 
 | 主题 | 内容 | 链接 |
 |---|---|---|
-| 项目蓝图 | 定位、范围、两套交付物，以及各阶段的取舍理由 | [docs/PROJECT.md](./docs/PROJECT.md) |
 | 视觉令牌 | 锁定的颜色、字号、圆角、间距，逐页目视清单与已知差异 | [docs/UI_FREEZE.md](./docs/UI_FREEZE.md) |
 | Mock 服务 | 端点、寻址方式，预览器与模拟器的区别 | [mock-server/README.md](./mock-server/README.md) |
 | 本地签名模板 | `signing/signing.local.json` 的占位配置 | [docs/signing.local.example.json](./docs/signing.local.example.json) |
