@@ -1,11 +1,13 @@
 import { AppTheme } from '../theme/AppTheme';
 import { common } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { AppDestination } from '../components/AppDestination';
 import { DashboardView } from '../views/DashboardView';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { HomeDataService } from '../data/HomeDataService';
 import { HomePulse, HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
+import { appHealth, isDatabaseUnsupported } from '../app/AppHealth';
 import { consumeJsonIssues } from '../db/SafeJson';
 import { previewStore } from '../preview/PreviewStore';
 import { ROUTES } from '../navigation/Routes';
@@ -22,6 +24,8 @@ export struct HomePage {
   @Local loadFailed: boolean = false;
   @Local isPreview: boolean = false;
   @Local dataNotice: string = '';
+  @Local dbBlocked: boolean = false;
+  @Local dbMessage: string = '';
   private service: HomeDataService | null = null;
   private loadToken: number = 0;
   private listener: (() => void) | null = null;
@@ -46,6 +50,7 @@ export struct HomePage {
   private async load(): Promise<void> {
     const context = this.getUIContext().getHostContext();
     if (context === undefined) {
+      this.loadPreview();
       return;
     }
     const token = ++this.loadToken;
@@ -66,13 +71,48 @@ export struct HomePage {
       this.dataNotice = consumeJsonIssues() > 0 ? '部分记录格式异常，已跳过' : '';
       this.loadFailed = false;
       this.isPreview = false;
+      this.dbBlocked = false;
+      appHealth.markReady();
     } catch (error) {
-      if (token === this.loadToken) {
-        this.summary = previewStore.homeSummary();
-        this.pulse = previewStore.homePulse();
-        this.isPreview = true;
-        this.loadFailed = false;
+      if (token !== this.loadToken) {
+        return;
       }
+      const failure = error as BusinessError;
+      const code: number = failure.code ?? 0;
+      const message: string = failure.message ?? '';
+      if (isDatabaseUnsupported(code)) {
+        this.loadPreview();
+        return;
+      }
+      appHealth.markFailed(message);
+      this.dbMessage = message;
+      this.dbBlocked = true;
+      this.loadFailed = false;
+      this.isPreview = false;
+      this.service = null;
+    }
+  }
+
+  private loadPreview(): void {
+    this.summary = previewStore.homeSummary();
+    this.pulse = previewStore.homePulse();
+    this.isPreview = true;
+    this.dbBlocked = false;
+    this.loadFailed = false;
+  }
+
+  private retryDatabase(): void {
+    appHealth.reset();
+    this.service = null;
+    this.dbBlocked = false;
+    this.dbMessage = '';
+    this.load();
+  }
+
+  private exitApplication(): void {
+    const context = this.getUIContext().getHostContext();
+    if (context !== undefined) {
+      (context as common.UIAbilityContext).terminateSelf();
     }
   }
 
@@ -95,6 +135,9 @@ export struct HomePage {
 
   @Builder
   homeBody() {
+    if (this.dbBlocked) {
+      this.blockedBody()
+    } else {
       Column() {
       ProfileHeader({
         pathStack: this.pathStack
@@ -205,8 +248,55 @@ export struct HomePage {
       }
       .width('100%')
       .layoutWeight(1)
-    }
+      }
       .width('100%')
       .height('100%')
+    }
+  }
+
+  @Builder
+  blockedBody() {
+    Column({ space: 14 }) {
+      Text('数据库打不开')
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(AppTheme.color.text)
+      Text('记录仍保存在本机。可以先重试；一直失败时请重启应用。备份与导出需要数据库打开后才能使用。')
+        .fontSize(12)
+        .lineHeight(19)
+        .fontColor(AppTheme.color.textSecondary)
+        .textAlign(TextAlign.Center)
+      if (this.dbMessage.length > 0) {
+        Text(this.dbMessage)
+          .fontSize(10)
+          .maxLines(3)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .fontColor(AppTheme.color.textMuted)
+          .textAlign(TextAlign.Center)
+      }
+      Text('重试')
+        .fontSize(14)
+        .fontColor(Color.White)
+        .width('100%')
+        .textAlign(TextAlign.Center)
+        .padding({ top: 12, bottom: 12 })
+        .backgroundColor(AppTheme.color.primary)
+        .borderRadius(12)
+        .onClick(() => {
+          this.retryDatabase();
+        })
+      Text('退出应用')
+        .fontSize(12)
+        .fontColor(AppTheme.color.textSecondary)
+        .padding({ top: 4, bottom: 4 })
+        .onClick(() => {
+          this.exitApplication();
+        })
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+    .padding({ left: 28, right: 28 })
+    .backgroundColor(AppTheme.color.page)
   }
 }

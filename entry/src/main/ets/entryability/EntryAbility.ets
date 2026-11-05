@@ -2,6 +2,7 @@ import { AbilityConstant, Configuration, ConfigurationConstant, UIAbility, Want 
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { DbHelper } from '../db/DbHelper';
+import { appHealth } from '../app/AppHealth';
 import { applyTheme } from '../theme/AppTheme';
 import { notifyPageBackgroundChanged } from '../settings/PageBackgroundBus';
 
@@ -13,8 +14,11 @@ export default class EntryAbility extends UIAbility {
 
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onCreate');
-    DbHelper.init(this.context).catch((error: Error) => {
+    DbHelper.init(this.context).then(() => {
+      appHealth.markReady();
+    }).catch((error: Error) => {
       hilog.error(DOMAIN, TAG, 'DbHelper.init failed: %{private}s', error.message);
+      appHealth.markFailed(error.message);
     });
   }
 

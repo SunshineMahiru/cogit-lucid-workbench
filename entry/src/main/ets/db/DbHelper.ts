@@ -1,6 +1,7 @@
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { fileIo } from '@kit.CoreFileKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 import { DB_CONFIG, DB_VERSION, PLAIN_DB_CONFIG } from './DbConfig';
 import { TABLE_CREATE_SQLS } from './schemas';
 import {
@@ -10,13 +11,14 @@ import {
 
 const META_ENCRYPTED = '/.db-encrypted';
 const META_ATTEMPTED = '/.db-encryption-attempted';
+const DOMAIN = 0x0000;
+const TAG = 'CogitLucidDb';
 
 /** Opens and caches the relational store instance. */
 export class DbHelper {
   private static store: relationalStore.RdbStore | null = null;
   private static storePromise: Promise<relationalStore.RdbStore> | null = null;
   private static schemaPromise: Promise<relationalStore.RdbStore> | null = null;
-  private static forcePlain: boolean = false;
 
   static async getStore(context: common.Context): Promise<relationalStore.RdbStore> {
     if (DbHelper.store !== null) {
@@ -38,9 +40,6 @@ export class DbHelper {
 
   /** Encrypts a database created before this version, once per device. */
   private static async ensureEncrypted(store: relationalStore.RdbStore, context: common.Context): Promise<void> {
-    if (DbHelper.forcePlain) {
-      return;
-    }
     const encryptedMarker = `${context.filesDir}${META_ENCRYPTED}`;
     const attemptedMarker = `${context.filesDir}${META_ATTEMPTED}`;
     if (fileIo.accessSync(encryptedMarker) || fileIo.accessSync(attemptedMarker)) {
@@ -95,21 +94,18 @@ export class DbHelper {
     }
   }
 
-  /** Opens the encrypted store, migrating a pre-encryption database on the way. */
+  /** Opens the encrypted store; a failure is reported instead of writing plaintext. */
   private static async openStore(context: common.Context): Promise<relationalStore.RdbStore> {
-    const config = DbHelper.forcePlain ? PLAIN_DB_CONFIG : DB_CONFIG;
     try {
-      return await relationalStore.getRdbStore(context, config);
+      return await relationalStore.getRdbStore(context, DB_CONFIG);
     } catch (error) {
-      if (DbHelper.forcePlain) {
-        throw error;
-      }
+      hilog.error(DOMAIN, TAG, 'encrypted open failed: %{private}s', (error as Error).message);
       try {
         await DbHelper.rekeyPlainStore(context);
         return await relationalStore.getRdbStore(context, DB_CONFIG);
       } catch (migrationError) {
-        DbHelper.forcePlain = true;
-        return relationalStore.getRdbStore(context, PLAIN_DB_CONFIG);
+        hilog.error(DOMAIN, TAG, 'rekey migration failed: %{private}s', (migrationError as Error).message);
+        throw migrationError;
       }
     }
   }
