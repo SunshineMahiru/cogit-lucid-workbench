@@ -9,6 +9,7 @@ local.properties
 node_modules/
 .test/
 *.log
+*-log.txt
 
 # CodeArts toolchain and local build logs
 .arts/
@@ -35,7 +36,13 @@ signing/
 # Install packages kept outside build/
 *.hap
 *.hsp
+*.har
 *.app
+
+# Local database copies
+*.db
+*.sqlite
+*.sqlite3
 
 # Reports and packaging material stay outside the app repository
 *.docx
