@@ -598,7 +598,7 @@ export struct PlanDetailPage {
               .width('100%')
 
               if (this.viewMode === 0) {
-                PlanWeekView({ days: this.weekDays })
+                PlanWeekView({ days: this.weekDays, previewMode: this.isPreview })
               } else {
                 PlanMonthView({
                   rows: this.monthRows(),

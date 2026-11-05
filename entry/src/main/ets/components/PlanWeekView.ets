@@ -5,6 +5,7 @@ import { DayActivity } from '../plan/PlanInsights';
 @ComponentV2
 export struct PlanWeekView {
   @Param days: DayActivity[] = [];
+  @Param previewMode: boolean = false;
   @Local selected: string = '';
 
   private pick(date: string): void {
@@ -64,6 +65,12 @@ export struct PlanWeekView {
           .fontSize(10)
           .lineHeight(16)
           .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+      } else if (this.previewMode) {
+        Text('预览器不读取本地数据库，这里只显示日期；速记与读数请在模拟器里查看')
+          .fontSize(9)
+          .lineHeight(15)
+          .fontColor(AppTheme.color.warning)
           .width('100%')
       } else {
         Text('数字为当天速记条数，「读」表示当天记了读数')
