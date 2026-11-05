@@ -19,7 +19,7 @@ export struct PlanEditPage {
   @Local errorText: string = '';
   @Local isSaving: boolean = false;
   @Local isPreview: boolean = false;
-  private planId: string | null = null;
+  @Local planId: string | null = null;
   private navStack: NavPathStack | null = null;
 
   aboutToAppear(): void {
