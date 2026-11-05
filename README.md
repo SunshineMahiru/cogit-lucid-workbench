@@ -9,87 +9,88 @@
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-22C55E?style=flat-square" alt="License: AGPL-3.0"></a>
   <img src="https://img.shields.io/badge/HarmonyOS-ArkTS-3776AB?style=flat-square" alt="HarmonyOS ArkTS">
-  <img src="https://img.shields.io/badge/API-24-4B5563?style=flat-square" alt="API 24">
+  <img src="https://img.shields.io/badge/API-26-4B5563?style=flat-square" alt="API 26">
   <img src="https://img.shields.io/badge/version-1.0.0-F59E0B?style=flat-square" alt="Version 1.0.0">
 </p>
 
 ## Overview
 
-cogit-lucid-workbench is a single-module HarmonyOS application, labelled **Cogit Lucid** on the device. It keeps a private record of what you noticed, what you decided, what you predicted, and how you reviewed it, then feeds those records into the next round. It is aimed at people who already keep a review habit and want their judgments to stay checkable afterwards.
+cogit-lucid-workbench is a single-module HarmonyOS application; the in-app title is **Cogit Lucid**, while the launcher keeps the repository name. It keeps what you noticed, decided, and predicted, plus how you reviewed it, in a local database, then brings those records into the next round. It suits people who already review their weeks and want earlier judgments to stay checkable.
 
-Three design choices separate it from a journal:
+Three choices shape the app:
 
-- **A prediction is frozen when saved.** Each one carries a confidence score, a reason, and a settlement date fixed in advance. You settle it against the outcome later, so the original call cannot be quietly edited into a hit. Revisions are stored as versions.
-- **The model is opt-in.** Records live in the on-device database. The review agent reads them only when you switch to a model mode, and the API key stays on the device.
-- **Anchors are read-only.** A small set of statements you chose to keep acts as the reference a contradiction is checked against, instead of advice invented at review time.
+- **A prediction freezes on save.** Confidence, reason, and settlement date are written once. Settling later only adds the outcome; a later edit appends a version instead of overwriting the call that was made.
+- **The model stays opt-in.** Records sit in the on-device database. The review agent reads them only after you switch to mock or model mode, and the API key is kept in the system asset store.
+- **An anchor becomes read-only once written.** You can keep adding sentences, but a stored one cannot be edited or removed, and it is what the contradiction step checks against.
 
-The interface is Chinese only. The display name is set in `entry/src/main/ets/theme/AppIdentity.ts` and the launcher label in `AppScope/resources/base/element/string.json`.
+The interface is Chinese only. The in-app name lives in `entry/src/main/ets/theme/AppIdentity.ts`, the launcher label in `AppScope/resources/base/element/string.json`.
 
-The launch screen opens with an identity band — avatar, nickname, signature, and a hand-written title — followed by four counters: notes today, pending settlements, consecutive record days, and the latest review date. Readings, the weekly card, the plan card, and the module grid sit below it. A `数据看板` button under the counters opens the analytics dashboard.
+The home page opens with the identity band (avatar, nickname, signature, handwritten title) and four counters: notes today, pending settlements, consecutive record days, and the latest review. Readings, the weekly card, the plan card, and the six-module grid follow. The `数据看板` button under the counters opens the analytics page.
 
 ## Project status
 
-The current build covers notes, predictions and settlement, review and the agent, relations, anchors, status, plans with weekly nodes, settings with page backgrounds and surface opacity, export, and a remote analytics dashboard. Both a light and a dark palette ship, and the interface follows the system colour mode. The home page is a normal destination on one navigation stack, so forward and back animate both pages. When `relationalStore` cannot be opened, as in the DevEco Previewer, the home page reads the in-memory preview store and labels the data as demo content. The project is still being refined.
+The build covers six record modules — notes, predictions and settlement, four-step reviews with an optional agent, relations, anchors, and status readings — plus plans that organise them: a goal, optional projects, seven-day nodes, and a checklist. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over line, and a split of linked records by module. Settings carry page backgrounds and surface opacity, Markdown export writes the whole record set, backup and restore hand a `.cogitbackup` file to the system save dialog, and the analytics dashboard renders a remote sample payload with twelve months of detail.
+
+Records live in an encrypted `relationalStore` database (twelve tables). If the store cannot be opened on a device, the home page shows a blocking view with retry and exit instead of writing plaintext; only runs without `relationalStore` — the DevEco Previewer reports code 801 — fall back to the in-memory demo data, and the counters are labelled as demo content.
+
+The app is one module, targets `targetSdkVersion` 26.0.0 with a minimum of 6.1.1 (API 24), declares `phone` as the only device type, and ships a light and a dark palette that follow the system colour mode. The device suite has seven cases; the local check scripts cover the pure functions and services, and both are described under Tests. Known limits: the interface is Chinese only, the analytics page reads the remote sample file rather than local records, and model modes need your own endpoint and key.
 
 ## Highlights
 
 | Highlight | What it gives you |
 |---|---|
 | Frozen prediction log | Target, judgment, confidence 0-100, reason, and a settlement date written once; settlement fills the outcome and marks hit or miss. |
-| Hit-rate statistics | Overall rate, a monthly trend over the last six months, and a hit/miss donut, drawn with `@ohos/mpchart`. |
-| Analytics dashboard | Ten charts over a remote JSON payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. A month picker selects one of the twelve months; every chart reads that month's detail. The dashboard renders the remote example payload and does not read local records. |
-| Preview fallback | In the DevEco Previewer, where `relationalStore` is unavailable, the home page falls back to the in-memory preview store and marks the counters as demo data. |
-| Four-step review | Facts, interpretation, contradiction, action. The contradiction step can quote up to three anchors. |
+| Hit-rate statistics | Overall rate, a six-month monthly trend, and a hit/miss donut, drawn with `@ohos/mpchart`. |
+| Analytics dashboard | Ten charts over one remote payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. A month picker selects one of twelve months, and every chart reads that month's detail. The page renders the remote sample and does not read local records. |
+| Encrypted local store | All twelve tables live in an encrypted `relationalStore` database. If the store cannot be opened, the home page shows a blocking view with retry and exit instead of writing plaintext. |
+| Previewer demo mode | Only where `relationalStore` is missing — the DevEco Previewer reports code 801 — the home page reads the in-memory preview store and labels the counters as demo data. |
+| Four-step review | Facts, interpretation, contradiction, action. The contradiction step ticks value anchors and uses them to test the explanation. |
 | Plan ladder | A goal, an optional project group, seven-day nodes, and a checklist. Only one goal is primary; closing a node carries unfinished items into the next week and writes a review draft. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over rate line, and a link split by module. |
 | Two-way record links | A plan node picks records from any of the six modules, and every record detail page can attach itself to a plan node. |
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
-| Markdown export | Eight record groups render into one Markdown file inside the app sandbox; plan links to sealed records print a placeholder instead of their titles. |
+| Markdown export | Eight record groups render into one Markdown file, written to the sandbox first and then handed to the system save dialog; plan links to sealed records print a placeholder instead of their titles. |
+| Backup and restore | A database snapshot, identity, settings and background pictures travel in one `.cogitbackup`; the current database is copied aside before a restore, and the API key never enters the bundle. |
 | Home identity band | Avatar, nickname, signature, and a hand-written title sit above four counters: notes today, pending settlements, record streak, and the latest review. |
-| Backgrounds and page opacity | Set one default picture or one per module, taken from the gallery, the camera or the file picker. The page surface itself takes 0-60% transparency, so the setting works with or without a picture. |
+| Backgrounds and page opacity | One default picture or one per module, from the gallery, the camera, or the file picker. Picture strength runs 4-30% and the page surface itself takes 0-60% transparency, so the setting works with or without a picture. |
 
 ## Architecture
 
-The code is organised as six layers with a single dependency direction, plus a shared type layer at the bottom. A layer only calls the layers below it; `analysis/` imports nothing but `model/` types, so rules stay testable without a database or a UI. The `data/` layer owns cross-entity read models such as the dashboard aggregate.
+The dependency direction runs one way: from interaction at the top down to the model layer at the bottom. A layer only calls the layers below it; `analysis/` imports nothing but `model/` types, so rules stay testable without a database or a UI. `app/` holds cross-page buses for refresh events and the database health state.
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ interaction   pages/  views/  components/  navigation/      │
-│               render and route dispatch                     │
-├─────────────────────────────────────────────────────────────┤
-│ domain        note/  prediction/  review/  anchor/          │
-│               relation/  status/  plan/                     │
-│               validation, composition, projection           │
-├─────────────────────────────────────────────────────────────┤
-│ data/         dashboard aggregate, cross-entity reads       │
-├─────────────────────────────────────────────────────────────┤
-│ analysis/     contradiction  calibration  anchors/trust     │
-│               status rules   llm adapter                    │
-│               imports model/ only                           │
-├─────────────────────────────────────────────────────────────┤
-│ network/      prompt + stats repositories  OpenAI-compatible│
-│               local mock client  cleartext blocked          │
-├─────────────────────────────────────────────────────────────┤
-│ records       db/  settings/  export/                       │
-│               relationalStore, Preferences, Markdown        │
-├─────────────────────────────────────────────────────────────┤
-│ model/        entity types, enums, factories                │
-│               no imports outside model/                     │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+  subgraph surface["Interaction"]
+    interaction["pages · views · components · navigation"]
+  end
+  subgraph core["Domain · Data · Analysis"]
+    domain["Domain<br/>note · prediction · review · anchor<br/>relation · status · plan"]
+    data["Data<br/>dashboard aggregate, cross-entity reads"]
+    analysis["Analysis<br/>contradiction · calibration · trust · status rules"]
+    domain --> data --> analysis
+  end
+  subgraph foundation["Network · Records · Model"]
+    network["Network<br/>prompts · stats repository · LLM clients"]
+    records["Records<br/>db · settings · export"]
+    model["Model<br/>entity types · enums · factories"]
+    network --> records --> model
+  end
+  surface --> core
+  core --> foundation
 ```
 
 - ArkTS pages with state management V2 (`@ComponentV2`, `@Local`, `@Param`); entity models and services in plain TypeScript.
-- Navigation with `NavPathStack`; 32 route names are centralised in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`.
-- `relationalStore` is the single source of truth, `Preferences` holds non-secret options, the model key is stored in the system asset service, and `fileIo` writes the Markdown export.
+- Navigation with `NavPathStack`; 32 route names live in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`. The tree holds 34 page files and 33 reusable components.
+- `relationalStore` is the single source of truth and is encrypted; `Preferences` keeps non-secret options, the model key sits in the system asset service, and `fileIo` writes the Markdown export.
 - `@ohos/mpchart` 3.1.0-rc.0 is the only runtime dependency. Icons come from system glyphs rather than an icon pack.
-- `components/charts/` wraps mpchart for lines, bars, and pies, and draws the two heatmaps on Canvas. `network/RemoteStatsRepository` reads the analytics JSON from Gitee first and GitHub second.
-- `profile/` holds the home identity: a Preferences store for the four text fields plus a 320 px avatar pipeline.
+- `components/charts/` wraps mpchart for lines, bars, and pies, and draws the heatmaps on Canvas. `network/RemoteStatsRepository` reads the analytics JSON from Gitee first, then GitHub.
+- `preview/` supplies in-memory demo data so pages render in the DevEco Previewer; no page reads it while the database is available.
 
 ## Usage Example
 
 The home page opens with the identity band and four counters; today's readings, a weekly settlement or onboarding card, the plan card, and the grid of six modules follow below. `编辑` and `设置` sit on the right of the identity band.
 
-<img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard button, today's readings, an onboarding card and the six-module grid">
+<img src="./docs/images/debug/home.jpeg" width="300" alt="Upper half of the home page: the identity band, four counters, the dashboard button, today's readings, the weekly settlement card and the plan card">
 
 ### Set your identity
 
@@ -123,61 +124,57 @@ Expected result: the header states the remote data timestamp and the selected mo
 
 1. Open the review module (`复盘`) and pick the week or month tab. Each tab keeps its own draft.
 2. Work through the four steps: facts, interpretation, contradiction, action. Facts and action are required.
-3. In the contradiction step, tick up to three anchors to check the explanation against.
+3. In the contradiction step, tick the value anchors that apply and check the explanation against them.
 4. Optionally open the agent panel to generate contradiction candidates. Template mode is offline; mock and model modes call an endpoint.
 5. Save. The period shows as complete and the session is kept in review history.
 
 ### Plan one week
 
-1. The plan card sits on the home page under the weekly settlement card. Tap `新建目标` when no goal exists; later taps open the current goal.
-2. Give the goal a title and a start date. The start date snaps to the Monday of that week, because every node runs Monday to Sunday.
-3. Open this week's node and add checklist items; tap an item to mark it done.
-4. Optionally create a project inside the goal and give the node that project group. A project can be renamed or deleted; deleting it sends its nodes back to ungrouped and keeps every item.
-5. Tap `结束本周`. Unfinished items carry into the next week, and a review draft is prefilled for the closed node. `去复盘` opens the review page with the node context, and the review page keeps a `返回节点` action.
-6. Tap `关联记录` to pick records from any of the six modules. The picker marks records from the same week, ranks them by shared relation and tag, and offers a keyword search plus a `加载更多` action for older records.
+1. The plan card sits under the weekly settlement card. With no goal, tap `新建`; afterwards `查看 ›` opens the current goal.
+2. Give the goal a title and a start date; the start date snaps to the Monday of that week. The end date is optional: leave it empty to track weeks only, or set a date later than that Monday to get a countdown.
+3. Open this week's node and add checklist items; tap an item to mark it done. The node header shows how many days are left and a three-part bar for done, carried over, and new items.
+4. Optionally create a project inside the goal and assign the node to it. A project can be renamed or deleted; deleting it returns its nodes to ungrouped and keeps every item.
+5. Tap `结束本周`. Unfinished items carry into the next week, and a review draft is prefilled for the closed node. `去复盘` opens the review with the node context; the review page keeps a `返回节点` action.
+6. Tap `关联记录` to pick records from the six modules. The picker marks records from the same week, ranks them by shared relation and tag, and offers keyword search plus a `加载更多` action.
 
-Expected result: only one goal carries the `主目标` badge; the home card shows the current week with its done/total count; a closed node shows `已结束` and keeps its link into the review flow.
+Expected result: only one goal carries the `主目标` badge. The goal page shows a deadline ring when an end date is set, otherwise `已推进 N 周`; a one-square-per-week rhythm strip; week and month views; a carry-over line once three weeks have checklists; and a split of linked records by module.
 
 ### Set a page background
 
-1. Open settings (`设置`) and tap `更换页面背景`.
+1. Open settings (`设置`) and tap `打开页面背景`.
 2. Pick a source: `从相册选择`, `拍一张`, or `选择文件`. The picture is converted to PNG and capped at 1080×1920.
-3. On the apply page, either set it as the default for every page, or tick the modules that should carry it.
-4. Adjust `页面透明度` for all pages, or only for the ticked module, then tap `完成`.
+3. Back on the apply page, set it as the default for `全部页面（默认）`, or tick pages and tap `应用`.
+4. Adjust `背景浓淡` (4–30%) so the picture stays readable behind the cards, and `页面透明度` (0–60%) for the surface itself. Both apply to every page or only to the ticked ones.
 
 Expected result: the module you open shows the picture behind its cards. Transparency at 0% keeps the surface solid; raising it lets the system wallpaper show through, whether or not a picture is set.
 
 ### Take the records out
 
-Settings (`设置`) writes the whole record set to `cogit-export-YYYYMMDD-HHMM.md` inside the app sandbox and reports the file name, character count, and record count. Sealed records are left out.
+Settings (`设置`) writes the whole record set to `cogit-export-YYYYMMDD-HHMM.md`, then opens the system save dialog so it can be copied to a folder you pick; cancel that dialog and the file stays in the sandbox, with the name, character count and record count still shown, and `分享` can send it out later. Sealed records are left out, a plan link to a sealed record prints `已封存记录`, and a plan with an end date adds one `结束：` line.
 
 ## Screens
 
-Screenshots come from a Mate 70 Pro emulator. Every record in them is synthetic. The new home and dashboard captures use the current build in dark mode; the feature table below was captured earlier in light mode. Those feature pages keep their layout, while the home page now adds the identity band and the `数据看板` link.
+Captured on a Mate 70 Pro emulator from the current build, in dark mode. Every record in them is synthetic.
 
 | Home | Analytics, current month |
 |---|---|
-| <img src="./docs/images/debug/home.jpeg" width="300" alt="Current home page with the identity band, four counters, a dashboard button, today's readings and the module grid"> | <img src="./docs/images/debug/analytics-month.jpeg" width="300" alt="Analytics dashboard in dark mode with month chips, the current month highlighted, the hit-rate line, the calibration curve and the outcome donut"> |
-| **Analytics, mid-page** | **Analytics, heatmaps** |
-| <img src="./docs/images/debug/analytics-mid.jpeg" width="300" alt="Middle of the analytics dashboard with the outcome donut, confidence bars and horizon buckets for the selected month"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the analytics dashboard with interaction bars, a coverage heatmap and weekday labels"> |
-
-The older feature captures follow; their page content still matches the current build apart from the identity band noted above.
-
-| Prediction statistics | Review complete |
-|---|---|
-| <img src="./docs/images/debug/prediction-stats.jpeg" width="300" alt="Prediction statistics page showing a 63 percent hit rate, a six-month trend line and a hit or miss donut"> | <img src="./docs/images/debug/review-saved.jpeg" width="300" alt="Review page confirming this week is complete and showing the recorded action line"> |
+| <img src="./docs/images/debug/home.jpeg" width="300" alt="Home page with the identity band, four counters, today's readings (7.55 hours of sleep, one workout, zero notes), the weekly settlement card marked reviewed, the current plan and this period's prompts"> | <img src="./docs/images/debug/analytics-month.jpeg" width="300" alt="Top of the analytics dashboard: remote payload timestamp, month chips with the current month highlighted, the monthly hit-rate line and the calibration curve"> |
+| **Analytics, mid-page** | **Analytics, lower section** |
+| <img src="./docs/images/debug/analytics-mid.jpeg" width="300" alt="Middle of the analytics dashboard: outcome donut at 38 percent, confidence bars and hit rate by horizon bucket"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the dashboard: interaction bars and the reading coverage heatmap with weekday labels and a light-to-dark legend"> |
+| **Goal detail** | **Review detail** |
+| <img src="./docs/images/debug/plan-detail.jpeg" width="300" alt="Goal detail with 56 days left on a 5 percent ring, a three-week rhythm strip, the week view and the carry-rate line"> | <img src="./docs/images/debug/review-saved.jpeg" width="300" alt="Review detail marked as finished and read-only, showing the four steps and the comparison against two anchors"> |
 | **Anchors** | **Relation graph** |
-| <img src="./docs/images/debug/anchor-fixed.jpeg" width="300" alt="Anchor page listing two read-only sample anchors with a button to start a review"> | <img src="./docs/images/debug/relation-graph.jpeg" width="300" alt="Relation graph with the centre node labelled me and three contacts coloured by trust tier"> |
+| <img src="./docs/images/debug/anchor.jpeg" width="300" alt="Value anchors page holding two sample sentences in the north-star bank, an input to add one, and a button to run a review against them"> | <img src="./docs/images/debug/relation-graph.jpeg" width="300" alt="Relation graph centred on me, with three contacts coloured by trust tier and a note explaining the edges"> |
 | **Settings, model mode** | **Markdown export** |
-| <img src="./docs/images/debug/settings-model.jpeg" width="300" alt="Settings page in model mode with provider tabs, model choice, budget slider, endpoint field and API key field"> | <img src="./docs/images/debug/export-result.jpeg" width="300" alt="Settings page after export, reporting the written Markdown file name, character count and record count"> |
+| <img src="./docs/images/debug/settings-model.jpeg" width="300" alt="Settings in model mode: a choice between GLM-4.7-Flash and DeepSeek V4-Flash, a 30 yuan monthly budget, the endpoint field and the API key field"> | <img src="./docs/images/debug/export-result.jpeg" width="300" alt="Settings after an export, reporting the file name cogit-export-20261105-2303.md, 1703 characters across 13 records, plus a share action"> |
 
 ## Quick Install
 
 ### Requirements
 
-- DevEco Studio with the HarmonyOS SDK installed. The project targets `targetSdkVersion` 26.0.0 and is compatible with 6.1.1 (API 24).
+- DevEco Studio with the HarmonyOS SDK that contains API 26 (`targetSdkVersion` 26.0.0); the app runs from 6.1.1 (API 24) upward.
 - A HarmonyOS phone emulator or a phone. `deviceTypes` declares `phone` only.
-- Node.js, only if you want the local mock server.
+- Node.js only if you want the local mock server. The hvigor command below uses the Node.js bundled with DevEco Studio.
 
 ### Get the code
 
@@ -190,7 +187,7 @@ A mirror is served from `git@gitee.com:theangelnextdoor/cogit-lucid-workbench.gi
 
 ### Install dependencies
 
-Open the project in DevEco Studio and let Sync finish. The only runtime dependency is `@ohos/mpchart` 3.1.0-rc.0, declared in `oh-package.json5`.
+Open the project in DevEco Studio and let Sync finish. The runtime dependency is `@ohos/mpchart` 3.1.0-rc.0; `@ohos/hypium` and `@ohos/hamock` are dev-only for tests. All three are declared in `oh-package.json5`.
 
 A command line build is possible from the project root:
 
@@ -198,73 +195,86 @@ A command line build is possible from the project root:
 node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p product=default --no-daemon
 ```
 
-`DEVECO_SDK_HOME`, `NODE_HOME`, and `JAVA_HOME` need to point at the DevEco toolchain first. The tracked profile has no signing config; without a local signing file the output is an unsigned HAP.
+Point `DEVECO_SDK_HOME`, `NODE_HOME`, and `JAVA_HOME` at the DevEco toolchain first. Artifacts land in `entry/build/default/outputs/default/`. The tracked profile has no signing config, so a build without a local signing file produces `entry-default-unsigned.hap`.
 
 ## Quick Start
 
 1. Open the project in DevEco Studio and wait for Sync to finish.
 2. Start a phone emulator or connect a phone.
-3. Select the `entry` module and run.
-4. On the dashboard, open notes (`速记`), write one line, and save.
-5. The note appears under recent notes, and the dashboard counters move off zero.
+3. Select the `entry` module and run. DevEco signs with the debug certificate when automatic signing is on; otherwise add `signing/signing.local.json` first (see Signing).
+4. Tap `＋ 速记` in the bottom right, write one line, and save. The `速记` tile in the module grid opens the same editor; it just sits below the fold.
+5. The note appears under recent notes, and the counters move off zero.
 6. Tap `数据看板`, then pick a month chip, to confirm the remote payload loads and the charts switch to that month.
 
-Expected result: the dashboard reports one note today and one in total, the weekly settlement card starts counting it, and the analytics page shows a remote timestamp with ten charts.
+Expected result: one note today and one in total, the weekly settlement card starts counting it, and the analytics page shows a remote timestamp with ten charts. If the request fails, the page keeps the error message and a retry action.
+
+The DevEco Previewer can render the pages, but it has no `relationalStore`; record pages show demo content and empty counters there. Use an emulator or a phone to see real data.
 
 ## Configuration
 
-### Local mock server
+### Mock server and endpoint routing
 
-The review prompt panel talks to a zero-dependency Node server in `mock-server/`.
+The review prompt panel and the local mock completion mode both talk to the zero-dependency Node server in `mock-server/`.
 
 ```bash
 node mock-server/server.js
 ```
 
-It listens on `0.0.0.0:4523`; set `PORT` to change the port.
+It listens on `0.0.0.0:4523`. Change the port through the environment: `PORT=8080 node mock-server/server.js`.
 
 | Method | Path | Response |
 |---|---|---|
 | GET | `/health` | `{ "status": "ok" }` |
-| GET | `/review-prompts?period=week` | `{ "prompts": [...] }` |
-| GET | `/review-prompts?period=month` | `{ "prompts": [...] }` |
-| POST | `/llm/complete` | Mock completion used by the local mock client |
-| POST | `/v1/chat/completions` | OpenAI-compatible `choices[0].message.content` |
+| GET | `/review-prompts?period=week` | `{ "prompts": [...] }`; `period=month` returns monthly prompts |
+| POST | `/llm/complete` | Mock completion used by the local mock mode |
+| POST | `/v1/chat/completions` | OpenAI-compatible; the app reads `choices[0].message.content` |
+
+Request URLs come from three places:
+
+- Review prompts: read the base URL in settings, drop a trailing `/v1`, and the rest is the mock root. With untouched settings that is `http://localhost:4523`.
+- Local mock: always `http://localhost:4523/llm/complete`, fixed in `network/ApiConfig.ts`. Settings do not affect this mode.
+- Model mode: the base URL is used as it stands, and the client appends `/chat/completions`.
+
+| Environment | Reaches `localhost:4523` | What to do |
+|---|---|---|
+| DevEco Previewer | Yes | The default URL works |
+| Emulator | No, `127.0.0.1` is the emulator itself | `hdc rport tcp:4523 tcp:4523`, which carries both prompts and local mock; pointing the base URL at the host works too |
+| Phone | No | Prompts follow the host address in settings and fall back to three local ones when none is set; the local mock address is fixed and cannot work here, so use model mode for testing |
+
+Worth knowing:
+
+- Cleartext HTTP is off by default. `entry/src/main/resources/base/profile/network_config.json` allows `127.0.0.1` and `localhost` only. A phone reaching the mock server over HTTP needs its host address added there; keep that line out of commits.
+- Timeouts differ per call: 5 seconds for prompts, 8 for the local mock completion, 20 for model mode.
+- `hdc rport` lasts for the current connection; run it again after an emulator restart.
 
 ### Remote analytics data
 
-The dashboard reads static JSON from `docs/mock/` in the public repository. No key is involved, and the page labels the payload as example data. It does not read the local database; these files are the only source for its charts.
+The dashboard does not read the local database. Its charts have one source: the static JSON in `docs/mock/` of the public repository. No key is involved, and the page labels the payload as example data.
 
 | File | Content |
 |---|---|
-| `stats-12m.json` | Twelve months of monthly points, plus one detail block per month: calibration, outcomes, confidence, horizon, readings, coverage, sleep buckets, interactions, and activity cells |
+| `stats-12m.json` | Twelve monthly points, plus one detail block per month: calibration, outcomes, confidence, horizon, readings, coverage, sleep buckets, interactions, and activity cells |
 
 Base URLs:
 
 - Gitee: `https://gitee.com/theangelnextdoor/cogit-lucid-workbench/raw/main/docs/mock/`
 - GitHub: `https://raw.githubusercontent.com/SunshineMahiru/cogit-lucid-workbench/main/docs/mock/`
 
-`RemoteStatsRepository` requests `stats-12m.json` from Gitee first and GitHub second, adding a cache-busting `t` parameter. If both fail, the page shows the error and a retry action. Switching months filters the monthly detail already loaded; it does not issue a new request.
-
-### Pointing the app at the server
-
-- DevEco previewer: `http://127.0.0.1:4523` works as is.
-- Emulator: `127.0.0.1` resolves to the emulator itself. Forward the port with `hdc rport tcp:4523 tcp:4523`, or point the model base URL in settings at the host address.
-- Real device: localhost is not treated as a valid host. Set the model base URL to your host's address; otherwise the app shows local fallback prompts.
-- Cleartext HTTP stays off by default; only `127.0.0.1` and `localhost` are allowlisted in `entry/src/main/resources/base/profile/network_config.json`. Add your own host there locally when a real device has to reach the mock server over HTTP, and keep that edit out of commits. The client timeout is 5 seconds.
+`RemoteStatsRepository` tries Gitee first and GitHub second, adding a cache-busting `t` parameter. If both fail, the page keeps the error text and a retry action. Switching months filters the monthly detail already loaded; it does not issue a new request.
 
 ### Backgrounds and page opacity
 
 | Item | Detail |
 |---|---|
-| Entry point | Settings → `页面背景` → `更换页面背景` |
-| Sources | Gallery, camera, or the document picker limited to picture suffixes. Every source is normalised to PNG and capped at 1080×1920 before it is stored. |
-| Scope | One default picture covers every page without a picture of its own; a module that has its own picture overrides it, and clearing that picture returns the module to the default. |
-| Ranges | Picture strength 4%-30% (default 10%); page transparency 0%-60% (default 0%). |
-| Storage | `${filesDir}/page-backgrounds`, named by content hash so an identical picture is stored once; files no module points at are removed at startup. |
-| Dark mode | Picture strength is multiplied by 0.7 and a black scrim is added, so the picture does not glow against a dark surface. |
+| Entry point | Settings → `页面背景` → `打开页面背景` |
+| Sources | Gallery, camera, or the document picker limited to picture suffixes. Every source is converted to PNG and capped at 1080×1920 |
+| Scope | Pick a picture, then tick the target pages: one module alone, or several at once. Pages without a picture of their own use the default one, and clearing a module returns it to that default |
+| Strength | 4%-30%, default 10%. A higher value makes the picture more visible and the body text less comfortable to read |
+| Opacity | 0%-60%, default 0%. With pages ticked the change applies to those modules; with nothing ticked it changes the global value |
+| Storage | `${filesDir}/page-backgrounds`, named by content hash so an identical picture is stored once; files no page points at are removed at startup |
+| Dark mode | Strength is multiplied by 0.7 and a black scrim is added, so the picture does not glow against a dark surface |
 
-The transparency slider needs no picture: it lowers the alpha of the page surface itself. The window is created with a clear background colour, so a transparent page reveals what sits behind the window.
+Opacity needs no picture: it lowers the alpha of the page surface itself. The window is created with a clear background colour, so a transparent page reveals what sits behind the window. After a module has its own value, `恢复跟随` hands it back to the global one.
 
 ### Home identity
 
@@ -280,11 +290,15 @@ The transparency slider needs no picture: it lowers the alpha of the page surfac
 
 | Mode | What it calls | Notes |
 |---|---|---|
-| Template | Nothing | Default. Works offline. |
-| Local mock | `POST /llm/complete` | No key required. |
-| Model | OpenAI-compatible `/v1/chat/completions` | Needs base URL, model name, and API key. The key is stored on device and never exported. |
+| Template | Nothing | Default. Works offline |
+| Local mock | `http://localhost:4523/llm/complete` | No key required. The address is fixed, so this mode cannot reach a host from a phone; use model mode there |
+| Model | `{base URL}/chat/completions` | Needs a base URL, a model name, and an API key |
 
-A monthly budget caps paid calls. Budget 0 disables them; cost is estimated from character counts and recorded in a monthly ledger; an exhausted budget or a failed request falls back to template mode.
+Defaults: base URL `http://localhost:4523/v1`, monthly budget 30 yuan, capped at 500. The model picker offers `GLM-4.7-Flash` and `DeepSeek V4-Flash`, the former by default.
+
+The API key goes into the system asset store, and the Preferences entry stays empty. If the asset store cannot be written, saving fails instead of falling back to plaintext. The key never enters an export.
+
+Budget 0 leaves template mode as the only option: local mock and model mode both skip the request and fall back. Cost is estimated from character counts and recorded in a monthly ledger. An exhausted budget or a failed request falls back the same way.
 
 ### Security levels
 
@@ -294,62 +308,101 @@ A monthly budget caps paid calls. Budget 0 disables them; cost is estimated from
 | `local_only` | Yes | No | Yes |
 | `sealed` | No | No | No |
 
-A level is set on each record. The default in settings only applies to records created after you change it.
+A level is chosen per record. The default in settings applies to records created after the change; it does not rewrite what already exists.
 
 ### Signing
 
-The tracked `build-profile.json5` intentionally keeps `signingConfigs` empty. At build time, `hvigorfile.ts` reads `signing/signing.local.json` when it exists and injects the `default` signing config. The local file and the `.p12`, `.cer`, and `.p7b` material are ignored, so a fresh clone builds an unsigned HAP.
+The tracked `build-profile.json5` keeps `signingConfigs` empty on purpose. At build time, `hvigorfile.ts` looks for `signing/signing.local.json` and injects the `default` signing config when the file is there. That file, along with `*.p12`, `*.cer`, and `*.p7b`, sits in the ignore list, so a fresh clone builds an unsigned HAP.
 
 To sign locally:
 
 1. Copy `docs/signing.local.example.json` to `signing/signing.local.json`.
-2. Fill in the certificate, profile, keystore paths and the DevEco-encrypted `keyPassword` / `storePassword` values. The documented fields are ciphertext; do not replace them with plaintext unless the local hvigor version accepts it.
+2. Fill in the certificate, profile, and keystore paths, plus the DevEco-encrypted `keyPassword` / `storePassword` values. Those two are ciphertext in the documented format; keep them that way unless the local hvigor version happens to accept plaintext.
 3. Build again and check for `entry-default-signed.hap` under `entry/build/default/outputs/default/`.
 
 ### Export
 
-Settings writes a single Markdown file covering events, decisions, relations, predictions, anchors, status readings, review results, and plans. The file stays in the app sandbox, so copying it out is a manual step. Sealed records are dropped, and a plan link that points at a sealed record prints `已封存记录` instead of the record title.
+Settings writes one Markdown file covering events, decisions, relations, predictions, anchors, status readings, review results, and plans, named like `cogit-export-20261027-0845.md`. `导出并另存为` opens the system save dialog and copies the file to the folder you pick; cancel it and the file stays in `${filesDir}/exports`, where `分享` can still send it out.
+
+Sealed records are dropped. A plan link that points at a sealed record prints `已封存记录` in place of a title. A plan with an end date gets an extra `结束：` line.
+
+### Backup and restore
+
+| Item | Detail |
+|---|---|
+| Entry | Settings → `数据管理` → `备份并另存` / `恢复备份` |
+| What a backup is | A `cogit-backup-<timestamp>.cogitbackup` file: JSON carrying a database snapshot, the identity and avatar, settings, and every page background with its opacity |
+| Saving it | A system save dialog opens straight away; pick a folder. Cancel it and the app reports `已生成备份，但未另存` |
+| Restore order | Version and database are validated, the current database is copied to `pre-restore-*.db`, then database, identity, settings and backgrounds come back, and the home page refreshes |
+| Left out | The API key. The field is emptied before packing and the restore writes non-secret options only, so enter it again on the new phone |
+
+The same card holds `清空全部数据`: the first tap turns it into `确认清空`, and the second one deletes. It wipes every row in the twelve tables, settings, identity, background pictures, the exported and backup files inside the sandbox, and the API key; files already saved elsewhere on the phone are left alone.
 
 ## Project Layout
 
 ```text
 cogit-lucid-workbench/
-├── AppScope/                     bundle name, version, launcher icon
-├── entry/                        the only module
+├── AppScope/                       bundle name, version, launcher icon
+├── entry/                          the only module
 │   ├── src/main/
-│       ├── ets/
-│       │   ├── entryability/     ability entry
-│       │   ├── pages/            34 page files over 32 route names
-│       │   ├── views/            dashboard composition
-│       │   ├── components/       33 reusable pieces
-│       │   │   └── charts/       line, bar, pie wrappers and Canvas heatmaps
-│       │   ├── navigation/       route names and parameter types
-│       │   ├── model/            entity types, enums, factories, demo data
-│       │   ├── data/             dashboard aggregate and cross-entity reads
-│       │   ├── profile/          identity store and avatar pipeline
-│       │   ├── note/ prediction/ review/ anchor/ relation/ status/ plan/
-│       │   ├── analysis/         rules, analyzers, LLM adapters
-│       │   ├── db/               schema, helpers, eight DAOs, tolerant JSON readers
-│       │   ├── settings/         Preferences keys, asset-backed key, budget ledger
-│       │   ├── export/           Markdown sections and file writer
-│       │   ├── network/          prompt and stats repositories, HTTP, LLM clients
-│       │   └── theme/            design tokens, app identity
-│       └── resources/            strings, colours, icons, network config
-│   ├── src/test/                 Hypium unit tests
-│   └── src/ohosTest/             device tests, including the analytics UiTest flow
-├── mock-server/                  zero-dependency Node mock server
-├── signing/                      local-only signing config and material (ignored)
-├── docs/                         UI freeze record, debug screenshots, signing template
-├── build-profile.json5           SDK versions, product, build modes
-├── oh-package.json5              dependencies
-└── LICENSE                       AGPL-3.0
+│   │   ├── ets/
+│   │   │   ├── entryability/       app entry, opens the database
+│   │   │   ├── pages/              34 page files; Index.ets holds the route table
+│   │   │   ├── views/              composed home views
+│   │   │   ├── components/         33 reusable pieces
+│   │   │   │   └── charts/         line, bar, pie wrappers, Canvas heatmap
+│   │   │   ├── navigation/         route names, parameter types, transition hooks
+│   │   │   ├── model/              entity types, enums, factories, demo data
+│   │   │   ├── data/               home aggregation and cross-entity reads
+│   │   │   ├── app/                database health, home and identity refresh buses
+│   │   │   ├── preview/            demo data for the previewer
+│   │   │   ├── profile/            identity store and avatar pipeline
+│   │   │   ├── note/               quick notes, templates, drafts, checks
+│   │   │   ├── prediction/         predictions and settlement
+│   │   │   ├── review/             review flow and the agent
+│   │   │   ├── anchor/             value anchors
+│   │   │   ├── relation/           people and relations
+│   │   │   ├── status/             status readings
+│   │   │   ├── plan/               goals, week nodes, chart inputs
+│   │   │   ├── analysis/           rules, analyzers, LLM adapters
+│   │   │   ├── db/                 12 table statements, 8 DAOs, tolerant JSON
+│   │   │   ├── settings/           options, backgrounds, asset-store key, budget ledger
+│   │   │   ├── export/             Markdown sections and the file writer
+│   │   │   ├── network/            prompt and stats repositories, HTTP, LLM clients
+│   │   │   └── theme/              design tokens, app identity
+│   │   └── resources/              base and dark resource sets, network config
+│   ├── src/test/                   Hypium unit tests
+│   └── src/ohosTest/               device tests, including the analytics UiTest flow
+├── mock-server/                    zero-dependency Node mock server
+├── hvigor/                         builder config
+├── signing/                        local signing config and material (ignored)
+├── docs/                           project notes, UI freeze record, screenshots, dashboard JSON, signing template
+├── build-profile.json5             SDK versions, product, build modes
+├── hvigorfile.ts                   build script that injects local signing
+├── oh-package.json5                dependencies
+├── code-linter.json5               static check rules
+└── LICENSE                         AGPL-3.0
 ```
+
+A new page touches three places: add the name in `navigation/Routes.ts`, drop the page file into `pages/`, and wire it into `pageMap` in `pages/Index.ets`.
 
 ## Tests
 
-`hvigorw test` runs the local Hypium unit tests in `entry/src/test`.
+Cases live in two places: `entry/src/test` holds local unit tests that run on the computer, and `entry/src/ohosTest` holds a device suite that needs an emulator or a phone.
 
-The device suite in `entry/src/ohosTest` has seven cases: four analysis rules in `Analysis.test.ets` and three analytics flow cases in `UiFlow.test.ets`. The flow covers opening the dashboard from the home page, switching month, and returning to the home page. Install both HAPs on the emulator, then run:
+| Suite | File | Cases | Covers |
+|---|---|---|---|
+| Local unit | `src/test/List.test.ets` | 4 | Two prediction form checks, confidence calibration bands, the export level filter |
+| Device · analysis | `src/ohosTest/ets/test/Analysis.test.ets` | 4 | The same four as above, run again on the device |
+| Device · flow | `src/ohosTest/ets/test/UiFlow.test.ets` | 3 | Open the dashboard, switch month, return home |
+
+Local unit tests:
+
+```bash
+node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" test -p module=entry --no-daemon
+```
+
+The device suite needs both HAPs installed before `aa test` can take over:
 
 ```bash
 node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p module=entry@ohosTest -p product=default --no-daemon
@@ -358,62 +411,78 @@ hdc install -r entry/build/default/outputs/ohosTest/entry-ohosTest-signed.hap
 hdc shell aa test -b com.sunshinemahiru.cogitlucid -m entry_test -s unittest OpenHarmonyTestRunner -w 10000
 ```
 
-Expected result: `Tests run: 7, Failure: 0, Error: 0, Pass: 7`.
+Expected output: `Tests run: 7, Failure: 0, Error: 0, Pass: 7`.
+
+Two things that trip people up: `hvigorw test` runs on Windows and macOS only, not on Linux; and `aa test` defaults to a 5 second timeout, which the flow cases outrun, so `-w 10000` raises it to ten.
 
 ## Documentation
 
 | Topic | What it covers | Link |
 |---|---|---|
-| Visual tokens | Locked colour, type, radius, and spacing tokens, plus the per-page visual checklist and known deviations | [docs/UI_FREEZE.md](./docs/UI_FREEZE.md) |
-| Local signing template | Placeholder signing config for `signing/signing.local.json` | [docs/signing.local.example.json](./docs/signing.local.example.json) |
+| Project blueprint | Positioning, scope, the two deliverables, and the reasoning behind each stage | [docs/PROJECT.md](./docs/PROJECT.md) |
+| Visual tokens | Locked colour, type, radius, and spacing tokens, plus the per-page checklist and known deviations | [docs/UI_FREEZE.md](./docs/UI_FREEZE.md) |
 | Mock server | Endpoints, addressing, and the previewer versus emulator note | [mock-server/README.md](./mock-server/README.md) |
+| Signing template | Placeholder config for `signing/signing.local.json` | [docs/signing.local.example.json](./docs/signing.local.example.json) |
 
 ## FAQ
 
-**The previewer shows an empty dashboard or a database error.**
-The DevEco previewer does not provide `relationalStore`. When the store cannot be opened, the home page reads the in-memory preview store and marks the counters as demo data; other data-backed pages use their own fallback. Run on an emulator or a phone to see real records.
+**Where do records live, and do they leave the device?**
+All twelve tables sit in the local `relationalStore`, encrypted as a whole with a key the system manages. Template mode never touches the network. Once model mode is on, only `analyzable` text reaches the base URL you entered. `sealed` records enter neither the model context nor an export.
 
-**The analytics dashboard shows example data.**
-The dashboard reads `docs/mock/stats-12m.json` from the public repository, trying Gitee first and GitHub second. The values are synthetic and labelled as example data in the header. Each month has its own detail block; edit the file to change what the charts show.
+**How do I move records to a new phone?**
+Settings → `数据管理` → `备份并另存` produces a `.cogitbackup` file carrying a database snapshot, the identity, settings, and background pictures. Install the app on the new phone and pick `恢复备份`; a `pre-restore-*.db` copy is kept before anything is overwritten. The API key does not travel with the backup, so enter it again.
+
+**Where does the exported Markdown go?**
+`导出并另存为` opens the system save dialog, and the file lands in whatever folder you pick. Cancel the dialog and it stays in `${filesDir}/exports`, where `分享` can still send it out.
+
+**The previewer shows an empty home page or a database error.**
+The DevEco previewer does not provide `relationalStore`. When the store cannot be opened, the home page reads the in-memory preview data and marks the counters as demo values; other data-backed pages have their own fallbacks. Use an emulator or a phone to see real records.
+
+**The dashboard shows example data.**
+It reads `docs/mock/stats-12m.json` from the public repository, Gitee first and GitHub second, and the header labels the payload as example data. Edit that file to change what the charts show.
 
 **The emulator cannot reach the mock server.**
-`127.0.0.1` inside the emulator is the emulator itself. Run `hdc rport tcp:4523 tcp:4523` before launching, or open settings and point the model base URL at the host address.
+`127.0.0.1` inside the emulator is the emulator itself. Run `hdc rport tcp:4523 tcp:4523` to forward the port; on a phone, put the host address into the base URL in settings instead.
 
 **The built HAP will not install.**
-Without a local signing file, `assembleHap` produces `entry-default-unsigned.hap`. Add `signing/signing.local.json` using `docs/signing.local.example.json`, or configure signing in DevEco Studio, then rebuild. The tracked `build-profile.json5` deliberately has no signing config.
+Without a local signing file, `assembleHap` produces `entry-default-unsigned.hap`, which the device refuses. Create `signing/signing.local.json` from `docs/signing.local.example.json`, or configure signing in DevEco Studio, then rebuild. The tracked `build-profile.json5` carries no signing config on purpose.
 
-**The launcher name does not match the title inside the app.**
-The launcher label `cogit-lucid-workbench` comes from `AppScope/resources/base/element/string.json`; the in-app title `Cogit Lucid` comes from `theme/AppIdentity.ts`. The Chinese name is not finalised, so both are placeholders.
+**The launcher name and the in-app title disagree.**
+The launcher label `cogit-lucid-workbench` comes from `AppScope/resources/base/element/string.json`; the in-app title `Cogit Lucid` comes from `theme/AppIdentity.ts`. The Chinese name is not settled, so both are placeholders.
 
-**Where did the refresh button go?**
-It moved into settings, under `数据管理` → `刷新首页数据`. The identity band keeps only `编辑` and `设置`.
-
-**Why do the screenshots differ from the running app?**
-They were taken before the identity band existed. The band now sits above the content in every screenshot; the rest of the layout is unchanged.
-
-**Why is there only one dependency?**
-Charts are drawn on native canvas through `@ohos/mpchart`. No web view and no third-party icon pack are used, which keeps the HAP small and avoids asset licensing.
-
-**The camera option closes with an error.**
+**The camera option fails right away.**
 The system camera picker needs a camera application on the device. Emulators usually ship without one, so use the gallery or the file picker there.
 
-**A transparent page shows the system wallpaper, not another app.**
-The window is created with a clear background colour, so lowering page transparency reveals whatever sits behind the window. No content from another application is read.
+**A transparent page shows the wallpaper underneath.**
+The window is created with a clear background colour, so lowering page opacity reveals whatever sits behind the window. Nothing is read from another application.
 
 **Is dark mode supported?**
-Yes. `theme/AppTheme.ts` carries both palettes; the app reads the system colour mode at launch and re-applies it when the system setting changes. Background pictures are dimmed and covered with a black scrim in dark mode.
+Yes. `theme/AppTheme.ts` carries a light and a dark palette; the app reads the system mode at launch and re-applies it when the system setting changes. Background pictures are dimmed and covered with a black scrim in dark mode.
+
+**Why only one runtime dependency?**
+Charts are drawn on native canvas through `@ohos/mpchart`. No web view and no third-party icon pack, which keeps the HAP small and avoids asset licensing.
 
 ## Contributing
 
+For anything beyond a small fix, open an issue first so the direction is agreed before the work happens. Small patches can go straight to a pull request.
+
 - Commit messages follow Conventional Commits: an English subject in `type(scope): subject` form with a body explaining the reason.
 - One logical change per commit. A larger feature is split into steps that can each be verified on their own.
-- Code comments are English only.
-- Before opening a pull request, run the Code Linter ruleset in `code-linter.json5` and confirm the project still builds.
-- Keep signing material, install packages, and reports out of commits; `.gitignore` already covers them.
-- Describe the motivation and the way you verified the change in the pull request.
+- Comments are in English; interface copy is in Chinese, matching the existing pages.
+- No third-party UI kit — components live in `components/` and are written here.
+- A new page touches three places: the name in `navigation/Routes.ts`, the file in `pages/`, and `pageMap` in `pages/Index.ets`.
+- Do not commit real records, screenshots showing a real name or avatar, or `.cogitbackup` files. Demo content belongs in the sample data under `model/`.
+- Signing material, HAPs and logs stay out of commits; `.gitignore` already covers them.
+- Before a pull request, run the rules in `code-linter.json5`, run `assembleHap`, run both suites from the Tests section, and say in the pull request how you verified the change.
+
+`main` is the only development branch and Gitee is a mirror. Send pull requests to GitHub; the maintainer syncs them across after merging.
 
 ## License
 
 Released under the [GNU Affero General Public License v3.0](./LICENSE).
 
+AGPL adds one obligation on top of GPL: if a modified version is offered to users over a network, its source has to be made available to them too. Running it locally does not trigger that.
+
 Copyright (c) 2026 SunshineMahiru (曦昼Sunshine).
+
+The only runtime dependency is `@ohos/mpchart`, licensed under Apache License 2.0, whose text ships with the package. `@ohos/hypium` and `@ohos/hamock` are test-only and stay in `devDependencies`.
