@@ -14,6 +14,9 @@ export function renderPlanSection(plans: PlanExport[]): string {
     lines.push(`### 目标：${entry.plan.title}`, '');
     lines.push(`- 状态：${entry.plan.status}`);
     lines.push(`- 起始：${entry.plan.startDate}`);
+    if (entry.plan.targetDate !== undefined && entry.plan.targetDate.length > 0) {
+      lines.push(`- 结束：${entry.plan.targetDate}`);
+    }
     if (entry.plan.goal.length > 0) {
       lines.push(`- 说明：${entry.plan.goal}`);
     }
