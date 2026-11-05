@@ -394,7 +394,7 @@ export struct PlanNodePage {
                           this.assignProject(project.id);
                         })
                     }, (project: PlanProject) =>
-                      `${project.id}_${this.selectedProjectId === project.id ? 1 : 0}`)
+                      `${project.id}_${project.name}_${this.selectedProjectId === project.id ? 1 : 0}`)
                   }
                 }
                 .scrollable(ScrollDirection.Horizontal)
@@ -462,7 +462,7 @@ export struct PlanNodePage {
                     .onClick(() => {
                       this.openLinkedRecord(link);
                     })
-                }, (link: PlanLink) => link.id)
+                }, (link: PlanLink) => `${link.id}_${link.label}`)
               }
             }
             .width('100%')

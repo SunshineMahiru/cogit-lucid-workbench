@@ -23,6 +23,7 @@ export struct StatusPage {
   @Local isLoading: boolean = true;
   @Local isSeeding: boolean = false;
   @Local isPreview: boolean = false;
+  @Local listVersion: number = 0;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -39,6 +40,7 @@ export struct StatusPage {
     try {
       this.service = await StatusService.open(hostContext);
       this.overview = await this.service.overview();
+      this.listVersion += 1;
       this.isLoading = false;
     } catch (error) {
       this.loadPreview();
@@ -49,12 +51,14 @@ export struct StatusPage {
   private loadPreview(): void {
     this.isPreview = true;
     this.overview = PREVIEW_STATUS_OVERVIEW;
+    this.listVersion += 1;
     this.isLoading = false;
   }
 
   private async refresh(): Promise<void> {
     if (this.isPreview) {
       this.overview = PREVIEW_STATUS_OVERVIEW;
+      this.listVersion += 1;
       this.isLoading = false;
       return;
     }
@@ -64,6 +68,7 @@ export struct StatusPage {
     this.isLoading = true;
     try {
       this.overview = await this.service.overview();
+      this.listVersion += 1;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '状态数据加载失败' });
     } finally {
@@ -296,7 +301,7 @@ export struct StatusPage {
 
                   ForEach(this.overview.recent.slice(0, 3), (row: StatusRow) => {
                     StatusDayRow({ row: row, compact: true })
-                  }, (row: StatusRow) => row.id)
+                  }, (row: StatusRow) => `${row.id}_${this.listVersion}`)
                 }
                 .width('100%')
               }

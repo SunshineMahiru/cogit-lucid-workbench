@@ -413,7 +413,7 @@ export struct ReviewForm {
                   .onClick(() => {
                     this.toggleAnchor(anchor.id);
                   })
-                }, (anchor: Anchor) => anchor.id)
+                }, (anchor: Anchor) => `${anchor.id}_${this.isAnchorSelected(anchor.id) ? 1 : 0}`)
               }
               .width('100%')
               .padding(14)

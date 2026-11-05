@@ -442,7 +442,7 @@ export struct PlanDetailPage {
                   .padding({ left: 8, right: 4, top: 4, bottom: 4 })
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .borderRadius(8)
-                }, (project: PlanProject) => project.id)
+                }, (project: PlanProject) => `${project.id}_${project.name}`)
               }
               Row({ space: 8 }) {
                 TextInput({

@@ -37,7 +37,7 @@ export struct NoteTemplatePicker {
         this.chip('自由', null)
         ForEach(NOTE_TEMPLATES, (template: NoteTemplate) => {
           this.chip(template.label, template.id)
-        }, (template: NoteTemplate) => template.id)
+        }, (template: NoteTemplate) => `${template.id}_${this.activeId === template.id ? 1 : 0}`)
       }
     }
     .scrollable(ScrollDirection.Horizontal)

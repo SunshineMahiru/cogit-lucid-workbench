@@ -397,7 +397,8 @@ export struct SettingsPage {
                     Flex({ wrap: FlexWrap.Wrap }) {
                       ForEach(MODEL_OPTIONS, (option: ModelOption) => {
                         this.modelChip(option)
-                      }, (option: ModelOption) => option.id)
+                      }, (option: ModelOption) =>
+                        `${option.id}_${this.settings.llmModel === option.id ? 1 : 0}`)
                     }
                     .width('100%')
 

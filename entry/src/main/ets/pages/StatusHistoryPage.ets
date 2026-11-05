@@ -17,6 +17,7 @@ export struct StatusHistoryPage {
   @Local isPreview: boolean = false;
   @Local undoId: string = '';
   @Local undoDate: string = '';
+  @Local listVersion: number = 0;
   private hasShownOnce: boolean = false;
 
   aboutToAppear(): void {
@@ -32,6 +33,7 @@ export struct StatusHistoryPage {
     try {
       this.service = await StatusService.open(hostContext);
       this.rows = await this.service.history();
+      this.listVersion += 1;
       this.isLoading = false;
     } catch (error) {
       this.loadPreview();
@@ -42,12 +44,14 @@ export struct StatusHistoryPage {
   private loadPreview(): void {
     this.isPreview = true;
     this.rows = PREVIEW_STATUS_ROWS.slice();
+    this.listVersion += 1;
     this.isLoading = false;
   }
 
   private async refresh(): Promise<void> {
     if (this.isPreview) {
       this.rows = PREVIEW_STATUS_ROWS.slice();
+      this.listVersion += 1;
       this.isLoading = false;
       return;
     }
@@ -57,6 +61,7 @@ export struct StatusHistoryPage {
     this.isLoading = true;
     try {
       this.rows = await this.service.history();
+      this.listVersion += 1;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '历史读数加载失败' });
     } finally {
@@ -207,7 +212,7 @@ export struct StatusHistoryPage {
                   }
                   .width('100%')
                 }
-              }, (row: StatusRow) => row.id)
+              }, (row: StatusRow) => `${row.id}_${this.listVersion}`)
             }
             .width('100%')
             .padding(AppTheme.spacing.page)

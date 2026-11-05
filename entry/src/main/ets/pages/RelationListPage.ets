@@ -20,6 +20,7 @@ export struct RelationListPage {
   @Local isSeeding: boolean = false;
   @Local isPreview: boolean = false;
   @Local showHelp: boolean = false;
+  @Local listVersion: number = 0;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -36,6 +37,7 @@ export struct RelationListPage {
     try {
       this.service = await RelationService.open(hostContext);
       this.items = await this.service.list(this.filter);
+      this.listVersion += 1;
       this.isLoading = false;
     } catch (error) {
       this.loadPreview();
@@ -47,6 +49,7 @@ export struct RelationListPage {
     this.isPreview = true;
     this.items = this.filter === null ? PREVIEW_RELATION_ITEMS.slice() :
       PREVIEW_RELATION_ITEMS.filter((item: RelationListItem) => item.trustLevel === this.filter);
+    this.listVersion += 1;
     this.isLoading = false;
   }
 
@@ -61,6 +64,7 @@ export struct RelationListPage {
     this.isLoading = true;
     try {
       this.items = await this.service.list(this.filter);
+      this.listVersion += 1;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '关系数据加载失败' });
     } finally {
@@ -294,7 +298,7 @@ export struct RelationListPage {
                     this.openDetail(item.id);
                   }
                 })
-              }, (item: RelationListItem) => item.id)
+              }, (item: RelationListItem) => `${item.id}_${this.listVersion}`)
             }
             .width('100%')
           }

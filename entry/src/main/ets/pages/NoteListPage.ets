@@ -20,6 +20,7 @@ export struct NoteListPage {
   @Local isLoadingMore: boolean = false;
   @Local hasMore: boolean = false;
   @Local isPreview: boolean = false;
+  @Local listVersion: number = 0;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -45,12 +46,14 @@ export struct NoteListPage {
   private loadPreview(): void {
     this.isPreview = true;
     this.items = previewStore.listNotes(this.filter);
+    this.listVersion += 1;
     this.isLoading = false;
   }
 
   async refresh(): Promise<void> {
     if (this.isPreview) {
       this.items = previewStore.listNotes(this.filter);
+      this.listVersion += 1;
       this.isLoading = false;
       return;
     }
@@ -62,6 +65,7 @@ export struct NoteListPage {
       this.items = this.filter.length === 0 ?
         await this.service.listRecentPage(PAGE_SIZE, 0) :
         await this.service.listByTypePage(this.filter, PAGE_SIZE, 0);
+      this.listVersion += 1;
       this.hasMore = this.items.length >= PAGE_SIZE;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '加载失败，请重试' });
@@ -80,6 +84,7 @@ export struct NoteListPage {
         await this.service.listRecentPage(PAGE_SIZE, this.items.length) :
         await this.service.listByTypePage(this.filter, PAGE_SIZE, this.items.length);
       this.items = this.items.concat(next);
+      this.listVersion += 1;
       this.hasMore = next.length >= PAGE_SIZE;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '加载更多失败，请重试' });
@@ -242,7 +247,7 @@ export struct NoteListPage {
                     }
                   })
                 }
-              }, (item: NoteListItem) => item.id)
+              }, (item: NoteListItem) => `${item.id}_${this.listVersion}`)
               if (this.hasMore) {
                 ListItem() {
                   Text(this.isLoadingMore ? '加载中…' : '加载更多')

@@ -46,6 +46,7 @@ export struct DashboardView {
   @Local weekStats: ReviewStats = emptyReviewStats();
   private lastPushAt: number = 0;
   @Local weekReviewed: boolean = false;
+  @Local dataVersion: number = 0;
   @Local isLoading: boolean = true;
   @Local loadFailed: boolean = false;
   @Local isPreview: boolean = false;
@@ -98,6 +99,7 @@ export struct DashboardView {
     this.weekStats = previewStore.weekStats();
     this.weekReviewed = previewStore.weekReviewed();
     this.moduleItems = this.buildModules();
+    this.dataVersion += 1;
     this.isLoading = false;
     this.loadFailed = false;
   }
@@ -124,6 +126,7 @@ export struct DashboardView {
         this.weekReviewed = history.some((item) =>
           item.period === ReviewPeriod.WEEK && item.rangeLabel === this.weekStats.rangeLabel);
       }
+      this.dataVersion += 1;
       this.loadFailed = false;
     } catch (error) {
       this.loadFailed = true;
@@ -559,7 +562,7 @@ export struct DashboardView {
                           }
                         })
                       }
-                    }, (note: NoteListItem) => note.id)
+                    }, (note: NoteListItem) => `${note.id}_${this.dataVersion}`)
                   }
                   .width('100%')
                 }
@@ -599,7 +602,7 @@ export struct DashboardView {
                           }
                         })
                       }
-                    }, (item: PredictionItem) => item.id)
+                    }, (item: PredictionItem) => `${item.id}_${this.dataVersion}`)
                   }
                   .width('100%')
                 }
