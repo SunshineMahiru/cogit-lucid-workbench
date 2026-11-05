@@ -12,6 +12,7 @@ import { PlanNodeStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
 import { buildPlanReviewFacts, writePlanReviewDraft } from '../plan/PlanReviewDraft';
 import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
+import { NodeDays, NodeProgress, buildNodeProgress, nodeDays } from '../plan/PlanInsights';
 import { PlanLinkPickerParams, PlanNodeParams } from '../navigation/RouteParams';
 import {
   NoteDetailParams,
@@ -275,6 +276,21 @@ export struct PlanNodePage {
     return next === null ? '本周已结束' : '本周已结束，清单已写入周复盘草稿';
   }
 
+  private progressRow(): NodeProgress | null {
+    if (this.node === null) {
+      return null;
+    }
+    const rows = buildNodeProgress([this.node], this.items);
+    return rows.length > 0 ? rows[0] : null;
+  }
+
+  private remainingDays(): NodeDays {
+    if (this.node === null) {
+      return { left: 0, total: 7, percent: 0 };
+    }
+    return nodeDays(this.node.startDate, this.node.endDate, todayString());
+  }
+
   @Builder
   itemRow(item: PlanItem) {
     Row({ space: 8 }) {
@@ -400,6 +416,52 @@ export struct PlanNodePage {
                 .scrollable(ScrollDirection.Horizontal)
                 .scrollBar(BarState.Off)
                 .width('100%')
+              }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Column({ space: 8 }) {
+              Row() {
+                Text('本周剩余')
+                  .fontSize(12)
+                  .fontColor(AppTheme.color.textSecondary)
+                Blank()
+                Text(`${this.remainingDays().left} 天 / ${this.remainingDays().total} 天`)
+                  .fontSize(11)
+                  .fontColor(this.remainingDays().left <= 1 ? AppTheme.color.warning : AppTheme.color.text)
+              }
+              .width('100%')
+
+              Progress({ value: this.remainingDays().percent, total: 100, type: ProgressType.Linear })
+                .height(6)
+                .color(this.remainingDays().left <= 1 ? AppTheme.color.warning : AppTheme.color.primary)
+                .backgroundColor(AppTheme.color.track)
+
+              if (this.progressRow() !== null && this.progressRow()!.total > 0) {
+                DataPanel({
+                  values: [
+                    this.progressRow()!.done,
+                    this.progressRow()!.openCarried,
+                    this.progressRow()!.openNew
+                  ],
+                  max: this.progressRow()!.total,
+                  type: DataPanelType.Line
+                })
+                  .height(10)
+                  .width('100%')
+                  .valueColors([0xFF2F7D4F, 0xFFE0A85C, 0xFFB9C6D2])
+                Text(`完成 ${this.progressRow()!.done} · 延续 ${this.progressRow()!.openCarried} · 新加 ${this.progressRow()!.openNew}`)
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+              } else {
+                Text('清单为空，还没有可统计的完成度。')
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
               }
             }
             .width('100%')
@@ -560,4 +622,13 @@ export struct PlanNodePage {
       }
     })
   }
+}
+
+function todayString(): string {
+  const date = new Date();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const monthText = month < 10 ? `0${month}` : `${month}`;
+  const dayText = day < 10 ? `0${day}` : `${day}`;
+  return `${date.getFullYear()}-${monthText}-${dayText}`;
 }
