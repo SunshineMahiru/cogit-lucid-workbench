@@ -40,7 +40,7 @@ The current build covers notes, predictions and settlement, review and the agent
 | Analytics dashboard | Ten charts over a remote JSON payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. A month picker selects one of the twelve months; every chart reads that month's detail. The dashboard renders the remote example payload and does not read local records. |
 | Preview fallback | In the DevEco Previewer, where `relationalStore` is unavailable, the home page falls back to the in-memory preview store and marks the counters as demo data. |
 | Four-step review | Facts, interpretation, contradiction, action. The contradiction step can quote up to three anchors. |
-| Plan ladder | A goal, an optional project group, seven-day nodes, and a checklist. Only one goal is primary; closing a node carries unfinished items into the next week and writes a review draft. |
+| Plan ladder | A goal, an optional project group, seven-day nodes, and a checklist. Only one goal is primary; closing a node carries unfinished items into the next week and writes a review draft. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over rate line, and a link split by module. |
 | Two-way record links | A plan node picks records from any of the six modules, and every record detail page can attach itself to a plan node. |
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
