@@ -14,6 +14,25 @@ export const DB_TABLES = {
   PLAN_LINK: 'plan_link'
 } as const;
 
+/**
+ * Every table, children before parents, for operations that wipe the store.
+ * Keep this list in sync with DB_TABLES; the fixture in `.test/check.js` asserts it.
+ */
+export const DB_TABLES_CHILD_FIRST: string[] = [
+  DB_TABLES.PLAN_LINK,
+  DB_TABLES.PLAN_ITEM,
+  DB_TABLES.PLAN_NODE,
+  DB_TABLES.PLAN_PROJECT,
+  DB_TABLES.PLAN,
+  DB_TABLES.EVENT,
+  DB_TABLES.DECISION,
+  DB_TABLES.RELATION,
+  DB_TABLES.PREDICTION,
+  DB_TABLES.ANCHOR,
+  DB_TABLES.STATUS_RECORD,
+  DB_TABLES.REVIEW_RESULT
+];
+
 /** Column names for the event table. */
 export const EVENT_COLS = {
   ID: 'id',

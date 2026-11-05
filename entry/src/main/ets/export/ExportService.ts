@@ -1,6 +1,7 @@
 import { relationalStore } from '@kit.ArkData';
 import { common, Want } from '@kit.AbilityKit';
-import { fileIo, fileUri, picker } from '@kit.CoreFileKit';
+import { fileUri, picker } from '@kit.CoreFileKit';
+import { copyBetween } from '../app/DocumentTransfer';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
@@ -79,7 +80,7 @@ export class ExportService {
     if (uris.length === 0) {
       return false;
     }
-    await fileIo.copyFile(result.filePath, uris[0]);
+    await copyBetween(result.filePath, uris[0]);
     return true;
   }
 

@@ -3,7 +3,8 @@ import { fileIo, picker } from '@kit.CoreFileKit';
 import { preferences } from '@kit.ArkData';
 import { util } from '@kit.ArkTS';
 import { DbHelper } from '../db/DbHelper';
-import { DB_TABLES } from '../db/DbConstants';
+import { DB_TABLES_CHILD_FIRST } from '../db/DbConstants';
+import { copyBetween } from '../app/DocumentTransfer';
 import { SETTINGS_STORE_NAME } from './SettingsKeys';
 import { SecretStore } from './SecretStore';
 import { SettingsStore } from './SettingsStore';
@@ -67,7 +68,7 @@ export class BackupService {
       if (uris.length === 0) {
         return '';
       }
-      await fileIo.copyFile(bundlePath, uris[0]);
+      await copyBetween(bundlePath, uris[0]);
       return fileName;
     } finally {
       try {
@@ -132,7 +133,7 @@ export class BackupService {
     const stamp = Date.now();
     const bundlePath = `${directory}/restore-${stamp}${BUNDLE_SUFFIX}`;
     const databasePath = `${directory}/restore-${stamp}.db`;
-    await fileIo.copyFile(uris[0], bundlePath);
+    await copyBetween(uris[0], bundlePath);
     try {
       const bundle = JSON.parse(await BackupService.readText(bundlePath)) as BackupBundle;
       if (bundle.version !== BUNDLE_VERSION || typeof bundle.database !== 'string' ||
@@ -291,10 +292,7 @@ export class BackupService {
 
   static async clearAll(context: common.Context): Promise<void> {
     const store = await DbHelper.init(context);
-    const tables: string[] = [
-      DB_TABLES.EVENT, DB_TABLES.DECISION, DB_TABLES.RELATION, DB_TABLES.PREDICTION,
-      DB_TABLES.ANCHOR, DB_TABLES.STATUS_RECORD, DB_TABLES.REVIEW_RESULT
-    ];
+    const tables: string[] = DB_TABLES_CHILD_FIRST;
     store.beginTransaction();
     try {
       for (const table of tables) {
