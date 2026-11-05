@@ -91,6 +91,7 @@ flowchart TB
 - `@ohos/mpchart` 3.1.0-rc.0 is the only runtime dependency. Icons come from system glyphs rather than an icon pack.
 - `components/charts/` wraps mpchart for lines, bars, and pies, and draws the heatmaps on Canvas. `network/RemoteStatsRepository` reads the analytics JSON from Gitee first, then GitHub.
 - `preview/` supplies in-memory demo data so pages render in the DevEco Previewer; no page reads it while the database is available.
+- `profile/` handles the home identity: nickname, signature and title are three text fields stored through Preferences alongside the avatar path, while the avatar image runs a separate 320 px square pipeline.
 
 ## Usage Example
 
