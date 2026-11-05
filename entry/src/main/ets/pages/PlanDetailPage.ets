@@ -2,34 +2,67 @@ import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
+import { PlanRhythmStrip } from '../components/PlanRhythmStrip';
+import { PlanWeekView } from '../components/PlanWeekView';
+import { PlanMonthView } from '../components/PlanMonthView';
+import { PlanDeadlineCard } from '../components/PlanDeadlineCard';
+import { SimpleLineChart } from '../components/charts/SimpleLineChart';
+import { SimpleBarChart } from '../components/charts/SimpleBarChart';
+import { ChartPoint, ChartSeries } from '../components/charts/ChartModels';
 import { Plan } from '../model/Plan';
 import { PlanNode } from '../model/PlanNode';
+import { PlanLink } from '../model/PlanLink';
+import { PlanItem } from '../model/PlanItem';
 import { PlanProject } from '../model/PlanProject';
 import { PlanNodeStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
+import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
+import {
+  CarryPoint,
+  DayActivity,
+  DayReading,
+  DeadlineProgress,
+  LinkCount,
+  NodeProgress,
+  buildDayActivity,
+  buildNodeProgress,
+  carrySeries,
+  deadlineProgress,
+  linkCounts,
+  weekDates
+} from '../plan/PlanInsights';
+import { addPlanDays, parsePlanDate } from '../plan/PlanFactory';
+import { QuickNoteService } from '../note';
+import { StatusService } from '../status';
 import { PlanDetailParams, PlanEditParams, PlanNodeParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
 import { notifyHomeRefresh, subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
-interface PlanNodeView {
-  node: PlanNode;
-  done: number;
-  total: number;
-}
 
-/** Goal detail: current week plus the timeline of seven-day nodes. */
+/** Goal detail: deadline, rhythm, week/month views and the node timeline. */
 @ComponentV2
 export struct PlanDetailPage {
   @Local plan: Plan | null = null;
-  @Local nodes: PlanNodeView[] = [];
+  @Local nodes: NodeProgress[] = [];
   @Local projects: PlanProject[] = [];
   @Local newProjectName: string = '';
   @Local editingProjectId: string = '';
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   @Local isPreview: boolean = false;
+  @Local carryPoints: CarryPoint[] = [];
+  @Local linkRows: LinkCount[] = [];
+  @Local links: PlanLink[] = [];
+  @Local deadline: DeadlineProgress = {
+    hasTarget: false, percent: 0, remainingDays: 0, totalDays: 0, overdue: false
+  };
+  @Local viewMode: number = 0;
+  @Local weekDays: DayActivity[] = [];
+  @Local monthOffset: number = 0;
   private planId: string = '';
   private service: PlanService | null = null;
+  private noteService: QuickNoteService | null = null;
+  private statusService: StatusService | null = null;
   private navStack: NavPathStack | null = null;
   private listener: (() => void) | null = null;
 
@@ -59,6 +92,8 @@ export struct PlanDetailPage {
     try {
       const service = await PlanService.open(hostContext);
       this.service = service;
+      this.noteService = await QuickNoteService.open(hostContext);
+      this.statusService = await StatusService.open(hostContext);
       this.plan = await service.findPlan(planId);
       if (this.plan === null) {
         this.missing = true;
@@ -71,6 +106,8 @@ export struct PlanDetailPage {
       }
       const refreshed = await service.listNodes(planId);
       await this.applyNodes(service, refreshed);
+      await this.applyLinks();
+      await this.loadWeekView();
     } catch (error) {
       this.loadPreview();
     } finally {
@@ -89,34 +126,76 @@ export struct PlanDetailPage {
     planPreviewStore.ensureFirstNode(this.planId);
     this.projects = planPreviewStore.projects(this.planId);
     const nodes = planPreviewStore.nodes(this.planId);
-    const views: PlanNodeView[] = [];
+    const items: PlanItem[] = [];
     for (const node of nodes) {
-      const items = planPreviewStore.listItems(node.id);
-      let done = 0;
-      for (const item of items) {
-        if (item.done) {
-          done += 1;
-        }
+      for (const item of planPreviewStore.listItems(node.id)) {
+        items.push(item);
       }
-      views.push({ node: node, done: done, total: items.length });
     }
-    this.nodes = views;
+    this.nodes = buildNodeProgress(nodes, items);
+    this.carryPoints = carrySeries(this.nodes);
+    this.links = planPreviewStore.linksByPlan(this.planId);
+    this.linkRows = linkCounts(this.links);
+    this.updateDeadline();
+    this.loadWeekView();
     this.isLoading = false;
   }
 
   private async applyNodes(service: PlanService, nodes: PlanNode[]): Promise<void> {
-    const views: PlanNodeView[] = [];
+    const items: PlanItem[] = [];
     for (const node of nodes) {
-      const items = await service.listItems(node.id);
-      let done = 0;
-      for (const item of items) {
-        if (item.done) {
-          done += 1;
+      for (const item of await service.listItems(node.id)) {
+        items.push(item);
+      }
+    }
+    this.nodes = buildNodeProgress(nodes, items);
+    this.carryPoints = carrySeries(this.nodes);
+    this.updateDeadline();
+  }
+
+  private async applyLinks(): Promise<void> {
+    if (this.service === null) {
+      this.links = planPreviewStore.linksByPlan(this.planId);
+    } else {
+      this.links = await this.service.listLinksByPlan(this.planId);
+    }
+    this.linkRows = linkCounts(this.links);
+  }
+
+  private updateDeadline(): void {
+    if (this.plan === null) {
+      return;
+    }
+    this.deadline = deadlineProgress(this.plan.startDate, this.plan.targetDate ?? '', todayString());
+  }
+
+  private async loadWeekView(): Promise<void> {
+    const current = this.currentNode();
+    if (current === null) {
+      this.weekDays = [];
+      return;
+    }
+    const dates = weekDates(current.startDate);
+    let stamps: number[] = [];
+    let readings: DayReading[] = [];
+    if (this.noteService !== null) {
+      const startMs = parsePlanDate(current.startDate).getTime();
+      const endMs = parsePlanDate(addPlanDays(current.endDate, 1)).getTime() - 1;
+      stamps = await this.noteService.timestampsBetween(startMs, endMs);
+    }
+    if (this.statusService !== null) {
+      const rows = await this.statusService.history(30);
+      for (const row of rows) {
+        if (row.date >= current.startDate && row.date <= current.endDate) {
+          readings.push({
+            date: row.date,
+            sleepHours: row.sleepHours,
+            exerciseCount: row.exerciseCount
+          });
         }
       }
-      views.push({ node: node, done: done, total: items.length });
     }
-    this.nodes = views;
+    this.weekDays = buildDayActivity(dates, stamps, readings);
   }
 
   async refresh(): Promise<void> {
@@ -131,12 +210,14 @@ export struct PlanDetailPage {
     this.projects = await this.service.listProjects(this.planId);
     const nodes = await this.service.listNodes(this.planId);
     await this.applyNodes(this.service, nodes);
+    await this.applyLinks();
+    await this.loadWeekView();
   }
 
-  private currentNode(): PlanNodeView | null {
-    let latest: PlanNodeView | null = null;
+  private currentNode(): NodeProgress | null {
+    let latest: NodeProgress | null = null;
     for (const view of this.nodes) {
-      if (view.node.status === PlanNodeStatus.OPEN) {
+      if (view.status === PlanNodeStatus.OPEN) {
         latest = view;
       }
     }
@@ -144,6 +225,59 @@ export struct PlanDetailPage {
       latest = this.nodes[this.nodes.length - 1];
     }
     return latest;
+  }
+
+  private monthRows(): NodeProgress[] {
+    const base = new Date();
+    base.setDate(1);
+    base.setMonth(base.getMonth() + this.monthOffset);
+    const prefix = `${base.getFullYear()}-${monthPad(base.getMonth() + 1)}`;
+    const rows: NodeProgress[] = [];
+    for (const row of this.nodes) {
+      if (row.startDate.startsWith(prefix)) {
+        rows.push(row);
+      }
+    }
+    return rows;
+  }
+
+  private monthLabel(): string {
+    const base = new Date();
+    base.setDate(1);
+    base.setMonth(base.getMonth() + this.monthOffset);
+    return `${base.getFullYear()} 年 ${base.getMonth() + 1} 月`;
+  }
+
+  private carryChartSeries(): ChartSeries[] {
+    const points: ChartPoint[] = [];
+    for (const point of this.carryPoints) {
+      points.push({
+        label: point.label,
+        value: point.percent,
+        note: `${point.carried}/${point.total} 项延续`
+      });
+    }
+    return [{ name: '延续率', color: 0xFF185FA5, points: points }];
+  }
+
+  private linkChartPoints(): ChartPoint[] {
+    const points: ChartPoint[] = [];
+    for (const row of this.linkRows) {
+      points.push({
+        label: planLinkModuleLabel(row.module),
+        value: row.count,
+        note: `${row.count} 条`
+      });
+    }
+    return points;
+  }
+
+  private totalLinkCount(): number {
+    let total = 0;
+    for (const row of this.linkRows) {
+      total += row.count;
+    }
+    return total;
   }
 
   private openNode(nodeId: string): void {
@@ -310,19 +444,19 @@ export struct PlanDetailPage {
   }
 
   @Builder
-  nodeCard(view: PlanNodeView) {
+  nodeCard(view: NodeProgress) {
     SectionCard() {
       Column({ space: 5 }) {
         Row({ space: 8 }) {
-          Text(`第 ${view.node.weekIndex} 周`)
+          Text(`第 ${view.weekIndex} 周`)
             .fontSize(14)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
-          Text(view.node.status === PlanNodeStatus.OPEN ? '进行中' : '已结束')
+          Text(view.status === PlanNodeStatus.OPEN ? '进行中' : '已结束')
             .fontSize(10)
-            .fontColor(view.node.status === PlanNodeStatus.OPEN ? AppTheme.color.success : AppTheme.color.textMuted)
+            .fontColor(view.status === PlanNodeStatus.OPEN ? AppTheme.color.success : AppTheme.color.textMuted)
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
-            .backgroundColor(view.node.status === PlanNodeStatus.OPEN ? AppTheme.color.successSurface : AppTheme.color.chip)
+            .backgroundColor(view.status === PlanNodeStatus.OPEN ? AppTheme.color.successSurface : AppTheme.color.chip)
             .borderRadius(6)
           Blank()
           Text(`${view.done}/${view.total}`)
@@ -331,7 +465,7 @@ export struct PlanDetailPage {
         }
         .width('100%')
 
-        Text(`${view.node.startDate} 至 ${view.node.endDate}`)
+        Text(`${view.startDate} 至 ${view.endDate}`)
           .fontSize(10)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
@@ -339,7 +473,7 @@ export struct PlanDetailPage {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
       .onClick(() => {
-        this.openNode(view.node.id);
+        this.openNode(view.nodeId);
       })
     }
   }
@@ -400,6 +534,144 @@ export struct PlanDetailPage {
                 .fontSize(10)
                 .fontColor(AppTheme.color.textMuted)
                 .width('100%')
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Column({ space: 8 }) {
+              Text('时间')
+                .fontSize(12)
+                .fontColor(AppTheme.color.textSecondary)
+                .width('100%')
+              PlanDeadlineCard({
+                progress: this.deadline,
+                weeksElapsed: this.nodes.length
+              })
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Column({ space: 8 }) {
+              Text('周节奏')
+                .fontSize(12)
+                .fontColor(AppTheme.color.textSecondary)
+                .width('100%')
+              PlanRhythmStrip({
+                rows: this.nodes,
+                currentId: this.currentNode() !== null ? this.currentNode()!.nodeId : '',
+                onOpen: (nodeId: string) => {
+                  this.openNode(nodeId);
+                }
+              })
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Column({ space: 10 }) {
+              Row({ space: 6 }) {
+                Text('周视图')
+                  .fontSize(11)
+                  .fontColor(this.viewMode === 0 ? Color.White : AppTheme.color.textSecondary)
+                  .padding({ left: 12, right: 12, top: 5, bottom: 5 })
+                  .backgroundColor(this.viewMode === 0 ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
+                  .borderRadius(14)
+                  .onClick(() => {
+                    this.viewMode = 0;
+                  })
+                Text('月视图')
+                  .fontSize(11)
+                  .fontColor(this.viewMode === 1 ? Color.White : AppTheme.color.textSecondary)
+                  .padding({ left: 12, right: 12, top: 5, bottom: 5 })
+                  .backgroundColor(this.viewMode === 1 ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
+                  .borderRadius(14)
+                  .onClick(() => {
+                    this.viewMode = 1;
+                  })
+                Blank()
+              }
+              .width('100%')
+
+              if (this.viewMode === 0) {
+                PlanWeekView({ days: this.weekDays })
+              } else {
+                PlanMonthView({
+                  rows: this.monthRows(),
+                  label: this.monthLabel(),
+                  onPrev: () => {
+                    this.monthOffset -= 1;
+                  },
+                  onNext: () => {
+                    this.monthOffset += 1;
+                  },
+                  onOpen: (nodeId: string) => {
+                    this.openNode(nodeId);
+                  }
+                })
+              }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Column({ space: 8 }) {
+              Row() {
+                Text('延续率')
+                  .fontSize(12)
+                  .fontColor(AppTheme.color.textSecondary)
+                Blank()
+                Text('延续项 ÷ 当周清单')
+                  .fontSize(9)
+                  .fontColor(AppTheme.color.textMuted)
+              }
+              .width('100%')
+
+              if (this.carryPoints.length >= 3) {
+                SimpleLineChart({ series: this.carryChartSeries(), minValue: 0, maxValue: 100, chartHeight: 150 })
+              } else {
+                Text('至少三周有清单后，才画出延续率走势。')
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+              }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Column({ space: 8 }) {
+              Row() {
+                Text('关联构成')
+                  .fontSize(12)
+                  .fontColor(AppTheme.color.textSecondary)
+                Blank()
+                Text(`共 ${this.totalLinkCount()} 条`)
+                  .fontSize(9)
+                  .fontColor(AppTheme.color.textMuted)
+              }
+              .width('100%')
+
+              if (this.totalLinkCount() === 0) {
+                Text('还没有关联记录；在周节点里挑几条挂上来。')
+                  .fontSize(10)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+              } else {
+                SimpleBarChart({
+                  points: this.linkChartPoints(),
+                  color: 0xFF185FA5,
+                  maxValue: 0,
+                  horizontal: true,
+                  chartHeight: 150
+                })
+              }
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)
@@ -482,26 +754,26 @@ export struct PlanDetailPage {
             SectionCard() {
               Row({ space: 10 }) {
                 Column({ space: 3 }) {
-                  Text(this.currentNode()!.node.status === PlanNodeStatus.OPEN ? '本周节点' : '最近节点')
+                  Text(this.currentNode()!.status === PlanNodeStatus.OPEN ? '本周节点' : '最近节点')
                     .fontSize(11)
                     .fontColor(AppTheme.color.textSecondary)
-                  Text(`第 ${this.currentNode()!.node.weekIndex} 周 · ${this.currentNode()!.done}/${this.currentNode()!.total}`)
+                  Text(`第 ${this.currentNode()!.weekIndex} 周 · ${this.currentNode()!.done}/${this.currentNode()!.total}`)
                     .fontSize(16)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
-                  Text(`${this.currentNode()!.node.startDate} 至 ${this.currentNode()!.node.endDate}`)
+                  Text(`${this.currentNode()!.startDate} 至 ${this.currentNode()!.endDate}`)
                     .fontSize(10)
                     .fontColor(AppTheme.color.textMuted)
                 }
                 .layoutWeight(1)
                 .alignItems(HorizontalAlign.Start)
-                Text(this.currentNode()!.node.status === PlanNodeStatus.OPEN ? '进入本周 ›' : '查看 ›')
+                Text(this.currentNode()!.status === PlanNodeStatus.OPEN ? '进入本周 ›' : '查看 ›')
                   .fontSize(11)
                   .fontColor(AppTheme.color.primary)
               }
               .width('100%')
               .onClick(() => {
-                this.openNode(this.currentNode()!.node.id);
+                this.openNode(this.currentNode()!.nodeId);
               })
             }
           }
@@ -511,9 +783,10 @@ export struct PlanDetailPage {
               .fontSize(12)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
-            ForEach(this.nodes, (view: PlanNodeView) => {
+            ForEach(this.nodes, (view: NodeProgress) => {
               this.nodeCard(view)
-            }, (view: PlanNodeView) => `${view.node.id}_${view.done}_${view.total}_${view.node.status}`)
+            }, (view: NodeProgress) =>
+              `${view.nodeId}_${view.done}_${view.total}_${view.status}_${view.openCarried}`)
           }
         }
         .width('100%')
@@ -553,4 +826,13 @@ export struct PlanDetailPage {
       }
     })
   }
+}
+
+function todayString(): string {
+  const date = new Date();
+  return `${date.getFullYear()}-${monthPad(date.getMonth() + 1)}-${monthPad(date.getDate())}`;
+}
+
+function monthPad(value: number): string {
+  return value < 10 ? `0${value}` : `${value}`;
 }

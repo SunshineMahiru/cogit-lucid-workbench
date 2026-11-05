@@ -89,6 +89,15 @@ export class EventDao {
     return this.queryWith(predicates);
   }
 
+  /** Returns every event inside the millisecond range, newest first. */
+  async queryBetween(startMs: number, endMs: number): Promise<Event[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.greaterThanOrEqualTo(EVENT_COLS.TIMESTAMP, startMs);
+    predicates.lessThanOrEqualTo(EVENT_COLS.TIMESTAMP, endMs);
+    predicates.orderByDesc(EVENT_COLS.TIMESTAMP);
+    return this.queryWith(predicates);
+  }
+
   /** Returns events of one type, newest first, capped at limit. */
   async queryByType(type: string, limit: number): Promise<Event[]> {
     return this.queryByTypePage(type, limit, 0);

@@ -2,6 +2,7 @@ import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { createEvent } from '../model/factories';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
@@ -82,6 +83,18 @@ export class QuickNoteService {
   async listRecentPage(limit: number, offset: number): Promise<NoteListItem[]> {
     const events = await this.eventDao.queryRecentPage(normalizeLimit(limit), Math.max(0, offset));
     return toNoteListItems(events);
+  }
+
+  /** Returns the timestamps of notes in one range; sealed notes are left out. */
+  async timestampsBetween(startMs: number, endMs: number): Promise<number[]> {
+    const events = await this.eventDao.queryBetween(startMs, endMs);
+    const stamps: number[] = [];
+    for (const event of events) {
+      if (event.level !== SecurityLevel.SEALED) {
+        stamps.push(event.timestamp);
+      }
+    }
+    return stamps;
   }
 
   /** Returns the newest notes of one type; an empty type falls back to all notes. */
