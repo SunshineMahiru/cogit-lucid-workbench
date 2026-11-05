@@ -15,7 +15,11 @@
 
 ## 项目简介
 
-cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，应用内标题为 **Cogit Lucid**，桌面标签仍是仓库名。它把注意到的事、做过的决定、下过的判断和事后的复盘留在本地数据库里，再把这些记录带进下一轮。适合已经在按周复盘、希望早先的判断事后仍然查得到的人。
+cogit-lucid-workbench 的含义即 cogit — from Latin "cogito"（我思）, as in "Cogito, ergo sum" — externalizing your own thinking.
+
+cogit 来自拉丁语 cogito（「我思」）——笛卡尔《第一哲学沉思》的 "Cogito, ergo sum"（我思故我在），这是近代哲学与存在主义的起点。项目核心是「元认知」，而「元认知」的字面意思就是「对思考的思考」——cogit（思考）+ lucid（清醒/澄明）精确表达「让思考澄明」，高于 self（自我）。
+
+它是一个单模块 HarmonyOS 应用，应用内标题为 **Cogit Lucid**，桌面标签仍是仓库名，具体名称待定。它把注意到的事、做过的决定、下过的判断和事后的复盘留在本地数据库里，再把这些记录带进下一轮。适合那些已经在按周复盘、希望早先的判断事后仍然查得到的人。
 
 三个设计决定了它和日记的差别：
 
@@ -56,7 +60,7 @@ cogit-lucid-workbench 是一个单模块 HarmonyOS 应用，应用内标题为 *
 
 ## 架构
 
-依赖方向只有一条：从最上面的交互往下走到最底下的模型。每层只调用它下面的层；`analysis/` 只 import `model/` 的类型，规则不需要数据库和界面就能单独验证。`app/` 放跨页面的刷新通道与数据库健康状态。
+本项目的依赖方向只有一条：从最上面的交互往下走到最底下的模型。每层只调用它下面的层；`analysis/` 只 import `model/` 的类型，规则不需要数据库和界面就能单独验证。`app/` 放跨页面的刷新通道与数据库健康状态。
 
 ```mermaid
 flowchart TB
@@ -190,7 +194,7 @@ cd cogit-lucid-workbench
 
 在 DevEco Studio 打开工程，等 Sync 结束。运行时依赖是 `@ohos/mpchart` 3.1.0-rc.0；`@ohos/hypium` 与 `@ohos/hamock` 只用于测试。三者都写在 `oh-package.json5` 里。
 
-也可以在项目根目录用命令行构建：
+你也可以在项目根目录用命令行构建：
 
 ```bash
 node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" assembleHap --mode module -p product=default --no-daemon
@@ -385,11 +389,11 @@ cogit-lucid-workbench/
 └── LICENSE                         AGPL-3.0
 ```
 
-加一个页面要动三处：`navigation/Routes.ts` 里加路由名，`pages/` 下放页面文件，`pages/Index.ets` 的 `pageMap` 里接上。
+其中，加一个页面要改动三处：`navigation/Routes.ts` 里加路由名，`pages/` 下放页面文件，`pages/Index.ets` 的 `pageMap` 里接上。
 
 ## 测试
 
-用例分两处：`entry/src/test` 的本地单测在电脑上跑，`entry/src/ohosTest` 的设备套件要装到模拟器或手机上。
+用例分两处：`entry/src/test` 的本地单测在电脑上运行，`entry/src/ohosTest` 的设备套件要安装到模拟器或手机上。
 
 | 套件 | 文件 | 条数 | 覆盖 |
 |---|---|---|---|
@@ -414,7 +418,7 @@ hdc shell aa test -b com.sunshinemahiru.cogitlucid -m entry_test -s unittest Ope
 
 预期输出：`Tests run: 7, Failure: 0, Error: 0, Pass: 7`。
 
-两点容易绊住：`hvigorw test` 只能在 Windows 和 macOS 上执行，Linux 跑不了；`aa test` 不指定超时时默认 5 秒，流程用例带界面操作，所以要给 `-w 10000` 放宽到 10 秒。
+两点容易绊住：`hvigorw test` 只能在 Windows 和 macOS 上执行，Linux 暂不支持；`aa test` 不指定超时时默认 5 秒，流程用例带界面操作，所以要给 `-w 10000` 放宽到 10 秒。
 
 ## 文档
 
@@ -465,7 +469,7 @@ DevEco 预览器不提供 `relationalStore`。数据库打不开时，首页改�
 
 ## 贡献指南
 
-改动大一点的话，先在 issue 里说一声，免得做完才发现方向不对。小修补直接提 PR 也可以。
+欢迎对本项目贡献。新颖且实用的想法，或是较大的改动，请在 issue 里提交说明；小修小补暂不推荐提交 PR。
 
 - 提交信息按 Conventional Commits：`type(scope): subject`，subject 用英文，正文说明原因。
 - 一个提交只做一件事。大功能拆成若干步，每步都能单独验证。
@@ -476,14 +480,14 @@ DevEco 预览器不提供 `relationalStore`。数据库打不开时，首页改�
 - 签名材料、HAP、日志都不进提交，`.gitignore` 已经覆盖。
 - 提 PR 前跑一遍 `code-linter.json5` 的规则、`assembleHap`，以及「测试」一节里的两套用例，并在 PR 里写清怎么验证的。
 
-`main` 是唯一开发分支，Gitee 那边是镜像。PR 提到 GitHub，合并后由维护者同步过去。
+`main` 是唯一开发分支，同步于 Github 与 Gitee。issue 欢迎两边提交，合并后将由维护者同步过去。
 
 ## 许可证
 
 本项目以 [GNU Affero 通用公共许可证第三版](./LICENSE) 发布。
 
-AGPL 比 GPL 多一条要求：改过的版本如果通过网络对外提供服务，也要把改动后的源码交给使用者。只在本地使用时不涉及这条。
+由于 AGPL 比 GPL 多一条要求，即改过的版本如果通过网络对外提供服务，也要把改动后的源码交给使用者。但只在本地使用时不涉及这条。
+
+其中运行时依赖只有 `@ohos/mpchart`，许可证为 Apache License 2.0，其文本随依赖一起分发；测试用的 `@ohos/hypium` 与 `@ohos/hamock` 只出现在 `devDependencies` 里。特此说明。
 
 版权所有 (c) 2026 SunshineMahiru（曦昼Sunshine）。
-
-运行时依赖只有 `@ohos/mpchart`，许可证为 Apache License 2.0，其文本随依赖一起分发；测试用的 `@ohos/hypium` 与 `@ohos/hamock` 只出现在 `devDependencies` 里。
