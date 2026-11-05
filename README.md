@@ -15,9 +15,15 @@
 
 ## Overview
 
-cogit-lucid-workbench is a single-module HarmonyOS application; the in-app title is **Cogit Lucid**, while the launcher keeps the repository name. It keeps what you noticed, decided, and predicted, plus how you reviewed it, in a local database, then brings those records into the next round. It suits people who already review their weeks and want earlier judgments to stay checkable.
+`cogit-lucid-workbench` joins cogit and lucid. cogit is the Latin cogito (I think), the word at the centre of Descartes's "Cogito, ergo sum" (I think, therefore I am) in *Meditations on First Philosophy*; lucid means clear and luminous. Put together, they read as making thinking clear.
 
-Three choices shape the app:
+The project began as an attempt to turn two lines of thought into a daily habit: metacognition and existentialism. Metacognition is thinking about thinking — noticing how you judge, then adjusting how you judge. Existentialism asks a different question: people have no pre-given nature and define themselves through freedom and choice, and handing that choice to circumstance, custom, or "this is just who I am" is what Sartre called bad faith. Metacognition supplies the method of recording and review; existentialism explains why the exercise is worth doing.
+
+In the app, the two lines map onto recording and review. Notes, predictions and decisions freeze the judgment, confidence, reason and settlement date at the moment of writing; when the date arrives the judgment is checked, and the weekly review tests the explanation against the value anchors. What was judged then, and what changed later, both stay in the record.
+
+cogit-lucid-workbench is a single-module HarmonyOS application. The in-app title is **Cogit Lucid**, the launcher keeps the repository name, and the Chinese name is still undecided. It keeps what you noticed, decided and predicted, plus how you reviewed it, in a local database, and carries those records into the next round; it suits people who already review their weeks and want earlier judgments to stay checkable.
+
+Three choices set it apart from a journal:
 
 - **A prediction freezes on save.** Confidence, reason, and settlement date are written once. Settling later only adds the outcome; a later edit appends a version instead of overwriting the call that was made.
 - **The model stays opt-in.** Records sit in the on-device database. The review agent reads them only after you switch to mock or model mode, and the API key is kept in the system asset store.
@@ -25,7 +31,7 @@ Three choices shape the app:
 
 The interface is Chinese only. The in-app name lives in `entry/src/main/ets/theme/AppIdentity.ts`, the launcher label in `AppScope/resources/base/element/string.json`.
 
-The home page opens with the identity band (avatar, nickname, signature, handwritten title) and four counters: notes today, pending settlements, consecutive record days, and the latest review. Readings, the weekly card, the plan card, and the six-module grid follow. The `数据看板` button under the counters opens the analytics page.
+The home page opens with the identity band (avatar, nickname, signature, custom title) and four counters: notes today, pending settlements, consecutive record days, and the latest review. Readings, the weekly card, the plan card, and the six-module grid follow. The `数据看板` button under the counters opens the analytics page.
 
 ## Project status
 
