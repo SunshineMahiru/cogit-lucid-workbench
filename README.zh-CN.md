@@ -321,7 +321,7 @@ cogit-lucid-workbench/
 │       │   ├── entryability/     应用入口
 │       │   ├── pages/            34 个页面文件、32 个路由名
 │       │   ├── views/            首页组合视图
-│       │   ├── components/       29 个可复用组件
+│       │   ├── components/       33 个可复用组件
 │       │   │   └── charts/       折线、柱状、饼图封装与 Canvas 热力图
 │       │   ├── navigation/       路由名与参数类型
 │       │   ├── model/            实体类型、枚举、工厂、示例数据

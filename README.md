@@ -321,7 +321,7 @@ cogit-lucid-workbench/
 │       │   ├── entryability/     ability entry
 │       │   ├── pages/            34 page files over 32 route names
 │       │   ├── views/            dashboard composition
-│       │   ├── components/       29 reusable pieces
+│       │   ├── components/       33 reusable pieces
 │       │   │   └── charts/       line, bar, pie wrappers and Canvas heatmaps
 │       │   ├── navigation/       route names and parameter types
 │       │   ├── model/            entity types, enums, factories, demo data
