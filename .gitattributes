@@ -1,0 +1,9 @@
+# Normalize text files to LF in the repository and in every checkout.
+* text=auto eol=lf
+
+# Images are binary; never apply end-of-line conversion or text diff.
+*.jpeg binary
+*.jpg binary
+*.png binary
+*.gif binary
+*.webp binary
