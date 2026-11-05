@@ -78,6 +78,12 @@ export struct PlanHomeCard {
     }
   }
 
+  private openList(): void {
+    this.pathStack.pushPathByName(ROUTES.PLAN, null, () => {
+      this.load();
+    });
+  }
+
   private openPlan(): void {
     if (this.plan === null) {
       const params: PlanEditParams = { planId: null };
@@ -108,6 +114,14 @@ export struct PlanHomeCard {
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
+        Text('全部目标 ›')
+          .id('plan_home_all')
+          .fontSize(11)
+          .fontColor(AppTheme.color.textSecondary)
+          .padding({ left: 4, right: 8, top: 6, bottom: 6 })
+          .onClick(() => {
+            this.openList();
+          })
         Text('新建')
           .id('plan_home_create')
           .fontSize(11)
