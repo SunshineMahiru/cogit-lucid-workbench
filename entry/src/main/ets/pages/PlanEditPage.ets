@@ -4,7 +4,8 @@ import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { Plan } from '../model/Plan';
 import { PlanService } from '../plan';
-import { formatPlanDate, mondayOf, parsePlanDate } from '../plan/PlanFactory';
+import { formatPlanDate, mondayOf } from '../plan/PlanFactory';
+import { validatePlanDraft } from '../plan/PlanValidation';
 import { PlanEditParams } from '../navigation/RouteParams';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
@@ -60,31 +61,13 @@ export struct PlanEditPage {
     this.targetDate = plan.targetDate ?? '';
   }
 
-  private validDate(value: string): boolean {
-    if (value.length !== 10) {
-      return false;
-    }
-    return !Number.isNaN(parsePlanDate(value).getTime());
-  }
-
   private async save(): Promise<void> {
-    if (this.title.trim().length === 0) {
-      this.errorText = '请填写目标名称';
-      return;
-    }
-    if (!this.validDate(this.startDate)) {
-      this.errorText = '起始日期格式应为 YYYY-MM-DD';
+    const check = validatePlanDraft(this.title, this.startDate, this.targetDate);
+    if (!check.ok) {
+      this.errorText = check.message;
       return;
     }
     const target = this.targetDate.trim();
-    if (target.length > 0 && !this.validDate(target)) {
-      this.errorText = '结束日期格式应为 YYYY-MM-DD，或留空';
-      return;
-    }
-    if (target.length > 0 && target < this.startDate) {
-      this.errorText = '结束日期不能早于起始日期';
-      return;
-    }
     if (this.isSaving) {
       return;
     }
