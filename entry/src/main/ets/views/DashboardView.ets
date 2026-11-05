@@ -398,7 +398,7 @@ export struct DashboardView {
                   GridItem() {
                     ReadingCard({ reading: reading })
                   }
-                }, (reading: BodyReading) => reading.label)
+                }, (reading: BodyReading) => `${reading.label}_${this.dataVersion}`)
               }
               .columnsTemplate('1fr 1fr 1fr')
               .rowsGap(0)
@@ -519,7 +519,7 @@ export struct DashboardView {
                         }
                       })
                     }
-                  }, (module: HomeModule) => module.route)
+                  }, (module: HomeModule) => `${module.route}_${this.dataVersion}`)
                 }
                 .columnsTemplate('1fr 1fr')
                 .columnsGap(10)
