@@ -30,6 +30,14 @@ export struct SimpleLineChart {
     }
   }
 
+  /** Re-applies the series when the parent swaps months or refreshes the payload. */
+  @Monitor('series')
+  onSeriesChange(): void {
+    if (this.pointCount() >= 2) {
+      this.setup();
+    }
+  }
+
   private pointCount(): number {
     let count = 0;
     for (const item of this.series) {

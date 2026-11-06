@@ -29,6 +29,14 @@ export struct SimpleBarChart {
     }
   }
 
+  /** Re-applies the bars when the parent swaps months or refreshes the payload. */
+  @Monitor('points')
+  onPointsChange(): void {
+    if (this.points.length > 0) {
+      this.setup();
+    }
+  }
+
   private ceiling(): number {
     if (this.maxValue > 0) {
       return this.maxValue;

@@ -16,6 +16,14 @@ export struct SimplePieChart {
     }
   }
 
+  /** Re-applies the slices and the centre label when either input changes. */
+  @Monitor('slices', 'centerText')
+  onSlicesChange(): void {
+    if (this.total() > 0) {
+      this.setup();
+    }
+  }
+
   private total(): number {
     let sum = 0;
     for (const slice of this.slices) {
