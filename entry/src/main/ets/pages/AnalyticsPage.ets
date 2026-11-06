@@ -24,23 +24,36 @@ export struct AnalyticsPage {
   @Local errorText: string = '';
   @Local selectedMonth: string = '';
   private repository: RemoteStatsRepository = new RemoteStatsRepository();
+  /** Bumped on every load so a slow earlier response cannot overwrite a newer one. */
+  private loadToken: number = 0;
 
   aboutToAppear(): void {
     this.load();
   }
 
   private async load(): Promise<void> {
+    const token = this.loadToken + 1;
+    this.loadToken = token;
     this.isLoading = true;
     this.errorText = '';
     try {
-      this.stats = await this.repository.fetch();
-      if (this.stats.months.length > 0 && this.selectedMonth.length === 0) {
-        this.selectedMonth = this.stats.months[this.stats.months.length - 1].label;
+      const stats = await this.repository.fetch();
+      if (token !== this.loadToken) {
+        return;
+      }
+      this.stats = stats;
+      if (stats.months.length > 0 && this.selectedMonth.length === 0) {
+        this.selectedMonth = stats.months[stats.months.length - 1].label;
       }
     } catch (error) {
+      if (token !== this.loadToken) {
+        return;
+      }
       this.errorText = error instanceof Error ? error.message : '图表数据加载失败';
     } finally {
-      this.isLoading = false;
+      if (token === this.loadToken) {
+        this.isLoading = false;
+      }
     }
   }
 
