@@ -221,6 +221,23 @@ export class PlanDao {
     return this.store.update(values, predicates);
   }
 
+  /** Closes one node and appends the next week with its carried items in a single transaction. */
+  async closeNodeWithNext(nodeId: string, reviewId: string, next: PlanNode,
+    carried: PlanItem[]): Promise<void> {
+    this.store.beginTransaction();
+    try {
+      await this.closeNode(nodeId, reviewId);
+      await this.insertNode(next);
+      for (const item of carried) {
+        await this.insertItem(item);
+      }
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
+  }
+
   async insertItem(item: PlanItem): Promise<number> {
     const values: relationalStore.ValuesBucket = {
       [PLAN_ITEM_COLS.ID]: item.id,

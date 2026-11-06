@@ -188,18 +188,18 @@ export class PlanService {
     if (node === null || node.status === PlanNodeStatus.CLOSED) {
       return null;
     }
-    await this.dao.closeNode(nodeId, reviewId);
     const nodes = await this.dao.queryNodes(node.planId);
     const next = createPlanNode(node.planId, nodes.length + 1, addPlanDays(node.startDate, 7), node.projectId);
-    await this.dao.insertNode(next);
     const items = await this.dao.queryItems(nodeId);
+    const carried: PlanItem[] = [];
     let order = 0;
     for (const item of items) {
       if (!item.done) {
-        await this.dao.insertItem(createPlanItem(next.id, item.text, order, item.id));
+        carried.push(createPlanItem(next.id, item.text, order, item.id));
         order += 1;
       }
     }
+    await this.dao.closeNodeWithNext(nodeId, reviewId, next, carried);
     return next;
   }
 
