@@ -57,6 +57,18 @@ export struct StatusEditPage {
       this.errorText = '日期格式应为 YYYY-MM-DD';
       return;
     }
+    if (this.sleepHours.trim().length === 0) {
+      this.errorText = '请填写睡眠时长';
+      return;
+    }
+    if (this.exerciseCount.trim().length === 0) {
+      this.errorText = '请填写运动次数';
+      return;
+    }
+    if (this.alertCount.trim().length === 0) {
+      this.errorText = '请填写报警次数';
+      return;
+    }
     const sleep = Number(this.sleepHours);
     const exercise = Number(this.exerciseCount);
     const alerts = Number(this.alertCount);
