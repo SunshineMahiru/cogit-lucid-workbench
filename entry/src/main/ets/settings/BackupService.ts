@@ -66,15 +66,24 @@ export class BackupService {
       options.newFileNames = [fileName];
       const uris = await new picker.DocumentViewPicker(context).save(options);
       if (uris.length === 0) {
+        BackupService.removeQuietly(bundlePath);
         return '';
       }
       await copyBetween(bundlePath, uris[0]);
+      BackupService.removeQuietly(bundlePath);
       return fileName;
     } finally {
       try {
         fileIo.unlinkSync(databasePath);
       } catch (error) {
       }
+    }
+  }
+
+  private static removeQuietly(path: string): void {
+    try {
+      fileIo.unlinkSync(path);
+    } catch (error) {
     }
   }
 
