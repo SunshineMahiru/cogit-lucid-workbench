@@ -2,6 +2,7 @@ import { relationalStore } from '@kit.ArkData';
 import { Anchor } from '../../model/Anchor';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, ANCHOR_COLS } from '../DbConstants';
+import { queryCount } from '../QuerySupport';
 
 /** Data access for the anchor table. */
 export class AnchorDao {
@@ -39,21 +40,8 @@ export class AnchorDao {
     }
   }
 
-  private async queryCount(sql: string): Promise<number> {
-    const resultSet = await this.store.querySql(sql);
-    try {
-      let total = 0;
-      if (resultSet.goToFirstRow()) {
-        total = resultSet.getLong(0);
-      }
-      return total;
-    } finally {
-      resultSet.close();
-    }
-  }
-
   async countVisible(): Promise<number> {
-    return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.ANCHOR} WHERE level <> 'sealed'`);
+    return queryCount(this.store, `SELECT COUNT(*) AS total FROM ${DB_TABLES.ANCHOR} WHERE level <> 'sealed'`);
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): Anchor {

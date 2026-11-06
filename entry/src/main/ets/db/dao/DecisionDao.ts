@@ -3,6 +3,7 @@ import { Decision } from '../../model/Decision';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, DECISION_COLS } from '../DbConstants';
 import { parseStringArray } from '../SafeJson';
+import { queryCount } from '../QuerySupport';
 
 /** Data access for the decision table. */
 export class DecisionDao {
@@ -55,25 +56,12 @@ export class DecisionDao {
     }
   }
 
-  private async queryCount(sql: string): Promise<number> {
-    const resultSet = await this.store.querySql(sql);
-    try {
-      let total = 0;
-      if (resultSet.goToFirstRow()) {
-        total = resultSet.getLong(0);
-      }
-      return total;
-    } finally {
-      resultSet.close();
-    }
-  }
-
   async countVisible(): Promise<number> {
-    return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.DECISION} WHERE level <> 'sealed'`);
+    return queryCount(this.store, `SELECT COUNT(*) AS total FROM ${DB_TABLES.DECISION} WHERE level <> 'sealed'`);
   }
 
   async countUnreviewed(): Promise<number> {
-    return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.DECISION} WHERE level <> 'sealed' AND ${DECISION_COLS.REVIEWED} = 0`);
+    return queryCount(this.store, `SELECT COUNT(*) AS total FROM ${DB_TABLES.DECISION} WHERE level <> 'sealed' AND ${DECISION_COLS.REVIEWED} = 0`);
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): Decision {

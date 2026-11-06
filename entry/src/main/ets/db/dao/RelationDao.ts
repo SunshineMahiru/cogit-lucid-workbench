@@ -4,6 +4,7 @@ import { SecurityLevel } from '../../model/SecurityLevel';
 import { TrustLevel } from '../../model/TrustLevel';
 import { DB_TABLES, RELATION_COLS } from '../DbConstants';
 import { parseInteractionLog } from '../SafeJson';
+import { queryCount } from '../QuerySupport';
 
 /** Data access for the relation table. */
 export class RelationDao {
@@ -107,21 +108,8 @@ export class RelationDao {
     return this.store.update(values, predicates);
   }
 
-  private async queryCount(sql: string): Promise<number> {
-    const resultSet = await this.store.querySql(sql);
-    try {
-      let total = 0;
-      if (resultSet.goToFirstRow()) {
-        total = resultSet.getLong(0);
-      }
-      return total;
-    } finally {
-      resultSet.close();
-    }
-  }
-
   async countVisible(): Promise<number> {
-    return this.queryCount(
+    return queryCount(this.store,
       `SELECT COUNT(*) AS total FROM ${DB_TABLES.RELATION} WHERE level <> 'sealed' AND deleted = 0`);
   }
 

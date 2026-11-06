@@ -3,6 +3,7 @@ import { Event } from '../../model/Event';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, EVENT_COLS } from '../DbConstants';
 import { parseStringArray } from '../SafeJson';
+import { queryCount } from '../QuerySupport';
 
 /** Data access for the event table. */
 export class EventDao {
@@ -59,12 +60,12 @@ export class EventDao {
 
   /** Returns the total number of events without materialising rows. */
   async countVisible(): Promise<number> {
-    return this.queryCount(`SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed'`);
+    return queryCount(this.store, `SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed'`);
   }
 
   /** Counts visible notes whose local calendar day matches the given YYYY-MM-DD. */
   async countVisibleOn(date: string): Promise<number> {
-    return this.queryCount(
+    return queryCount(this.store,
       `SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed' ` +
       `AND date(timestamp / 1000, 'unixepoch', 'localtime') = '${date}'`);
   }
@@ -119,19 +120,6 @@ export class EventDao {
         events.push(this.mapRow(resultSet));
       }
       return events;
-    } finally {
-      resultSet.close();
-    }
-  }
-
-  private async queryCount(sql: string): Promise<number> {
-    const resultSet = await this.store.querySql(sql);
-    try {
-      let total = 0;
-      if (resultSet.goToFirstRow()) {
-        total = resultSet.getLong(0);
-      }
-      return total;
     } finally {
       resultSet.close();
     }
