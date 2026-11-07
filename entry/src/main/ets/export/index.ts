@@ -16,7 +16,8 @@ export {
   trustLevelLabel,
   yesNoLabel
 } from './MarkdownText';
-export { EXPORT_DIR_NAME, EXPORT_FILE_PREFIX, buildExportFileName, writeExportFile } from './ExportFileWriter';
+export { EXPORT_DIR_NAME, buildExportFileName, writeExportFile } from './ExportFileWriter';
+export { EXPORT_FILE_PREFIX, EXPORT_RETENTION, expiredExports } from './ExportRetention';
 export { renderExportDocument } from './render';
 export type { ExportResult } from './ExportService';
 export { ExportService } from './ExportService';
