@@ -7,7 +7,6 @@ import { PlanWeekView } from '../components/PlanWeekView';
 import { PlanMonthView } from '../components/PlanMonthView';
 import { PlanDeadlineCard } from '../components/PlanDeadlineCard';
 import { SimpleLineChart } from '../components/charts/SimpleLineChart';
-import { SimpleBarChart } from '../components/charts/SimpleBarChart';
 import { ChartPoint, ChartSeries } from '../components/charts/ChartModels';
 import { Plan } from '../model/Plan';
 import { PlanNode } from '../model/PlanNode';
@@ -38,6 +37,7 @@ import { PlanDetailParams, PlanEditParams, PlanNodeParams } from '../navigation/
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
 import { notifyHomeRefresh, subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
+import { LinkCompositionCard } from '../views/plan/LinkCompositionCard';
 
 /** Goal detail: deadline, rhythm, week/month views and the node timeline. */
 @ComponentV2
@@ -645,37 +645,10 @@ export struct PlanDetailPage {
             .alignItems(HorizontalAlign.Start)
           }
 
-          SectionCard() {
-            Column({ space: 8 }) {
-              Row() {
-                Text('关联构成')
-                  .fontSize(12)
-                  .fontColor(AppTheme.color.textSecondary)
-                Blank()
-                Text(`共 ${this.totalLinkCount()} 条`)
-                  .fontSize(9)
-                  .fontColor(AppTheme.color.textMuted)
-              }
-              .width('100%')
-
-              if (this.totalLinkCount() === 0) {
-                Text('还没有关联记录；在周节点里挑几条挂上来。')
-                  .fontSize(10)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-              } else {
-                SimpleBarChart({
-                  points: this.linkChartPoints(),
-                  color: 0xFF185FA5,
-                  maxValue: 0,
-                  horizontal: true,
-                  chartHeight: 150
-                })
-              }
-            }
-            .width('100%')
-            .alignItems(HorizontalAlign.Start)
-          }
+          LinkCompositionCard({
+            points: this.linkChartPoints(),
+            total: this.totalLinkCount()
+          })
 
           SectionCard() {
             Column({ space: 6 }) {

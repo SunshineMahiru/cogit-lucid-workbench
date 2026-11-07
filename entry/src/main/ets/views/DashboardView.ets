@@ -9,10 +9,8 @@ import {
   todayLabel
 } from '../model/HomeModel';
 import { HomeDataService } from '../data/HomeDataService';
-import { ModuleCard } from '../components/ModuleCard';
 import { PredictionCard } from '../components/PredictionCard';
 import { ReadingCard } from '../components/ReadingCard';
-import { NoteCard } from '../components/NoteCard';
 import { NoteListItem } from '../note/NoteListItem';
 import { NoteEditParams, NoteListParams, PredictionDetailParams, PredictionListParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
@@ -26,6 +24,8 @@ import { OnboardingStore } from '../settings/OnboardingStore';
 import { PREVIEW_BANNER } from '../preview/PreviewMode';
 import { previewStore } from '../preview/PreviewStore';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
+import { ModuleGridCard } from './dashboard/ModuleGridCard';
+import { RecentNotesCard } from './dashboard/RecentNotesCard';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -290,21 +290,6 @@ export struct DashboardView {
     .justifyContent(FlexAlign.Center)
   }
 
-  @Builder
-  emptyNotesView() {
-    Column({ space: 8 }) {
-      Text('暂无速记')
-        .fontSize(14)
-        .fontColor(AppTheme.color.textSecondary)
-      Text('点击「速记」模块开始记录')
-        .fontSize(12)
-        .fontColor(AppTheme.color.textMuted)
-    }
-    .width('100%')
-    .padding(24)
-    .justifyContent(FlexAlign.Center)
-  }
-
   build() {
     Column() {
       if (this.showTitleBar) {
@@ -500,77 +485,24 @@ export struct DashboardView {
 
               ReviewPromptPanel({ period: ReviewPeriod.WEEK })
 
-              // Module tiles
-              Column({ space: 10 }) {
-                Text('模块入口')
-                  .fontSize(12)
-                  .fontColor(AppTheme.color.textSecondary)
-                  .width('100%')
-                  .textAlign(TextAlign.Start)
-                Grid() {
-                  ForEach(this.moduleItems, (module: HomeModule) => {
-                    GridItem() {
-                      ModuleCard({
-                        icon: module.icon,
-                        title: module.title,
-                        summary: module.summary,
-                        onTap: () => {
-                          this.openModule(module.route);
-                        }
-                      })
-                    }
-                  }, (module: HomeModule) => `${module.route}_${this.dataVersion}`)
+              ModuleGridCard({
+                moduleItems: this.moduleItems,
+                dataVersion: this.dataVersion,
+                onOpen: (route: string) => {
+                  this.openModule(route);
                 }
-                .columnsTemplate('1fr 1fr')
-                .columnsGap(10)
-                .rowsGap(10)
-                .width('100%')
-                .height(266)
-              }
-              .width('100%')
-              .padding(16)
-              .backgroundColor(AppTheme.color.surface)
-              .borderRadius(14)
+              })
 
-              // Recent notes
-              Column({ space: 10 }) {
-                Row() {
-                  Text('最近速记')
-                    .fontSize(14)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor(AppTheme.color.text)
-                  Blank()
-                  Text('全部')
-                    .fontSize(12)
-                    .fontColor(AppTheme.color.textSecondary)
-                    .onClick(() => {
-                      this.openNoteList();
-                    })
+              RecentNotesCard({
+                notes: this.recentNotes,
+                dataVersion: this.dataVersion,
+                onOpenAll: () => {
+                  this.openNoteList();
+                },
+                onNoteTap: () => {
+                  this.openNoteList();
                 }
-                .width('100%')
-
-                if (this.recentNotes.length === 0) {
-                  this.emptyNotesView()
-                } else {
-                  List({ space: 8 }) {
-                    ForEach(this.recentNotes, (note: NoteListItem) => {
-                      ListItem() {
-                        NoteCard({
-                          note: note,
-                          onTap: () => {
-                            this.openNoteList();
-                          }
-                        })
-                      }
-                    }, (note: NoteListItem) => `${note.id}_${this.dataVersion}`)
-                  }
-                  .width('100%')
-                }
-              }
-              .width('100%')
-              .padding(16)
-              .backgroundColor(AppTheme.color.surface)
-              .borderRadius(14)
+              })
 
               // Pending predictions
               Column({ space: 10 }) {
