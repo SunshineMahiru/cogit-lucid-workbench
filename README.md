@@ -329,7 +329,7 @@ To sign locally:
 
 ### Export
 
-Settings writes one Markdown file covering events, decisions, relations, predictions, anchors, status readings, review results, and plans, named like `cogit-export-20261027-0845.md`. `导出并另存为` opens the system save dialog and copies the file to the folder you pick; cancel it and the file stays in `${filesDir}/exports`, where `分享` can still send it out.
+Settings writes one Markdown file covering events, decisions, relations, predictions, anchors, status readings, review results, and plans, named like `cogit-export-20261027-0845.md`. `导出并另存为` opens the system save dialog and copies the file to the folder you pick; cancel it and the file stays in `${filesDir}/exports`, where `分享` can still send it out; only the ten newest exports are kept, and older ones are removed on the next export.
 
 Sealed records are dropped. A plan link that points at a sealed record prints `已封存记录` in place of a title. A plan with an end date gets an extra `结束：` line.
 
@@ -439,7 +439,7 @@ All twelve tables sit in the local `relationalStore`, encrypted as a whole with 
 Settings → `数据管理` → `备份并另存` produces a `.cogitbackup` file carrying a database snapshot, the identity, settings, and background pictures. Install the app on the new phone and pick `恢复备份`; a `pre-restore-*.db` copy is kept before anything is overwritten. The API key does not travel with the backup, so enter it again.
 
 **Where does the exported Markdown go?**
-`导出并另存为` opens the system save dialog, and the file lands in whatever folder you pick. Cancel the dialog and it stays in `${filesDir}/exports`, where `分享` can still send it out.
+`导出并另存为` opens the system save dialog, and the file lands in whatever folder you pick. Cancel the dialog and it stays in `${filesDir}/exports`, where `分享` can still send it out; the folder keeps the ten newest exports.
 
 **The previewer shows an empty home page or a database error.**
 The DevEco previewer does not provide `relationalStore`. When the store cannot be opened, the home page reads the in-memory preview data and marks the counters as demo values; other data-backed pages have their own fallbacks. Use an emulator or a phone to see real records.
