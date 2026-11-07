@@ -19,6 +19,12 @@ export class DbHelper {
   private static store: relationalStore.RdbStore | null = null;
   private static storePromise: Promise<relationalStore.RdbStore> | null = null;
   private static schemaPromise: Promise<relationalStore.RdbStore> | null = null;
+  private static plaintextFallback: boolean = false;
+
+  /** True when the store stayed unencrypted because both rekey attempts failed. */
+  static usesPlaintextFallback(): boolean {
+    return DbHelper.plaintextFallback;
+  }
 
   static async getStore(context: common.Context): Promise<relationalStore.RdbStore> {
     if (DbHelper.store !== null) {
@@ -42,7 +48,11 @@ export class DbHelper {
   private static async ensureEncrypted(store: relationalStore.RdbStore, context: common.Context): Promise<void> {
     const encryptedMarker = `${context.filesDir}${META_ENCRYPTED}`;
     const attemptedMarker = `${context.filesDir}${META_ATTEMPTED}`;
-    if (fileIo.accessSync(encryptedMarker) || fileIo.accessSync(attemptedMarker)) {
+    if (fileIo.accessSync(encryptedMarker)) {
+      return;
+    }
+    if (fileIo.accessSync(attemptedMarker)) {
+      DbHelper.plaintextFallback = true;
       return;
     }
     try {
@@ -53,8 +63,24 @@ export class DbHelper {
         await store.rekeyEx({ encryptionKey: new Uint8Array(0) });
         DbHelper.writeMarker(encryptedMarker);
       } catch (exError) {
+        // The store stays usable but unencrypted; the home page surfaces this state.
+        DbHelper.plaintextFallback = true;
         DbHelper.writeMarker(attemptedMarker);
       }
+    }
+  }
+
+  /** Clears the failure marker so the next launch retries encryption once. */
+  static clearEncryptionFailure(context: common.Context): boolean {
+    const attemptedMarker = `${context.filesDir}${META_ATTEMPTED}`;
+    if (!fileIo.accessSync(attemptedMarker)) {
+      return false;
+    }
+    try {
+      fileIo.unlinkSync(attemptedMarker);
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 
@@ -137,17 +163,18 @@ export class DbHelper {
     for (const sql of TABLE_CREATE_SQLS) {
       await store.executeSql(sql);
     }
-    // Older installs used the reserved word "order"; rename once if it is still present.
+    // Older installs used the reserved word "order"; the rename fails harmlessly once applied.
     try {
       await store.executeSql(`ALTER TABLE anchor RENAME COLUMN "order" TO sort_order`);
     } catch (error) {
     }
-    // "action" is also reserved; older review tables still use it.
+    // "action" is also reserved; a failure here means the column was already renamed.
     try {
       await store.executeSql(`ALTER TABLE review_result RENAME COLUMN action TO next_action`);
     } catch (error) {
     }
-    // Older installs predate security levels on four record types.
+    // Older installs predate security levels on four record types; adding an existing column fails
+    // and is ignored, which keeps this block safe to run on every launch.
     const levelMigrations: string[] = [
       `ALTER TABLE prediction ADD COLUMN level TEXT NOT NULL DEFAULT 'local_only'`,
       `ALTER TABLE anchor ADD COLUMN level TEXT NOT NULL DEFAULT 'local_only'`,
@@ -160,6 +187,7 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Plan context columns arrived later; duplicate-column errors are expected on new installs.
     const planContextMigrations: string[] = [
       `ALTER TABLE review_result ADD COLUMN plan_id TEXT`,
       `ALTER TABLE review_result ADD COLUMN plan_node_id TEXT`,
@@ -171,7 +199,8 @@ export class DbHelper {
       } catch (error) {
       }
     }
-    // Prediction revisions need a stable root so the latest version can be resolved.
+    // Prediction revisions need a stable root so the latest version can be resolved; both the
+    // column and the backfill are skipped when they already ran.
     try {
       await store.executeSql(`ALTER TABLE prediction ADD COLUMN root_id TEXT NOT NULL DEFAULT ''`);
     } catch (error) {
@@ -181,6 +210,7 @@ export class DbHelper {
     } catch (error) {
     }
     await DbHelper.mergeLegacyPredictionRoots(store);
+    // Soft-delete flags follow the same idempotent pattern as the columns above.
     const deleteMigrations: string[] = [
       `ALTER TABLE relation ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,
       `ALTER TABLE status_record ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`

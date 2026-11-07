@@ -18,10 +18,15 @@ import {
   PAGE_BACKGROUND_GROUPS,
   PageBackgroundService
 } from '../settings/PageBackgroundService';
-import { BackupService } from '../settings/BackupService';
+import { BackupService, RestoreOutcome } from '../settings/BackupService';
 import { ROUTES } from '../navigation/Routes';
 import { ExportService, totalExportRecords } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
+import { DbHelper } from '../db/DbHelper';
+import { DebugFaults } from '../app/DebugFaults';
+import BuildProfile from 'BuildProfile';
+import { DebugPanel } from '../components/settings/DebugPanel';
+import { DataManagementCard } from '../components/settings/DataManagementCard';
 import { securityLevelText } from '../note';
 
 interface ModelOption {
@@ -66,6 +71,7 @@ export struct SettingsPage {
   @Local globalApplied: boolean = false;
   @Local dataBusy: boolean = false;
   @Local clearArmed: boolean = false;
+  @Local encryptionFallback: boolean = false;
   @Local backgroundRows: BackgroundRowState[] = initialBackgroundRows();
   private store: SettingsStore | null = null;
   private hostContext: common.Context | null = null;
@@ -85,6 +91,8 @@ export struct SettingsPage {
       return;
     }
     this.hostContext = context;
+    this.encryptionFallback = DbHelper.usesPlaintextFallback() ||
+      DebugFaults.encryptionFallback(context);
     try {
       this.store = await SettingsStore.open(context);
       this.settings = await this.store.load();
@@ -228,13 +236,61 @@ export struct SettingsPage {
     }
     this.dataBusy = true;
     try {
-      const restored = await BackupService.restoreFromUser(this.hostContext);
-      this.showToast(restored ? '已恢复备份，建议重启应用' : '未选择备份文件');
+      const outcome = await BackupService.restoreFromUser(this.hostContext);
+      if (outcome === RestoreOutcome.CANCELLED) {
+        this.showToast('未选择备份文件');
+      } else if (outcome === RestoreOutcome.PARTIAL) {
+        this.showToast('数据库已恢复，身份或设置未完全恢复；建议重启应用后重新设置');
+      } else {
+        this.showToast('已恢复备份，建议重启应用');
+      }
     } catch (error) {
       this.showToast('恢复失败；请确认文件是本应用导出的备份');
     } finally {
       this.dataBusy = false;
     }
+  }
+
+  /** Debug only: makes the next launch report an unencrypted store. */
+  private simulateEncryptionFailure(): void {
+    if (this.hostContext === null) {
+      this.showToast('运行环境未就绪');
+      return;
+    }
+    DebugFaults.enableEncryptionFallback(this.hostContext);
+    this.showToast('已开启加密失败模拟，重启应用后生效');
+  }
+
+  /** Debug only: makes the next restore fail after the database has been replaced. */
+  private simulateRestoreFailure(): void {
+    if (this.hostContext === null) {
+      this.showToast('运行环境未就绪');
+      return;
+    }
+    DebugFaults.enableRestoreFailure(this.hostContext);
+    this.showToast('已开启恢复失败模拟，下次恢复会返回部分成功');
+  }
+
+  private clearDebugFlags(): void {
+    if (this.hostContext === null) {
+      this.showToast('运行环境未就绪');
+      return;
+    }
+    const cleared = DebugFaults.clear(this.hostContext);
+    this.encryptionFallback = DbHelper.usesPlaintextFallback() || DebugFaults.encryptionFallback(this.hostContext);
+    this.showToast(cleared ? '调试标记已清除' : '没有调试标记');
+  }
+
+  /** Clears the failed-encryption marker; the next launch retries the rekey. */
+  private retryEncryption(): void {
+    if (this.hostContext === null) {
+      this.showToast('运行环境未就绪');
+      return;
+    }
+    const clearedFlag = DbHelper.clearEncryptionFailure(this.hostContext);
+    const clearedDebug = DebugFaults.clear(this.hostContext);
+    this.showToast(clearedFlag || clearedDebug ? '已登记重试，重启应用后将再次尝试加密' : '没有需要重试的加密失败记录');
+    this.encryptionFallback = DbHelper.usesPlaintextFallback() || DebugFaults.encryptionFallback(this.hostContext);
   }
 
   /** Re-reads local records so the home header counters reflect the latest data. */
@@ -551,66 +607,39 @@ export struct SettingsPage {
                 .alignItems(HorizontalAlign.Start)
               }
 
-              SectionCard() {
-                Column({ space: 8 }) {
-                  Text('数据管理')
-                    .fontSize(14)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor(AppTheme.color.text)
-                    .width('100%')
-                  Text('备份包含记录、身份、设置与本地图片；恢复需选择 .cogitbackup 文件。')
-                    .fontSize(11)
-                    .lineHeight(17)
-                    .fontColor(AppTheme.color.textSecondary)
-                    .width('100%')
-                  Row({ space: 8 }) {
-                    Text(this.dataBusy ? '处理中…' : '备份并另存')
-                      .fontSize(11)
-                      .fontColor(AppTheme.color.primary)
-                      .padding({ left: 10, right: 10, top: 7, bottom: 7 })
-                      .backgroundColor(AppTheme.color.tint)
-                      .borderRadius(8)
-                      .accessibilityText('备份本地数据并另存')
-                      .onClick(() => {
-                        this.backupData();
-                      })
-                    Text('恢复备份')
-                      .fontSize(11)
-                      .fontColor(AppTheme.color.primary)
-                      .padding({ left: 10, right: 10, top: 7, bottom: 7 })
-                      .backgroundColor(AppTheme.color.tint)
-                      .borderRadius(8)
-                      .accessibilityText('从备份文件恢复数据')
-                      .onClick(() => {
-                        this.restoreData();
-                      })
-                    Text(this.clearArmed ? '确认清空' : '清空全部数据')
-                      .fontSize(11)
-                      .fontColor(AppTheme.color.danger)
-                      .padding({ left: 8, right: 8, top: 7, bottom: 7 })
-                      .accessibilityText(this.clearArmed ? '确认清空全部数据' : '清空全部数据，需要二次确认')
-                      .onClick(() => {
-                        this.clearData();
-                      })
-                  }
-                  .width('100%')
-
-                  Row({ space: 8 }) {
-                    Text('刷新首页数据')
-                      .fontSize(11)
-                      .fontColor(AppTheme.color.primary)
-                      .padding({ left: 10, right: 10, top: 7, bottom: 7 })
-                      .backgroundColor(AppTheme.color.tint)
-                      .borderRadius(8)
-                      .accessibilityText('重新读取本地记录并刷新首页摘要')
-                      .onClick(() => {
-                        this.refreshHome();
-                      })
-                  }
-                  .width('100%')
+              DataManagementCard({
+                dataBusy: this.dataBusy,
+                clearArmed: this.clearArmed,
+                encryptionFallback: this.encryptionFallback,
+                onBackup: () => {
+                  this.backupData();
+                },
+                onRestore: () => {
+                  this.restoreData();
+                },
+                onClear: () => {
+                  this.clearData();
+                },
+                onRetryEncryption: () => {
+                  this.retryEncryption();
+                },
+                onRefreshHome: () => {
+                  this.refreshHome();
                 }
-                .width('100%')
-                .alignItems(HorizontalAlign.Start)
+              })
+
+              if (BuildProfile.DEBUG) {
+                DebugPanel({
+                  onSimulateEncryption: () => {
+                    this.simulateEncryptionFailure();
+                  },
+                  onSimulateRestore: () => {
+                    this.simulateRestoreFailure();
+                  },
+                  onClearFlags: () => {
+                    this.clearDebugFlags();
+                  }
+                })
               }
 
               SectionCard() {

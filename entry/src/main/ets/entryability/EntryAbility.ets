@@ -5,6 +5,8 @@ import { DbHelper } from '../db/DbHelper';
 import { appHealth } from '../app/AppHealth';
 import { applyTheme } from '../theme/AppTheme';
 import { notifyPageBackgroundChanged } from '../settings/PageBackgroundBus';
+import { DebugFaults } from '../app/DebugFaults';
+import BuildProfile from 'BuildProfile';
 
 const DOMAIN = 0x0000;
 const TAG = 'CogitLucid';
@@ -13,6 +15,7 @@ export default class EntryAbility extends UIAbility {
   private mainWindow: window.Window | null = null;
 
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    DebugFaults.setDebug(BuildProfile.DEBUG);
     hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onCreate');
     DbHelper.init(this.context).then(() => {
       appHealth.markReady();

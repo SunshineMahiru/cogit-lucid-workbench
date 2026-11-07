@@ -9,6 +9,8 @@ import { HomePulse, HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 import { appHealth, isDatabaseUnsupported } from '../app/AppHealth';
 import { consumeJsonIssues } from '../db/SafeJson';
+import { DbHelper } from '../db/DbHelper';
+import { DebugFaults } from '../app/DebugFaults';
 import { previewStore } from '../preview/PreviewStore';
 import { ROUTES } from '../navigation/Routes';
 
@@ -24,6 +26,7 @@ export struct HomePage {
   @Local loadFailed: boolean = false;
   @Local isPreview: boolean = false;
   @Local dataNotice: string = '';
+  @Local encryptionNotice: string = '';
   @Local dbBlocked: boolean = false;
   @Local dbMessage: string = '';
   private service: HomeDataService | null = null;
@@ -69,6 +72,8 @@ export struct HomePage {
       this.summary = summary;
       this.pulse = pulse;
       this.dataNotice = consumeJsonIssues() > 0 ? '部分记录格式异常，已跳过' : '';
+      this.encryptionNotice = (DbHelper.usesPlaintextFallback() || DebugFaults.encryptionFallback(context)) ?
+        '数据库未能加密，记录以明文保存在本机；建议更新系统或重装应用' : '';
       this.loadFailed = false;
       this.isPreview = false;
       this.dbBlocked = false;
@@ -156,6 +161,13 @@ export struct HomePage {
         Text('演示数据 · 数据库不可用')
           .fontSize(10)
           .fontColor(AppTheme.color.textMuted)
+          .width('100%')
+          .textAlign(TextAlign.Center)
+          .padding({ top: 6, bottom: 2 })
+      } else if (this.encryptionNotice.length > 0) {
+        Text(this.encryptionNotice)
+          .fontSize(10)
+          .fontColor(AppTheme.color.danger)
           .width('100%')
           .textAlign(TextAlign.Center)
           .padding({ top: 6, bottom: 2 })

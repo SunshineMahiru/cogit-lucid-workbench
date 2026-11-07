@@ -5,6 +5,7 @@ import { util } from '@kit.ArkTS';
 import { DbHelper } from '../db/DbHelper';
 import { DB_TABLES_CHILD_FIRST } from '../db/DbConstants';
 import { copyBetween } from '../app/DocumentTransfer';
+import { DebugFaults } from '../app/DebugFaults';
 import { SETTINGS_STORE_NAME } from './SettingsKeys';
 import { SecretStore } from './SecretStore';
 import { SettingsStore } from './SettingsStore';
@@ -44,6 +45,24 @@ interface BackupBundle {
   alphas: BundleAlpha[];
   globalAlpha: number;
   opacity: number;
+}
+
+interface StagedBackground {
+  key: string;
+  path: string;
+}
+
+/** Side data decoded into a staging folder before anything live is touched. */
+interface StagedSideData {
+  avatarPath: string;
+  backgrounds: StagedBackground[];
+}
+
+/** Result of one restore attempt; PARTIAL means the database landed but side data did not. */
+export enum RestoreOutcome {
+  CANCELLED = 'cancelled',
+  RESTORED = 'restored',
+  PARTIAL = 'partial'
 }
 
 /** Portable backup: one JSON file carrying the database, identity, settings and pictures. */
@@ -130,10 +149,10 @@ export class BackupService {
     };
   }
 
-  static async restoreFromUser(context: common.Context): Promise<boolean> {
+  static async restoreFromUser(context: common.Context): Promise<RestoreOutcome> {
     const uris = await new picker.DocumentViewPicker(context).select();
     if (uris.length === 0) {
-      return false;
+      return RestoreOutcome.CANCELLED;
     }
     const directory = `${context.filesDir}/backups`;
     if (!fileIo.accessSync(directory)) {
@@ -153,35 +172,75 @@ export class BackupService {
       if (!(await BackupService.isDatabaseFile(context, databasePath))) {
         throw new Error('备份内的数据库无效');
       }
+      // Decode every picture first: a bad payload fails here, before the live database moves.
+      const staged = await BackupService.stageSideData(context, bundle, stamp);
       const store = await DbHelper.init(context);
       await store.backup(`${directory}/pre-restore-${stamp}.db`);
       await store.restore(databasePath);
-      await BackupService.restoreProfile(context, bundle.profile, stamp);
-      await SettingsStore.savePreferencesOnly(context, bundle.settings);
-      await BackupService.restoreBackgrounds(context, bundle, stamp);
+      let outcome: RestoreOutcome = RestoreOutcome.RESTORED;
+      try {
+        await BackupService.commitProfile(context, bundle.profile, staged.avatarPath, stamp);
+        await SettingsStore.savePreferencesOnly(context, bundle.settings);
+        await BackupService.commitBackgrounds(context, bundle, staged, stamp);
+      } catch (sideError) {
+        outcome = RestoreOutcome.PARTIAL;
+      }
       notifyProfileRefresh();
       notifyPageBackgroundChanged();
       notifyHomeRefresh();
-      return true;
+      return outcome;
     } finally {
       try {
         fileIo.unlinkSync(bundlePath);
         fileIo.unlinkSync(databasePath);
       } catch (error) {
       }
+      const staging = `${context.filesDir}/restore-staging-${stamp}`;
+      BackupService.removeDirectory(staging);
+      try {
+        fileIo.rmdirSync(staging);
+      } catch (error) {
+      }
     }
   }
 
-  private static async restoreProfile(context: common.Context, profile: BundleProfile,
-    stamp: number): Promise<void> {
+  /** Decodes avatar and backgrounds into a staging folder; throws before any live data changes. */
+  private static async stageSideData(context: common.Context, bundle: BackupBundle,
+    stamp: number): Promise<StagedSideData> {
+    const staging = `${context.filesDir}/restore-staging-${stamp}`;
+    if (!fileIo.accessSync(staging)) {
+      fileIo.mkdirSync(staging, true);
+    }
+    const staged: StagedSideData = { avatarPath: '', backgrounds: [] };
+    if (typeof bundle.profile.avatarData === 'string' && bundle.profile.avatarData.length > 0) {
+      const avatarPath = `${staging}/avatar.png`;
+      await BackupService.writeBytes(avatarPath, BackupService.decode(bundle.profile.avatarData));
+      staged.avatarPath = avatarPath;
+    }
+    let index = 0;
+    for (const item of bundle.backgrounds) {
+      const path = `${staging}/background-${index}-${item.key}.png`;
+      await BackupService.writeBytes(path, BackupService.decode(item.data));
+      staged.backgrounds.push({ key: item.key, path: path });
+      index += 1;
+    }
+    return staged;
+  }
+
+  /** Moves the staged avatar into the profile folder and saves the identity fields. */
+  private static async commitProfile(context: common.Context, profile: BundleProfile,
+    stagedAvatar: string, stamp: number): Promise<void> {
+    if (DebugFaults.restoreFailure(context)) {
+      throw new Error('debug restore failure');
+    }
     let avatarPath = '';
-    if (typeof profile.avatarData === 'string' && profile.avatarData.length > 0) {
+    if (stagedAvatar.length > 0) {
       const directory = `${context.filesDir}/profile`;
       if (!fileIo.accessSync(directory)) {
         fileIo.mkdirSync(directory, true);
       }
       avatarPath = `${directory}/avatar-restored-${stamp}.png`;
-      await BackupService.writeBytes(avatarPath, BackupService.decode(profile.avatarData));
+      fileIo.renameSync(stagedAvatar, avatarPath);
     }
     const store = await ProfileStore.open(context);
     const restored: Profile = {
@@ -194,16 +253,17 @@ export class BackupService {
     profileCache.set(restored);
   }
 
-  private static async restoreBackgrounds(context: common.Context, bundle: BackupBundle,
-    stamp: number): Promise<void> {
+  /** Moves staged background files into place and writes their keys and opacities. */
+  private static async commitBackgrounds(context: common.Context, bundle: BackupBundle,
+    staged: StagedSideData, stamp: number): Promise<void> {
     const directory = `${context.filesDir}/page-backgrounds`;
     if (!fileIo.accessSync(directory)) {
       fileIo.mkdirSync(directory, true);
     }
     const store = await PageBackgroundStore.open(context);
-    for (const item of bundle.backgrounds) {
+    for (const item of staged.backgrounds) {
       const path = `${directory}/restored-${item.key}-${stamp}.png`;
-      await BackupService.writeBytes(path, BackupService.decode(item.data));
+      fileIo.renameSync(item.path, path);
       await store.set(item.key, path);
     }
     for (const item of bundle.alphas) {
