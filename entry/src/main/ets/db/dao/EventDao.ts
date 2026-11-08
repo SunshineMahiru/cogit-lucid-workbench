@@ -3,7 +3,7 @@ import { Event } from '../../model/Event';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, EVENT_COLS } from '../DbConstants';
 import { parseStringArray } from '../SafeJson';
-import { queryCount } from '../QuerySupport';
+import { queryCount, queryRows } from '../QuerySupport';
 
 /** Data access for the event table. */
 export class EventDao {
@@ -113,16 +113,8 @@ export class EventDao {
   }
 
   private async queryWith(predicates: relationalStore.RdbPredicates): Promise<Event[]> {
-    const resultSet = await this.store.query(predicates);
-    try {
-      const events: Event[] = [];
-      while (resultSet.goToNextRow()) {
-        events.push(this.mapRow(resultSet));
-      }
-      return events;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<Event>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapRow(resultSet));
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): Event {

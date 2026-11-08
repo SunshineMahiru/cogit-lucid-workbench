@@ -15,6 +15,7 @@ import {
   PLAN_ITEM_COLS,
   PLAN_LINK_COLS
 } from '../DbConstants';
+import { queryRows } from '../QuerySupport';
 
 /** Data access for plans, projects, seven-day nodes, checklist items and record links. */
 export class PlanDao {
@@ -73,16 +74,8 @@ export class PlanDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN);
     predicates.orderByDesc(PLAN_COLS.IS_PRIMARY);
     predicates.orderByDesc(PLAN_COLS.CREATED_AT);
-    const resultSet = await this.store.query(predicates);
-    try {
-      const rows: Plan[] = [];
-      while (resultSet.goToNextRow()) {
-        rows.push(this.mapPlan(resultSet));
-      }
-      return rows;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<Plan>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapPlan(resultSet));
   }
 
   async findPlan(id: string): Promise<Plan | null> {
@@ -123,16 +116,8 @@ export class PlanDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_PROJECT);
     predicates.equalTo(PLAN_PROJECT_COLS.PLAN_ID, planId);
     predicates.orderByAsc(PLAN_PROJECT_COLS.SORT_ORDER);
-    const resultSet = await this.store.query(predicates);
-    try {
-      const rows: PlanProject[] = [];
-      while (resultSet.goToNextRow()) {
-        rows.push(this.mapProject(resultSet));
-      }
-      return rows;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<PlanProject>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapProject(resultSet));
   }
 
   async renameProject(id: string, name: string): Promise<number> {
@@ -179,16 +164,8 @@ export class PlanDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_NODE);
     predicates.equalTo(PLAN_NODE_COLS.PLAN_ID, planId);
     predicates.orderByAsc(PLAN_NODE_COLS.WEEK_INDEX);
-    const resultSet = await this.store.query(predicates);
-    try {
-      const rows: PlanNode[] = [];
-      while (resultSet.goToNextRow()) {
-        rows.push(this.mapNode(resultSet));
-      }
-      return rows;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<PlanNode>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapNode(resultSet));
   }
 
   async findNode(id: string): Promise<PlanNode | null> {
@@ -255,16 +232,8 @@ export class PlanDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_ITEM);
     predicates.equalTo(PLAN_ITEM_COLS.NODE_ID, nodeId);
     predicates.orderByAsc(PLAN_ITEM_COLS.SORT_ORDER);
-    const resultSet = await this.store.query(predicates);
-    try {
-      const rows: PlanItem[] = [];
-      while (resultSet.goToNextRow()) {
-        rows.push(this.mapItem(resultSet));
-      }
-      return rows;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<PlanItem>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapItem(resultSet));
   }
 
   async setItemDone(id: string, done: boolean): Promise<number> {
@@ -297,48 +266,24 @@ export class PlanDao {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
     predicates.equalTo(PLAN_LINK_COLS.NODE_ID, nodeId);
     predicates.orderByDesc(PLAN_LINK_COLS.CREATED_AT);
-    const resultSet = await this.store.query(predicates);
-    try {
-      const rows: PlanLink[] = [];
-      while (resultSet.goToNextRow()) {
-        rows.push(this.mapLink(resultSet));
-      }
-      return rows;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<PlanLink>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapLink(resultSet));
   }
 
   async queryLinksByPlan(planId: string): Promise<PlanLink[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
     predicates.equalTo(PLAN_LINK_COLS.PLAN_ID, planId);
     predicates.orderByDesc(PLAN_LINK_COLS.CREATED_AT);
-    const resultSet = await this.store.query(predicates);
-    try {
-      const rows: PlanLink[] = [];
-      while (resultSet.goToNextRow()) {
-        rows.push(this.mapLink(resultSet));
-      }
-      return rows;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<PlanLink>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapLink(resultSet));
   }
 
   async queryLinksByTarget(module: string, targetId: string): Promise<PlanLink[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
     predicates.equalTo(PLAN_LINK_COLS.MODULE, module);
     predicates.equalTo(PLAN_LINK_COLS.TARGET_ID, targetId);
-    const resultSet = await this.store.query(predicates);
-    try {
-      const rows: PlanLink[] = [];
-      while (resultSet.goToNextRow()) {
-        rows.push(this.mapLink(resultSet));
-      }
-      return rows;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<PlanLink>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapLink(resultSet));
   }
 
   /** Replaces every link that points at one record inside a transaction, so retries cannot duplicate rows. */

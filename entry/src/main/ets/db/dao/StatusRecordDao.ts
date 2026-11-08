@@ -2,6 +2,7 @@ import { relationalStore } from '@kit.ArkData';
 import { StatusRecord } from '../../model/StatusRecord';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, STATUS_RECORD_COLS } from '../DbConstants';
+import { queryRows } from '../QuerySupport';
 
 /** Data access for the status record table. */
 export class StatusRecordDao {
@@ -45,16 +46,8 @@ export class StatusRecordDao {
   async queryAll(): Promise<StatusRecord[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
     predicates.equalTo(STATUS_RECORD_COLS.DELETED, 0);
-    const resultSet = await this.store.query(predicates);
-    try {
-      const records: StatusRecord[] = [];
-      while (resultSet.goToNextRow()) {
-        records.push(this.mapRow(resultSet));
-      }
-      return records;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<StatusRecord>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapRow(resultSet));
   }
 
   /** Returns the status record for one date, or null when absent. */
@@ -77,16 +70,8 @@ export class StatusRecordDao {
   async queryRecent(limit: number): Promise<StatusRecord[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
     predicates.equalTo(STATUS_RECORD_COLS.DELETED, 0).orderByDesc(STATUS_RECORD_COLS.DATE).limitAs(limit);
-    const resultSet = await this.store.query(predicates);
-    try {
-      const records: StatusRecord[] = [];
-      while (resultSet.goToNextRow()) {
-        records.push(this.mapRow(resultSet));
-      }
-      return records;
-    } finally {
-      resultSet.close();
-    }
+    return queryRows<StatusRecord>(this.store, predicates,
+      (resultSet: relationalStore.ResultSet) => this.mapRow(resultSet));
   }
 
   /** Marks a status record as deleted without removing its history. */
