@@ -67,7 +67,7 @@ export class EventDao {
   async countVisibleOn(date: string): Promise<number> {
     return queryCount(this.store,
       `SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed' ` +
-      `AND date(timestamp / 1000, 'unixepoch', 'localtime') = '${date}'`);
+      `AND date(timestamp / 1000, 'unixepoch', 'localtime') = ?`, [date]);
   }
 
   /** Returns one event by id, or null when it does not exist. */
