@@ -1,6 +1,6 @@
 import { AbilityConstant, Configuration, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { window } from '@kit.ArkUI';
+import { KeyboardAvoidMode, window } from '@kit.ArkUI';
 import { DbHelper } from '../db/DbHelper';
 import { appHealth } from '../app/AppHealth';
 import { applyTheme } from '../theme/AppTheme';
@@ -65,6 +65,8 @@ export default class EntryAbility extends UIAbility {
       // The page scrim owns the surface colour, so the window itself stays clear and
       // a translucent page can show what sits behind the application window.
       mainWindow.setWindowBackgroundColor('#00000000');
+      // Shrink the page instead of shifting it, so fixed bottom actions stay above the keyboard.
+      mainWindow.getUIContext().setKeyboardAvoidMode(KeyboardAvoidMode.RESIZE);
       this.applySystemBar(this.context.config.colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
     }).catch((error: Error) => {
       hilog.error(DOMAIN, TAG, 'setWindowBackgroundColor failed: %{private}s', error.message);
