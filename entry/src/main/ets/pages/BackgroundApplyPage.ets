@@ -338,7 +338,7 @@ export struct BackgroundApplyPage {
               SectionCard() {
                 Column({ space: 10 }) {
                   Text('待应用的图片')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
@@ -356,10 +356,10 @@ export struct BackgroundApplyPage {
                   } else {
                     Column() {
                       Text('还没有可应用的图片')
-                        .fontSize(12)
+                        .fontSize(AppTheme.font.bodyStrong)
                         .fontColor(AppTheme.color.textSecondary)
                       Text('从相册、相机或文件选一张，再决定用在哪几个页面')
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.textMuted)
                         .margin({ top: 4 })
                     }
@@ -371,7 +371,7 @@ export struct BackgroundApplyPage {
                   }
                   Row({ space: 8 }) {
                     Text(this.busyKey === 'pick' ? '读取中…' : '重新选择图片')
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.primary)
                       .padding({ left: 12, right: 12, top: 7, bottom: 7 })
                       .backgroundColor(AppTheme.color.tint)
@@ -382,7 +382,7 @@ export struct BackgroundApplyPage {
                       })
                     Blank()
                     Text(`覆盖 ${this.appliedCount()} 个页面`)
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textMuted)
                   }
                   .width('100%')
@@ -394,18 +394,18 @@ export struct BackgroundApplyPage {
               SectionCard() {
                 Column({ space: 8 }) {
                   Text('全部页面（默认）')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
                   Text('设为默认后，没有单独设置的模块都跟这张图；以后新增的模块也自动继承。')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Row({ space: 8 }) {
                     Text(this.globalApplied ? '已设置' : '未设置')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(this.globalApplied ? AppTheme.color.success : AppTheme.color.textMuted)
                       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                       .backgroundColor(this.globalApplied ? AppTheme.color.successSurface : AppTheme.color.surfaceAlt)
@@ -413,7 +413,7 @@ export struct BackgroundApplyPage {
                     Blank()
                     if (this.globalApplied) {
                       Text('清除')
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.danger)
                         .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                         .accessibilityText('清除全局默认背景')
@@ -422,7 +422,7 @@ export struct BackgroundApplyPage {
                         })
                     }
                     Text(this.busyKey === 'global' ? '设置中…' : '设为默认')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(Color.White)
                       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
                       .backgroundColor(this.pendingPath.length > 0 ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
@@ -441,19 +441,19 @@ export struct BackgroundApplyPage {
               SectionCard() {
                 Column({ space: 10 }) {
                   Text('应用到哪些页面')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
                   Text('点右侧按钮把这张图设为该模块所有页面的背景；同一模块内共享一张图。')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   ForEach(this.states, (state: BackgroundGroupState) => {
                     Row({ space: 8 }) {
                       Text(this.isSelected(state.key) ? '✓' : '')
-                        .fontSize(12)
+                        .fontSize(AppTheme.font.bodyStrong)
                         .fontColor(Color.White)
                         .width(22)
                         .height(22)
@@ -469,10 +469,10 @@ export struct BackgroundApplyPage {
                           this.toggleSelected(state.key);
                         })
                       Text(state.label)
-                        .fontSize(13)
+                        .fontSize(AppTheme.font.bodyStrong)
                         .fontColor(AppTheme.color.text)
                       Text(state.own ? '单独设置' : (state.following ? '跟随全局' : '未应用'))
-                        .fontSize(10)
+                        .fontSize(AppTheme.font.caption)
                         .fontColor(state.own ? AppTheme.color.success :
                           (state.following ? AppTheme.color.primary : AppTheme.color.textMuted))
                         .padding({ left: 6, right: 6, top: 2, bottom: 2 })
@@ -482,7 +482,7 @@ export struct BackgroundApplyPage {
                       Blank()
                       if (state.own) {
                         Text('清除')
-                          .fontSize(11)
+                          .fontSize(AppTheme.font.body)
                           .fontColor(AppTheme.color.danger)
                           .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                           .accessibilityText(`清除${state.label}的页面背景`)
@@ -492,7 +492,7 @@ export struct BackgroundApplyPage {
                       }
                       Text(this.busyKey === state.key ? '处理中…' :
                         (this.pendingPath.length > 0 ? '应用' : '选图'))
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(Color.White)
                         .padding({ left: 10, right: 10, top: 5, bottom: 5 })
                         .backgroundColor(this.pendingPath.length > 0 ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
@@ -512,7 +512,7 @@ export struct BackgroundApplyPage {
 
                   Row({ space: 8 }) {
                     Text(this.busyKey === 'selected' ? '应用中…' : `应用到已选（${this.selectedKeys.length}）`)
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(Color.White)
                       .textAlign(TextAlign.Center)
                       .layoutWeight(1)
@@ -525,7 +525,7 @@ export struct BackgroundApplyPage {
                         this.applyToSelected();
                       })
                     Text(this.busyKey === 'all' ? '应用中…' : '全部应用')
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.primary)
                       .textAlign(TextAlign.Center)
                       .layoutWeight(1)
@@ -547,20 +547,20 @@ export struct BackgroundApplyPage {
               SectionCard() {
                 Column({ space: 8 }) {
                   Text('页面透明度')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
                   Text(this.selectedKeys.length > 0 ?
                     `作用于已选的 ${this.selectedKeys.length} 个页面；取消勾选后改的是全局值。` :
                     '作用于全部页面；勾选上面的页面可以对单个模块单独设置。')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Row({ space: 8 }) {
                     Text('不透明')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textMuted)
                     Slider({
                       value: (1 - this.surfaceAlpha) * 100,
@@ -574,7 +574,7 @@ export struct BackgroundApplyPage {
                         this.updateSurfaceAlpha(value);
                       })
                     Text(`${Math.round((1 - this.surfaceAlpha) * 100)}%`)
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                       .width(36)
                       .textAlign(TextAlign.End)
@@ -582,11 +582,11 @@ export struct BackgroundApplyPage {
                   .width('100%')
                   Row() {
                     Text('没有图片也生效，透出页面后方的底色或壁纸。')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                       .layoutWeight(1)
                     Text('恢复跟随')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.primary)
                       .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                       .accessibilityText('把页面透明度恢复为跟随全局或不透明')
@@ -604,13 +604,13 @@ export struct BackgroundApplyPage {
               SectionCard() {
                 Column({ space: 8 }) {
                   Text('背景浓淡')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
                   Row({ space: 8 }) {
                     Text('淡')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textMuted)
                     Slider({
                       value: this.imageOpacity * 100,
@@ -624,14 +624,14 @@ export struct BackgroundApplyPage {
                         this.updateOpacity(value);
                       })
                     Text(`${Math.round(this.imageOpacity * 100)}%`)
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                       .width(36)
                       .textAlign(TextAlign.End)
                   }
                   .width('100%')
                   Text('数值越高图片越明显，正文可读性会相应下降。')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                 }
@@ -643,7 +643,7 @@ export struct BackgroundApplyPage {
                 Column({ space: 6 }) {
                   Row({ space: 8 }) {
                     Text('清除全部背景图片')
-                      .fontSize(13)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.danger)
                       .accessibilityText('清除全部页面的背景图片')
                       .onClick(() => {
@@ -651,7 +651,7 @@ export struct BackgroundApplyPage {
                       })
                     Blank()
                     Text('恢复默认纯色底')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textMuted)
                   }
                   .width('100%')
@@ -667,7 +667,7 @@ export struct BackgroundApplyPage {
 
           Column() {
             Text('完成')
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .fontWeight(FontWeight.Medium)
               .fontColor(Color.White)
               .width('100%')

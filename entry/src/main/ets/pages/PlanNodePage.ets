@@ -295,7 +295,7 @@ export struct PlanNodePage {
   itemRow(item: PlanItem) {
     Row({ space: 8 }) {
       Text(item.done ? '✓' : '○')
-        .fontSize(16)
+        .fontSize(AppTheme.font.title)
         .fontColor(item.done ? AppTheme.color.success : AppTheme.color.textMuted)
         .width(26)
         .textAlign(TextAlign.Center)
@@ -304,13 +304,13 @@ export struct PlanNodePage {
         })
       Column({ space: 2 }) {
         Text(item.text)
-          .fontSize(13)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(item.done ? AppTheme.color.textMuted : AppTheme.color.text)
           .decoration({ type: item.done ? TextDecorationType.LineThrough : TextDecorationType.None })
           .width('100%')
         if (item.carriedFrom !== undefined) {
           Text('上周延续')
-            .fontSize(9)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.warning)
             .width('100%')
         }
@@ -318,7 +318,7 @@ export struct PlanNodePage {
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
       Text('删除')
-        .fontSize(10)
+        .fontSize(AppTheme.font.caption)
         .fontColor(AppTheme.color.textMuted)
         .onClick(() => {
           this.remove(item);
@@ -360,12 +360,12 @@ export struct PlanNodePage {
             Column({ space: 5 }) {
               Row() {
                 Text(`第 ${this.node.weekIndex} 周`)
-                  .fontSize(20)
+                  .fontSize(AppTheme.font.headline)
                   .fontWeight(FontWeight.Bold)
                   .fontColor(AppTheme.color.text)
                   .layoutWeight(1)
                 Text(this.node.status === PlanNodeStatus.OPEN ? '进行中' : '已结束')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(this.node.status === PlanNodeStatus.OPEN ? AppTheme.color.success : AppTheme.color.textMuted)
                   .padding({ left: 7, right: 7, top: 2, bottom: 2 })
                   .backgroundColor(this.node.status === PlanNodeStatus.OPEN ? AppTheme.color.successSurface : AppTheme.color.chip)
@@ -373,25 +373,25 @@ export struct PlanNodePage {
               }
               .width('100%')
               Text(`${this.node.startDate} 至 ${this.node.endDate}`)
-                .fontSize(10)
+                .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textMuted)
                 .width('100%')
               if (this.plan !== null) {
                 Text(this.plan.title)
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
               }
               if (this.node.status === PlanNodeStatus.OPEN && this.projects.length > 0) {
                 Text('所属项目')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                   .padding({ top: 2 })
                 Scroll() {
                   Row({ space: 6 }) {
                     Text('不分组')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(this.selectedProjectId.length === 0 ? Color.White : AppTheme.color.textSecondary)
                       .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                       .backgroundColor(this.selectedProjectId.length === 0 ? AppTheme.color.primary : AppTheme.color.chip)
@@ -401,7 +401,7 @@ export struct PlanNodePage {
                       })
                     ForEach(this.projects, (project: PlanProject) => {
                       Text(project.name)
-                        .fontSize(10)
+                        .fontSize(AppTheme.font.caption)
                         .fontColor(this.selectedProjectId === project.id ? Color.White : AppTheme.color.textSecondary)
                         .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                         .backgroundColor(this.selectedProjectId === project.id ? AppTheme.color.primary : AppTheme.color.chip)
@@ -426,11 +426,11 @@ export struct PlanNodePage {
             Column({ space: 8 }) {
               Row() {
                 Text('本周剩余')
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondary)
                 Blank()
                 Text(`${this.remainingDays().left} 天 / ${this.remainingDays().total} 天`)
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(this.remainingDays().left <= 1 ? AppTheme.color.warning : AppTheme.color.text)
               }
               .width('100%')
@@ -454,12 +454,12 @@ export struct PlanNodePage {
                   .width('100%')
                   .valueColors([0xFF2F7D4F, 0xFFE0A85C, 0xFFB9C6D2])
                 Text(`完成 ${this.progressRow()!.done} · 延续 ${this.progressRow()!.openCarried} · 新加 ${this.progressRow()!.openNew}`)
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               } else {
                 Text('清单为空，还没有可统计的完成度。')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               }
@@ -471,13 +471,13 @@ export struct PlanNodePage {
           SectionCard() {
             Column({ space: 4 }) {
               Text('本周清单')
-                .fontSize(13)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontWeight(FontWeight.Medium)
                 .fontColor(AppTheme.color.text)
                 .width('100%')
               if (this.items.length === 0) {
                 Text('还没有清单项，先加一条')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                   .padding({ top: 6, bottom: 6 })
@@ -495,13 +495,13 @@ export struct PlanNodePage {
             Column({ space: 5 }) {
               Row({ space: 8 }) {
                 Text('关联记录')
-                  .fontSize(13)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(AppTheme.color.text)
                   .layoutWeight(1)
                 Text('选择记录')
                   .id('plan_link_open')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.primary)
                   .onClick(() => {
                     this.openLinkPicker();
@@ -510,13 +510,13 @@ export struct PlanNodePage {
               .width('100%')
               if (this.links.length === 0) {
                 Text('还没有关联速记、预测、复盘、锚点、关系或状态')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               } else {
                 ForEach(this.links, (link: PlanLink) => {
                   Text(`${planLinkModuleLabel(link.module)} · ${link.label}`)
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.primary)
                     .width('100%')
                     .maxLines(1)
@@ -544,7 +544,7 @@ export struct PlanNodePage {
                   })
                 Text('添加')
                   .id('plan_item_add')
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.primary)
                   .onClick(() => {
                     this.addItem();
@@ -557,7 +557,7 @@ export struct PlanNodePage {
           if (this.node.status === PlanNodeStatus.OPEN) {
             Text(this.isSaving ? '处理中…' : '结束本周，未完成带入下周')
               .id('plan_node_close')
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)
@@ -569,14 +569,14 @@ export struct PlanNodePage {
               })
           } else {
             Text(this.isPreview ? '本周已结束' : '本周已结束，清单已写入周复盘草稿')
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
               .textAlign(TextAlign.Center)
               .padding({ top: 10, bottom: 6 })
             Text('去复盘')
               .id('plan_node_review')
-              .fontSize(13)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.primary)
               .width('100%')
               .textAlign(TextAlign.Center)

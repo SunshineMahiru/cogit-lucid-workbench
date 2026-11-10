@@ -351,7 +351,7 @@ export struct SettingsPage {
   @Builder
   providerChip(label: string, provider: LlmProvider) {
     Text(label)
-      .fontSize(12)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.settings.llmProvider === provider ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.settings.llmProvider === provider ? AppTheme.color.primary : AppTheme.color.chip)
@@ -364,7 +364,7 @@ export struct SettingsPage {
   @Builder
   modelChip(option: ModelOption) {
     Text(option.label)
-      .fontSize(12)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.settings.llmModel === option.id ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.settings.llmModel === option.id ? AppTheme.color.primary : AppTheme.color.chip)
@@ -377,7 +377,7 @@ export struct SettingsPage {
   @Builder
   levelChip(level: SecurityLevel) {
     Text(securityLevelText(level))
-      .fontSize(12)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.settings.defaultLevel === level ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.settings.defaultLevel === level ? AppTheme.color.primary : AppTheme.color.chip)
@@ -427,11 +427,11 @@ export struct SettingsPage {
                   Row() {
                     Column({ space: 2 }) {
                       Text('复盘 Agent 模式')
-                        .fontSize(14)
+                        .fontSize(AppTheme.font.subtitle)
                         .fontWeight(FontWeight.Medium)
                         .fontColor(AppTheme.color.text)
                       Text('模板离线可用；本地模拟走 mock-server；模型端点走 OpenAI 兼容接口')
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.textSecondary)
                     }
                     .layoutWeight(1)
@@ -447,7 +447,7 @@ export struct SettingsPage {
 
                   if (this.settings.llmProvider !== 'template') {
                     Text('模型')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                       .width('100%')
                     Flex({ wrap: FlexWrap.Wrap }) {
@@ -460,11 +460,11 @@ export struct SettingsPage {
 
                     Row() {
                       Text('月预算')
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.textSecondary)
                       Blank()
                       Text(`¥${this.settings.llmMonthlyBudget}`)
-                        .fontSize(12)
+                        .fontSize(AppTheme.font.bodyStrong)
                         .fontColor(AppTheme.color.primary)
                     }
                     .width('100%')
@@ -482,19 +482,19 @@ export struct SettingsPage {
                       })
 
                     Text('上限 500 元；0 表示不进行付费调用；模型调用按字符估算并记账')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
 
                     Text(`本月已记账 ¥${this.spentYuan.toFixed(2)} / 预算 ¥${this.settings.llmMonthlyBudget}`)
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
 
                   if (this.settings.llmProvider === 'model') {
                     Text('接口地址')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                       .width('100%')
                     TextInput({ text: this.settings.llmBaseUrl, placeholder: 'http://localhost:4523/v1' })
@@ -503,13 +503,13 @@ export struct SettingsPage {
                         this.withBaseUrl(value);
                       })
                     Text('真机请填写宿主机局域网地址；Mock 提示与模型请求共用此主机。')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .lineHeight(16)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
 
                     Text('API Key（可空，仅存本机）')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                       .width('100%')
                     TextInput({ text: this.settings.llmApiKey, placeholder: 'sk-...' })
@@ -520,14 +520,14 @@ export struct SettingsPage {
                       })
 
                     Text('开启模型模式后，事实、解释与锚点会发往该地址；Key 只保存在本机，不进导出。')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .lineHeight(16)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
 
                   Text('小艺接入需要 HarmonyOS 7 与已发布智能体，当前 SDK 不提供，暂不开放。')
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .lineHeight(16)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
@@ -539,12 +539,12 @@ export struct SettingsPage {
               SectionCard() {
                 Column({ space: 10 }) {
                   Text('新速记默认密级')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
                   Text('仅影响新建记录；已有记录保持原密级')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Flex({ wrap: FlexWrap.Wrap }) {
@@ -561,18 +561,18 @@ export struct SettingsPage {
               SectionCard() {
                 Column({ space: 10 }) {
                   Text('导出')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
                   Text('把全部可导出记录写成 Markdown，并另存到你选择的位置。')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
 
                     Text(this.isExporting ? '导出中…' : '导出并另存为')
-                      .fontSize(13)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.primary)
                       .padding({ left: 14, right: 14, top: 8, bottom: 8 })
                       .backgroundColor(AppTheme.color.tint)
@@ -584,7 +584,7 @@ export struct SettingsPage {
 
                   if (this.lastExportPath.length > 0) {
                     Text('分享')
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.primary)
                       .padding({ left: 10, right: 10, top: 9, bottom: 9 })
                       .onClick(() => {
@@ -594,11 +594,11 @@ export struct SettingsPage {
 
                   if (this.lastExportName.length > 0) {
                     Text(`已写入 ${this.lastExportName}`)
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.text)
                       .width('100%')
                     Text(`${this.lastExportChars} 字符 · 共 ${this.lastExportTotal} 条记录`)
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
@@ -645,18 +645,18 @@ export struct SettingsPage {
               SectionCard() {
                 Column({ space: 8 }) {
                   Text('页面背景')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
                   Text('设置各页面的背景图与应用范围；进入后可选择图片、应用到指定模块或恢复默认。')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Row({ space: 8 }) {
                     Text(this.backgroundBusy === 'pending' ? '读取中…' : '打开页面背景')
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(Color.White)
                       .padding({ left: 14, right: 14, top: 9, bottom: 9 })
                       .backgroundColor(AppTheme.color.primary)
@@ -667,7 +667,7 @@ export struct SettingsPage {
                       })
                     Blank()
                     Text(this.appliedSummary())
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textMuted)
                   }
                   .width('100%')
@@ -679,17 +679,17 @@ export struct SettingsPage {
               SectionCard() {
                 Column({ space: 6 }) {
                   Text('数据与隐私')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
                   Text('业务数据只保存在本机；LLM 默认关闭，开启后仅发送复盘所需文本。')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .lineHeight(18)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Text('密级为「已封存」的记录不会进入导出与模型上下文。')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .lineHeight(18)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
@@ -706,7 +706,7 @@ export struct SettingsPage {
 
           Column() {
             Text(this.isSaving ? '保存中…' : '保存设置')
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .fontWeight(FontWeight.Medium)
               .fontColor(Color.White)
               .width('100%')
