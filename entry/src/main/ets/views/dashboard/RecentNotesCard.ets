@@ -14,12 +14,12 @@ export struct RecentNotesCard {
     Column({ space: 10 }) {
       Row() {
         Text('最近速记')
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
         Blank()
         Text('全部')
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.textSecondary)
           .onClick(() => {
             this.onOpenAll();
@@ -55,10 +55,10 @@ export struct RecentNotesCard {
   emptyView() {
     Column({ space: 8 }) {
       Text('暂无速记')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.textSecondary)
       Text('点击「速记」模块开始记录')
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textMuted)
     }
     .width('100%')

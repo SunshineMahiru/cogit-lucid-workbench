@@ -14,18 +14,18 @@ export struct LinkCompositionCard {
       Column({ space: 8 }) {
         Row() {
           Text('关联构成')
-            .fontSize(12)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontColor(AppTheme.color.textSecondary)
           Blank()
           Text(`共 ${this.total} 条`)
-            .fontSize(9)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
         }
         .width('100%')
 
         if (this.total === 0) {
           Text('还没有关联记录；在周节点里挑几条挂上来。')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
             .width('100%')
         } else {

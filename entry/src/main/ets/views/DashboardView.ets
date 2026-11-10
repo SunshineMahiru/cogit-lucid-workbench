@@ -267,7 +267,7 @@ export struct DashboardView {
         .height(36)
         .color(AppTheme.color.primary)
       Text('加载中...')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.textSecondary)
     }
     .width('100%')
@@ -279,10 +279,10 @@ export struct DashboardView {
   emptyPredictionsView() {
     Column({ space: 8 }) {
       Text('暂无待结算预测')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.textSecondary)
       Text('点击「预测」模块创建一条')
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textMuted)
     }
     .width('100%')
@@ -297,11 +297,11 @@ export struct DashboardView {
         Row() {
           Column({ space: 4 }) {
             Text(APP_DISPLAY_NAME)
-              .fontSize(22)
+              .fontSize(AppTheme.font.headline)
               .fontWeight(FontWeight.Bold)
               .fontColor(AppTheme.color.text)
             Text(this.today)
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.textSecondary)
           }
           .alignItems(HorizontalAlign.Start)
@@ -310,17 +310,17 @@ export struct DashboardView {
 
           Row({ space: 12 }) {
             Text(`${this.predictions.length} 条待结算`)
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.primary)
             Text('设置')
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.primary)
               .accessibilityText('打开设置')
               .onClick(() => {
                 this.openSettings();
               })
             Text('↻ 刷新')
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.primary)
               .accessibilityText('刷新首页数据')
               .onClick(() => {
@@ -336,11 +336,11 @@ export struct DashboardView {
       if (this.loadFailed) {
         Row({ space: 8 }) {
           Text('本地数据暂不可用，当前仅展示界面')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.warning)
             .layoutWeight(1)
           Text('重试')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.primary)
             .onClick(() => {
               this.refresh();
@@ -353,7 +353,7 @@ export struct DashboardView {
 
       if (this.isPreview) {
         Text(PREVIEW_BANNER)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primaryDeep)
           .width('100%')
           .padding({ left: 20, right: 20, top: 6, bottom: 6 })
@@ -397,11 +397,11 @@ export struct DashboardView {
               Row() {
                 Column({ space: 4 }) {
                   Text(String(this.summary.totalNotes))
-                    .fontSize(18)
+                    .fontSize(AppTheme.font.title)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                   Text('总速记')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                 }
                 .layoutWeight(1)
@@ -409,11 +409,11 @@ export struct DashboardView {
 
                 Column({ space: 4 }) {
                   Text(String(this.summary.pendingPredictions))
-                    .fontSize(18)
+                    .fontSize(AppTheme.font.title)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                   Text('待结算')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                 }
                 .layoutWeight(1)
@@ -421,11 +421,11 @@ export struct DashboardView {
 
                 Column({ space: 4 }) {
                   Text(formatHitRate(this.summary.hitRate, this.summary.settledPredictions))
-                    .fontSize(18)
+                    .fontSize(AppTheme.font.title)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.primary)
                   Text(hitRateCaption(this.summary.settledPredictions))
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                 }
                 .layoutWeight(1)
@@ -440,34 +440,34 @@ export struct DashboardView {
               Column({ space: 6 }) {
                 Row() {
                   Text('本周结算')
-                    .fontSize(13)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.primaryDeep)
                   Blank()
                   Text('查看 ›')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.primary)
                 }
                 .width('100%')
 
                 Text(this.weekStats.rangeLabel)
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
 
                 Row({ space: 12 }) {
                   Text(`速记 ${this.weekStats.noteCount}`)
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                   Text(`决策 ${this.weekStats.decisionCount}`)
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                   Text(`命中率 ${formatHitRate(this.weekStats.hitRate, this.weekStats.settledPredictions)}`)
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.primary)
                   Blank()
                   Text(this.weekReviewed ? '已复盘' : '未复盘')
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(this.weekReviewed ? AppTheme.color.success : AppTheme.color.warning)
                 }
                 .width('100%')
@@ -508,12 +508,12 @@ export struct DashboardView {
               Column({ space: 10 }) {
                 Row() {
                   Text('今日待结算')
-                    .fontSize(14)
+                    .fontSize(AppTheme.font.subtitle)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                   Blank()
                   Text('全部')
-                    .fontSize(12)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.textSecondary)
                     .onClick(() => {
                       this.openPredictionList();
@@ -553,7 +553,7 @@ export struct DashboardView {
 
           Row() {
             Text('＋ 速记')
-              .fontSize(13)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontWeight(FontWeight.Medium)
               .fontColor(Color.White)
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })

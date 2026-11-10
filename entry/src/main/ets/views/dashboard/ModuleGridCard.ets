@@ -12,7 +12,7 @@ export struct ModuleGridCard {
   build() {
     Column({ space: 10 }) {
       Text('模块入口')
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textSecondary)
         .width('100%')
         .textAlign(TextAlign.Start)
