@@ -68,3 +68,6 @@ desktop.ini
 AGENTS.md
 docs/PROJECT.md
 .workbuddy/
+spec/
+.deveco/
+.cache/
