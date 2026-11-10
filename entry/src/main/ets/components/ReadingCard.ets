@@ -29,7 +29,7 @@ export struct ReadingCard {
   build() {
     Column({ space: 4 }) {
       Text(this.iconForLabel(this.reading.label))
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontWeight(FontWeight.Medium)
         .fontColor(this.colorForLabel(this.reading.label))
         .width(22)
@@ -38,11 +38,11 @@ export struct ReadingCard {
         .backgroundColor(AppTheme.color.tint)
         .borderRadius(AppTheme.radius.tag)
       Text(this.reading.value + this.reading.unit)
-        .fontSize(20)
+        .fontSize(AppTheme.font.headline)
         .fontWeight(FontWeight.Medium)
         .fontColor(this.colorForLabel(this.reading.label))
       Text(this.reading.label)
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textSecondary)
     }
     .layoutWeight(1)

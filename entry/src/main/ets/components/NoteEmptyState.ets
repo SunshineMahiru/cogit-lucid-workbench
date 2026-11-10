@@ -21,14 +21,14 @@ export struct NoteEmptyState {
   build() {
     Column({ space: 8 }) {
       Text(this.title)
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.textSecondary)
       Text(this.hint)
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textMuted)
       if (this.actionLabel.length > 0) {
         Text(this.actionLabel)
-          .fontSize(13)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.primary)
           .padding({ left: 16, right: 16, top: 8, bottom: 8 })
           .backgroundColor(AppTheme.color.tint)

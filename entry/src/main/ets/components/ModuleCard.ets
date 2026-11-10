@@ -12,7 +12,7 @@ export struct ModuleCard {
     Column({ space: 6 }) {
       Row({ space: 8 }) {
         Text(this.icon)
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.primaryDeep)
           .width(24)
@@ -21,18 +21,18 @@ export struct ModuleCard {
           .backgroundColor(AppTheme.color.tint)
           .borderRadius(AppTheme.radius.tag)
         Text(this.title)
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
         Blank()
         Text('›')
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.textMuted)
       }
       .width('100%')
 
       Text(this.summary)
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textSecondary)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })

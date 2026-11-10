@@ -25,10 +25,10 @@ export struct PlanWeekView {
   dayCell(day: DayActivity) {
     Column({ space: 3 }) {
       Text(day.weekday)
-        .fontSize(10)
+        .fontSize(AppTheme.font.caption)
         .fontColor(AppTheme.color.textMuted)
       Text(day.date.slice(5))
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(this.selected === day.date ? Color.White : AppTheme.color.text)
         .width(32)
         .height(24)
@@ -38,10 +38,10 @@ export struct PlanWeekView {
         .borderRadius(6)
       Row({ space: 3 }) {
         Text(day.noteCount > 0 ? `${day.noteCount}` : '·')
-          .fontSize(9)
+          .fontSize(AppTheme.font.caption)
           .fontColor(day.noteCount > 0 ? AppTheme.color.primary : AppTheme.color.textMuted)
         Text(day.hasReading ? '读' : '·')
-          .fontSize(9)
+          .fontSize(AppTheme.font.caption)
           .fontColor(day.hasReading ? AppTheme.color.success : AppTheme.color.textMuted)
       }
     }
@@ -62,19 +62,19 @@ export struct PlanWeekView {
 
       if (this.selectedDay() !== null) {
         Text(this.detailText(this.selectedDay()!))
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .lineHeight(16)
           .fontColor(AppTheme.color.textSecondary)
           .width('100%')
       } else if (this.previewMode) {
         Text('预览器不读取本地数据库，这里只显示日期；速记与读数请在模拟器里查看')
-          .fontSize(9)
+          .fontSize(AppTheme.font.caption)
           .lineHeight(15)
           .fontColor(AppTheme.color.warning)
           .width('100%')
       } else {
         Text('数字为当天速记条数，「读」表示当天记了读数')
-          .fontSize(9)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
       }

@@ -34,20 +34,20 @@ export struct PredictionCard {
     Column({ space: 10 }) {
       Row() {
         Text(this.dueLabel())
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(this.dueColor())
           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
           .backgroundColor(this.dueSurface())
           .borderRadius(8)
           .margin({ right: 6 })
         Text(this.item.title)
-          .fontSize(15)
+          .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.text)
           .layoutWeight(1)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(`${this.item.confidence}%`)
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.primary)
           .margin({ left: 8 })
       }
@@ -55,11 +55,11 @@ export struct PredictionCard {
 
       Row() {
         Text('置信度')
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.textSecondary)
         Blank()
         Text(this.item.dueDate)
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.textSecondary)
       }
       .width('100%')

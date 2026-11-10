@@ -24,7 +24,7 @@ export struct NoteTagEditor {
   build() {
     Column({ space: 8 }) {
       Text('添加标签')
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textSecondaryStrong)
         .width('100%')
 
@@ -32,7 +32,7 @@ export struct NoteTagEditor {
         Flex({ wrap: FlexWrap.Wrap }) {
           ForEach(this.tags, (tag: string) => {
             Text(`${tag} ×`)
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.primaryDeep)
               .padding({ left: 8, right: 8, top: 4, bottom: 4 })
               .backgroundColor(AppTheme.color.tint)
@@ -50,7 +50,7 @@ export struct NoteTagEditor {
         TextInput({ text: this.draftTag, placeholder: '输入标签，回车添加' })
           .layoutWeight(1)
           .height(36)
-          .fontSize(13)
+          .fontSize(AppTheme.font.bodyStrong)
           .padding({ left: 10, right: 10 })
           .backgroundColor(AppTheme.color.surfaceTint)
           .borderRadius(AppTheme.radius.tag)
@@ -64,7 +64,7 @@ export struct NoteTagEditor {
             this.submit();
           })
         Text('添加')
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontWeight(FontWeight.Medium)
           .fontColor(this.canSubmit() ? Color.White : AppTheme.color.textMuted)
           .padding({ left: 14, right: 14, top: 9, bottom: 9 })

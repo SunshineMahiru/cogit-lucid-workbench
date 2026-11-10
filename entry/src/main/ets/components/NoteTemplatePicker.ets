@@ -20,7 +20,7 @@ export struct NoteTemplatePicker {
   @Builder
   chip(label: string, templateId: NoteTemplateId | null) {
     Text(label)
-      .fontSize(13)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.activeId === templateId ? Color.White : AppTheme.color.textStrong)
       .padding({ left: 14, right: 14, top: 7, bottom: 7 })
       .backgroundColor(this.activeId === templateId ? AppTheme.color.primary : AppTheme.color.chip)

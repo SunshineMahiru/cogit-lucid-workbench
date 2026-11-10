@@ -29,7 +29,7 @@ export struct RelationTrustBadge {
 
   build() {
     Text(trustLevelText(this.level))
-      .fontSize(10)
+      .fontSize(AppTheme.font.caption)
       .fontColor(this.textColor())
       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
       .backgroundColor(this.surfaceColor())

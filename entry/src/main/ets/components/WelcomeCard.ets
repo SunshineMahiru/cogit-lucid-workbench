@@ -10,7 +10,7 @@ export struct WelcomeCard {
   step(index: string, title: string, detail: string) {
     Row({ space: 10 }) {
       Text(index)
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontWeight(FontWeight.Medium)
         .fontColor(AppTheme.color.primaryDeep)
         .width(22)
@@ -20,11 +20,11 @@ export struct WelcomeCard {
         .borderRadius(11)
       Column({ space: 2 }) {
         Text(title)
-          .fontSize(13)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
         Text(detail)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
       }
       .alignItems(HorizontalAlign.Start)
@@ -37,12 +37,12 @@ export struct WelcomeCard {
     Column({ space: 10 }) {
       Row() {
         Text('从一条记录开始')
-          .fontSize(16)
+          .fontSize(AppTheme.font.title)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
         Blank()
         Text('稍后')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
           .onClick(() => {
             this.onDismiss();
@@ -51,7 +51,7 @@ export struct WelcomeCard {
       .width('100%')
 
       Text('先记下此刻，再决定下一步；预测和复盘会把这套循环接起来。')
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .lineHeight(19)
         .fontColor(AppTheme.color.textSecondary)
         .width('100%')
@@ -62,7 +62,7 @@ export struct WelcomeCard {
 
       Row({ space: 10 }) {
         Text('开始速记')
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontWeight(FontWeight.Medium)
           .fontColor(Color.White)
           .padding({ left: 14, right: 14, top: 8, bottom: 8 })
@@ -72,7 +72,7 @@ export struct WelcomeCard {
             this.onStart();
           })
         Text('先看看')
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.primary)
           .padding({ left: 10, right: 10, top: 8, bottom: 8 })
           .onClick(() => {

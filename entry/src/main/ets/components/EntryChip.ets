@@ -21,9 +21,9 @@ export struct EntryChip {
   build() {
     Row({ space: 4 }) {
       Text(this.iconForLabel(this.label))
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
       Text(this.label)
-        .fontSize(13)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.text)
     }
     .padding({ left: 12, right: 12, top: 8, bottom: 8 })

@@ -18,11 +18,11 @@ export struct StatusTrendCard {
     Column({ space: 10 }) {
       Row() {
         Text('睡眠趋势')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
         Blank()
         Text('最近 7 次')
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
       }
       .width('100%')
@@ -37,7 +37,7 @@ export struct StatusTrendCard {
               .backgroundColor(row.sleepHours < 6.5 ? AppTheme.color.warning : AppTheme.color.primary)
               .borderRadius(4)
             Text(row.date.length >= 5 ? row.date.slice(5) : row.date)
-              .fontSize(9)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
           }
           .layoutWeight(1)
@@ -51,10 +51,10 @@ export struct StatusTrendCard {
 
       Row({ space: 12 }) {
         Text('低于 6.5 小时')
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.warning)
         Text('其余记录')
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.primary)
       }
       .width('100%')

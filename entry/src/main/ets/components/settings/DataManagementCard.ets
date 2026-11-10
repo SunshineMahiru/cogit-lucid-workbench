@@ -17,18 +17,18 @@ export struct DataManagementCard {
     SectionCard() {
       Column({ space: 8 }) {
         Text('数据管理')
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
           .width('100%')
         Text('备份包含记录、身份、设置与本地图片；恢复需选择 .cogitbackup 文件。')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .lineHeight(17)
           .fontColor(AppTheme.color.textSecondary)
           .width('100%')
         Row({ space: 8 }) {
           Text(this.dataBusy ? '处理中…' : '备份并另存')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.primary)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
@@ -38,7 +38,7 @@ export struct DataManagementCard {
               this.onBackup();
             })
           Text('恢复备份')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.primary)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
@@ -48,7 +48,7 @@ export struct DataManagementCard {
               this.onRestore();
             })
           Text(this.clearArmed ? '确认清空' : '清空全部数据')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.danger)
             .padding({ left: 8, right: 8, top: 7, bottom: 7 })
             .accessibilityText(this.clearArmed ? '确认清空全部数据' : '清空全部数据，需要二次确认')
@@ -61,7 +61,7 @@ export struct DataManagementCard {
         if (this.encryptionFallback) {
           Row({ space: 8 }) {
             Text('重新尝试加密')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.danger)
               .padding({ left: 10, right: 10, top: 7, bottom: 7 })
               .backgroundColor(AppTheme.color.tint)
@@ -76,7 +76,7 @@ export struct DataManagementCard {
 
         Row({ space: 8 }) {
           Text('刷新首页数据')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.primary)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)

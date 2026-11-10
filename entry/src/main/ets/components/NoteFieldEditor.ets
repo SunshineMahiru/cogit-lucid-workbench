@@ -19,11 +19,11 @@ export struct NoteFieldEditor {
     Column({ space: 6 }) {
       Row({ space: 4 }) {
         Text(this.field.label)
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.textSecondaryStrong)
         if (this.field.required) {
           Text('*')
-            .fontSize(12)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontColor(AppTheme.color.danger)
         }
       }
@@ -31,7 +31,7 @@ export struct NoteFieldEditor {
 
       if (this.field.multiline) {
         TextArea({ text: this.value, placeholder: this.field.placeholder })
-          .fontSize(13)
+          .fontSize(AppTheme.font.bodyStrong)
           .height(72)
           .padding(10)
           .backgroundColor(AppTheme.color.surfaceTint)
@@ -42,7 +42,7 @@ export struct NoteFieldEditor {
           })
       } else {
         TextInput({ text: this.value, placeholder: this.field.placeholder })
-          .fontSize(13)
+          .fontSize(AppTheme.font.bodyStrong)
           .height(40)
           .padding({ left: 10, right: 10 })
           .backgroundColor(AppTheme.color.surfaceTint)
@@ -55,7 +55,7 @@ export struct NoteFieldEditor {
 
       if (this.error.length > 0) {
         Text(this.error)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.danger)
           .width('100%')
       }

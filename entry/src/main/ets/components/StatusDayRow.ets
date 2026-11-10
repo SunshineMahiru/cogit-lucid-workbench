@@ -19,11 +19,11 @@ export struct StatusDayRow {
     Column({ space: 6 }) {
       Row() {
         Text(this.row.date)
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.textSecondary)
         Blank()
         Text(`${this.row.sleepHours} 小时`)
-          .fontSize(13)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontWeight(FontWeight.Medium)
           .fontColor(this.row.flags.length > 0 ? AppTheme.color.danger : AppTheme.color.text)
       }
@@ -36,15 +36,15 @@ export struct StatusDayRow {
 
       Row({ space: 12 }) {
         Text(`运动 ${this.row.exerciseCount} 次`)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
         Text(`报警 ${this.row.alertCount} 次`)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
         Blank()
         if (this.row.flags.length > 0) {
           Text(`${this.row.flags.length} 项提示`)
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.danger)
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .backgroundColor(AppTheme.color.dangerSurface)
@@ -55,7 +55,7 @@ export struct StatusDayRow {
 
       if (!this.compact && this.row.note.length > 0) {
         Text(this.row.note)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
           .maxLines(1)

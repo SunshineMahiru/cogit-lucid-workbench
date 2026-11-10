@@ -66,7 +66,7 @@ export struct SimplePieChart {
   build() {
     if (this.total() <= 0) {
       Text('数据不足，暂不绘图')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
         .padding({ top: 16, bottom: 16 })
@@ -80,7 +80,7 @@ export struct SimplePieChart {
             Row({ space: 6 }) {
               Row().width(9).height(9).backgroundColor(slice.color).borderRadius(2)
               Text(`${slice.label} ${slice.value}`)
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textMuted)
             }
             .width('100%')

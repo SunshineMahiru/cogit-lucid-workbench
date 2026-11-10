@@ -14,11 +14,11 @@ export struct NoteSaveBar {
           .height(18)
           .color(Color.White)
         Text('保存中')
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontColor(Color.White)
       } else {
         Text('保存')
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontWeight(FontWeight.Medium)
           .fontColor(Color.White)
       }

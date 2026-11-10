@@ -12,18 +12,18 @@ export struct DebugPanel {
     SectionCard() {
       Column({ space: 8 }) {
         Text('调试（仅 debug 构建）')
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
           .width('100%')
         Text('故障开关用来验证失败分支，正式构建不读取这些标记。')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .lineHeight(17)
           .fontColor(AppTheme.color.textSecondary)
           .width('100%')
         Row({ space: 8 }) {
           Text('模拟加密失败')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.danger)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
@@ -32,7 +32,7 @@ export struct DebugPanel {
               this.onSimulateEncryption();
             })
           Text('模拟恢复部分失败')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.danger)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
@@ -41,7 +41,7 @@ export struct DebugPanel {
               this.onSimulateRestore();
             })
           Text('清除调试标记')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.primary)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)

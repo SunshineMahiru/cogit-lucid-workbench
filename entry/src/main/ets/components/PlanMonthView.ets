@@ -17,7 +17,7 @@ export struct PlanMonthView {
     Column({ space: 8 }) {
       Row({ space: 8 }) {
         Text('‹')
-          .fontSize(16)
+          .fontSize(AppTheme.font.title)
           .fontColor(AppTheme.color.primary)
           .width(28)
           .height(24)
@@ -26,12 +26,12 @@ export struct PlanMonthView {
             this.onPrev();
           })
         Text(this.label)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
         Text('›')
-          .fontSize(16)
+          .fontSize(AppTheme.font.title)
           .fontColor(AppTheme.color.primary)
           .width(28)
           .height(24)
@@ -44,25 +44,25 @@ export struct PlanMonthView {
 
       if (this.rows.length === 0) {
         Text('这个月没有周节点')
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
       } else {
         ForEach(this.rows, (row: NodeProgress) => {
           Row({ space: 8 }) {
             Text(`第 ${row.weekIndex} 周`)
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.text)
               .width(60)
             Text(`${row.startDate.slice(5)} – ${row.endDate.slice(5)}`)
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .layoutWeight(1)
             Text(row.openCarried > 0 ? `延续 ${row.openCarried}` : '')
-              .fontSize(9)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.warning)
             Text(`${row.done}/${row.total}`)
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textSecondary)
           }
           .width('100%')

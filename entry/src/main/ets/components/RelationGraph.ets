@@ -67,7 +67,7 @@ export struct RelationGraph {
           .position({ x: this.nodeX(index) - 14, y: this.nodeY(index) - 14 })
 
         Text(item.name)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.text)
           .width(70)
           .maxLines(1)
@@ -85,7 +85,7 @@ export struct RelationGraph {
         .position({ x: CENTER_X - 23, y: CENTER_Y - 23 })
 
       Text('我')
-        .fontSize(15)
+        .fontSize(AppTheme.font.subtitle)
         .fontWeight(FontWeight.Medium)
         .fontColor(AppTheme.color.primaryDeep)
         .width(46)

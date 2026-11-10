@@ -40,26 +40,26 @@ export struct PredictionListCard {
     Column({ space: 8 }) {
       Row({ space: 6 }) {
         Text(this.tagLabel())
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(this.tagColor())
           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
           .backgroundColor(this.tagBackground())
           .borderRadius(8)
         Text(this.item.target)
-          .fontSize(15)
+          .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.text)
           .layoutWeight(1)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(`${this.item.confidence}%`)
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.primary)
           .margin({ left: 8 })
       }
       .width('100%')
 
       Text(this.item.judgment)
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textSecondaryStrong)
         .width('100%')
         .maxLines(2)
@@ -69,11 +69,11 @@ export struct PredictionListCard {
         Text(this.item.status === PredictionStatus.PENDING ?
           `结算日 ${this.item.settlementDate}` :
           `实际 ${this.item.actualResult.length > 0 ? this.item.actualResult : '—'}`)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
         Blank()
         Text(this.item.status === PredictionStatus.PENDING ? '置信度' : '已结算')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textMuted)
       }
       .width('100%')

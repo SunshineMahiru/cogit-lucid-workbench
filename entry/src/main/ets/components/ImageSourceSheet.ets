@@ -11,10 +11,10 @@ export struct ImageSourceSheet {
   option(title: string, hint: string, source: BackgroundImageSource) {
     Column({ space: 2 }) {
       Text(title)
-        .fontSize(13)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.text)
       Text(hint)
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
     }
     .width('100%')
@@ -31,7 +31,7 @@ export struct ImageSourceSheet {
   build() {
     Column({ space: 10 }) {
       Text('图片从哪来')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontWeight(FontWeight.Medium)
         .fontColor(AppTheme.color.text)
         .width('100%')

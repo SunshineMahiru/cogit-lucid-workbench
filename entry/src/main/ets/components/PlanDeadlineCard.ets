@@ -20,7 +20,7 @@ export struct PlanDeadlineCard {
             .backgroundColor(AppTheme.color.track)
             .style({ strokeWidth: 7 })
           Text(`${this.progress.percent}%`)
-            .fontSize(13)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
         }
@@ -33,22 +33,22 @@ export struct PlanDeadlineCard {
           Text(this.progress.overdue
             ? `已超期 ${Math.abs(this.progress.remainingDays)} 天`
             : `剩余 ${this.progress.remainingDays} 天`)
-            .fontSize(14)
+            .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(this.progress.overdue ? AppTheme.color.danger : AppTheme.color.text)
             .width('100%')
           Text(`已用 ${this.progress.percent}% · 总 ${this.progress.totalDays} 天`)
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textSecondary)
             .width('100%')
         } else {
           Text(`已推进 ${this.weeksElapsed} 周`)
-            .fontSize(14)
+            .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
             .width('100%')
           Text('没有设结束日，进度按周数计；在编辑目标里可以补上')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
             .width('100%')
         }

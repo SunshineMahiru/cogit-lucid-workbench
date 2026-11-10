@@ -13,7 +13,7 @@ export struct PlanRhythmStrip {
   build() {
     if (this.rows.length === 0) {
       Text('还没有周节点')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
     } else {
@@ -22,7 +22,7 @@ export struct PlanRhythmStrip {
           ForEach(this.rows, (row: NodeProgress) => {
             Column({ space: 4 }) {
               Text(`${row.weekIndex}`)
-                .fontSize(12)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(row.status === PlanNodeStatus.CLOSED ? Color.White : AppTheme.color.textSecondary)
                 .width(36)
                 .height(36)
@@ -35,7 +35,7 @@ export struct PlanRhythmStrip {
                   color: AppTheme.color.primaryDeep
                 })
               Text(row.total > 0 ? `${row.done}/${row.total}` : '—')
-                .fontSize(9)
+                .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textMuted)
             }
             .onClick(() => {

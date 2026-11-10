@@ -16,12 +16,12 @@ export struct ChartSection {
     SectionCard() {
       Column({ space: 6 }) {
         Text(this.title)
-          .fontSize(13)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
           .width('100%')
         Text(this.hint)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
         this.content()

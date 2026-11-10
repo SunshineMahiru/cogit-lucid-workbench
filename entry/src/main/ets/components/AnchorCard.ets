@@ -11,7 +11,7 @@ export struct AnchorCard {
   build() {
     Row({ space: 12 }) {
       Text(this.index < 10 ? `0${this.index}` : `${this.index}`)
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.primary)
         .width(28)
         .height(28)
@@ -22,12 +22,12 @@ export struct AnchorCard {
 
       Column({ space: 4 }) {
         Text(this.anchor.text)
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .lineHeight(22)
           .fontColor(AppTheme.color.text)
           .width('100%')
         Text(this.anchor.source)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
       }
@@ -35,7 +35,7 @@ export struct AnchorCard {
       .alignItems(HorizontalAlign.Start)
 
       Text('关联计划')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 6 })
         .onClick(() => {

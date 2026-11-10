@@ -27,7 +27,7 @@ export struct RelationCard {
       Column({ space: 8 }) {
         Row({ space: 6 }) {
           Text(this.item.name)
-            .fontSize(15)
+            .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
             .layoutWeight(1)
@@ -39,14 +39,14 @@ export struct RelationCard {
 
         Row({ space: 6 }) {
           Text(`${this.item.interactionCount} 次互动 · ${this.item.lastInteractionLabel}`)
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.textSecondary)
             .layoutWeight(1)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
           if (this.item.rawMaterialTest) {
             Text('未加工材料')
-              .fontSize(9)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.primaryDeep)
               .padding({ left: 5, right: 5, top: 2, bottom: 2 })
               .backgroundColor(AppTheme.color.tint)
@@ -54,7 +54,7 @@ export struct RelationCard {
           }
           if (this.item.forbidAnalysis) {
             Text('禁分析')
-              .fontSize(9)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.danger)
               .padding({ left: 5, right: 5, top: 2, bottom: 2 })
               .backgroundColor(AppTheme.color.dangerSurface)
