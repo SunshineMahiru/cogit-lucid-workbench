@@ -261,17 +261,17 @@ export struct AnalyticsPage {
     Row({ space: 8 }) {
       Column({ space: 2 }) {
         Text(this.stats !== null ? `远端示例数据 · ${this.stats.generatedAt}` : '等待远端数据')
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
         Text(this.selectedMonth.length > 0 ? `当前月份 ${this.selectedMonth}` : '选择月份后查看')
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textSecondary)
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
       Text('刷新')
         .id('analytics_refresh')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.primary)
         .onClick(() => this.load())
     }
@@ -286,7 +286,7 @@ export struct AnalyticsPage {
         ForEach(this.monthsForPicker(), (month: StatsMonth, index: number) => {
           Text(month.label)
             .id(index === 0 ? 'analytics_month_first' : (index === 1 ? 'analytics_month_second' : `analytics_month_${month.label}`))
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(this.selectedMonth === month.label ? Color.White : AppTheme.color.textSecondary)
             .padding({ left: 10, right: 10, top: 6, bottom: 6 })
             .backgroundColor(this.selectedMonth === month.label ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
@@ -306,21 +306,21 @@ export struct AnalyticsPage {
     if (this.isLoading) {
       Row({ space: 8 }) {
         LoadingProgress().width(16).height(16).color(AppTheme.color.primary)
-        Text('正在加载远端数据…').fontSize(11).fontColor(AppTheme.color.textMuted)
+        Text('正在加载远端数据…').fontSize(AppTheme.font.body).fontColor(AppTheme.color.textMuted)
       }
       .width('100%')
       .padding(16)
     } else if (this.errorText.length > 0) {
       Column({ space: 6 }) {
         Text('图表数据加载失败')
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.danger)
         Text(this.errorText)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
         Text('重试')
           .id('analytics_retry')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
           .onClick(() => this.load())
       }
@@ -329,7 +329,7 @@ export struct AnalyticsPage {
       .padding(16)
     } else if (this.stats !== null && this.stats.months.length === 0) {
       Text('远端暂无统计数据')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
         .padding(16)
@@ -357,7 +357,7 @@ export struct AnalyticsPage {
                   xMax: 100
                 })
             Text(`校准共 ${this.stats !== null ? this.stats.calibration.length : 0} 档，样本不足 20 条时仅作观察`)
-              .fontSize(9)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
           }
@@ -386,7 +386,7 @@ export struct AnalyticsPage {
             HeatmapGrid({ data: this.activityHeatmap(), maxValue: 7 })
           }
           Text('数据来自远端示例接口，仅用于课程演示；图表随接口返回变化重绘。')
-            .fontSize(9)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
             .width('100%')
             .padding({ top: 4, bottom: 20 })

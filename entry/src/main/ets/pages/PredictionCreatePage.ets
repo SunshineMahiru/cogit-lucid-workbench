@@ -135,7 +135,7 @@ export struct PredictionCreatePage {
   fieldError(message: string) {
     if (message.length > 0) {
       Text(message)
-        .fontSize(10)
+        .fontSize(AppTheme.font.caption)
         .fontColor(AppTheme.color.danger)
         .width('100%')
     }
@@ -144,7 +144,7 @@ export struct PredictionCreatePage {
   @Builder
   deadlineChip(label: string, days: number) {
     Text(label)
-      .fontSize(11)
+      .fontSize(AppTheme.font.body)
       .fontColor(AppTheme.color.primaryDeep)
       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
       .backgroundColor(AppTheme.color.tint)
@@ -181,7 +181,7 @@ export struct PredictionCreatePage {
             SectionCard() {
               Column({ space: 6 }) {
                 Text('预测对象')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextInput({ placeholder: '例如：本周作息', text: this.target })
@@ -199,7 +199,7 @@ export struct PredictionCreatePage {
             SectionCard() {
               Column({ space: 6 }) {
                 Text('判断')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextArea({ placeholder: '写成到期能判断真假的句子', text: this.judgment })
@@ -210,7 +210,7 @@ export struct PredictionCreatePage {
                     this.judgment = value;
                   })
                 Text('需要同时包含数量与期限，结算时才有依据')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                 this.fieldError(this.errors.judgment)
@@ -223,11 +223,11 @@ export struct PredictionCreatePage {
               Column({ space: 6 }) {
                 Row() {
                   Text('置信度')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                   Blank()
                   Text(`${this.confidence}%`)
-                    .fontSize(13)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.primary)
                 }
                 .width('100%')
@@ -247,7 +247,7 @@ export struct PredictionCreatePage {
             SectionCard() {
               Column({ space: 8 }) {
                 Text('结算日')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Row({ space: 6 }) {
@@ -269,7 +269,7 @@ export struct PredictionCreatePage {
             SectionCard() {
               Column({ space: 6 }) {
                 Text('理由（可选）')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextArea({ placeholder: '当时为什么这么判断？', text: this.reason })
@@ -285,7 +285,7 @@ export struct PredictionCreatePage {
             }
 
             Text('提交后不可修改；到期后才能结算，结算日用于排序与提醒。')
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .lineHeight(17)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
@@ -298,7 +298,7 @@ export struct PredictionCreatePage {
 
         Column() {
           Text(this.isSaving ? '保存中…' : (this.sourceId === null ? '保存这条预测' : '生成新版本'))
-            .fontSize(14)
+            .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
             .width('100%')

@@ -23,10 +23,10 @@ struct PredictionInfoRow {
   build() {
     Row({ space: 12 }) {
       Text(this.label)
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textSecondary)
       Text(this.value)
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.text)
         .layoutWeight(1)
         .textAlign(TextAlign.End)
@@ -94,14 +94,14 @@ export struct PredictionDetailPage {
   reviseMenu() {
     Row() {
       Text('计划')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 12, right: 6 })
         .onClick(() => {
           this.openAttach();
         })
       Text('修改')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 6, right: 16 })
         .onClick(() => {
@@ -223,29 +223,29 @@ export struct PredictionDetailPage {
           Column({ space: 12 }) {
             Row({ space: 8 }) {
               Text(predictionStatusText(this.detail.status, this.detail.hit))
-                .fontSize(10)
+                .fontSize(AppTheme.font.caption)
                 .fontColor(this.tagColor())
                 .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                 .backgroundColor(this.tagBackground())
                 .borderRadius(8)
               Text(`${this.detail.confidence}%`)
-                .fontSize(14)
+                .fontSize(AppTheme.font.subtitle)
                 .fontColor(AppTheme.color.primary)
               Blank()
               Text(`v${this.detail.version}`)
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textMuted)
             }
             .width('100%')
 
             Text(this.detail.target)
-              .fontSize(20)
+              .fontSize(AppTheme.font.headline)
               .fontWeight(FontWeight.Bold)
               .fontColor(AppTheme.color.text)
               .width('100%')
 
             Text(this.detail.judgment)
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .lineHeight(24)
               .fontColor(AppTheme.color.text)
               .width('100%')
@@ -271,11 +271,11 @@ export struct PredictionDetailPage {
             if (this.detail.reason.length > 0) {
               Column({ space: 6 }) {
                 Text('理由')
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Text(this.detail.reason)
-                  .fontSize(13)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .lineHeight(22)
                   .fontColor(AppTheme.color.text)
                   .width('100%')
@@ -290,7 +290,7 @@ export struct PredictionDetailPage {
             if (this.detail.status === PredictionStatus.PENDING) {
               if (todayDateString() >= this.detail.settlementDate) {
                 Text('结算这条预测')
-                  .fontSize(13)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.primary)
                   .width('100%')
                   .textAlign(TextAlign.Center)
@@ -302,14 +302,14 @@ export struct PredictionDetailPage {
                   })
               } else {
                 Text(`到期后可结算 · ${this.detail.settlementDate}`)
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                   .textAlign(TextAlign.Center)
               }
             } else {
               Text('已结算，结果不可修改')
-                .fontSize(10)
+                .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textMuted)
                 .width('100%')
                 .textAlign(TextAlign.Center)

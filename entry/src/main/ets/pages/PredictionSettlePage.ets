@@ -127,7 +127,7 @@ export struct PredictionSettlePage {
   @Builder
   hitChip(label: string, value: string) {
     Text(label)
-      .fontSize(13)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.hitChoice === value ? Color.White : AppTheme.color.text)
       .padding({ left: 18, right: 18, top: 8, bottom: 8 })
       .backgroundColor(this.hitChoice === value ? AppTheme.color.primary : AppTheme.color.chip)
@@ -229,17 +229,17 @@ export struct PredictionSettlePage {
               SectionCard() {
                 Column({ space: 6 }) {
                   Text(this.detail.target)
-                    .fontSize(16)
+                    .fontSize(AppTheme.font.title)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
                   Text(this.detail.judgment)
-                    .fontSize(13)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .lineHeight(21)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Text(`置信度 ${this.detail.confidence}% · 结算日 ${this.detail.settlementDate}`)
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                 }
@@ -250,7 +250,7 @@ export struct PredictionSettlePage {
               SectionCard() {
                 Column({ space: 6 }) {
                   Text('实际结果')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   TextArea({ placeholder: '实际发生了什么？只写可核对的事实', text: this.actualResult })
@@ -261,7 +261,7 @@ export struct PredictionSettlePage {
                       this.actualResult = value;
                     })
                   Text('这条结果会与原始判断一起保留，用于命中率统计')
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                 }
@@ -272,7 +272,7 @@ export struct PredictionSettlePage {
               SectionCard() {
                 Column({ space: 8 }) {
                   Text('判定')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Row({ space: 10 }) {
@@ -281,7 +281,7 @@ export struct PredictionSettlePage {
                   }
                   if (this.errorText.length > 0) {
                     Text(this.errorText)
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.danger)
                       .width('100%')
                   }
@@ -299,7 +299,7 @@ export struct PredictionSettlePage {
 
           Column() {
             Text(this.isSaving ? '结算中…' : '确认结算')
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .fontWeight(FontWeight.Medium)
               .fontColor(Color.White)
               .width('100%')

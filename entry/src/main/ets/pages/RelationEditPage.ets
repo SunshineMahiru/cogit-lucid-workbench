@@ -91,7 +91,7 @@ export struct RelationEditPage {
   @Builder
   trustChip(level: TrustLevel) {
     Text(trustLevelText(level))
-      .fontSize(12)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.trustLevel === level ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.trustLevel === level ? AppTheme.color.primary : AppTheme.color.chip)
@@ -104,7 +104,7 @@ export struct RelationEditPage {
   @Builder
   levelChip(level: SecurityLevel) {
     Text(securityLevelText(level))
-      .fontSize(12)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.level === level ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.level === level ? AppTheme.color.primary : AppTheme.color.chip)
@@ -117,7 +117,7 @@ export struct RelationEditPage {
   @Builder
   flagChip(label: string, value: boolean, onToggle: () => void) {
     Text(value ? `${label} · 已开启` : `${label} · 未开启`)
-      .fontSize(11)
+      .fontSize(AppTheme.font.body)
       .fontColor(value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
       .backgroundColor(value ? AppTheme.color.tint : AppTheme.color.chip)
@@ -129,7 +129,7 @@ export struct RelationEditPage {
   saveMenu() {
     Row() {
       Text(this.isSaving ? '保存中' : '保存')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
         .padding({ left: 12, right: 16 })
         .onClick(() => {
@@ -175,7 +175,7 @@ export struct RelationEditPage {
         Scroll() {
           Column({ space: 12 }) {
             Text('课程版只保存化名。先给这段关系一个称呼，再标出你能谈到哪一层；互动记录在详情页补充。')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .lineHeight(18)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
@@ -183,11 +183,11 @@ export struct RelationEditPage {
             SectionCard() {
               Column({ space: 6 }) {
                 Text('名称')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Text('用化名或代号，列表与导出都用它。')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                 TextInput({ text: this.name, placeholder: '例如：朋友 A' })
@@ -204,11 +204,11 @@ export struct RelationEditPage {
             SectionCard() {
               Column({ space: 8 }) {
                 Text('信任层级')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Text('友好：日常往来；真诚：能谈真实想法；透明：能看未加工的材料。')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .lineHeight(15)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
@@ -225,11 +225,11 @@ export struct RelationEditPage {
             SectionCard() {
               Column({ space: 8 }) {
                 Text('默认密级')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Text('本地：只在设备上；可分析：切到模型档后可进入上下文；封存：不进入汇总与导出。')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .lineHeight(15)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
@@ -246,11 +246,11 @@ export struct RelationEditPage {
             SectionCard() {
               Column({ space: 8 }) {
                 Text('分析边界')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Text('未加工材料测试：对方是否看过你未整理的材料；禁止动机分析：复盘 Agent 不推测对方动机。')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .lineHeight(15)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
@@ -270,11 +270,11 @@ export struct RelationEditPage {
             SectionCard() {
               Column({ space: 6 }) {
                 Text('关系备注')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Text('只写与复盘边界有关的信息，不写隐私细节。')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                 TextArea({ text: this.notes, placeholder: '只写与复盘边界有关的信息' })
@@ -291,13 +291,13 @@ export struct RelationEditPage {
 
             if (this.errorText.length > 0) {
               Text(this.errorText)
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.danger)
                 .width('100%')
             }
 
             Text(this.isSaving ? '保存中…' : '保存关系')
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)

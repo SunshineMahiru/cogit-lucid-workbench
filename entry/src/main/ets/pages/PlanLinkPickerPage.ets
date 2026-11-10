@@ -180,7 +180,7 @@ export struct PlanLinkPickerPage {
   saveMenu() {
     Text(this.isSaving ? '保存中' : '保存')
       .id('plan_link_save')
-      .fontSize(14)
+      .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.primary)
       .padding({ left: 12, right: 16 })
       .height(56)
@@ -192,7 +192,7 @@ export struct PlanLinkPickerPage {
   @Builder
   moduleChip(module: PlanLinkModule) {
     Text(planLinkModuleLabel(module))
-      .fontSize(11)
+      .fontSize(AppTheme.font.body)
       .fontColor(this.module === module ? Color.White : AppTheme.color.textSecondary)
       .padding({ left: 10, right: 10, top: 6, bottom: 6 })
       .backgroundColor(this.module === module ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
@@ -207,21 +207,21 @@ export struct PlanLinkPickerPage {
   candidateRow(item: LinkCandidate) {
     Row({ space: 8 }) {
       Text(this.isSelected(item) ? '✓' : '○')
-        .fontSize(16)
+        .fontSize(AppTheme.font.title)
         .fontColor(this.isSelected(item) ? AppTheme.color.primary : AppTheme.color.textMuted)
         .width(24)
         .textAlign(TextAlign.Center)
       Column({ space: 2 }) {
         Row({ space: 6 }) {
           Text(item.title.length > 0 ? item.title : '未命名记录')
-            .fontSize(12)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontColor(AppTheme.color.text)
             .layoutWeight(1)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
           if (item.suggested) {
             Text('本周')
-              .fontSize(9)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.primaryDeep)
               .padding({ left: 5, right: 5, top: 1, bottom: 1 })
               .backgroundColor(AppTheme.color.tint)
@@ -230,7 +230,7 @@ export struct PlanLinkPickerPage {
         }
         .width('100%')
         Text(item.subtitle.length > 0 ? item.subtitle : '暂无说明')
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
           .maxLines(1)
@@ -280,10 +280,10 @@ export struct PlanLinkPickerPage {
         if (this.errorText.length > 0) {
           Column({ space: 8 }) {
             Text(this.errorText)
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.danger)
             Text('重试')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.primary)
               .onClick(() => {
                 this.errorText = '';
@@ -316,7 +316,7 @@ export struct PlanLinkPickerPage {
               if (this.hasMore()) {
                 Text(`加载更多（还有 ${this.visibleCandidates().length - this.visibleCount} 条）`)
                   .id('plan_link_more')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.primary)
                   .width('100%')
                   .textAlign(TextAlign.Center)
@@ -335,7 +335,7 @@ export struct PlanLinkPickerPage {
         }
 
         Text(`已选 ${this.selectedKeys.length} 条`)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
       }

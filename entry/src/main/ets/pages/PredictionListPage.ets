@@ -117,7 +117,7 @@ export struct PredictionListPage {
   @Builder
   filterChip(label: string, status: PredictionStatus | null) {
     Text(label)
-      .fontSize(12)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.filter === status ? Color.White : AppTheme.color.textStrong)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.filter === status ? AppTheme.color.primary : AppTheme.color.chip)
@@ -131,7 +131,7 @@ export struct PredictionListPage {
   actionsMenu() {
     Row({ space: 2 }) {
       Text('统计')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 8, right: 8 })
         .onClick(() => {
@@ -140,7 +140,7 @@ export struct PredictionListPage {
           }
         })
       Text('＋')
-        .fontSize(20)
+        .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 4, right: 14 })
         .onClick(() => {
@@ -156,11 +156,11 @@ export struct PredictionListPage {
     Row() {
       Column({ space: 4 }) {
         Text(formatHitRate(this.summary.hitRate, this.summary.settled))
-          .fontSize(18)
+          .fontSize(AppTheme.font.title)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.primary)
         Text(hitRateCaption(this.summary.settled))
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
       }
       .layoutWeight(1)
@@ -168,11 +168,11 @@ export struct PredictionListPage {
 
       Column({ space: 4 }) {
         Text(String(this.summary.pending))
-          .fontSize(18)
+          .fontSize(AppTheme.font.title)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
         Text('待结算')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
       }
       .layoutWeight(1)
@@ -180,11 +180,11 @@ export struct PredictionListPage {
 
       Column({ space: 4 }) {
         Text(String(this.summary.settled))
-          .fontSize(18)
+          .fontSize(AppTheme.font.title)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
         Text('已结算')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
       }
       .layoutWeight(1)
@@ -280,7 +280,7 @@ export struct PredictionListPage {
             if (this.hasMore) {
               ListItem() {
                 Text(this.isLoadingMore ? '加载中…' : '加载更多')
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.primary)
                   .width('100%')
                   .textAlign(TextAlign.Center)

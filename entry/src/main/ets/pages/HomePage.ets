@@ -149,7 +149,7 @@ export struct HomePage {
       })
       if (this.loadFailed) {
         Text('首页数据读取失败，点此重试')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.danger)
           .width('100%')
           .textAlign(TextAlign.Center)
@@ -159,21 +159,21 @@ export struct HomePage {
           })
       } else if (this.isPreview) {
         Text('演示数据 · 数据库不可用')
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
           .textAlign(TextAlign.Center)
           .padding({ top: 6, bottom: 2 })
       } else if (this.encryptionNotice.length > 0) {
         Text(this.encryptionNotice)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.danger)
           .width('100%')
           .textAlign(TextAlign.Center)
           .padding({ top: 6, bottom: 2 })
       } else if (this.dataNotice.length > 0) {
         Text(this.dataNotice)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.warning)
           .width('100%')
           .textAlign(TextAlign.Center)
@@ -182,11 +182,11 @@ export struct HomePage {
       Row({ space: 8 }) {
         Column({ space: 2 }) {
           Text(`${this.summary.todayNotes} 条`)
-            .fontSize(13)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
           Text('今日速记')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
@@ -196,11 +196,11 @@ export struct HomePage {
 
         Column({ space: 2 }) {
           Text(`${this.summary.pendingPredictions} 条`)
-            .fontSize(13)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
           Text('待结算')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
@@ -210,11 +210,11 @@ export struct HomePage {
 
         Column({ space: 2 }) {
           Text(`${this.pulse.streakDays} 天`)
-            .fontSize(13)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
           Text('连续记录')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
@@ -224,11 +224,11 @@ export struct HomePage {
 
         Column({ space: 2 }) {
           Text(this.pulse.lastReviewLabel)
-            .fontSize(13)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
           Text('最近复盘')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
@@ -242,7 +242,7 @@ export struct HomePage {
       Row() {
         Text('数据看板 ›')
           .id('home_dashboard_entry')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
           .padding({ left: 12, right: 12, top: 10, bottom: 10 })
           .backgroundColor(AppTheme.color.surfaceAlt)
@@ -270,24 +270,24 @@ export struct HomePage {
   blockedBody() {
     Column({ space: 14 }) {
       Text('数据库打不开')
-        .fontSize(20)
+        .fontSize(AppTheme.font.headline)
         .fontWeight(FontWeight.Bold)
         .fontColor(AppTheme.color.text)
       Text('记录仍保存在本机。可以先重试；一直失败时请重启应用。备份与导出需要数据库打开后才能使用。')
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .lineHeight(19)
         .fontColor(AppTheme.color.textSecondary)
         .textAlign(TextAlign.Center)
       if (this.dbMessage.length > 0) {
         Text(this.dbMessage)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .maxLines(3)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .fontColor(AppTheme.color.textMuted)
           .textAlign(TextAlign.Center)
       }
       Text('重试')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(Color.White)
         .width('100%')
         .textAlign(TextAlign.Center)
@@ -298,7 +298,7 @@ export struct HomePage {
           this.retryDatabase();
         })
       Text('退出应用')
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textSecondary)
         .padding({ top: 4, bottom: 4 })
         .onClick(() => {

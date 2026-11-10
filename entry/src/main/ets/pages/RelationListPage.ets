@@ -124,7 +124,7 @@ export struct RelationListPage {
   @Builder
   filterChip(label: string, level: TrustLevel | null) {
     Text(label)
-      .fontSize(12)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.filter === level ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.filter === level ? AppTheme.color.primary : AppTheme.color.chip)
@@ -138,14 +138,14 @@ export struct RelationListPage {
   graphMenu() {
     Row({ space: 2 }) {
       Text('＋')
-        .fontSize(20)
+        .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 8, right: 4 })
         .onClick(() => {
           this.openEditor();
         })
       Text('图谱')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 4, right: 16 })
         .onClick(() => {
@@ -164,24 +164,24 @@ export struct RelationListPage {
       Column({ space: 4 }) {
         Row() {
           Text('关系层')
-            .fontSize(16)
+            .fontSize(AppTheme.font.title)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
           Blank()
           Text(`${this.items.length} 人`)
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.textSecondary)
         }
         .width('100%')
 
         Row({ space: 8 }) {
           Text('记录你愿意长期观察的关系。列表用化名，信任层级决定复盘时能谈到哪一层。')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .lineHeight(17)
             .fontColor(AppTheme.color.textSecondary)
             .layoutWeight(1)
           Text(this.showHelp ? '收起' : '怎么用')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.primary)
             .onClick(() => {
               this.showHelp = !this.showHelp;
@@ -192,17 +192,17 @@ export struct RelationListPage {
         if (this.showHelp) {
           Column({ space: 4 }) {
             Text('1. 新建：给关系起一个化名，再选友好、真诚或透明。')
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .lineHeight(16)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
             Text('2. 说明：备注写清分析边界，不写隐私细节。')
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .lineHeight(16)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
             Text('3. 维护：在详情页追加互动记录，复盘时回看变化。')
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .lineHeight(16)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')

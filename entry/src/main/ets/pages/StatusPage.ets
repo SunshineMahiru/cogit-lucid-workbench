@@ -123,7 +123,7 @@ export struct StatusPage {
   addMenu() {
     Row() {
       Text('＋')
-        .fontSize(20)
+        .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 12, right: 16 })
         .onClick(() => {
@@ -138,11 +138,11 @@ export struct StatusPage {
   statItem(value: string, label: string) {
     Column({ space: 2 }) {
       Text(value)
-        .fontSize(18)
+        .fontSize(AppTheme.font.title)
         .fontWeight(FontWeight.Medium)
         .fontColor(AppTheme.color.text)
       Text(label)
-        .fontSize(10)
+        .fontSize(AppTheme.font.caption)
         .fontColor(AppTheme.color.textSecondary)
     }
     .layoutWeight(1)
@@ -208,27 +208,27 @@ export struct StatusPage {
                 Column({ space: 10 }) {
                   Row() {
                     Text('最近一次读数')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                     Blank()
                     Text(this.overview.latest.date)
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textMuted)
                   }
                   .width('100%')
 
                   Row({ space: 6 }) {
                     Text(`${this.overview.latest.sleepHours}`)
-                      .fontSize(32)
+                      .fontSize(AppTheme.font.display)
                       .fontWeight(FontWeight.Bold)
                       .fontColor(this.overview.latest.flags.length > 0 ? AppTheme.color.danger : AppTheme.color.text)
                     Text('小时睡眠')
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.textSecondary)
                       .margin({ top: 12 })
                     Blank()
                     Text(`运动 ${this.overview.latest.exerciseCount} 次 · 报警 ${this.overview.latest.alertCount} 次`)
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                   }
                   .width('100%')
@@ -242,7 +242,7 @@ export struct StatusPage {
                     Flex({ wrap: FlexWrap.Wrap }) {
                       ForEach(this.overview.latest.flags, (flag: ReadingFlag) => {
                         Text(flag.message)
-                          .fontSize(10)
+                          .fontSize(AppTheme.font.caption)
                           .fontColor(AppTheme.color.danger)
                           .padding({ left: 6, right: 6, top: 3, bottom: 3 })
                           .backgroundColor(AppTheme.color.dangerSurface)
@@ -255,7 +255,7 @@ export struct StatusPage {
 
                   if (this.overview.latest.note.length > 0) {
                     Text(this.overview.latest.note)
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
@@ -273,7 +273,7 @@ export struct StatusPage {
                   }
                   .width('100%')
                   Text(`最近 ${this.overview.summary.days} 次记录 · 有提示 ${this.overview.summary.flaggedDays} 天`)
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                     .textAlign(TextAlign.Center)
@@ -287,11 +287,11 @@ export struct StatusPage {
                 Column({ space: 10 }) {
                   Row() {
                     Text('最近记录')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                     Blank()
                     Text('全部记录 ›')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.primary)
                       .onClick(() => {
                         this.openHistory();

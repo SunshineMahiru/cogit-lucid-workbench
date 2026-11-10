@@ -169,7 +169,7 @@ export struct PlanListPage {
   addMenu() {
     Text('＋')
       .id('plan_create')
-      .fontSize(22)
+      .fontSize(AppTheme.font.headline)
       .fontColor(AppTheme.color.primary)
       .padding({ left: 12, right: 16 })
       .height(56)
@@ -184,7 +184,7 @@ export struct PlanListPage {
       Column({ space: 6 }) {
         Row({ space: 8 }) {
           Text('主目标')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.primaryDeep)
             .padding({ left: 7, right: 7, top: 2, bottom: 2 })
             .backgroundColor(AppTheme.color.tint)
@@ -192,13 +192,13 @@ export struct PlanListPage {
           Blank()
           Row({ space: 10 }) {
             Text('查看 ›')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.primary)
               .onClick(() => {
                 this.openDetail(plan.id);
               })
             Text('编辑')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.textSecondary)
               .onClick(() => {
                 this.openEditor(plan.id);
@@ -208,21 +208,21 @@ export struct PlanListPage {
         .width('100%')
 
         Text(plan.title)
-          .fontSize(20)
+          .fontSize(AppTheme.font.headline)
           .fontWeight(FontWeight.Bold)
           .fontColor(AppTheme.color.text)
           .width('100%')
           .maxLines(2)
         if (plan.goal.length > 0) {
           Text(plan.goal)
-            .fontSize(12)
+            .fontSize(AppTheme.font.bodyStrong)
             .lineHeight(18)
             .fontColor(AppTheme.color.textSecondary)
             .width('100%')
             .maxLines(3)
         }
         Text(`起始 ${plan.startDate} · 七日节点按周推进`)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
       }
@@ -237,7 +237,7 @@ export struct PlanListPage {
       Column({ space: 5 }) {
         Row({ space: 8 }) {
           Text(plan.title)
-            .fontSize(15)
+            .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
             .layoutWeight(1)
@@ -247,7 +247,7 @@ export struct PlanListPage {
               this.openDetail(plan.id);
             })
           Text('设为主目标')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.primary)
             .onClick(() => {
               this.setPrimary(plan.id);
@@ -256,7 +256,7 @@ export struct PlanListPage {
         .width('100%')
 
         Text(plan.goal.length > 0 ? plan.goal : '还没有目标说明')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
           .maxLines(2)
@@ -273,20 +273,20 @@ export struct PlanListPage {
       Row({ space: 8 }) {
         Column({ space: 3 }) {
           Text(plan.title)
-            .fontSize(13)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontColor(AppTheme.color.textSecondary)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .width('100%')
           Text(`归档 · 起始 ${plan.startDate}`)
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
             .width('100%')
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
         Text('恢复')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
           .onClick(() => {
             this.restore(plan.id);
@@ -330,12 +330,12 @@ export struct PlanListPage {
           SectionCard() {
             Column({ space: 4 }) {
               Text('把长期目标切成七日节点')
-                .fontSize(13)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontWeight(FontWeight.Medium)
                 .fontColor(AppTheme.color.text)
                 .width('100%')
               Text('首页只展示主目标；其他目标可以随时切换为主目标。进入目标即可管理周节点、清单与关联记录。')
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .lineHeight(17)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
@@ -352,7 +352,7 @@ export struct PlanListPage {
 
           if (this.otherPlans().length > 0) {
             Text('其他目标')
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
             ForEach(this.otherPlans(), (plan: Plan) => {
@@ -362,7 +362,7 @@ export struct PlanListPage {
 
           if (this.archivedPlans().length > 0) {
             Text('已归档')
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
             ForEach(this.archivedPlans(), (plan: Plan) => {

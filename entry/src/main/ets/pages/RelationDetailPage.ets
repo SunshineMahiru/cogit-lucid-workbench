@@ -181,14 +181,14 @@ export struct RelationDetailPage {
   editMenu() {
     Row({ space: 4 }) {
       Text('计划')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 10, right: 6 })
         .onClick(() => {
           this.openAttach();
         })
       Text('编辑')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 10, right: 8 })
         .accessibilityText('编辑关系')
@@ -196,7 +196,7 @@ export struct RelationDetailPage {
           this.openEditor();
         })
       Text('删除')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.danger)
         .padding({ left: 4, right: 16 })
         .accessibilityText('删除关系，可撤销')
@@ -212,10 +212,10 @@ export struct RelationDetailPage {
   infoRow(label: string, value: string) {
     Row({ space: 12 }) {
       Text(label)
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textSecondary)
       Text(value)
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.text)
         .layoutWeight(1)
         .textAlign(TextAlign.End)
@@ -284,11 +284,11 @@ export struct RelationDetailPage {
               SectionCard() {
                 Row({ space: 8 }) {
                   Text('关系已删除')
-                    .fontSize(12)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.textSecondary)
                   Blank()
                   Text('撤销')
-                    .fontSize(12)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.primary)
                     .accessibilityText('撤销删除关系')
                     .onClick(() => {
@@ -303,7 +303,7 @@ export struct RelationDetailPage {
               Column({ space: 8 }) {
                 Row({ space: 8 }) {
                   Text(this.detail.name)
-                    .fontSize(20)
+                    .fontSize(AppTheme.font.headline)
                     .fontWeight(FontWeight.Bold)
                     .fontColor(AppTheme.color.text)
                     .layoutWeight(1)
@@ -314,7 +314,7 @@ export struct RelationDetailPage {
                 Row({ space: 6 }) {
                   if (this.detail.rawMaterialTest) {
                     Text('未加工材料')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.primaryDeep)
                       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                       .backgroundColor(AppTheme.color.tint)
@@ -322,7 +322,7 @@ export struct RelationDetailPage {
                   }
                   if (this.detail.forbidAnalysis) {
                     Text('禁分析')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.danger)
                       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                       .backgroundColor(AppTheme.color.dangerSurface)
@@ -330,7 +330,7 @@ export struct RelationDetailPage {
                   }
                   Blank()
                   Text(this.detail.lastInteractionLabel)
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textMuted)
                 }
                 .width('100%')
@@ -352,16 +352,16 @@ export struct RelationDetailPage {
             SectionCard() {
               Column({ space: 5 }) {
                 Text('可分析边界')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Text(this.trustAllowed ? '允许动机分析' : '仅描述，不做动机分析')
-                  .fontSize(13)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.trustAllowed ? AppTheme.color.success : AppTheme.color.warning)
                   .width('100%')
                 Text(this.trustReason)
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .lineHeight(18)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
@@ -373,25 +373,25 @@ export struct RelationDetailPage {
             SectionCard() {
               Column({ space: 5 }) {
                 Text('关联记录')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 if (this.detail.linkedEvents.length === 0 && this.detail.linkedDecisions.length === 0) {
                   Text('暂无速记或决策引用这条关系')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                 } else {
                   ForEach(this.detail.linkedEvents, (title: string, index: number) => {
                     Text(`速记 · ${title}`)
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .lineHeight(19)
                       .fontColor(AppTheme.color.text)
                       .width('100%')
                   }, (title: string, index: number) => `ev_${index}_${title}`)
                   ForEach(this.detail.linkedDecisions, (title: string, index: number) => {
                     Text(`决策 · ${title}`)
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .lineHeight(19)
                       .fontColor(AppTheme.color.text)
                       .width('100%')
@@ -406,11 +406,11 @@ export struct RelationDetailPage {
               SectionCard() {
                 Column({ space: 6 }) {
                   Text('备注')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Text(this.detail.notes)
-                    .fontSize(13)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .lineHeight(21)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
@@ -423,7 +423,7 @@ export struct RelationDetailPage {
             SectionCard() {
               Column({ space: 10 }) {
                 Text('互动记录')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Row({ space: 8 }) {
@@ -437,7 +437,7 @@ export struct RelationDetailPage {
                     })
                   Text(this.isAdding ? '保存中' : '添加')
                     .id('relation_interaction_add')
-                    .fontSize(12)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.primary)
                     .onClick(() => {
                       this.addInteraction();
@@ -446,18 +446,18 @@ export struct RelationDetailPage {
                 .width('100%')
                 if (this.detail.interactionLog.length === 0) {
                   Text('暂无互动记录')
-                    .fontSize(12)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                 } else {
                   ForEach(this.detail.interactionLog, (log: InteractionLog, index: number) => {
                     Column({ space: 3 }) {
                       Text(formatInteractionTime(log.timestamp))
-                        .fontSize(10)
+                        .fontSize(AppTheme.font.caption)
                         .fontColor(AppTheme.color.textMuted)
                         .width('100%')
                       Text(log.content)
-                        .fontSize(13)
+                        .fontSize(AppTheme.font.bodyStrong)
                         .lineHeight(20)
                         .fontColor(AppTheme.color.text)
                         .width('100%')

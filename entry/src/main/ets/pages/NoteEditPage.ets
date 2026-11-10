@@ -264,7 +264,7 @@ export struct NoteEditPage {
   saveMenu() {
     Row() {
       Text(this.isSaving ? '保存中' : '保存')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(this.isSaving ? AppTheme.color.textMuted : AppTheme.color.primary)
         .padding({ left: 8, right: 16 })
         .onClick(() => {
@@ -332,7 +332,7 @@ export struct NoteEditPage {
           Column({ space: 16 }) {
             Column({ space: 6 }) {
               Text('类别')
-                .fontSize(12)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               NoteTemplatePicker({
@@ -348,13 +348,13 @@ export struct NoteEditPage {
             Column({ space: 6 }) {
               Row({ space: 4 }) {
                 Text(this.draft.templateId === null ? '正文 *' : '正文（可选）')
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondaryStrong)
               }
               .width('100%')
 
               TextArea({ text: this.draft.content, placeholder: '先记一句…' })
-                .fontSize(13)
+                .fontSize(AppTheme.font.bodyStrong)
                 .height(88)
                 .padding(10)
                 .backgroundColor(AppTheme.color.surfaceTint)
@@ -366,7 +366,7 @@ export struct NoteEditPage {
 
               if (this.errorFor(null).length > 0) {
                 Text(this.errorFor(null))
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.danger)
                   .width('100%')
               }
@@ -399,19 +399,19 @@ export struct NoteEditPage {
 
             Column({ space: 8 }) {
               Text('关联关系（可选）')
-                .fontSize(12)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               if (this.relations.length === 0) {
                 Text('关系层还没有记录，可先去载入示例关系')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               } else {
                 Flex({ wrap: FlexWrap.Wrap }) {
                   ForEach(this.relations, (relation: RelationListItem) => {
                     Text(relation.name)
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? Color.White : AppTheme.color.textSecondaryStrong)
                       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
                       .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.primary : AppTheme.color.chip)
@@ -430,15 +430,15 @@ export struct NoteEditPage {
 
             Row() {
               Text('密级')
-                .fontSize(12)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondary)
               Text(securityLevelText(this.draft.level))
-                .fontSize(12)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondaryStrong)
                 .margin({ left: 12 })
               Blank()
               Text('跟随设置')
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textMuted)
             }
             .width('100%')
