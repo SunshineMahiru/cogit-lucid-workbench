@@ -7,7 +7,13 @@ build/
 .cxx/
 local.properties
 node_modules/
-.test/
+.test/*
+!.test/check.js
+!.test/service-check.js
+!.test/export-check.js
+!.test/agent-check.js
+!.test/plan-check.js
+entry/.test/
 *.log
 *-log.txt
 
