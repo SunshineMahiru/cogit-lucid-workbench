@@ -1,4 +1,5 @@
-import { NoteDraft, NoteEntry, readNoteEntry } from './NoteDraft';
+import { NoteDraft } from './NoteDraft';
+import { buildTemplateEntries } from './NoteDraftEntries';
 import { NoteTemplateId } from './NoteTemplateId';
 import { findNoteTemplate } from './templates';
 
@@ -20,15 +21,11 @@ export function mergeDraftEntries(draft: NoteDraft, templateId: NoteTemplateId |
     };
   }
   const template = findNoteTemplate(templateId);
-  const entries: NoteEntry[] = [];
-  for (const field of template.fields) {
-    entries.push({ key: field.key, value: readNoteEntry(draft, field.key) });
-  }
   return {
     templateId: templateId,
     title: draft.title,
     content: draft.content,
-    entries: entries,
+    entries: buildTemplateEntries(template, draft),
     tags: template.defaultTags.slice(),
     relatedRelationIds: draft.relatedRelationIds.slice(),
     level: draft.level,

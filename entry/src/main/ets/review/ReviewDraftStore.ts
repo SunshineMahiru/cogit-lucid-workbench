@@ -2,6 +2,7 @@ import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewDraft } from './ReviewDraft';
+import { mergeWeeklyDraft } from './ReviewDraftMerge';
 
 const STORE_NAME = 'review_draft_store';
 const KEY_PREFIX = 'draft_';
@@ -85,26 +86,6 @@ export class ReviewDraftStore {
    */
   async prefillWeekly(facts: string, planId: string = '', planNodeId: string = ''): Promise<void> {
     const existing = await this.loadFor(ReviewPeriod.WEEK, planNodeId);
-    if (existing === null) {
-      const draft: ReviewDraft = {
-        facts: facts,
-        interpretation: '',
-        contradiction: '',
-        action: '',
-        anchorIds: [],
-        planId: planId,
-        planNodeId: planNodeId
-      };
-      await this.saveFor(ReviewPeriod.WEEK, planNodeId, draft);
-      return;
-    }
-    if (existing.facts.trim().length === 0) {
-      existing.facts = facts;
-    } else if (!existing.facts.includes(facts)) {
-      existing.facts = `${existing.facts.trimEnd()}\n\n${facts}`;
-    }
-    existing.planId = planId;
-    existing.planNodeId = planNodeId;
-    await this.saveFor(ReviewPeriod.WEEK, planNodeId, existing);
+    await this.saveFor(ReviewPeriod.WEEK, planNodeId, mergeWeeklyDraft(existing, facts, planId, planNodeId));
   }
 }

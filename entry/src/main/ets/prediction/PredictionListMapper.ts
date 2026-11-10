@@ -1,6 +1,8 @@
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
+import { hitRatePercent } from '../analysis/metrics/Rates';
+import { formatDateTime } from '../analysis/time/DateTime';
 import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
 
 /** Converts one prediction into a list row. */
@@ -45,7 +47,7 @@ export function summarizePredictions(predictions: Prediction[]): PredictionSumma
     }
   }
   const settled = total - pending;
-  const hitRate = settled > 0 ? Math.round(hits / settled * 100) : 0;
+  const hitRate = hitRatePercent(hits, settled);
   return { total: total, pending: pending, settled: settled, hits: hits, hitRate: hitRate };
 }
 
@@ -100,14 +102,4 @@ function compareRows(left: PredictionListItem, right: PredictionListItem): numbe
     return left.settlementDate < right.settlementDate ? -1 : 1;
   }
   return right.createdAt - left.createdAt;
-}
-
-function formatDateTime(timestamp: number): string {
-  const date = new Date(timestamp);
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ` +
-    `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-}
-
-function pad2(value: number): string {
-  return value < 10 ? `0${value}` : `${value}`;
 }

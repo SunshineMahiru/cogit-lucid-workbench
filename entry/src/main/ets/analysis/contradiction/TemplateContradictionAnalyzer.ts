@@ -1,5 +1,6 @@
 import { Anchor } from '../../model/Anchor';
 import { AnalysisContext } from '../types';
+import { AnchorMatcher } from '../anchors/AnchorMatcher';
 import { KeywordAnchorMatcher } from '../anchors/KeywordAnchorMatcher';
 import {
   ContradictionAnalyzer,
@@ -11,7 +12,7 @@ const ABSOLUTE_WORDS: string[] = ['总是', '从不', '永远', '一定', '必�
 
 /** Deterministic offline hints used when no model is configured. */
 export class TemplateContradictionAnalyzer implements ContradictionAnalyzer {
-  private matcher: KeywordAnchorMatcher = new KeywordAnchorMatcher();
+  private matcher: AnchorMatcher = new KeywordAnchorMatcher();
 
   async analyze(input: ContradictionInput, context: AnalysisContext): Promise<ContradictionCandidate[]> {
     const facts = input.facts.trim();

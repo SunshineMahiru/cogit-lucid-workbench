@@ -1,5 +1,6 @@
 import { SecurityLevel } from '../model/SecurityLevel';
-import { NoteDraft, NoteEntry } from './NoteDraft';
+import { NoteDraft } from './NoteDraft';
+import { buildTemplateEntries } from './NoteDraftEntries';
 import { NoteTemplateId } from './NoteTemplateId';
 import { findNoteTemplate } from './templates';
 
@@ -9,15 +10,11 @@ export function createNoteDraft(templateId: NoteTemplateId | null): NoteDraft {
     return createFreeformNoteDraft();
   }
   const template = findNoteTemplate(templateId);
-  const entries: NoteEntry[] = [];
-  for (const field of template.fields) {
-    entries.push({ key: field.key, value: '' });
-  }
   return {
     templateId: templateId,
     title: '',
     content: '',
-    entries: entries,
+    entries: buildTemplateEntries(template, null),
     tags: template.defaultTags.slice(),
     relatedRelationIds: [],
     level: SecurityLevel.LOCAL_ONLY,

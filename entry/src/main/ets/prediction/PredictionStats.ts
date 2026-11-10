@@ -1,8 +1,8 @@
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
-import { CalibrationReport, PredictionOutcome } from '../analysis/calibration/CalibrationAnalyzer';
-import { ThresholdCalibrationAnalyzer } from '../analysis/calibration/ThresholdCalibrationAnalyzer';
+import { CalibrationReport } from '../analysis/calibration/CalibrationAnalyzer';
+import { buildPredictionMetrics, SettledSample } from '../analysis/metrics/PredictionMetrics';
 
 /** One month of settled predictions. */
 export interface PredictionMonthPoint {
@@ -28,62 +28,37 @@ export interface PredictionStats {
   calibration: CalibrationReport;
 }
 
-interface MonthAccumulator {
-  month: string;
-  settled: number;
-  hits: number;
-}
-
 /** Builds the chart payload from settled predictions only. */
 export function buildPredictionStats(predictions: Prediction[], monthLimit: number = 6): PredictionStats {
-  const buckets: Map<string, MonthAccumulator> = new Map<string, MonthAccumulator>();
-  let settled = 0;
-  let hits = 0;
-  const outcomes: PredictionOutcome[] = [];
+  const samples: SettledSample[] = [];
   for (const prediction of predictions) {
     if (prediction.status !== PredictionStatus.SETTLED || prediction.level === SecurityLevel.SEALED) {
       continue;
     }
-    settled += 1;
-    if (prediction.hit === true) {
-      hits += 1;
-    }
-    outcomes.push({ confidence: prediction.confidence, hit: prediction.hit === true });
     const month = prediction.settlementDate.length >= 7 ?
       prediction.settlementDate.slice(0, 7) : '未知';
-    let bucket = buckets.get(month);
-    if (bucket === undefined) {
-      bucket = { month: month, settled: 0, hits: 0 };
-      buckets.set(month, bucket);
-    }
-    bucket.settled += 1;
-    if (prediction.hit === true) {
-      bucket.hits += 1;
-    }
+    samples.push({ confidence: prediction.confidence, hit: prediction.hit === true, month: month });
   }
 
+  const metrics = buildPredictionMetrics(samples, monthLimit);
   const months: PredictionMonthPoint[] = [];
-  for (const bucket of buckets.values()) {
+  for (const month of metrics.months) {
     months.push({
-      month: bucket.month,
-      label: monthLabel(bucket.month),
-      settled: bucket.settled,
-      hits: bucket.hits,
-      hitRate: Math.round(bucket.hits / bucket.settled * 100)
+      month: month.month,
+      label: monthLabel(month.month),
+      settled: month.settled,
+      hits: month.hits,
+      hitRate: month.hitRate
     });
   }
-  months.sort((left: PredictionMonthPoint, right: PredictionMonthPoint) =>
-    left.month < right.month ? -1 : (left.month > right.month ? 1 : 0));
-  const limited = months.length > monthLimit ? months.slice(months.length - monthLimit) : months;
-  const calibration = new ThresholdCalibrationAnalyzer().analyze(outcomes, { now: Date.now() });
 
   return {
-    settled: settled,
-    hits: hits,
-    misses: settled - hits,
-    hitRate: settled > 0 ? Math.round(hits / settled * 100) : 0,
-    months: limited,
-    calibration: calibration
+    settled: metrics.settled,
+    hits: metrics.hits,
+    misses: metrics.misses,
+    hitRate: metrics.hitRate,
+    months: months,
+    calibration: metrics.calibration
   };
 }
 

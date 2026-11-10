@@ -1,4 +1,5 @@
 import { ReviewPeriod } from '../model/ReviewPeriod';
+import { formatDate } from '../analysis/time/DateTime';
 
 /** Half-open date range for one review period, in milliseconds. */
 export interface PeriodRange {
@@ -18,7 +19,7 @@ export function rangeFor(period: ReviewPeriod, now: number): PeriodRange {
     return {
       start: start.getTime(),
       end: next.getTime(),
-      label: `${formatDate(start)} ~ ${formatDate(dayBefore(next))}`
+      label: `${formatDate(start.getTime())} ~ ${formatDate(dayBefore(next).getTime())}`
     };
   }
   const weekday = date.getDay();
@@ -28,16 +29,10 @@ export function rangeFor(period: ReviewPeriod, now: number): PeriodRange {
   return {
     start: start.getTime(),
     end: next.getTime(),
-    label: `${formatDate(start)} ~ ${formatDate(dayBefore(next))}`
+    label: `${formatDate(start.getTime())} ~ ${formatDate(dayBefore(next).getTime())}`
   };
 }
 
 function dayBefore(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
-}
-
-function formatDate(date: Date): string {
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  return `${date.getFullYear()}-${month < 10 ? `0${month}` : `${month}`}-${day < 10 ? `0${day}` : `${day}`}`;
 }

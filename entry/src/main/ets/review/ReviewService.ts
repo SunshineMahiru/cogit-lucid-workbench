@@ -5,9 +5,9 @@ import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
 import { createReviewResult } from '../model/factories';
 import { Prediction } from '../model/Prediction';
-import { PredictionStatus } from '../model/PredictionStatus';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { SecurityLevel } from '../model/SecurityLevel';
+import { countReviewWindow, ReviewWindowCounts } from '../analysis/metrics/ReviewMetrics';
 import { DbHelper } from '../db/DbHelper';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
@@ -105,39 +105,14 @@ export class ReviewService {
 
 function summarize(events: Event[], decisions: Decision[], predictions: Prediction[],
   anchorCount: number, range: PeriodRange): ReviewStats {
-  let noteCount = 0;
-  for (const event of events) {
-    if (event.timestamp >= range.start && event.timestamp < range.end) {
-      noteCount += 1;
-    }
-  }
-  let decisionCount = 0;
-  for (const decision of decisions) {
-    if (decision.timestamp >= range.start && decision.timestamp < range.end) {
-      decisionCount += 1;
-    }
-  }
-  let pending = 0;
-  let settled = 0;
-  let hits = 0;
-  for (const prediction of predictions) {
-    if (prediction.status === PredictionStatus.PENDING) {
-      pending += 1;
-    } else if (prediction.createdAt >= range.start && prediction.createdAt < range.end) {
-      settled += 1;
-      if (prediction.hit === true) {
-        hits += 1;
-      }
-    }
-  }
-  const hitRate = settled > 0 ? Math.round(hits / settled * 100) : 0;
+  const counts: ReviewWindowCounts = countReviewWindow(events, decisions, predictions, range.start, range.end);
   return {
     rangeLabel: range.label,
-    noteCount: noteCount,
-    decisionCount: decisionCount,
-    pendingPredictions: pending,
-    settledPredictions: settled,
-    hitRate: hitRate,
+    noteCount: counts.noteCount,
+    decisionCount: counts.decisionCount,
+    pendingPredictions: counts.pendingPredictions,
+    settledPredictions: counts.settledPredictions,
+    hitRate: counts.hitRate,
     anchorCount: anchorCount
   };
 }

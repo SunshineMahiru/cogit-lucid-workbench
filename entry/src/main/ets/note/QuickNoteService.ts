@@ -131,11 +131,7 @@ export class QuickNoteService {
     if (event === null) {
       throw new Error('note not found');
     }
-    event.title = deriveNoteTitle(draft);
-    event.content = composeNoteContent(draft);
-    event.tags = normalizeTags(draft.tags);
-    event.relatedRelationIds = (draft.relatedRelationIds ?? []).slice();
-    event.level = draft.level;
+    applyDraft(event, draft);
     await this.eventDao.update(event);
     return toNoteDetail(event);
   }
@@ -153,14 +149,18 @@ function normalizeLimit(limit: number): number {
 
 function buildEvent(draft: NoteDraft): Event {
   const event = createEvent();
-  event.title = deriveNoteTitle(draft);
-  event.content = composeNoteContent(draft);
   event.type = draft.templateId === null ? FREE_NOTE_TYPE : findNoteTemplate(draft.templateId).label;
   event.timestamp = draft.timestamp > 0 ? draft.timestamp : Date.now();
+  applyDraft(event, draft);
+  return event;
+}
+
+function applyDraft(event: Event, draft: NoteDraft): void {
+  event.title = deriveNoteTitle(draft);
+  event.content = composeNoteContent(draft);
   event.tags = normalizeTags(draft.tags);
   event.relatedRelationIds = (draft.relatedRelationIds ?? []).slice();
   event.level = draft.level;
-  return event;
 }
 
 function normalizeTags(tags: string[]): string[] {

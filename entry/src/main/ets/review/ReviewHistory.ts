@@ -1,6 +1,7 @@
 import { Anchor } from '../model/Anchor';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewResult } from '../model/ReviewResult';
+import { formatDateTime } from '../analysis/time/DateTime';
 
 /** Row model for the saved review list. */
 export interface ReviewHistoryItem {
@@ -75,11 +76,5 @@ export function toReviewDetailView(result: ReviewResult, anchors: Anchor[]): Rev
 
 /** Local date-time label used in both the list and the detail header. */
 export function formatReviewTime(timestamp: number): string {
-  const date = new Date(timestamp);
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ` +
-    `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-}
-
-function pad2(value: number): string {
-  return value < 10 ? `0${value}` : `${value}`;
+  return formatDateTime(timestamp);
 }

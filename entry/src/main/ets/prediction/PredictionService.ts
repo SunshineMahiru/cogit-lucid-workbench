@@ -2,6 +2,7 @@ import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { MOCK_PREDICTIONS } from '../model/mockData';
 import { PredictionStatus } from '../model/PredictionStatus';
+import { Prediction } from '../model/Prediction';
 import { DbHelper } from '../db/DbHelper';
 import { PredictionDao } from '../db/dao/PredictionDao';
 import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
@@ -67,11 +68,7 @@ export class PredictionService {
       throw new Error('invalid prediction draft');
     }
     const prediction = createPrediction();
-    prediction.target = draft.target.trim();
-    prediction.judgment = draft.judgment.trim();
-    prediction.confidence = Math.round(draft.confidence);
-    prediction.reason = draft.reason.trim();
-    prediction.settlementDate = draft.settlementDate.trim();
+    fillFromDraft(prediction, draft);
     prediction.createdAt = now;
     await this.predictionDao.insert(prediction);
     return toPredictionDetail(prediction);
@@ -87,11 +84,7 @@ export class PredictionService {
       throw new Error('prediction not found');
     }
     const prediction = createPrediction();
-    prediction.target = draft.target.trim();
-    prediction.judgment = draft.judgment.trim();
-    prediction.confidence = Math.round(draft.confidence);
-    prediction.reason = draft.reason.trim();
-    prediction.settlementDate = draft.settlementDate.trim();
+    fillFromDraft(prediction, draft);
     prediction.version = existing.version + 1;
     prediction.rootId = existing.rootId !== undefined && existing.rootId.length > 0 ? existing.rootId : existing.id;
     prediction.createdAt = now;
@@ -138,4 +131,12 @@ export class PredictionService {
     }
     return MOCK_PREDICTIONS.length;
   }
+}
+
+function fillFromDraft(prediction: Prediction, draft: PredictionDraft): void {
+  prediction.target = draft.target.trim();
+  prediction.judgment = draft.judgment.trim();
+  prediction.confidence = Math.round(draft.confidence);
+  prediction.reason = draft.reason.trim();
+  prediction.settlementDate = draft.settlementDate.trim();
 }

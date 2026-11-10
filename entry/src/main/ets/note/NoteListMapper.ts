@@ -1,4 +1,5 @@
 import { Event } from '../model/Event';
+import { formatClock, formatMonthDayTime, isSameDay } from '../analysis/time/DateTime';
 import { NoteListItem } from './NoteListItem';
 
 /** Maximum length of the list summary. */
@@ -30,19 +31,10 @@ export function toNoteListItems(events: Event[], now: number = Date.now()): Note
 
 /** Formats a capture time: HH:mm for today, MM-DD HH:mm for earlier days. */
 export function formatNoteTime(timestamp: number, now: number = Date.now()): string {
-  const date = new Date(timestamp);
-  const today = new Date(now);
-  const clock = `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-  const sameDay = date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate();
-  return sameDay ? clock : `${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${clock}`;
+  return isSameDay(timestamp, now) ? formatClock(timestamp) : formatMonthDayTime(timestamp);
 }
 
 function summarize(content: string): string {
   const line = content.replace(/\s+/g, ' ').trim();
   return line.length > NOTE_SUMMARY_MAX_LENGTH ? `${line.slice(0, NOTE_SUMMARY_MAX_LENGTH)}…` : line;
-}
-
-function pad2(value: number): string {
-  return value < 10 ? `0${value}` : `${value}`;
 }

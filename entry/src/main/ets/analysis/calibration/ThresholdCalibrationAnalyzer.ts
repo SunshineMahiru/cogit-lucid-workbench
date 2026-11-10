@@ -1,4 +1,5 @@
 import { AnalysisContext } from '../types';
+import { hitRatePercent } from '../metrics/Rates';
 import { CalibrationAnalyzer, CalibrationBucket, CalibrationReport, PredictionOutcome } from './CalibrationAnalyzer';
 
 interface Band {
@@ -37,12 +38,12 @@ export class ThresholdCalibrationAnalyzer implements CalibrationAnalyzer {
       settled += 1;
     }
     for (const bucket of buckets) {
-      bucket.hitRate = bucket.total > 0 ? Math.round(bucket.hits / bucket.total * 100) : 0;
+      bucket.hitRate = hitRatePercent(bucket.hits, bucket.total);
     }
     return {
       settled: settled,
       hits: hits,
-      hitRate: settled > 0 ? Math.round(hits / settled * 100) : 0,
+      hitRate: hitRatePercent(hits, settled),
       brierScore: settled > 0 ? Math.round(brier / settled * 10000) / 10000 : 0,
       buckets: buckets
     };

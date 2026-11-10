@@ -1,3 +1,5 @@
+import { addDaysToDate, formatDate } from '../analysis/time/DateTime';
+
 /** Draft captured before a prediction is committed. */
 export interface PredictionDraft {
   target: string;
@@ -65,15 +67,12 @@ export function hasPredictionErrors(errors: PredictionDraftErrors): boolean {
 
 /** Today as YYYY-MM-DD in local time. */
 export function todayDateString(now: number = Date.now()): string {
-  const date = new Date(now);
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  return formatDate(now);
 }
 
 /** Date string N days after now, used by the quick deadline chips. */
 export function dateAfterDays(now: number, days: number): string {
-  const date = new Date(now);
-  date.setDate(date.getDate() + days);
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  return addDaysToDate(now, days);
 }
 
 function isValidDate(value: string): boolean {
@@ -86,8 +85,4 @@ function isValidDate(value: string): boolean {
   const day = Number(parts[2]);
   const date = new Date(year, month - 1, day);
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
-}
-
-function pad2(value: number): string {
-  return value < 10 ? `0${value}` : `${value}`;
 }
