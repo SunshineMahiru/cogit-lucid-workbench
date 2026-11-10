@@ -424,7 +424,7 @@ export struct PlanDetailPage {
   editMenu() {
     Row({ space: 4 }) {
       Text('编辑')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 10, right: 8 })
         .height(56)
@@ -432,7 +432,7 @@ export struct PlanDetailPage {
           this.openEditor();
         })
       Text('归档')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.textSecondary)
         .padding({ left: 8, right: 16 })
         .height(56)
@@ -449,24 +449,24 @@ export struct PlanDetailPage {
       Column({ space: 5 }) {
         Row({ space: 8 }) {
           Text(`第 ${view.weekIndex} 周`)
-            .fontSize(14)
+            .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
           Text(view.status === PlanNodeStatus.OPEN ? '进行中' : '已结束')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(view.status === PlanNodeStatus.OPEN ? AppTheme.color.success : AppTheme.color.textMuted)
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .backgroundColor(view.status === PlanNodeStatus.OPEN ? AppTheme.color.successSurface : AppTheme.color.chip)
             .borderRadius(6)
           Blank()
           Text(`${view.done}/${view.total}`)
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.textSecondary)
         }
         .width('100%')
 
         Text(`${view.startDate} 至 ${view.endDate}`)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
       }
@@ -510,12 +510,12 @@ export struct PlanDetailPage {
             Column({ space: 5 }) {
               Row() {
                 Text(this.plan.title)
-                  .fontSize(20)
+                  .fontSize(AppTheme.font.headline)
                   .fontWeight(FontWeight.Bold)
                   .fontColor(AppTheme.color.text)
                   .layoutWeight(1)
                 Text(this.plan.isPrimary ? '主目标' : '目标')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.primaryDeep)
                   .padding({ left: 7, right: 7, top: 2, bottom: 2 })
                   .backgroundColor(AppTheme.color.tint)
@@ -525,13 +525,13 @@ export struct PlanDetailPage {
 
               if (this.plan.goal.length > 0) {
                 Text(this.plan.goal)
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .lineHeight(18)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
               }
               Text(`起始 ${this.plan.startDate} · 周一至周日`)
-                .fontSize(10)
+                .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textMuted)
                 .width('100%')
             }
@@ -542,7 +542,7 @@ export struct PlanDetailPage {
           SectionCard() {
             Column({ space: 8 }) {
               Text('时间')
-                .fontSize(12)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               PlanDeadlineCard({
@@ -557,7 +557,7 @@ export struct PlanDetailPage {
           SectionCard() {
             Column({ space: 8 }) {
               Text('周节奏')
-                .fontSize(12)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               PlanRhythmStrip({
@@ -576,7 +576,7 @@ export struct PlanDetailPage {
             Column({ space: 10 }) {
               Row({ space: 6 }) {
                 Text('周视图')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(this.viewMode === 0 ? Color.White : AppTheme.color.textSecondary)
                   .padding({ left: 12, right: 12, top: 5, bottom: 5 })
                   .backgroundColor(this.viewMode === 0 ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
@@ -585,7 +585,7 @@ export struct PlanDetailPage {
                     this.viewMode = 0;
                   })
                 Text('月视图')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(this.viewMode === 1 ? Color.White : AppTheme.color.textSecondary)
                   .padding({ left: 12, right: 12, top: 5, bottom: 5 })
                   .backgroundColor(this.viewMode === 1 ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
@@ -623,11 +623,11 @@ export struct PlanDetailPage {
             Column({ space: 8 }) {
               Row() {
                 Text('延续率')
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondary)
                 Blank()
                 Text('延续项 ÷ 当周清单')
-                  .fontSize(9)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
               }
               .width('100%')
@@ -636,7 +636,7 @@ export struct PlanDetailPage {
                 SimpleLineChart({ series: this.carryChartSeries(), minValue: 0, maxValue: 100, chartHeight: 150 })
               } else {
                 Text('至少三周有清单后，才画出延续率走势。')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               }
@@ -653,30 +653,30 @@ export struct PlanDetailPage {
           SectionCard() {
             Column({ space: 6 }) {
               Text('项目')
-                .fontSize(12)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               if (this.projects.length === 0) {
                 Text('还没有项目分组；项目是可选的，不影响周节点。')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               } else {
                 ForEach(this.projects, (project: PlanProject) => {
                   Row({ space: 6 }) {
                     Text(project.name)
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.text)
                       .layoutWeight(1)
                     Text('改名')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.primary)
                       .padding({ left: 6, right: 6, top: 4, bottom: 4 })
                       .onClick(() => {
                         this.beginRenameProject(project);
                       })
                     Text('删除')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.danger)
                       .padding({ left: 6, right: 6, top: 4, bottom: 4 })
                       .onClick(() => {
@@ -703,7 +703,7 @@ export struct PlanDetailPage {
                   })
                 if (this.editingProjectId.length > 0) {
                   Text('取消')
-                    .fontSize(12)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.textSecondary)
                     .onClick(() => {
                       this.cancelRenameProject();
@@ -711,7 +711,7 @@ export struct PlanDetailPage {
                 }
                 Text(this.editingProjectId.length > 0 ? '保存' : '添加')
                   .id('plan_project_add')
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.primary)
                   .onClick(() => {
                     this.submitProject();
@@ -728,20 +728,20 @@ export struct PlanDetailPage {
               Row({ space: 10 }) {
                 Column({ space: 3 }) {
                   Text(this.currentNode()!.status === PlanNodeStatus.OPEN ? '本周节点' : '最近节点')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                   Text(`第 ${this.currentNode()!.weekIndex} 周 · ${this.currentNode()!.done}/${this.currentNode()!.total}`)
-                    .fontSize(16)
+                    .fontSize(AppTheme.font.title)
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                   Text(`${this.currentNode()!.startDate} 至 ${this.currentNode()!.endDate}`)
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                 }
                 .layoutWeight(1)
                 .alignItems(HorizontalAlign.Start)
                 Text(this.currentNode()!.status === PlanNodeStatus.OPEN ? '进入本周 ›' : '查看 ›')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.primary)
               }
               .width('100%')
@@ -753,7 +753,7 @@ export struct PlanDetailPage {
 
           if (this.nodes.length > 1) {
             Text('周节点')
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
             ForEach(this.nodes, (view: NodeProgress) => {
