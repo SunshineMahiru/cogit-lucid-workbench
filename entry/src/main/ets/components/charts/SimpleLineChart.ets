@@ -110,7 +110,7 @@ export struct SimpleLineChart {
             ForEach(this.series, (item: ChartSeries) => {
               Row({ space: 4 }) {
                 Row().width(8).height(8).backgroundColor(item.color).borderRadius(2)
-                Text(item.name).fontSize(10).fontColor(AppTheme.color.textMuted)
+                Text(item.name).fontSize(AppTheme.font.caption).fontColor(AppTheme.color.textMuted)
               }
             }, (item: ChartSeries) => item.name)
           }
@@ -120,7 +120,7 @@ export struct SimpleLineChart {
           Row() {
             ForEach(this.series.length > 0 ? this.series[0].points : [], (point: ChartPoint) => {
               Text(point.label)
-                .fontSize(9)
+                .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textMuted)
                 .layoutWeight(1)
                 .textAlign(TextAlign.Center)
@@ -134,7 +134,7 @@ export struct SimpleLineChart {
       .width('100%')
     } else {
       Text('数据不足，暂不绘图')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
         .padding({ top: 16, bottom: 16 })

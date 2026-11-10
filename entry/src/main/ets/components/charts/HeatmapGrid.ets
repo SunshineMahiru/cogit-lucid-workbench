@@ -1,4 +1,5 @@
 import { HeatmapData } from './ChartModels';
+import { AppTheme } from '../../theme/AppTheme';
 
 /** Calendar-style grid drawn on Canvas; the only chart type mpchart does not cover. */
 @ComponentV2
@@ -53,7 +54,7 @@ export struct HeatmapGrid {
   build() {
     if (this.data.rows.length === 0) {
       Text('数据不足，暂不绘图')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor('#6B6A63')
         .width('100%')
         .padding({ top: 16, bottom: 16 })
@@ -63,7 +64,7 @@ export struct HeatmapGrid {
           Column() {
             ForEach(this.data.rows, (label: string) => {
               Text(label)
-                .fontSize(8)
+                .fontSize(AppTheme.font.caption)
                 .fontColor('#6B6A63')
                 .textAlign(TextAlign.Center)
                 .layoutWeight(1)
@@ -94,7 +95,7 @@ export struct HeatmapGrid {
             Blank().width(20)
             ForEach(this.data.columns, (label: string) => {
               Text(label)
-                .fontSize(8)
+                .fontSize(AppTheme.font.caption)
                 .fontColor('#6B6A63')
                 .textAlign(TextAlign.Center)
                 .layoutWeight(1)
@@ -104,16 +105,16 @@ export struct HeatmapGrid {
         }
         Row({ space: 10 }) {
           Text(this.data.legend)
-            .fontSize(9)
+            .fontSize(AppTheme.font.caption)
             .fontColor('#6B6A63')
             .layoutWeight(1)
           Row({ space: 3 }) {
-            Text('少').fontSize(9).fontColor('#6B6A63')
+            Text('少').fontSize(AppTheme.font.caption).fontColor('#6B6A63')
             Row().width(9).height(9).backgroundColor('#EDEBE4').borderRadius(1)
             Row().width(9).height(9).backgroundColor('#B7D3E8').borderRadius(1)
             Row().width(9).height(9).backgroundColor('#6FA8CC').borderRadius(1)
             Row().width(9).height(9).backgroundColor('#2E6F9E').borderRadius(1)
-            Text('多').fontSize(9).fontColor('#6B6A63')
+            Text('多').fontSize(AppTheme.font.caption).fontColor('#6B6A63')
           }
         }
         .width('100%')

@@ -103,12 +103,12 @@ export struct PlanHomeCard {
       Row({ space: 10 }) {
         Column({ space: 3 }) {
           Text('还没有进行中的计划')
-            .fontSize(13)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
             .width('100%')
           Text('用七日节点把长期目标推到下一周')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.textMuted)
             .width('100%')
         }
@@ -116,7 +116,7 @@ export struct PlanHomeCard {
         .alignItems(HorizontalAlign.Start)
         Text('全部目标 ›')
           .id('plan_home_all')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
           .padding({ left: 4, right: 8, top: 6, bottom: 6 })
           .onClick(() => {
@@ -124,7 +124,7 @@ export struct PlanHomeCard {
           })
         Text('新建')
           .id('plan_home_create')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primaryDeep)
           .padding({ left: 10, right: 10, top: 6, bottom: 6 })
           .backgroundColor(AppTheme.color.tint)
@@ -144,20 +144,20 @@ export struct PlanHomeCard {
       Column({ space: 5 }) {
         Row({ space: 8 }) {
           Text('当前计划')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.primaryDeep)
             .padding({ left: 7, right: 7, top: 2, bottom: 2 })
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(6)
           Blank()
           Text('查看 ›')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
         }
         .width('100%')
 
         Text(plan.title)
-          .fontSize(16)
+          .fontSize(AppTheme.font.title)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
           .width('100%')
@@ -166,13 +166,13 @@ export struct PlanHomeCard {
 
         Row({ space: 10 }) {
           Text(this.node !== null ? `第 ${this.node.weekIndex} 周` : '第 1 周')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textSecondary)
           Text(`清单 ${this.doneCount}/${this.totalCount}`)
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textSecondary)
           Text(this.node !== null ? `${this.node.startDate} 至 ${this.node.endDate}` : `起始 ${plan.startDate}`)
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
             .layoutWeight(1)
             .textAlign(TextAlign.End)
@@ -191,7 +191,7 @@ export struct PlanHomeCard {
     if (this.isLoading) {
       Row({ space: 6 }) {
         LoadingProgress().width(14).height(14).color(AppTheme.color.primary)
-        Text('读取计划…').fontSize(10).fontColor(AppTheme.color.textMuted)
+        Text('读取计划…').fontSize(AppTheme.font.caption).fontColor(AppTheme.color.textMuted)
       }
       .width('100%')
       .padding({ top: 2, bottom: 2 })

@@ -58,18 +58,18 @@ export struct ReviewAgentPanel {
       Row() {
         Column({ space: 2 }) {
           Text('矛盾提示 Agent')
-            .fontSize(12)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
           Text(this.message.length > 0 ? this.message : '离线模板 / 本地模拟 / 模型端点')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
 
         Text(this.isLoading ? '生成中…' : '生成提示')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
           .padding({ left: 10, right: 10, top: 5, bottom: 5 })
           .backgroundColor(AppTheme.color.tint)
@@ -87,34 +87,34 @@ export struct ReviewAgentPanel {
             .height(14)
             .color(AppTheme.color.primary)
           Text('正在分析事实与解释…')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
         }
       } else if (this.errorText.length > 0) {
         Text(this.errorText)
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.danger)
           .width('100%')
       } else if (this.requested && this.candidates.length === 0) {
         Text('没有生成候选，换一种说法再试')
-          .fontSize(10)
+          .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
       } else {
         ForEach(this.candidates, (candidate: ContradictionCandidate, index: number) => {
           Column({ space: 4 }) {
             Text(candidate.gap)
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .lineHeight(19)
               .fontColor(AppTheme.color.text)
               .width('100%')
             Row() {
               Text(candidate.prompt)
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .lineHeight(17)
                 .fontColor(AppTheme.color.textSecondary)
                 .layoutWeight(1)
               Text('填入')
-                .fontSize(10)
+                .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.primary)
                 .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                 .backgroundColor(AppTheme.color.tint)

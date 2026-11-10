@@ -235,11 +235,11 @@ export struct ReviewForm {
   statItem(value: string, label: string) {
     Column({ space: 2 }) {
       Text(value)
-        .fontSize(16)
+        .fontSize(AppTheme.font.title)
         .fontWeight(FontWeight.Medium)
         .fontColor(AppTheme.color.text)
       Text(label)
-        .fontSize(10)
+        .fontSize(AppTheme.font.caption)
         .fontColor(AppTheme.color.textSecondary)
     }
     .layoutWeight(1)
@@ -252,7 +252,7 @@ export struct ReviewForm {
       ForEach(STEP_LABELS, (label: string, index: number) => {
         Row({ space: 4 }) {
           Text(String(index + 1))
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(index <= this.step ? Color.White : AppTheme.color.textSecondary)
             .width(18)
             .height(18)
@@ -261,7 +261,7 @@ export struct ReviewForm {
             .backgroundColor(index <= this.step ? AppTheme.color.primary : AppTheme.color.tint)
             .borderRadius(9)
           Text(label)
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(index === this.step ? AppTheme.color.text : AppTheme.color.textSecondary)
         }
         .margin({ right: 8 })
@@ -275,11 +275,11 @@ export struct ReviewForm {
       if (this.planNodeId.length > 0) {
         Row({ space: 8 }) {
           Text('来自计划节点')
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
           Blank()
           Text('返回节点 ›')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.primary)
             .onClick(() => {
               this.onBackToPlan();
@@ -301,19 +301,19 @@ export struct ReviewForm {
       } else if (this.saved) {
         Column({ space: 12 }) {
           Text('本期复盘已完成')
-            .fontSize(18)
+            .fontSize(AppTheme.font.title)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
           Text(this.stats.rangeLabel)
-            .fontSize(12)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontColor(AppTheme.color.textSecondary)
           Text(this.action)
-            .fontSize(14)
+            .fontSize(AppTheme.font.subtitle)
             .lineHeight(22)
             .fontColor(AppTheme.color.text)
             .textAlign(TextAlign.Center)
           Text('再写一条')
-            .fontSize(13)
+            .fontSize(AppTheme.font.bodyStrong)
             .fontColor(AppTheme.color.primary)
             .padding({ left: 16, right: 16, top: 8, bottom: 8 })
             .backgroundColor(AppTheme.color.tint)
@@ -333,12 +333,12 @@ export struct ReviewForm {
             Column({ space: 8 }) {
               Row() {
                 Text(this.period === ReviewPeriod.WEEK ? '本周' : '本月')
-                  .fontSize(13)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(AppTheme.color.text)
                 Blank()
                 Text(this.stats.rangeLabel)
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
               }
               .width('100%')
@@ -363,12 +363,12 @@ export struct ReviewForm {
             }
 
             Text(`${this.step + 1}. ${STEP_LABELS[this.step]}`)
-              .fontSize(16)
+              .fontSize(AppTheme.font.title)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppTheme.color.text)
               .width('100%')
             Text(STEP_HINTS[this.step])
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .lineHeight(18)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
@@ -376,20 +376,20 @@ export struct ReviewForm {
             if (this.step === 2 && this.anchors.length > 0) {
               Column({ space: 8 }) {
                 Text('对照锚点 · 点击选择本次真正用到的')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 ForEach(this.anchors, (anchor: Anchor) => {
                   Column({ space: 4 }) {
                     Row() {
                       Text(anchor.text)
-                        .fontSize(13)
+                        .fontSize(AppTheme.font.bodyStrong)
                         .lineHeight(20)
                         .fontColor(AppTheme.color.text)
                         .layoutWeight(1)
                       if (this.isAnchorSelected(anchor.id)) {
                         Text('已对照')
-                          .fontSize(9)
+                          .fontSize(AppTheme.font.caption)
                           .fontColor(AppTheme.color.primary)
                           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                           .backgroundColor(AppTheme.color.tint)
@@ -398,7 +398,7 @@ export struct ReviewForm {
                     }
                     .width('100%')
                     Text(anchor.source)
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
@@ -434,7 +434,7 @@ export struct ReviewForm {
             }
 
             TextArea({ text: this.currentText(), placeholder: STEP_PLACEHOLDERS[this.step] })
-              .fontSize(13)
+              .fontSize(AppTheme.font.bodyStrong)
               .height(180)
               .padding(12)
               .backgroundColor(AppTheme.color.surface)
@@ -455,7 +455,7 @@ export struct ReviewForm {
         Row({ space: 12 }) {
           if (this.step > 0) {
             Text('上一步')
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .fontColor(AppTheme.color.textSecondaryStrong)
               .padding({ left: 20, right: 20, top: 11, bottom: 11 })
               .backgroundColor(AppTheme.color.chip)
@@ -466,7 +466,7 @@ export struct ReviewForm {
           }
           Blank()
           Text(this.step < 3 ? '下一步' : '完成复盘')
-            .fontSize(14)
+            .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
             .padding({ left: 24, right: 24, top: 11, bottom: 11 })

@@ -69,7 +69,7 @@ export struct PredictionShareChart {
               .backgroundColor(AppTheme.color.primaryDeep)
               .borderRadius(2)
             Text(`命中 ${this.hits} 条`)
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.text)
           }
           Row({ space: 6 }) {
@@ -79,11 +79,11 @@ export struct PredictionShareChart {
               .backgroundColor(AppTheme.color.borderStrong)
               .borderRadius(2)
             Text(`未命中 ${this.misses} 条`)
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.text)
           }
           Text(`共 ${this.hits + this.misses} 条已结算`)
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
@@ -92,7 +92,7 @@ export struct PredictionShareChart {
       .width('100%')
     } else {
       Text('暂无可统计的结算结果')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
         .padding({ top: 16, bottom: 16 })

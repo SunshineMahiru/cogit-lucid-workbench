@@ -1,6 +1,6 @@
 import { fileUri } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
-import { AppTheme } from '../theme/AppTheme';
+import { AppTheme, avatarGlyphSize } from '../theme/AppTheme';
 import { ROUTES } from '../navigation/Routes';
 import { profileCache } from '../profile/ProfileCache';
 import { Profile } from '../profile/ProfileStore';
@@ -97,7 +97,7 @@ export struct ProfileHeader {
     } else {
       Column() {
         Text(this.profile.nickname.slice(0, 1))
-          .fontSize(size / 2.6)
+          .fontSize(avatarGlyphSize(size))
           .fontColor(AppTheme.color.primary)
       }
       .width(size)
@@ -115,14 +115,14 @@ export struct ProfileHeader {
         this.avatar(56)
         Row({ space: 6 }) {
           Text(this.profile.nickname)
-            .fontSize(17)
+            .fontSize(AppTheme.font.title)
             .fontWeight(FontWeight.Medium)
             .fontColor(AppTheme.color.text)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .flexShrink(1)
           Text(this.profile.title)
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.accentGold)
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .backgroundColor(AppTheme.color.surfaceWarm)
@@ -133,14 +133,14 @@ export struct ProfileHeader {
         .justifyContent(FlexAlign.Start)
 
         Text('编辑')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
           .accessibilityText('编辑身份信息')
           .onClick(() => {
             this.openEditor();
           })
         Text('设置')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
           .accessibilityText('打开设置')
           .onClick(() => {
@@ -151,7 +151,7 @@ export struct ProfileHeader {
       .alignItems(VerticalAlign.Center)
 
       Text(this.profile.signature.length > 0 ? this.profile.signature : '写一句留给自己的话')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textSecondary)
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })

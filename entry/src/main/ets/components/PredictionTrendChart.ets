@@ -82,7 +82,7 @@ export struct PredictionTrendChart {
         Row() {
           ForEach(this.points, (point: PredictionMonthPoint) => {
             Text(point.label)
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .layoutWeight(1)
               .textAlign(TextAlign.Center)
@@ -94,7 +94,7 @@ export struct PredictionTrendChart {
       .width('100%')
     } else {
       Text('至少两个结算月份后显示趋势')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
         .padding({ top: 16, bottom: 16 })

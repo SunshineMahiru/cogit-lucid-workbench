@@ -77,12 +77,12 @@ export struct ReviewPromptPanel {
       Column({ space: 8 }) {
         Row() {
           Text('本期提示')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.textSecondary)
           Blank()
           Text(this.state === STATE_ERROR ? 'Mock 未连接' :
             (this.state === STATE_LOCAL ? '本地示例' : '本地 Mock'))
-            .fontSize(10)
+            .fontSize(AppTheme.font.caption)
             .fontColor(this.state === STATE_ERROR ? AppTheme.color.danger : AppTheme.color.textMuted)
         }
         .width('100%')
@@ -94,18 +94,18 @@ export struct ReviewPromptPanel {
               .height(14)
               .color(AppTheme.color.primary)
             Text('正在获取提示…')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.textMuted)
           }
         } else if (this.state === STATE_ERROR) {
           Column({ space: 4 }) {
             Row({ space: 8 }) {
               Text('提示加载失败')
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.danger)
               Blank()
               Text('重试')
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.primary)
                 .onClick(() => {
                   this.load();
@@ -115,17 +115,17 @@ export struct ReviewPromptPanel {
             Text(this.isRealDevice && !this.hasConfiguredHost ?
               '真机不自动猜地址；请在设置里填写宿主机局域网地址后重试' :
               `先启动 mock-server，确认 ${API_BASE_URL}/review-prompts 可访问`)
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .lineHeight(15)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
             Text('当前显示本地回退提示')
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
             ForEach(this.prompts, (prompt: ReviewPrompt) => {
               Text(`· ${prompt.text}`)
-                .fontSize(12)
+                .fontSize(AppTheme.font.bodyStrong)
                 .lineHeight(19)
                 .fontColor(AppTheme.color.text)
                 .width('100%')
@@ -135,18 +135,18 @@ export struct ReviewPromptPanel {
           .alignItems(HorizontalAlign.Start)
         } else if (this.state === STATE_EMPTY) {
           Text('暂无提示，稍后再试')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.textMuted)
         } else {
           if (this.state === STATE_LOCAL) {
             Row({ space: 8 }) {
               Text('当前离线，以下为内置示例提示')
-                .fontSize(10)
+                .fontSize(AppTheme.font.caption)
                 .lineHeight(15)
                 .fontColor(AppTheme.color.textMuted)
                 .layoutWeight(1)
               Text('重试连接')
-                .fontSize(10)
+                .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.primary)
                 .onClick(() => {
                   this.load();
@@ -156,7 +156,7 @@ export struct ReviewPromptPanel {
           }
           ForEach(this.prompts, (prompt: ReviewPrompt) => {
             Text(`· ${prompt.text}`)
-              .fontSize(12)
+              .fontSize(AppTheme.font.bodyStrong)
               .lineHeight(19)
               .fontColor(AppTheme.color.text)
               .width('100%')

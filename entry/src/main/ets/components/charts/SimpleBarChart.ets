@@ -121,7 +121,7 @@ export struct SimpleBarChart {
   build() {
     if (this.points.length === 0) {
       Text('数据不足，暂不绘图')
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
         .padding({ top: 16, bottom: 16 })
@@ -133,12 +133,12 @@ export struct SimpleBarChart {
         ForEach(this.points, (point: ChartPoint) => {
           Row({ space: 6 }) {
             Text(point.label)
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .layoutWeight(1)
               .maxLines(1)
             Text(point.note.length > 0 ? point.note : String(point.value))
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.text)
           }
           .width('100%')
@@ -153,7 +153,7 @@ export struct SimpleBarChart {
         Row() {
           ForEach(this.points, (point: ChartPoint) => {
             Text(point.label)
-              .fontSize(9)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .layoutWeight(1)
               .textAlign(TextAlign.Center)
