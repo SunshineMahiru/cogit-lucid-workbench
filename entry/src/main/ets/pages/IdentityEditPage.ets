@@ -152,7 +152,7 @@ export struct IdentityEditPage {
             this.avatarPreview()
             Column({ space: 6 }) {
               Text('头像')
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textSecondary)
               Row({ space: 8 }) {
                 this.sourceChip('相册', BackgroundImageSource.GALLERY)
@@ -176,7 +176,7 @@ export struct IdentityEditPage {
 
           Row({ space: 10 }) {
             Text('取消')
-              .fontSize(13)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.textSecondary)
               .layoutWeight(1)
               .textAlign(TextAlign.Center)
@@ -187,7 +187,7 @@ export struct IdentityEditPage {
                 this.cancel();
               })
             Text(this.busyKey === 'save' ? '保存中…' : '保存')
-              .fontSize(13)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontColor(Color.White)
               .layoutWeight(1)
               .textAlign(TextAlign.Center)
@@ -238,7 +238,7 @@ export struct IdentityEditPage {
     } else {
       Column() {
         Text(this.draftNickname.slice(0, 1))
-          .fontSize(20)
+          .fontSize(AppTheme.font.headline)
           .fontColor(AppTheme.color.primary)
       }
       .width(56)
@@ -252,7 +252,7 @@ export struct IdentityEditPage {
   @Builder
   sourceChip(label: string, source: BackgroundImageSource) {
     Text(label)
-      .fontSize(11)
+      .fontSize(AppTheme.font.body)
       .fontColor(AppTheme.color.primary)
       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
       .backgroundColor(AppTheme.color.tint)
@@ -267,10 +267,10 @@ export struct IdentityEditPage {
   field(label: string, value: string, limit: number, onChange: (value: string) => void) {
     Column({ space: 4 }) {
       Text(label)
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textSecondary)
       TextInput({ text: value })
-        .fontSize(13)
+        .fontSize(AppTheme.font.bodyStrong)
         .maxLength(limit)
         .backgroundColor(AppTheme.color.surfaceAlt)
         .borderRadius(8)

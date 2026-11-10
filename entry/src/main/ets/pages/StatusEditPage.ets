@@ -132,14 +132,14 @@ export struct StatusEditPage {
   saveMenu() {
     Row() {
       Text('计划')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 12, right: 6 })
         .onClick(() => {
           this.openAttach();
         })
       Text(this.isSaving ? '保存中' : '保存')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
         .padding({ left: 6, right: 16 })
         .onClick(() => {
@@ -154,7 +154,7 @@ export struct StatusEditPage {
   numberField(label: string, placeholder: string, value: string, decimal: boolean, onChange: (value: string) => void) {
     Column({ space: 5 }) {
       Text(label)
-        .fontSize(11)
+        .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textSecondary)
         .width('100%')
       TextInput({ text: value, placeholder: placeholder })
@@ -201,7 +201,7 @@ export struct StatusEditPage {
         Scroll() {
           Column({ space: 12 }) {
             Text('记录睡眠、运动与凌晨报警；同一天再次保存会覆盖原读数。')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .lineHeight(18)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
@@ -209,7 +209,7 @@ export struct StatusEditPage {
             SectionCard() {
               Column({ space: 6 }) {
                 Text('日期')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextInput({ text: this.date, placeholder: 'YYYY-MM-DD' })
@@ -241,7 +241,7 @@ export struct StatusEditPage {
             SectionCard() {
               Column({ space: 6 }) {
                 Text('备注')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextArea({ text: this.note, placeholder: '可写一句当天状态' })
@@ -258,13 +258,13 @@ export struct StatusEditPage {
 
             if (this.errorText.length > 0) {
               Text(this.errorText)
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.danger)
                 .width('100%')
             }
 
             Text(this.isSaving ? '保存中…' : '保存读数')
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)

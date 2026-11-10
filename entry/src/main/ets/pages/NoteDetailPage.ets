@@ -113,7 +113,7 @@ export struct NoteDetailPage {
   editMenu() {
     Row({ space: 4 }) {
       Text('编辑')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 10, right: 8 })
         .accessibilityText('编辑速记')
@@ -121,14 +121,14 @@ export struct NoteDetailPage {
           this.openEdit();
         })
       Text('计划')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 4, right: 8 })
         .onClick(() => {
           this.openAttach();
         })
       Text('删除')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.danger)
         .padding({ left: 4, right: 16 })
         .accessibilityText('删除速记')
@@ -143,7 +143,7 @@ export struct NoteDetailPage {
   @Builder
   deleteMenu() {
     Text('删除')
-      .fontSize(14)
+      .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.danger)
       .padding({ left: 12, right: 16 })
       .onClick(() => {
@@ -209,23 +209,23 @@ export struct NoteDetailPage {
           Column({ space: 12 }) {
             Row({ space: 8 }) {
               Text(this.detail.type)
-                .fontSize(10)
+                .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.primary)
                 .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                 .backgroundColor(AppTheme.color.tint)
                 .borderRadius(8)
               Text(this.detail.timeLabel)
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textMuted)
               Blank()
               Text(securityLevelText(this.detail.level))
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textSecondary)
             }
             .width('100%')
 
             Text(this.detail.title)
-              .fontSize(20)
+              .fontSize(AppTheme.font.headline)
               .fontWeight(FontWeight.Bold)
               .fontColor(AppTheme.color.text)
               .width('100%')
@@ -234,7 +234,7 @@ export struct NoteDetailPage {
               Flex({ wrap: FlexWrap.Wrap }) {
                 ForEach(this.detail.tags, (tag: string) => {
                   Text(tag)
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.primaryDeep)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                     .backgroundColor(AppTheme.color.tint)
@@ -246,7 +246,7 @@ export struct NoteDetailPage {
             }
 
             Text(this.detail.content)
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .lineHeight(24)
               .fontColor(AppTheme.color.text)
               .width('100%')

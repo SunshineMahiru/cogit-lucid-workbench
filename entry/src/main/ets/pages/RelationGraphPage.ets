@@ -86,7 +86,7 @@ export struct RelationGraphPage {
         .backgroundColor(level === TrustLevel.TRANSPARENT ? AppTheme.color.success :
           (level === TrustLevel.SINCERE ? AppTheme.color.warning : AppTheme.color.primaryDeep))
       Text(`${trustLevelText(level)} ${this.count(level)}`)
-        .fontSize(10)
+        .fontSize(AppTheme.font.caption)
         .fontColor(AppTheme.color.textSecondary)
     }
   }
@@ -143,7 +143,7 @@ export struct RelationGraphPage {
               SectionCard() {
                 Column({ space: 8 }) {
                   Text(`关系星图 · ${this.items.length} 人`)
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   Row({ space: 12 }) {
@@ -160,7 +160,7 @@ export struct RelationGraphPage {
                   .alignItems(HorizontalAlign.Center)
 
                   Text(this.items.length > 6 ? '仅显示前 6 人；完整名单见关系列表' : '以我为中心，颜色表示信任层级')
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                 }
@@ -169,7 +169,7 @@ export struct RelationGraphPage {
               }
 
               Text('说明：现有数据只有「我—关系」的互动，没有人与人之间的边，因此不绘制全量网络图。')
-                .fontSize(10)
+                .fontSize(AppTheme.font.caption)
                 .lineHeight(17)
                 .fontColor(AppTheme.color.textMuted)
                 .width('100%')

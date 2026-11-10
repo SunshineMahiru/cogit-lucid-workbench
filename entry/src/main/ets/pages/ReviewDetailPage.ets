@@ -66,11 +66,11 @@ export struct ReviewDetailPage {
     SectionCard() {
       Column({ space: 5 }) {
         Text(title)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
           .width('100%')
         Text(body.length > 0 ? body : '（未填写）')
-          .fontSize(13)
+          .fontSize(AppTheme.font.bodyStrong)
           .lineHeight(21)
           .fontColor(AppTheme.color.text)
           .width('100%')
@@ -95,7 +95,7 @@ export struct ReviewDetailPage {
   @Builder
   planMenu() {
     Text('计划')
-      .fontSize(14)
+      .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.primary)
       .padding({ left: 12, right: 16 })
       .height(56)
@@ -164,28 +164,28 @@ export struct ReviewDetailPage {
               Column({ space: 5 }) {
                 Row({ space: 6 }) {
                   Text(this.detail.periodLabel)
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.primaryDeep)
                     .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                     .backgroundColor(AppTheme.color.tint)
                     .borderRadius(6)
                   Text(this.detail.rangeLabel)
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .layoutWeight(1)
                 }
                 .width('100%')
                 Text(this.detail.createdAtLabel)
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
                 Text('已完成记录不可修改')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.warning)
                   .width('100%')
                 if (this.detail.planNodeId !== undefined) {
                   Text('返回计划节点 ›')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.primary)
                     .width('100%')
                     .onClick(() => {
@@ -207,11 +207,11 @@ export struct ReviewDetailPage {
             SectionCard() {
               Column({ space: 6 }) {
                 Text('4. 行动')
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Text(this.detail.action.length > 0 ? this.detail.action : '（未填写）')
-                  .fontSize(13)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .lineHeight(21)
                   .fontColor(AppTheme.color.text)
                   .width('100%')
@@ -223,24 +223,24 @@ export struct ReviewDetailPage {
             SectionCard() {
               Column({ space: 6 }) {
                 Text(`锚点对照 · ${this.detail.anchors.length} 条`)
-                  .fontSize(11)
+                  .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 if (this.detail.anchors.length === 0) {
                   Text('本次未选择锚点')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                 } else {
                   ForEach(this.detail.anchors, (anchor: Anchor) => {
                     Column({ space: 2 }) {
                       Text(anchor.text)
-                        .fontSize(12)
+                        .fontSize(AppTheme.font.bodyStrong)
                         .lineHeight(19)
                         .fontColor(AppTheme.color.text)
                         .width('100%')
                       Text(anchor.source)
-                        .fontSize(9)
+                        .fontSize(AppTheme.font.caption)
                         .fontColor(AppTheme.color.textMuted)
                         .width('100%')
                     }

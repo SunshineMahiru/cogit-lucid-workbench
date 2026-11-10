@@ -178,11 +178,11 @@ export struct StatusHistoryPage {
                 SectionCard() {
                   Row({ space: 8 }) {
                     Text(`已删除 ${this.undoDate}`)
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.textSecondary)
                     Blank()
                     Text('撤销')
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.primary)
                       .accessibilityText('撤销删除状态读数')
                       .onClick(() => {
@@ -200,7 +200,7 @@ export struct StatusHistoryPage {
                     Row() {
                       Blank()
                       Text('删除')
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.danger)
                         .padding({ top: 2, bottom: 2 })
                         .accessibilityText(`删除 ${row.date} 的状态读数，可撤销`)

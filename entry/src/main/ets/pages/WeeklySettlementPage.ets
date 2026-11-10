@@ -82,7 +82,7 @@ export struct WeeklySettlementPage {
   @Builder
   offsetChip(label: string, value: number) {
     Text(label)
-      .fontSize(12)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.weekOffset === value ? Color.White : AppTheme.color.text)
       .padding({ left: 14, right: 14, top: 6, bottom: 6 })
       .backgroundColor(this.weekOffset === value ? AppTheme.color.primary : AppTheme.color.chip)
@@ -96,11 +96,11 @@ export struct WeeklySettlementPage {
   metric(value: string, label: string) {
     Column({ space: 3 }) {
       Text(value)
-        .fontSize(20)
+        .fontSize(AppTheme.font.headline)
         .fontWeight(FontWeight.Medium)
         .fontColor(AppTheme.color.text)
       Text(label)
-        .fontSize(10)
+        .fontSize(AppTheme.font.caption)
         .fontColor(AppTheme.color.textSecondary)
     }
     .layoutWeight(1)
@@ -142,7 +142,7 @@ export struct WeeklySettlementPage {
                 this.offsetChip('上周', -1)
                 Blank()
                 Text(this.stats.rangeLabel)
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
               }
               .width('100%')
@@ -167,26 +167,26 @@ export struct WeeklySettlementPage {
                 Column({ space: 8 }) {
                   Row() {
                     Text('待结算预测')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                     Blank()
                     Text(`${this.stats.pendingPredictions} 条`)
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.text)
                   }
                   .width('100%')
                   Row() {
                     Text('价值锚点')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                     Blank()
                     Text(`${this.stats.anchorCount} 条`)
-                      .fontSize(12)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.text)
                   }
                   .width('100%')
                   Text('周结算只汇总本机记录，不写入新的结算表；复盘结果仍由四步表单保存。')
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .lineHeight(16)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
@@ -204,7 +204,7 @@ export struct WeeklySettlementPage {
 
           Column() {
             Text('开始周复盘')
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .fontWeight(FontWeight.Medium)
               .fontColor(Color.White)
               .width('100%')

@@ -139,7 +139,7 @@ export struct PlanEditPage {
   saveMenu() {
     Text(this.isSaving ? '保存中' : '保存')
       .id('plan_save')
-      .fontSize(14)
+      .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.primary)
       .padding({ left: 12, right: 16 })
       .height(56)
@@ -155,12 +155,12 @@ export struct PlanEditPage {
         SectionCard() {
           Column({ space: 4 }) {
             Text('先写目标，再排周期')
-              .fontSize(13)
+              .fontSize(AppTheme.font.bodyStrong)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppTheme.color.text)
               .width('100%')
             Text('目标名称要能一眼看出这段时期要推进什么；起始日期会自动归到所在周的周一。')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .lineHeight(17)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
@@ -172,7 +172,7 @@ export struct PlanEditPage {
         SectionCard() {
           Column({ space: 6 }) {
             Text('目标名称')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
             TextInput({ text: this.title, placeholder: '例如：把计划模块接入首页' })
@@ -190,7 +190,7 @@ export struct PlanEditPage {
         SectionCard() {
           Column({ space: 6 }) {
             Text('目标说明')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
             TextArea({ text: this.goal, placeholder: '写清完成标准，不写口号' })
@@ -209,7 +209,7 @@ export struct PlanEditPage {
         SectionCard() {
           Column({ space: 6 }) {
             Text('起始日期')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
             TextInput({ text: this.startDate, placeholder: 'YYYY-MM-DD' })
@@ -220,7 +220,7 @@ export struct PlanEditPage {
                 this.startDate = value;
               })
             Text('保存后按周一至周日生成第一个七日节点。')
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
           }
@@ -231,7 +231,7 @@ export struct PlanEditPage {
         SectionCard() {
           Column({ space: 6 }) {
             Text('结束日期（可选）')
-              .fontSize(11)
+              .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
             TextInput({ text: this.targetDate, placeholder: '留空表示不设结束日' })
@@ -242,7 +242,7 @@ export struct PlanEditPage {
                 this.targetDate = value;
               })
             Text('设了结束日，目标详情才会显示剩余天数与完成百分比。')
-              .fontSize(10)
+              .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
           }
@@ -252,13 +252,13 @@ export struct PlanEditPage {
 
         if (this.errorText.length > 0) {
           Text(this.errorText)
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.danger)
             .width('100%')
         }
 
         Text(this.isSaving ? '保存中…' : '保存计划')
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontColor(Color.White)
           .width('100%')
           .textAlign(TextAlign.Center)

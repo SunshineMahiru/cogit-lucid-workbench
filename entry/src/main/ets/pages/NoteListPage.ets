@@ -128,7 +128,7 @@ export struct NoteListPage {
   @Builder
   filterChip(label: string, type: string) {
     Text(label)
-      .fontSize(12)
+      .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.filter === type ? Color.White : AppTheme.color.textStrong)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.filter === type ? AppTheme.color.primary : AppTheme.color.chip)
@@ -142,7 +142,7 @@ export struct NoteListPage {
   addMenu() {
     Row() {
       Text('＋')
-        .fontSize(20)
+        .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 12, right: 16 })
         .onClick(() => {
@@ -251,7 +251,7 @@ export struct NoteListPage {
               if (this.hasMore) {
                 ListItem() {
                   Text(this.isLoadingMore ? '加载中…' : '加载更多')
-                    .fontSize(12)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.primary)
                     .width('100%')
                     .textAlign(TextAlign.Center)
@@ -273,7 +273,7 @@ export struct NoteListPage {
         .padding({ left: 16, right: 16, top: 12, bottom: 80 })
 
         Text('＋')
-          .fontSize(22)
+          .fontSize(AppTheme.font.headline)
           .fontColor(Color.White)
           .width(48)
           .height(48)

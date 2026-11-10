@@ -151,11 +151,11 @@ export struct PredictionStatsPage {
                 Row() {
                   Column({ space: 2 }) {
                     Text(formatHitRate(this.stats.hitRate, this.stats.settled))
-                      .fontSize(30)
+                      .fontSize(AppTheme.font.display)
                       .fontWeight(FontWeight.Bold)
                       .fontColor(AppTheme.color.primary)
                     Text('整体命中率')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                   }
                   .layoutWeight(1)
@@ -163,10 +163,10 @@ export struct PredictionStatsPage {
 
                   Column({ space: 6 }) {
                     Text(`已结算 ${this.stats.settled} 条`)
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.text)
                     Text(`命中 ${this.stats.hits} · 未命中 ${this.stats.misses}`)
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                   }
                   .alignItems(HorizontalAlign.End)
@@ -178,11 +178,11 @@ export struct PredictionStatsPage {
                 Column({ space: 6 }) {
                   Row() {
                     Text('命中率趋势')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                     Blank()
                     Text('按月 · 最近 6 个月')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                   }
                   .width('100%')
@@ -190,7 +190,7 @@ export struct PredictionStatsPage {
                   PredictionTrendChart({ points: this.stats.months })
 
                   Text(`整体样本 ${this.stats.settled} 条；趋势最多显示最近 6 个月`)
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                 }
@@ -200,7 +200,7 @@ export struct PredictionStatsPage {
               SectionCard() {
                 Column({ space: 6 }) {
                   Text('命中 / 未命中')
-                    .fontSize(11)
+                    .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
                   PredictionShareChart({
@@ -209,7 +209,7 @@ export struct PredictionStatsPage {
                     hitRate: this.stats.hitRate
                   })
                   Text('口径：按结算日期归月，只统计已结算预测')
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                 }
@@ -220,32 +220,32 @@ export struct PredictionStatsPage {
                 Column({ space: 8 }) {
                   Row() {
                     Text('置信度校准')
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                     Blank()
                     Text(`Brier ${this.stats.calibration.brierScore.toFixed(3)}`)
-                      .fontSize(11)
+                      .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.primary)
                   }
                   .width('100%')
                   Text(this.stats.settled < 10 ?
                     '样本不足 10 条，校准结果仅供观察' : '按置信度区间统计命中率')
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                   ForEach(this.stats.calibration.buckets, (bucket: CalibrationBucket) => {
                     Row() {
                       Text(bucket.label)
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.text)
                         .width(72)
                       Text(`${bucket.hits} / ${bucket.total}`)
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.textSecondary)
                         .layoutWeight(1)
                         .textAlign(TextAlign.End)
                       Text(bucket.total > 0 ? `${bucket.hitRate}%` : '—')
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(bucket.hitRate >= 50 ? AppTheme.color.success : AppTheme.color.warning)
                         .width(48)
                         .textAlign(TextAlign.End)
@@ -253,7 +253,7 @@ export struct PredictionStatsPage {
                     .width('100%')
                   }, (bucket: CalibrationBucket) => bucket.label)
                   Text('Brier 越低越接近真实置信度；命中率高不等于校准好')
-                    .fontSize(10)
+                    .fontSize(AppTheme.font.caption)
                     .lineHeight(16)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')

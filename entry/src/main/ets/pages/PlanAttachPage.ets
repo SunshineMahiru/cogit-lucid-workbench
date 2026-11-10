@@ -148,7 +148,7 @@ export struct PlanAttachPage {
   saveMenu() {
     Text(this.isSaving ? '保存中' : '保存')
       .id('plan_attach_save')
-      .fontSize(14)
+      .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.primary)
       .padding({ left: 12, right: 16 })
       .height(56)
@@ -168,9 +168,9 @@ export struct PlanAttachPage {
       .justifyContent(FlexAlign.Center)
     } else if (this.errorText.length > 0) {
       Column({ space: 8 }) {
-        Text(this.errorText).fontSize(12).fontColor(AppTheme.color.danger)
+        Text(this.errorText).fontSize(AppTheme.font.bodyStrong).fontColor(AppTheme.color.danger)
         Text('重试')
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
           .onClick(() => {
             this.errorText = '';
@@ -198,12 +198,12 @@ export struct PlanAttachPage {
           SectionCard() {
             Column({ space: 4 }) {
               Text(`把${planLinkModuleLabel(this.module)}关联到计划`)
-                .fontSize(13)
+                .fontSize(AppTheme.font.bodyStrong)
                 .fontWeight(FontWeight.Medium)
                 .fontColor(AppTheme.color.text)
                 .width('100%')
               Text(`当前记录：${this.label}`)
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
                 .maxLines(2)
@@ -214,17 +214,17 @@ export struct PlanAttachPage {
           ForEach(this.targets, (row: AttachTarget, index: number) => {
             Row({ space: 8 }) {
               Text(row.selected ? '✓' : '○')
-                .fontSize(16)
+                .fontSize(AppTheme.font.title)
                 .fontColor(row.selected ? AppTheme.color.primary : AppTheme.color.textMuted)
                 .width(24)
                 .textAlign(TextAlign.Center)
               Column({ space: 2 }) {
                 Text(row.title)
-                  .fontSize(12)
+                  .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.text)
                   .width('100%')
                 Text(`第 ${row.weekIndex} 周 · ${row.startDate}`)
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               }

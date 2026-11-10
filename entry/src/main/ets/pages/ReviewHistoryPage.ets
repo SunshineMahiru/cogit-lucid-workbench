@@ -98,25 +98,25 @@ export struct ReviewHistoryPage {
                   Column({ space: 5 }) {
                     Row({ space: 6 }) {
                       Text(item.periodLabel)
-                        .fontSize(9)
+                        .fontSize(AppTheme.font.caption)
                         .fontColor(AppTheme.color.primaryDeep)
                         .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                         .backgroundColor(AppTheme.color.tint)
                         .borderRadius(6)
                       Text(item.rangeLabel)
-                        .fontSize(11)
+                        .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.textSecondary)
                         .layoutWeight(1)
                         .maxLines(1)
                         .textOverflow({ overflow: TextOverflow.Ellipsis })
                       Text(item.createdAtLabel)
-                        .fontSize(9)
+                        .fontSize(AppTheme.font.caption)
                         .fontColor(AppTheme.color.textMuted)
                     }
                     .width('100%')
 
                     Text(item.action.length > 0 ? item.action : '（未填写行动）')
-                      .fontSize(13)
+                      .fontSize(AppTheme.font.bodyStrong)
                       .lineHeight(20)
                       .fontColor(AppTheme.color.text)
                       .width('100%')
@@ -124,7 +124,7 @@ export struct ReviewHistoryPage {
                       .textOverflow({ overflow: TextOverflow.Ellipsis })
 
                     Text(item.anchorCount > 0 ? `对照 ${item.anchorCount} 条锚点` : '未选择锚点')
-                      .fontSize(10)
+                      .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }

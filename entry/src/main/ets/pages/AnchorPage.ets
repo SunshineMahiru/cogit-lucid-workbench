@@ -123,18 +123,18 @@ export struct AnchorPage {
     Column({ space: 6 }) {
       Row() {
         Text('北极星句段库')
-          .fontSize(16)
+          .fontSize(AppTheme.font.title)
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
         Blank()
         Text(`${this.anchors.length} 条`)
-          .fontSize(11)
+          .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
       }
       .width('100%')
 
       Text('复盘第三步用来对照的稳定句子；新建后只读。')
-        .fontSize(12)
+        .fontSize(AppTheme.font.bodyStrong)
         .lineHeight(18)
         .fontColor(AppTheme.color.textSecondary)
         .width('100%')
@@ -150,7 +150,7 @@ export struct AnchorPage {
           })
         Text(this.isAdding ? '保存中' : '添加')
           .id('anchor_add')
-          .fontSize(12)
+          .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.primary)
           .onClick(() => {
             this.addAnchor();
@@ -243,7 +243,7 @@ export struct AnchorPage {
 
           Column() {
             Text('用它做一次复盘')
-              .fontSize(14)
+              .fontSize(AppTheme.font.subtitle)
               .fontWeight(FontWeight.Medium)
               .fontColor(Color.White)
               .width('100%')

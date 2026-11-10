@@ -52,7 +52,7 @@ export struct ReviewAgentPage {
       Scroll() {
         Column({ space: 12 }) {
           Text('先写事实与解释，再让 Agent 找差距；结果只作提示，不替代你的判断。')
-            .fontSize(11)
+            .fontSize(AppTheme.font.body)
             .lineHeight(18)
             .fontColor(AppTheme.color.textSecondary)
             .width('100%')
@@ -60,7 +60,7 @@ export struct ReviewAgentPage {
           SectionCard() {
             Column({ space: 6 }) {
               Text('事实')
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               TextArea({ text: this.facts, placeholder: '实际发生了什么？只写可核对的部分' })
@@ -77,7 +77,7 @@ export struct ReviewAgentPage {
           SectionCard() {
             Column({ space: 6 }) {
               Text('解释')
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               TextArea({ text: this.interpretation, placeholder: '我当时怎么解释这些事？' })
@@ -94,18 +94,18 @@ export struct ReviewAgentPage {
           SectionCard() {
             Column({ space: 6 }) {
               Text(`参考锚点 ${this.anchors.length} 条`)
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               if (this.anchors.length === 0) {
                 Text('暂无锚点，Agent 只会基于事实与解释给提示')
-                  .fontSize(10)
+                  .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               } else {
                 ForEach(this.anchors, (anchor: Anchor) => {
                   Text(`· ${anchor.text}`)
-                    .fontSize(12)
+                    .fontSize(AppTheme.font.bodyStrong)
                     .lineHeight(19)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
@@ -128,7 +128,7 @@ export struct ReviewAgentPage {
           SectionCard() {
             Column({ space: 6 }) {
               Text('整理结果')
-                .fontSize(11)
+                .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
               TextArea({ text: this.notes, placeholder: '填入的提示会追加到这里，可再改写' })

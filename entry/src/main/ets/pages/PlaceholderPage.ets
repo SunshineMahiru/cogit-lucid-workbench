@@ -21,7 +21,7 @@ export struct PlaceholderPage {
   placeholderBody() {
       Column({ space: 8 }) {
         Text(this.hint)
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.textSecondary)
       }
       .width('100%')

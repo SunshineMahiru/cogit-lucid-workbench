@@ -18,7 +18,7 @@ export struct ReviewPage {
     Row({ space: 2 }) {
       if (this.planNodeId.length > 0) {
         Text('返回节点')
-          .fontSize(14)
+          .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.primary)
           .padding({ left: 8, right: 8 })
           .onClick(() => {
@@ -26,7 +26,7 @@ export struct ReviewPage {
           })
       }
       Text('历史')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 8, right: 8 })
         .onClick(() => {
@@ -35,7 +35,7 @@ export struct ReviewPage {
           }
         })
       Text('Agent')
-        .fontSize(14)
+        .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: 4, right: 14 })
         .onClick(() => {
