@@ -4,7 +4,7 @@ import { backgroundKeyForRoute } from '../settings/PageBackgroundService';
 
 /**
  * Shared destination shell. Every route builds its page through this component so the
- * opaque surface, the custom title bar and the background layer exist once.
+ * opaque surface, the system title bar and the background layer exist once.
  */
 @ComponentV2
 export struct AppDestination {
@@ -30,50 +30,8 @@ export struct AppDestination {
   }
 
   @Builder
-  header() {
-    Stack({ alignContent: Alignment.Center }) {
-      Text(this.title)
-        .fontSize(18)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(AppTheme.color.text)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .width('100%')
-        .padding({ left: 72, right: 72 })
-        .textAlign(TextAlign.Center)
-      Row() {
-        Text('‹')
-          .fontSize(28)
-          .fontColor(AppTheme.color.text)
-          .width(40)
-          .height(40)
-          .textAlign(TextAlign.Center)
-          .accessibilityText('返回')
-          .onClick(() => {
-            this.goBack();
-          })
-        Blank()
-        Row({ space: 4 }) {
-          this.menus()
-        }
-        .height('100%')
-      }
-      .width('100%')
-      .height('100%')
-      .padding({ left: 8, right: 8 })
-      .alignItems(VerticalAlign.Center)
-    }
-    .width('100%')
-    .height(56)
-  }
-
-  private goBack(): void {
-    if (this.onDestinationBackPressed()) {
-      return;
-    }
-    if (this.navStack !== null) {
-      this.navStack.pop();
-    }
+  menusSlot() {
+    this.menus()
   }
 
   build() {
@@ -81,9 +39,6 @@ export struct AppDestination {
       Stack() {
         PageBackground({ route: backgroundKeyForRoute(this.route) })
         Column() {
-          if (!this.hideTitleBar) {
-            this.header()
-          }
           Column() {
             this.content()
           }
@@ -97,7 +52,9 @@ export struct AppDestination {
       .height('100%')
       .backgroundColor(AppTheme.color.page)
     }
-    .hideTitleBar(true)
+    .title(this.title)
+    .menus(this.menusSlot)
+    .hideTitleBar(this.hideTitleBar)
     .backgroundColor(AppTheme.color.page)
     .onReady((context: NavDestinationContext) => {
       this.navStack = context.pathStack;
