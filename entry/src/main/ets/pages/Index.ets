@@ -35,7 +35,6 @@ import { SettingsPage } from './SettingsPage';
 import { IdentityEditPage } from './IdentityEditPage';
 import { BackgroundApplyPage } from './BackgroundApplyPage';
 import { PageBackgroundService } from '../settings/PageBackgroundService';
-import { pageTransitionOf } from '../navigation/PageTransitionHooks';
 
 @Entry
 @ComponentV2
@@ -145,59 +144,6 @@ struct Index {
       .hideTitleBar(true)
       .mode(NavigationMode.Stack)
       .navDestination(this.pageMap)
-      .customNavContentTransition(
-        (from: NavContentInfo, to: NavContentInfo, operation: NavigationOperation):
-          NavigationAnimatedTransition | undefined => {
-          const touchesFirstLevel = from.index === 0 || to.index === 0 ||
-            (from.index === 1 && to.index === 1);
-          if (!touchesFirstLevel) {
-            return undefined;
-          }
-          return {
-            timeout: 600,
-            transition: (proxy: NavigationTransitionProxy) => {
-              const fromHooks = pageTransitionOf(from.navDestinationId) ?? pageTransitionOf(from.name);
-              const toHooks = pageTransitionOf(to.navDestinationId) ?? pageTransitionOf(to.name);
-              if (fromHooks === undefined || toHooks === undefined) {
-                proxy.finishTransition();
-                return;
-              }
-              fromHooks.exitStart();
-              toHooks.enterStart();
-              setTimeout(() => {
-                if (operation === NavigationOperation.POP) {
-                  this.getUIContext().animateTo({
-                    duration: 110,
-                    curve: Curve.EaseIn,
-                    onFinish: () => {
-                      this.getUIContext().animateTo({
-                        duration: 110,
-                        curve: Curve.EaseOut,
-                        onFinish: () => {
-                          proxy.finishTransition();
-                        }
-                      }, () => {
-                        toHooks.enterEnd();
-                      });
-                    }
-                  }, () => {
-                    fromHooks.exitEnd();
-                  });
-                  return;
-                }
-                this.getUIContext().animateTo({
-                  duration: 220,
-                  curve: Curve.EaseOut,
-                  onFinish: () => {
-                    proxy.finishTransition();
-                  }
-                }, () => {
-                  toHooks.enterEnd();
-                });
-              }, 32);
-            }
-          };
-        })
       .backgroundColor(Color.Transparent)
     }
     .width('100%')

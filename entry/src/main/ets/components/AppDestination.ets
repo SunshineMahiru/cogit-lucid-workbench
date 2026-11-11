@@ -1,11 +1,6 @@
 import { AppTheme } from '../theme/AppTheme';
 import { PageBackground } from './PageBackground';
 import { backgroundKeyForRoute } from '../settings/PageBackgroundService';
-import {
-  PageTransitionHooks,
-  registerPageTransition,
-  unregisterPageTransition
-} from '../navigation/PageTransitionHooks';
 
 /**
  * Shared destination shell. Every route builds its page through this component so the
@@ -24,15 +19,7 @@ export struct AppDestination {
   };
   @Event onDestinationBackPressed: () => boolean = () => false;
 
-  @Local pageOpacity: number = 1;
-  @Local bodyOpacity: number = 1;
-  @Local bodyOffset: number = 0;
-  private destinationId: string = '';
   private navStack: NavPathStack | null = null;
-
-  aboutToAppear(): void {
-    this.registerHooks(this.route);
-  }
 
   @Builder
   emptyContent() {
@@ -89,27 +76,6 @@ export struct AppDestination {
     }
   }
 
-  private registerHooks(key: string): void {
-    const hooks: PageTransitionHooks = {
-      enterStart: () => {
-        this.pageOpacity = 1;
-        this.bodyOpacity = 0;
-        this.bodyOffset = 12;
-      },
-      enterEnd: () => {
-        this.bodyOpacity = 1;
-        this.bodyOffset = 0;
-      },
-      exitStart: () => {
-        this.pageOpacity = 1;
-      },
-      exitEnd: () => {
-        this.pageOpacity = 0;
-      }
-    };
-    registerPageTransition(key, hooks);
-  }
-
   build() {
     NavDestination() {
       Stack() {
@@ -126,8 +92,6 @@ export struct AppDestination {
         }
         .width('100%')
         .height('100%')
-        .opacity(this.bodyOpacity)
-        .translate({ y: this.bodyOffset })
       }
       .width('100%')
       .height('100%')
@@ -135,19 +99,12 @@ export struct AppDestination {
     }
     .hideTitleBar(true)
     .backgroundColor(AppTheme.color.page)
-    .opacity(this.pageOpacity)
     .onReady((context: NavDestinationContext) => {
-      this.destinationId = context.navDestinationId ?? '';
       this.navStack = context.pathStack;
-      this.registerHooks(this.destinationId);
       this.onDestinationReady(context);
     })
     .onShown(() => {
       this.onDestinationShown();
-    })
-    .onDisAppear(() => {
-      unregisterPageTransition(this.destinationId);
-      unregisterPageTransition(this.route);
     })
     .onBackPressed(() => {
       return this.onDestinationBackPressed();
