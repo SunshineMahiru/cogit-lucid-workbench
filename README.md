@@ -438,7 +438,7 @@ Two things that trip people up: `hvigorw test` runs on Windows and macOS only, n
 
 | Topic | What it covers | Link |
 |---|---|---|
-| Startup baseline | Method and numbers for cold and warm launch on the emulator | [docs/PERF_BASELINE.md](./docs/PERF_BASELINE.md) |
+| Startup and memory baseline | Method and numbers for cold and warm launch, plus the memory readings | [docs/PERF_BASELINE.md](./docs/PERF_BASELINE.md) |
 | Visual tokens | Locked colour, type, radius, and spacing tokens, plus the per-page checklist and known deviations | [docs/UI_FREEZE.md](./docs/UI_FREEZE.md) |
 | Mock server | Endpoints, addressing, and the previewer versus emulator note | [mock-server/README.md](./mock-server/README.md) |
 | Signing template | Placeholder config for `signing/signing.local.json` | [docs/signing.local.example.json](./docs/signing.local.example.json) |
