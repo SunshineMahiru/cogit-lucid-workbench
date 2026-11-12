@@ -16,6 +16,8 @@ const {
   toPredictionListItems
 } = require('./out2/prediction/PredictionListMapper');
 const { rangeFor } = require('./out2/review/ReviewRange');
+const { budgetAllows, estimateCostYuan, monthKey } = require('./out2/settings/LlmBudget');
+const { defaultAppSettings, sanitizeAppSettings } = require('./out2/settings/AppSettings');
 const {
   addDaysToDate,
   formatClock,
@@ -834,6 +836,71 @@ test('导出保留窗口', () => {
   assert.deepStrictEqual(expiredExports(names, latest, 20), []);
   // 自定义窗口按同样规则计算。
   assert.strictEqual(expiredExports(names, latest, 3).length, 9);
+});
+
+test('成本估算按千字符计价并保留四位', () => {
+  assert.strictEqual(estimateCostYuan(1000, 0), 0.002);
+  assert.strictEqual(estimateCostYuan(0, 1000), 0.002);
+  assert.strictEqual(estimateCostYuan(500, 500), 0.002);
+  assert.strictEqual(estimateCostYuan(333, 0), 0.0007);
+  assert.strictEqual(estimateCostYuan(0, 0), 0);
+});
+
+test('成本估算把负数按零处理', () => {
+  assert.strictEqual(estimateCostYuan(-500, 1000), 0.002);
+  assert.strictEqual(estimateCostYuan(-500, -500), 0);
+});
+
+test('预算判定在正好用满时放行', () => {
+  assert.strictEqual(budgetAllows(10, 9.99, 0.01), true);
+  assert.strictEqual(budgetAllows(10, 9.99, 0.02), false);
+});
+
+test('预算为零时不放行任何调用', () => {
+  assert.strictEqual(budgetAllows(0, 0, 0), false);
+  assert.strictEqual(budgetAllows(0, 0, 0.0001), false);
+});
+
+test('月度键按本地月份补零', () => {
+  assert.strictEqual(monthKey(new Date(2026, 0, 15).getTime()), '2026-01');
+  assert.strictEqual(monthKey(new Date(2026, 11, 31, 23, 59).getTime()), '2026-12');
+});
+
+test('未知档位按旧开关回落到模板或本地模拟', () => {
+  const off = sanitizeAppSettings(Object.assign(defaultAppSettings(), {
+    llmProvider: 'bogus',
+    llmEnabled: false
+  }));
+  assert.strictEqual(off.llmProvider, 'template');
+  assert.strictEqual(off.llmEnabled, false);
+  const on = sanitizeAppSettings(Object.assign(defaultAppSettings(), {
+    llmProvider: 'bogus',
+    llmEnabled: true
+  }));
+  assert.strictEqual(on.llmProvider, 'mock');
+  assert.strictEqual(on.llmEnabled, true);
+});
+
+test('预算取整后夹在零到上限之间', () => {
+  const base = defaultAppSettings();
+  assert.strictEqual(sanitizeAppSettings(Object.assign(base, { llmMonthlyBudget: 29.9 })).llmMonthlyBudget, 29);
+  assert.strictEqual(sanitizeAppSettings(Object.assign(base, { llmMonthlyBudget: -8 })).llmMonthlyBudget, 0);
+  assert.strictEqual(sanitizeAppSettings(Object.assign(base, { llmMonthlyBudget: 8000 })).llmMonthlyBudget, 500);
+  assert.strictEqual(sanitizeAppSettings(Object.assign(base, { llmMonthlyBudget: Number.NaN })).llmMonthlyBudget, 30);
+});
+
+test('空地址与空模型回落默认值', () => {
+  const cleaned = sanitizeAppSettings(Object.assign(defaultAppSettings(), {
+    llmBaseUrl: '   ',
+    llmModel: '  '
+  }));
+  assert.strictEqual(cleaned.llmBaseUrl, 'http://localhost:4523/v1');
+  assert.strictEqual(cleaned.llmModel, 'glm-4.7-flash');
+});
+
+test('非法密级回落为仅本地', () => {
+  const cleaned = sanitizeAppSettings(Object.assign(defaultAppSettings(), { defaultLevel: 'whatever' }));
+  assert.strictEqual(cleaned.defaultLevel, 'local_only');
 });
 
 if (failures.length > 0) {
