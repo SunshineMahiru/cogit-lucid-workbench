@@ -97,7 +97,7 @@ flowchart TB
 
 The home page opens with the identity band and four counters; today's readings, a weekly settlement or onboarding card, the plan card, and the grid of six modules follow below. `编辑` and `设置` sit on the right of the identity band.
 
-<img src="./docs/images/debug/home.jpeg" width="300" alt="Upper half of the home page: the identity band, four counters, the dashboard button, today's readings, the weekly settlement card and the plan card">
+<img src="./docs/images/debug/home.jpeg" width="300" alt="Upper half of the home page: the identity band, four counters, the dashboard button, the readings card, the weekly settlement card marked reviewed and the plan card">
 
 ### Set your identity
 
@@ -161,19 +161,19 @@ Settings (`设置`) writes the whole record set to `cogit-export-YYYYMMDD-HHMM.m
 
 ## Screens
 
-Captured on a Mate 70 Pro emulator in dark mode. They predate the navigation refresh, so the title bar in them is still the app's own rather than the system one; a re-capture is pending. Every record in them is synthetic.
+Captured on a Mate 70 Pro emulator from the current build, in dark mode. Every record in them is synthetic.
 
 | Home | Analytics, current month |
 |---|---|
-| <img src="./docs/images/debug/home.jpeg" width="300" alt="Home page with the identity band, four counters, today's readings (7.55 hours of sleep, one workout, zero notes), the weekly settlement card marked reviewed, the current plan and this period's prompts"> | <img src="./docs/images/debug/analytics-month.jpeg" width="300" alt="Top of the analytics dashboard: remote payload timestamp, month chips with the current month highlighted, the monthly hit-rate line and the calibration curve"> |
+| <img src="./docs/images/debug/home.jpeg" width="300" alt="Home page with the identity band, four counters (two notes today, one pending prediction, a one-day streak, last review on 11-13), the readings card, the weekly settlement marked reviewed, the current goal 验收计划1109 at week 1, and this period's prompts"> | <img src="./docs/images/debug/analytics-month.jpeg" width="300" alt="Top of the analytics dashboard: remote payload timestamp, month chips with the current month highlighted, the monthly hit-rate line and the calibration curve"> |
 | **Analytics, mid-page** | **Analytics, lower section** |
-| <img src="./docs/images/debug/analytics-mid.jpeg" width="300" alt="Middle of the analytics dashboard: outcome donut at 38 percent, confidence bars and hit rate by horizon bucket"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the dashboard: interaction bars and the reading coverage heatmap with weekday labels and a light-to-dark legend"> |
+| <img src="./docs/images/debug/analytics-mid.jpeg" width="300" alt="Middle of the analytics dashboard: the outcome donut at 38 percent and the confidence distribution bars"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the dashboard: interaction bars and the reading coverage heatmap with weekday labels and a light-to-dark legend"> |
 | **Goal detail** | **Review detail** |
-| <img src="./docs/images/debug/plan-detail.jpeg" width="300" alt="Goal detail with 56 days left on a 5 percent ring, a three-week rhythm strip, the week view and the carry-rate line"> | <img src="./docs/images/debug/review-saved.jpeg" width="300" alt="Review detail marked as finished and read-only, showing the four steps and the comparison against two anchors"> |
+| <img src="./docs/images/debug/plan-detail.jpeg" width="300" alt="Goal detail reporting one week advanced, a single week node at 0 of 1, the week strip for 11-09 to 11-15 and the carry-rate card waiting for three weeks of data"> | <img src="./docs/images/debug/review-saved.jpeg" width="300" alt="Review detail marked finished and read-only, showing the four steps and the anchor comparison, which was left empty"> |
 | **Anchors** | **Relation graph** |
 | <img src="./docs/images/debug/anchor.jpeg" width="300" alt="Value anchors page holding two sample sentences in the north-star bank, an input to add one, and a button to run a review against them"> | <img src="./docs/images/debug/relation-graph.jpeg" width="300" alt="Relation graph centred on me, with three contacts coloured by trust tier and a note explaining the edges"> |
 | **Settings, model mode** | **Markdown export** |
-| <img src="./docs/images/debug/settings-model.jpeg" width="300" alt="Settings in model mode: a choice between GLM-4.7-Flash and DeepSeek V4-Flash, a 30 yuan monthly budget, the endpoint field and the API key field"> | <img src="./docs/images/debug/export-result.jpeg" width="300" alt="Settings after an export, reporting the file name cogit-export-20261105-2303.md, 1703 characters across 13 records, plus a share action"> |
+| <img src="./docs/images/debug/settings-model.jpeg" width="300" alt="Settings in model mode: a choice between GLM-4.7-Flash and DeepSeek V4-Flash, a 30 yuan monthly budget, the endpoint field and the API key field"> | <img src="./docs/images/debug/export-result.jpeg" width="300" alt="Settings after an export, reporting the file name cogit-export-20261113-0306.md, 1992 characters across 21 records, plus a share action"> |
 
 ## Quick Install
 
