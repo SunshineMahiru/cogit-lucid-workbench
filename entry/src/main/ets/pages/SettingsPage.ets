@@ -351,6 +351,7 @@ export struct SettingsPage {
   @Builder
   providerChip(label: string, provider: LlmProvider) {
     Text(label)
+      .id(`settings_provider_${provider}`)
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.settings.llmProvider === provider ? Color.White : AppTheme.color.text)
       .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })

@@ -140,6 +140,7 @@ export struct PredictionListPage {
           }
         })
       Text('＋')
+        .id('prediction_create_entry')
         .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
         .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s16 })

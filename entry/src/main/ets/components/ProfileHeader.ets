@@ -140,6 +140,7 @@ export struct ProfileHeader {
             this.openEditor();
           })
         Text('设置')
+          .id('home_settings_entry')
           .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
           .accessibilityText('打开设置')
