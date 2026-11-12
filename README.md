@@ -438,6 +438,7 @@ Two things that trip people up: `hvigorw test` runs on Windows and macOS only, n
 
 | Topic | What it covers | Link |
 |---|---|---|
+| Manual checks | Which screens and behaviours were verified by hand, why they cannot be automated, and when to re-run | [docs/MANUAL_CHECKS.md](./docs/MANUAL_CHECKS.md) |
 | Startup and memory baseline | Method and numbers for cold and warm launch, plus the memory readings | [docs/PERF_BASELINE.md](./docs/PERF_BASELINE.md) |
 | Visual tokens | Locked colour, type, radius, and spacing tokens, plus the per-page checklist and known deviations | [docs/UI_FREEZE.md](./docs/UI_FREEZE.md) |
 | Mock server | Endpoints, addressing, and the previewer versus emulator note | [mock-server/README.md](./mock-server/README.md) |
