@@ -356,9 +356,9 @@ cogit-lucid-workbench/
 │   │   │   ├── entryability/       app entry, opens the database
 │   │   │   ├── pages/              34 page files; Index.ets holds the route table
 │   │   │   ├── views/              composed home views
-│   │   │   ├── components/         33 reusable pieces
+│   │   │   ├── components/         40 reusable pieces
 │   │   │   │   └── charts/         line, bar, pie wrappers, Canvas heatmap
-│   │   │   ├── navigation/         route names, parameter types, transition hooks
+│   │   │   ├── navigation/         route names and parameter types
 │   │   │   ├── model/              entity types, enums, factories, demo data
 │   │   │   ├── data/               home aggregation and cross-entity reads
 │   │   │   ├── app/                database health, home and identity refresh buses
@@ -371,12 +371,12 @@ cogit-lucid-workbench/
 │   │   │   ├── relation/           people and relations
 │   │   │   ├── status/             status readings
 │   │   │   ├── plan/               goals, week nodes, chart inputs
-│   │   │   ├── analysis/           rules, analyzers, LLM adapters
+│   │   │   ├── analysis/           rules, analyzers, date and metric helpers, LLM adapters
 │   │   │   ├── db/                 12 table statements, 8 DAOs, tolerant JSON
 │   │   │   ├── settings/           options, backgrounds, asset-store key, budget ledger
 │   │   │   ├── export/             Markdown sections and the file writer
 │   │   │   ├── network/            prompt and stats repositories, HTTP, LLM clients
-│   │   │   └── theme/              design tokens, app identity
+│   │   │   └── theme/              font, radius and spacing scales, system colour mapping
 │   │   └── resources/              base and dark resource sets, network config
 │   ├── src/test/                   Hypium unit tests
 │   └── src/ohosTest/               device tests, including the analytics UiTest flow
@@ -395,18 +395,30 @@ A new page touches three places: add the name in `navigation/Routes.ts`, drop th
 
 ## Tests
 
-Cases live in two places: `entry/src/test` holds local unit tests that run on the computer, and `entry/src/ohosTest` holds a device suite that needs an emulator or a phone.
+Cases live in three places: `entry/src/test` holds local unit tests that run on the computer, `entry/src/ohosTest` holds a device suite that needs an emulator or a phone, and `.test/` holds plain Node scripts that compile the TypeScript sources and exercise the domain layer without any HarmonyOS runtime.
 
 | Suite | File | Cases | Covers |
 |---|---|---|---|
 | Local unit | `src/test/List.test.ets` | 4 | Two prediction form checks, confidence calibration bands, the export level filter |
 | Device · analysis | `src/ohosTest/ets/test/Analysis.test.ets` | 4 | The same four as above, run again on the device |
 | Device · flow | `src/ohosTest/ets/test/UiFlow.test.ets` | 3 | Open the dashboard, switch month, return home |
+| Node scripts | `.test/check.js` and four siblings | 118 | Date and metric helpers, services, export, review agent fallbacks, plan factories |
 
 Local unit tests:
 
 ```bash
 node "<DevEco Studio>/tools/hvigor/bin/hvigorw.js" test -p module=entry --no-daemon
+```
+
+The Node scripts compile the TypeScript sources into `.test/out2` first, then run each file; they need no emulator and no `ohpm` install:
+
+```bash
+tsc -p .test/tscheck/tsconfig.emit.json
+node .test/check.js
+node .test/service-check.js
+node .test/export-check.js
+node .test/agent-check.js
+node .test/plan-check.js
 ```
 
 The device suite needs both HAPs installed before `aa test` can take over:
