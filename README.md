@@ -402,7 +402,7 @@ Cases live in three places: `entry/src/test` holds local unit tests that run on 
 | Local unit | `src/test/List.test.ets` | 4 | Two prediction form checks, confidence calibration bands, the export level filter |
 | Device · analysis | `src/ohosTest/ets/test/Analysis.test.ets` | 4 | The same four as above, run again on the device |
 | Device · flow | `src/ohosTest/ets/test/UiFlow.test.ets` | 6 | Open the dashboard, switch month, return home, open settings, switch to the model provider, switch back |
-| Node scripts | `.test/check.js` and four siblings | 127 | Date and metric helpers, services, export, review agent fallbacks, plan factories |
+| Node scripts | `.test/check.js` and four siblings | 130 | Date and metric helpers, cost ledger, settings sanitising, tolerant JSON, services, export, review agent fallbacks, plan factories |
 
 Local unit tests:
 
