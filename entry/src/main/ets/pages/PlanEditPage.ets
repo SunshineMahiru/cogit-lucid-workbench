@@ -19,6 +19,7 @@ export struct PlanEditPage {
   @Local targetDate: string = '';
   @Local errorText: string = '';
   @Local isSaving: boolean = false;
+  @Local isDirty: boolean = false;
   @Local isPreview: boolean = false;
   @Local planId: string | null = null;
   private navStack: NavPathStack | null = null;
@@ -90,6 +91,7 @@ export struct PlanEditPage {
       }
       this.getUIContext().getPromptAction().showToast({ message: '演示模式：计划已保存' });
       notifyHomeRefresh();
+      this.isDirty = false;
       this.pop();
       this.isSaving = false;
       return;
@@ -102,6 +104,7 @@ export struct PlanEditPage {
       }
       this.getUIContext().getPromptAction().showToast({ message: '计划已保存' });
       notifyHomeRefresh();
+      this.isDirty = false;
       this.pop();
     } catch (error) {
       this.errorText = '保存失败，请重试';
@@ -181,6 +184,7 @@ export struct PlanEditPage {
               .backgroundColor(AppTheme.color.surfaceAlt)
               .onChange((value: string) => {
                 this.title = value;
+                this.isDirty = true;
               })
           }
           .width('100%')
@@ -200,6 +204,7 @@ export struct PlanEditPage {
               .backgroundColor(AppTheme.color.surfaceAlt)
               .onChange((value: string) => {
                 this.goal = value;
+                this.isDirty = true;
               })
           }
           .width('100%')
@@ -218,6 +223,7 @@ export struct PlanEditPage {
               .backgroundColor(AppTheme.color.surfaceAlt)
               .onChange((value: string) => {
                 this.startDate = value;
+                this.isDirty = true;
               })
             Text('保存后按周一至周日生成第一个七日节点。')
               .fontSize(AppTheme.font.caption)
@@ -240,6 +246,7 @@ export struct PlanEditPage {
               .backgroundColor(AppTheme.color.surfaceAlt)
               .onChange((value: string) => {
                 this.targetDate = value;
+                this.isDirty = true;
               })
             Text('设了结束日，目标详情才会显示剩余天数与完成百分比。')
               .fontSize(AppTheme.font.caption)
@@ -291,6 +298,30 @@ export struct PlanEditPage {
         this.navStack = context.pathStack;
         const params = context.pathInfo.param === undefined ? null : context.pathInfo.param as PlanEditParams;
         this.load(params === null ? null : params.planId);
+      },
+      onDestinationBackPressed: () => {
+        if (!this.isDirty) {
+          return false;
+        }
+        this.getUIContext().showAlertDialog({
+          title: '放弃这个目标？',
+          message: '已填写的内容不会保存。',
+          primaryButton: {
+            value: '继续编辑',
+            action: () => {
+            }
+          },
+          secondaryButton: {
+            value: '放弃',
+            action: () => {
+              this.isDirty = false;
+              if (this.navStack !== null) {
+                this.navStack.pop();
+              }
+            }
+          }
+        });
+        return true;
       }
     })
   }

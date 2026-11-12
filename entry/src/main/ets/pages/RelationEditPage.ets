@@ -19,6 +19,7 @@ export struct RelationEditPage {
   @Local level: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
+  @Local isDirty: boolean = false;
   @Local errorText: string = '';
   @Local isPreview: boolean = false;
   private relationId: string | null = null;
@@ -78,6 +79,7 @@ export struct RelationEditPage {
         this.forbidAnalysis, this.level, this.notes);
       notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '关系已保存' });
+      this.isDirty = false;
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
@@ -98,6 +100,7 @@ export struct RelationEditPage {
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.trustLevel = level;
+        this.isDirty = true;
       })
   }
 
@@ -111,6 +114,7 @@ export struct RelationEditPage {
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.level = level;
+        this.isDirty = true;
       })
   }
 
@@ -154,6 +158,30 @@ export struct RelationEditPage {
         this.navStack = context.pathStack;
         const params = context.pathInfo.param as RelationEditParams;
         this.load(params.relationId);
+      },
+      onDestinationBackPressed: () => {
+        if (!this.isDirty) {
+          return false;
+        }
+        this.getUIContext().showAlertDialog({
+          title: '放弃这条关系？',
+          message: '已填写的内容不会保存。',
+          primaryButton: {
+            value: '继续编辑',
+            action: () => {
+            }
+          },
+          secondaryButton: {
+            value: '放弃',
+            action: () => {
+              this.isDirty = false;
+              if (this.navStack !== null) {
+                this.navStack.pop();
+              }
+            }
+          }
+        });
+        return true;
       }
     })
   }
@@ -195,6 +223,7 @@ export struct RelationEditPage {
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.name = value;
+                    this.isDirty = true;
                   })
               }
               .width('100%')
@@ -257,9 +286,11 @@ export struct RelationEditPage {
                 Row({ space: 8 }) {
                   this.flagChip('未加工材料测试', this.rawMaterialTest, () => {
                     this.rawMaterialTest = !this.rawMaterialTest;
+                    this.isDirty = true;
                   })
                   this.flagChip('禁止动机分析', this.forbidAnalysis, () => {
                     this.forbidAnalysis = !this.forbidAnalysis;
+                    this.isDirty = true;
                   })
                 }
               }
@@ -283,6 +314,7 @@ export struct RelationEditPage {
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.notes = value;
+                    this.isDirty = true;
                   })
               }
               .width('100%')

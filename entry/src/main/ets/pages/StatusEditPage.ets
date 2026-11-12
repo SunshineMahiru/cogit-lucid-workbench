@@ -17,6 +17,7 @@ export struct StatusEditPage {
   @Local note: string = '';
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
+  @Local isDirty: boolean = false;
   @Local isPreview: boolean = false;
   @Local errorText: string = '';
   private service: StatusService | null = null;
@@ -96,6 +97,7 @@ export struct StatusEditPage {
       await service.save(this.date, sleep, exercise, alerts, this.note);
       notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '读数已保存' });
+      this.isDirty = false;
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
@@ -180,6 +182,30 @@ export struct StatusEditPage {
         this.navStack = context.pathStack;
         const params = context.pathInfo.param as StatusEditParams;
         this.load(params.date);
+      },
+      onDestinationBackPressed: () => {
+        if (!this.isDirty) {
+          return false;
+        }
+        this.getUIContext().showAlertDialog({
+          title: '放弃这条读数？',
+          message: '已填写的内容不会保存。',
+          primaryButton: {
+            value: '继续编辑',
+            action: () => {
+            }
+          },
+          secondaryButton: {
+            value: '放弃',
+            action: () => {
+              this.isDirty = false;
+              if (this.navStack !== null) {
+                this.navStack.pop();
+              }
+            }
+          }
+        });
+        return true;
       }
     })
   }
@@ -216,6 +242,7 @@ export struct StatusEditPage {
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.date = value;
+                    this.isDirty = true;
                   })
               }
               .width('100%')
@@ -226,12 +253,15 @@ export struct StatusEditPage {
               Column({ space: 10 }) {
                 this.numberField('睡眠小时', '例如 7.5', this.sleepHours, true, (value: string) => {
                   this.sleepHours = value;
+                  this.isDirty = true;
                 })
                 this.numberField('运动次数', '例如 1', this.exerciseCount, false, (value: string) => {
                   this.exerciseCount = value;
+                  this.isDirty = true;
                 })
                 this.numberField('凌晨报警次数', '例如 0', this.alertCount, false, (value: string) => {
                   this.alertCount = value;
+                  this.isDirty = true;
                 })
               }
               .width('100%')
@@ -250,6 +280,7 @@ export struct StatusEditPage {
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.note = value;
+                    this.isDirty = true;
                   })
               }
               .width('100%')

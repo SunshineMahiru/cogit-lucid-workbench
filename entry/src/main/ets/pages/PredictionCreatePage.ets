@@ -32,6 +32,7 @@ export struct PredictionCreatePage {
     settlementDate: ''
   };
   @Local isSaving: boolean = false;
+  @Local isDirty: boolean = false;
   @Local sourceId: string | null = null;
   @Local sourceVersion: number = 0;
   private navStack: NavPathStack | null = null;
@@ -71,6 +72,7 @@ export struct PredictionCreatePage {
 
   private useDeadline(days: number): void {
     this.settlementDate = dateAfterDays(Date.now(), days);
+    this.isDirty = true;
     this.errors = { target: this.errors.target, judgment: this.errors.judgment,
       confidence: this.errors.confidence, settlementDate: '' };
   }
@@ -108,6 +110,7 @@ export struct PredictionCreatePage {
       this.getUIContext().getPromptAction().showToast({
         message: this.sourceId === null ? '演示模式：预测已保存在当前会话' : `演示模式：已生成第 ${saved.version} 版`
       });
+      this.isDirty = false;
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
@@ -121,6 +124,7 @@ export struct PredictionCreatePage {
       this.getUIContext().getPromptAction().showToast({
         message: this.sourceId === null ? '预测已保存，不能修改' : `已生成第 ${saved.version} 版预测`
       });
+      this.isDirty = false;
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
@@ -169,6 +173,30 @@ export struct PredictionCreatePage {
             this.loadSource(params.sourcePredictionId);
           }
         }
+      },
+      onDestinationBackPressed: () => {
+        if (!this.isDirty) {
+          return false;
+        }
+        this.getUIContext().showAlertDialog({
+          title: '放弃这条预测？',
+          message: '已填写的内容不会保存。',
+          primaryButton: {
+            value: '继续编辑',
+            action: () => {
+            }
+          },
+          secondaryButton: {
+            value: '放弃',
+            action: () => {
+              this.isDirty = false;
+              if (this.navStack !== null) {
+                this.navStack.pop();
+              }
+            }
+          }
+        });
+        return true;
       }
     })
   }
@@ -189,6 +217,7 @@ export struct PredictionCreatePage {
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.target = value;
+                    this.isDirty = true;
                   })
                 this.fieldError(this.errors.target)
               }
@@ -208,6 +237,7 @@ export struct PredictionCreatePage {
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.judgment = value;
+                    this.isDirty = true;
                   })
                 Text('需要同时包含数量与期限，结算时才有依据')
                   .fontSize(AppTheme.font.caption)
@@ -237,6 +267,7 @@ export struct PredictionCreatePage {
                   .selectedColor(AppTheme.color.primary)
                   .onChange((value: number) => {
                     this.confidence = Math.round(value);
+                    this.isDirty = true;
                   })
                 this.fieldError(this.errors.confidence)
               }
@@ -259,6 +290,7 @@ export struct PredictionCreatePage {
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.settlementDate = value;
+                    this.isDirty = true;
                   })
                 this.fieldError(this.errors.settlementDate)
               }
@@ -278,6 +310,7 @@ export struct PredictionCreatePage {
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.reason = value;
+                    this.isDirty = true;
                   })
               }
               .width('100%')
