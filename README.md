@@ -402,7 +402,7 @@ Cases live in three places: `entry/src/test` holds local unit tests that run on 
 | Local unit | `src/test/List.test.ets` | 4 | Two prediction form checks, confidence calibration bands, the export level filter |
 | Device · analysis | `src/ohosTest/ets/test/Analysis.test.ets` | 4 | The same four as above, run again on the device |
 | Device · flow | `src/ohosTest/ets/test/UiFlow.test.ets` | 3 | Open the dashboard, switch month, return home |
-| Node scripts | `.test/check.js` and four siblings | 118 | Date and metric helpers, services, export, review agent fallbacks, plan factories |
+| Node scripts | `.test/check.js` and four siblings | 127 | Date and metric helpers, services, export, review agent fallbacks, plan factories |
 
 Local unit tests:
 
@@ -438,6 +438,7 @@ Two things that trip people up: `hvigorw test` runs on Windows and macOS only, n
 
 | Topic | What it covers | Link |
 |---|---|---|
+| Startup baseline | Method and numbers for cold and warm launch on the emulator | [docs/PERF_BASELINE.md](./docs/PERF_BASELINE.md) |
 | Visual tokens | Locked colour, type, radius, and spacing tokens, plus the per-page checklist and known deviations | [docs/UI_FREEZE.md](./docs/UI_FREEZE.md) |
 | Mock server | Endpoints, addressing, and the previewer versus emulator note | [mock-server/README.md](./mock-server/README.md) |
 | Signing template | Placeholder config for `signing/signing.local.json` | [docs/signing.local.example.json](./docs/signing.local.example.json) |
