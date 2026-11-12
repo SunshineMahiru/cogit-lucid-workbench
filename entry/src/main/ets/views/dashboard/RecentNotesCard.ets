@@ -46,7 +46,7 @@ export struct RecentNotesCard {
       }
     }
     .width('100%')
-    .padding(16)
+    .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.lg)
   }
@@ -62,7 +62,7 @@ export struct RecentNotesCard {
         .fontColor(AppTheme.color.textMuted)
     }
     .width('100%')
-    .padding(24)
+    .padding(AppTheme.spacing.s24)
     .justifyContent(FlexAlign.Center)
   }
 }

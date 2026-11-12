@@ -325,7 +325,7 @@ export struct PlanNodePage {
         })
     }
     .width('100%')
-    .padding({ top: 7, bottom: 7 })
+    .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
   }
 
   @Builder
@@ -367,7 +367,7 @@ export struct PlanNodePage {
                 Text(this.node.status === PlanNodeStatus.OPEN ? '进行中' : '已结束')
                   .fontSize(AppTheme.font.caption)
                   .fontColor(this.node.status === PlanNodeStatus.OPEN ? AppTheme.color.success : AppTheme.color.textMuted)
-                  .padding({ left: 7, right: 7, top: 2, bottom: 2 })
+                  .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                   .backgroundColor(this.node.status === PlanNodeStatus.OPEN ? AppTheme.color.successSurface : AppTheme.color.chip)
                   .borderRadius(AppTheme.radius.sm)
               }
@@ -387,13 +387,13 @@ export struct PlanNodePage {
                   .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
-                  .padding({ top: 2 })
+                  .padding({ top: AppTheme.spacing.s2 })
                 Scroll() {
                   Row({ space: 6 }) {
                     Text('不分组')
                       .fontSize(AppTheme.font.caption)
                       .fontColor(this.selectedProjectId.length === 0 ? Color.White : AppTheme.color.textSecondary)
-                      .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                      .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                       .backgroundColor(this.selectedProjectId.length === 0 ? AppTheme.color.primary : AppTheme.color.chip)
                       .borderRadius(AppTheme.radius.md)
                       .onClick(() => {
@@ -403,7 +403,7 @@ export struct PlanNodePage {
                       Text(project.name)
                         .fontSize(AppTheme.font.caption)
                         .fontColor(this.selectedProjectId === project.id ? Color.White : AppTheme.color.textSecondary)
-                        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                         .backgroundColor(this.selectedProjectId === project.id ? AppTheme.color.primary : AppTheme.color.chip)
                         .borderRadius(AppTheme.radius.md)
                         .onClick(() => {
@@ -480,7 +480,7 @@ export struct PlanNodePage {
                   .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
-                  .padding({ top: 6, bottom: 6 })
+                  .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
               } else {
                 ForEach(this.items, (item: PlanItem) => {
                   this.itemRow(item)
@@ -561,7 +561,7 @@ export struct PlanNodePage {
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 12, bottom: 12 })
+              .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
               .borderRadius(AppTheme.radius.md)
               .onClick(() => {
@@ -573,14 +573,14 @@ export struct PlanNodePage {
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 10, bottom: 6 })
+              .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s6 })
             Text('去复盘')
               .id('plan_node_review')
               .fontSize(AppTheme.font.bodyStrong)
               .fontColor(AppTheme.color.primary)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 6, bottom: 10 })
+              .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s10 })
               .onClick(() => {
                 if (this.navStack !== null && this.node !== null) {
                   const params: PlanReviewParams = { planId: this.node.planId, nodeId: this.node.id };
@@ -590,7 +590,7 @@ export struct PlanNodePage {
           }
         }
         .width('100%')
-        .padding({ left: 20, right: 20, top: 10, bottom: 24 })
+        .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s24 })
       }
       .width('100%')
       .height('100%')

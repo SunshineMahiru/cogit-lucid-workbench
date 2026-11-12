@@ -100,7 +100,7 @@ export struct ReviewHistoryPage {
                       Text(item.periodLabel)
                         .fontSize(AppTheme.font.caption)
                         .fontColor(AppTheme.color.primaryDeep)
-                        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                        .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                         .backgroundColor(AppTheme.color.tint)
                         .borderRadius(AppTheme.radius.sm)
                       Text(item.rangeLabel)
@@ -129,7 +129,7 @@ export struct ReviewHistoryPage {
                       .width('100%')
                   }
                   .width('100%')
-                  .padding(14)
+                  .padding(AppTheme.spacing.s16)
                   .onClick(() => {
                     this.openDetail(item.id);
                   })

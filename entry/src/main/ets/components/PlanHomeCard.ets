@@ -118,7 +118,7 @@ export struct PlanHomeCard {
           .id('plan_home_all')
           .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.textSecondary)
-          .padding({ left: 4, right: 8, top: 6, bottom: 6 })
+          .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s8, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
           .onClick(() => {
             this.openList();
           })
@@ -126,7 +126,7 @@ export struct PlanHomeCard {
           .id('plan_home_create')
           .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primaryDeep)
-          .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+          .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
           .backgroundColor(AppTheme.color.tint)
           .borderRadius(AppTheme.radius.lg)
           .onClick(() => {
@@ -146,7 +146,7 @@ export struct PlanHomeCard {
           Text('当前计划')
             .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.primaryDeep)
-            .padding({ left: 7, right: 7, top: 2, bottom: 2 })
+            .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(AppTheme.radius.sm)
           Blank()
@@ -194,19 +194,19 @@ export struct PlanHomeCard {
         Text('读取计划…').fontSize(AppTheme.font.caption).fontColor(AppTheme.color.textMuted)
       }
       .width('100%')
-      .padding({ top: 2, bottom: 2 })
+      .padding({ top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
     } else if (this.plan === null || this.plan.status !== PlanStatus.ACTIVE) {
       Column() {
         this.emptyCard()
       }
       .width('100%')
-      .padding({ top: 2, bottom: 2 })
+      .padding({ top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
     } else {
       Column() {
         this.planCard(this.plan)
       }
       .width('100%')
-      .padding({ top: 2, bottom: 2 })
+      .padding({ top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
     }
   }
 }

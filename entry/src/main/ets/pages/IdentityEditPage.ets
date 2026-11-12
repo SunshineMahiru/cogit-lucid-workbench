@@ -180,7 +180,7 @@ export struct IdentityEditPage {
               .fontColor(AppTheme.color.textSecondary)
               .layoutWeight(1)
               .textAlign(TextAlign.Center)
-              .padding({ top: 10, bottom: 10 })
+              .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
               .backgroundColor(AppTheme.color.surfaceAlt)
               .borderRadius(AppTheme.radius.md)
               .onClick(() => {
@@ -191,7 +191,7 @@ export struct IdentityEditPage {
               .fontColor(Color.White)
               .layoutWeight(1)
               .textAlign(TextAlign.Center)
-              .padding({ top: 10, bottom: 10 })
+              .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
               .backgroundColor(AppTheme.color.primary)
               .borderRadius(AppTheme.radius.md)
               .accessibilityText('保存身份信息')
@@ -254,7 +254,7 @@ export struct IdentityEditPage {
     Text(label)
       .fontSize(AppTheme.font.body)
       .fontColor(AppTheme.color.primary)
-      .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(AppTheme.color.tint)
       .borderRadius(AppTheme.radius.sm)
       .accessibilityText(label)
@@ -274,7 +274,7 @@ export struct IdentityEditPage {
         .maxLength(limit)
         .backgroundColor(AppTheme.color.surfaceAlt)
         .borderRadius(AppTheme.radius.sm)
-        .padding({ left: 10, right: 10 })
+        .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10 })
         .onChange((text: string) => {
           onChange(text);
         })

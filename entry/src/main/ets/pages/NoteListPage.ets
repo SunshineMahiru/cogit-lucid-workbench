@@ -130,7 +130,7 @@ export struct NoteListPage {
     Text(label)
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.filter === type ? Color.White : AppTheme.color.textStrong)
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.filter === type ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -144,7 +144,7 @@ export struct NoteListPage {
       Text('＋')
         .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 12, right: 16 })
+        .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s16 })
         .onClick(() => {
           this.openEditor();
         })
@@ -255,7 +255,7 @@ export struct NoteListPage {
                     .fontColor(AppTheme.color.primary)
                     .width('100%')
                     .textAlign(TextAlign.Center)
-                    .padding({ top: 10, bottom: 10 })
+                    .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
                     .onClick(() => {
                       this.loadMore();
                     })
@@ -270,7 +270,8 @@ export struct NoteListPage {
         }
         .width('100%')
         .height('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 80 })
+        // The 80 vp bottom inset reserves room for the floating action button, so it stays off the scale.
+        .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s12, bottom: 80 })
 
         Text('＋')
           .fontSize(AppTheme.font.headline)
@@ -281,7 +282,7 @@ export struct NoteListPage {
           .textAlign(TextAlign.Center)
           .backgroundColor(AppTheme.color.primary)
           .borderRadius(AppTheme.radius.xl)
-          .margin({ right: 16, bottom: 24 })
+          .margin({ right: AppTheme.spacing.s16, bottom: AppTheme.spacing.s24 })
           .onClick(() => {
             this.openEditor();
           })

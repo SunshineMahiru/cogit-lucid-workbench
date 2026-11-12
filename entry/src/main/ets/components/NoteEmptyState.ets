@@ -30,17 +30,17 @@ export struct NoteEmptyState {
         Text(this.actionLabel)
           .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.primary)
-          .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+          .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
           .backgroundColor(AppTheme.color.tint)
           .borderRadius(AppTheme.radius.lg)
-          .margin({ top: 4 })
+          .margin({ top: AppTheme.spacing.s4 })
           .onClick(() => {
             this.onAction();
           })
       }
     }
     .width('100%')
-    .padding(32)
+    .padding(AppTheme.spacing.s24)
     .justifyContent(FlexAlign.Center)
     .border(this.dashed ? { width: 1, color: AppTheme.color.borderStrong, style: BorderStyle.Dashed } : { width: 0 })
     .borderRadius(this.dashed ? AppTheme.radius.md : 0)

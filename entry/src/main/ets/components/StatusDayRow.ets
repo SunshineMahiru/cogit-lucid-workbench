@@ -46,7 +46,7 @@ export struct StatusDayRow {
           Text(`${this.row.flags.length} 项提示`)
             .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.danger)
-            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
             .backgroundColor(AppTheme.color.dangerSurface)
             .borderRadius(AppTheme.radius.sm)
         }

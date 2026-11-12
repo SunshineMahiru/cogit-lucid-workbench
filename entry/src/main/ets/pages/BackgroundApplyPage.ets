@@ -361,7 +361,7 @@ export struct BackgroundApplyPage {
                       Text('从相册、相机或文件选一张，再决定用在哪几个页面')
                         .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.textMuted)
-                        .margin({ top: 4 })
+                        .margin({ top: AppTheme.spacing.s4 })
                     }
                     .width('100%')
                     .height(96)
@@ -373,7 +373,7 @@ export struct BackgroundApplyPage {
                     Text(this.busyKey === 'pick' ? '读取中…' : '重新选择图片')
                       .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.primary)
-                      .padding({ left: 12, right: 12, top: 7, bottom: 7 })
+                      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
                       .backgroundColor(AppTheme.color.tint)
                       .borderRadius(AppTheme.radius.sm)
                       .accessibilityText('重新选择背景图片来源')
@@ -407,7 +407,7 @@ export struct BackgroundApplyPage {
                     Text(this.globalApplied ? '已设置' : '未设置')
                       .fontSize(AppTheme.font.caption)
                       .fontColor(this.globalApplied ? AppTheme.color.success : AppTheme.color.textMuted)
-                      .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                       .backgroundColor(this.globalApplied ? AppTheme.color.successSurface : AppTheme.color.surfaceAlt)
                       .borderRadius(AppTheme.radius.sm)
                     Blank()
@@ -415,7 +415,7 @@ export struct BackgroundApplyPage {
                       Text('清除')
                         .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.danger)
-                        .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                         .accessibilityText('清除全局默认背景')
                         .onClick(() => {
                           this.clearGlobalImage();
@@ -424,7 +424,7 @@ export struct BackgroundApplyPage {
                     Text(this.busyKey === 'global' ? '设置中…' : '设为默认')
                       .fontSize(AppTheme.font.body)
                       .fontColor(Color.White)
-                      .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
                       .backgroundColor(this.pendingPath.length > 0 ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
                       .borderRadius(AppTheme.radius.sm)
                       .accessibilityText('把背景设为全部页面的默认背景')
@@ -475,7 +475,7 @@ export struct BackgroundApplyPage {
                         .fontSize(AppTheme.font.caption)
                         .fontColor(state.own ? AppTheme.color.success :
                           (state.following ? AppTheme.color.primary : AppTheme.color.textMuted))
-                        .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                        .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                         .backgroundColor(state.own ? AppTheme.color.successSurface :
                           (state.following ? AppTheme.color.tint : AppTheme.color.surfaceAlt))
                         .borderRadius(AppTheme.radius.sm)
@@ -484,7 +484,7 @@ export struct BackgroundApplyPage {
                         Text('清除')
                           .fontSize(AppTheme.font.body)
                           .fontColor(AppTheme.color.danger)
-                          .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                           .accessibilityText(`清除${state.label}的页面背景`)
                           .onClick(() => {
                             this.clearGroup(state.key, state.label);
@@ -494,7 +494,7 @@ export struct BackgroundApplyPage {
                         (this.pendingPath.length > 0 ? '应用' : '选图'))
                         .fontSize(AppTheme.font.body)
                         .fontColor(Color.White)
-                        .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                        .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
                         .backgroundColor(this.pendingPath.length > 0 ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
                         .borderRadius(AppTheme.radius.sm)
                         .accessibilityText(`把背景应用到${state.label}`)
@@ -507,7 +507,7 @@ export struct BackgroundApplyPage {
                         })
                     }
                     .width('100%')
-                    .padding({ top: 6, bottom: 6 })
+                    .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
                   }, (state: BackgroundGroupState) => `${state.key}-${state.applied}`)
 
                   Row({ space: 8 }) {
@@ -516,7 +516,7 @@ export struct BackgroundApplyPage {
                       .fontColor(Color.White)
                       .textAlign(TextAlign.Center)
                       .layoutWeight(1)
-                      .padding({ top: 9, bottom: 9 })
+                      .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
                       .backgroundColor(this.selectedKeys.length > 0 && this.pendingPath.length > 0 ?
                         AppTheme.color.primary : AppTheme.color.primaryDisabled)
                       .borderRadius(AppTheme.radius.md)
@@ -529,7 +529,7 @@ export struct BackgroundApplyPage {
                       .fontColor(AppTheme.color.primary)
                       .textAlign(TextAlign.Center)
                       .layoutWeight(1)
-                      .padding({ top: 9, bottom: 9 })
+                      .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
                       .backgroundColor(AppTheme.color.tint)
                       .borderRadius(AppTheme.radius.md)
                       .accessibilityText('把背景应用到全部页面')
@@ -588,7 +588,7 @@ export struct BackgroundApplyPage {
                     Text('恢复跟随')
                       .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.primary)
-                      .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                      .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                       .accessibilityText('把页面透明度恢复为跟随全局或不透明')
                       .onClick(() => {
                         this.resetSurfaceAlpha();
@@ -672,7 +672,7 @@ export struct BackgroundApplyPage {
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 12, bottom: 12 })
+              .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(AppTheme.color.primary)
               .borderRadius(AppTheme.radius.md)
               .accessibilityText('完成背景设置并返回')
@@ -681,7 +681,7 @@ export struct BackgroundApplyPage {
               })
           }
           .width('100%')
-          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: 8, bottom: 24 })
+          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s24 })
         }
       }
       .width('100%')

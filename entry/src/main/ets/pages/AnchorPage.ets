@@ -159,7 +159,7 @@ export struct AnchorPage {
       .width('100%')
     }
     .width('100%')
-    .padding(14)
+    .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.md)
     .alignItems(HorizontalAlign.Start)
@@ -192,7 +192,7 @@ export struct AnchorPage {
           this.headerCard()
         }
         .width('100%')
-        .padding({ left: 16, right: 16, top: 12 })
+        .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s12 })
 
         if (this.isLoading) {
           Column() {
@@ -219,7 +219,7 @@ export struct AnchorPage {
           .width('100%')
           .layoutWeight(1)
           .justifyContent(FlexAlign.Center)
-          .padding({ left: 16, right: 16 })
+          .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16 })
         } else {
           Scroll() {
             Column({ space: 8 }) {
@@ -239,7 +239,7 @@ export struct AnchorPage {
           .layoutWeight(1)
           .scrollBar(BarState.Off)
           .align(Alignment.Top)
-          .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+          .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
 
           Column() {
             Text('用它做一次复盘')
@@ -248,7 +248,7 @@ export struct AnchorPage {
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 12, bottom: 12 })
+              .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(AppTheme.color.primary)
               .borderRadius(AppTheme.radius.md)
               .onClick(() => {
@@ -256,7 +256,7 @@ export struct AnchorPage {
               })
           }
           .width('100%')
-          .padding({ left: 16, right: 16, bottom: 24, top: 4 })
+          .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, bottom: AppTheme.spacing.s24, top: AppTheme.spacing.s4 })
         }
       }
       .width('100%')

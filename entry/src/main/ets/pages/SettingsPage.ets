@@ -353,7 +353,7 @@ export struct SettingsPage {
     Text(label)
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.settings.llmProvider === provider ? Color.White : AppTheme.color.text)
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.settings.llmProvider === provider ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -366,7 +366,7 @@ export struct SettingsPage {
     Text(option.label)
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.settings.llmModel === option.id ? Color.White : AppTheme.color.text)
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.settings.llmModel === option.id ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -379,7 +379,7 @@ export struct SettingsPage {
     Text(securityLevelText(level))
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.settings.defaultLevel === level ? Color.White : AppTheme.color.text)
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.settings.defaultLevel === level ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -574,7 +574,7 @@ export struct SettingsPage {
                     Text(this.isExporting ? '导出中…' : '导出并另存为')
                       .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.primary)
-                      .padding({ left: 14, right: 14, top: 8, bottom: 8 })
+                      .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
                       .backgroundColor(AppTheme.color.tint)
                       .borderRadius(AppTheme.radius.md)
                       .accessibilityText('导出记录并另存为 Markdown')
@@ -586,7 +586,7 @@ export struct SettingsPage {
                     Text('分享')
                       .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.primary)
-                      .padding({ left: 10, right: 10, top: 9, bottom: 9 })
+                      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
                       .onClick(() => {
                         this.shareExport();
                       })
@@ -658,7 +658,7 @@ export struct SettingsPage {
                     Text(this.backgroundBusy === 'pending' ? '读取中…' : '打开页面背景')
                       .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(Color.White)
-                      .padding({ left: 14, right: 14, top: 9, bottom: 9 })
+                      .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
                       .backgroundColor(AppTheme.color.primary)
                       .borderRadius(AppTheme.radius.sm)
                       .accessibilityText('打开页面背景设置')
@@ -711,7 +711,7 @@ export struct SettingsPage {
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 12, bottom: 12 })
+              .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(this.isDirty && !this.isSaving ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
               .borderRadius(AppTheme.radius.md)
               .accessibilityText(this.isSaving ? '正在保存设置' : '保存设置')
@@ -722,7 +722,7 @@ export struct SettingsPage {
               })
           }
           .width('100%')
-          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: 8, bottom: 24 })
+          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s24 })
         }
         .width('100%')
         .height('100%')

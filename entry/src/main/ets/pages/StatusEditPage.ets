@@ -134,14 +134,14 @@ export struct StatusEditPage {
       Text('计划')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 12, right: 6 })
+        .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s6 })
         .onClick(() => {
           this.openAttach();
         })
       Text(this.isSaving ? '保存中' : '保存')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
-        .padding({ left: 6, right: 16 })
+        .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s16 })
         .onClick(() => {
           this.save();
         })
@@ -268,7 +268,7 @@ export struct StatusEditPage {
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 12, bottom: 12 })
+              .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
               .borderRadius(AppTheme.radius.md)
               .onClick(() => {

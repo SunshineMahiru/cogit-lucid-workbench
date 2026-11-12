@@ -20,7 +20,7 @@ export struct ReviewPage {
         Text('返回节点')
           .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.primary)
-          .padding({ left: 8, right: 8 })
+          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8 })
           .onClick(() => {
             this.openPlanNode();
           })
@@ -28,7 +28,7 @@ export struct ReviewPage {
       Text('历史')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 8, right: 8 })
+        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8 })
         .onClick(() => {
           if (this.navStack !== null) {
             this.navStack.pushPathByName(ROUTES.REVIEW_HISTORY, null);
@@ -37,7 +37,7 @@ export struct ReviewPage {
       Text('Agent')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 4, right: 14 })
+        .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s16 })
         .onClick(() => {
           if (this.navStack !== null) {
             this.navStack.pushPathByName(ROUTES.REVIEW_AGENT, null);

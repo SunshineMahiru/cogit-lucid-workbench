@@ -69,7 +69,7 @@ export struct SimplePieChart {
         .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
-        .padding({ top: 16, bottom: 16 })
+        .padding({ top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s16 })
     } else {
       Row({ space: 12 }) {
         PieChart({ model: this.model })

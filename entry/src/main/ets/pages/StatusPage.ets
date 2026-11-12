@@ -125,7 +125,7 @@ export struct StatusPage {
       Text('＋')
         .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 12, right: 16 })
+        .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s16 })
         .onClick(() => {
           this.openEditor();
         })
@@ -225,7 +225,7 @@ export struct StatusPage {
                     Text('小时睡眠')
                       .fontSize(AppTheme.font.bodyStrong)
                       .fontColor(AppTheme.color.textSecondary)
-                      .margin({ top: 12 })
+                      .margin({ top: AppTheme.spacing.s12 })
                     Blank()
                     Text(`运动 ${this.overview.latest.exerciseCount} 次 · 报警 ${this.overview.latest.alertCount} 次`)
                       .fontSize(AppTheme.font.body)
@@ -244,10 +244,10 @@ export struct StatusPage {
                         Text(flag.message)
                           .fontSize(AppTheme.font.caption)
                           .fontColor(AppTheme.color.danger)
-                          .padding({ left: 6, right: 6, top: 3, bottom: 3 })
+                          .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                           .backgroundColor(AppTheme.color.dangerSurface)
                           .borderRadius(AppTheme.radius.sm)
-                          .margin({ right: 6, bottom: 4 })
+                          .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
                       }, (flag: ReadingFlag) => flag.code)
                     }
                     .width('100%')

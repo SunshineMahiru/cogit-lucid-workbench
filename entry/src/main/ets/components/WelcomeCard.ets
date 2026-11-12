@@ -65,7 +65,7 @@ export struct WelcomeCard {
           .fontSize(AppTheme.font.bodyStrong)
           .fontWeight(FontWeight.Medium)
           .fontColor(Color.White)
-          .padding({ left: 14, right: 14, top: 8, bottom: 8 })
+          .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
           .backgroundColor(AppTheme.color.primary)
           .borderRadius(AppTheme.radius.md)
           .onClick(() => {
@@ -74,7 +74,7 @@ export struct WelcomeCard {
         Text('先看看')
           .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.primary)
-          .padding({ left: 10, right: 10, top: 8, bottom: 8 })
+          .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
           .onClick(() => {
             this.onDismiss();
           })
@@ -82,7 +82,7 @@ export struct WelcomeCard {
       .width('100%')
     }
     .width('100%')
-    .padding(14)
+    .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.selectedSurface)
     .borderRadius(AppTheme.radius.md)
     .border({ width: 1, color: AppTheme.color.borderSelected })

@@ -119,7 +119,7 @@ export struct PredictionListPage {
     Text(label)
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.filter === status ? Color.White : AppTheme.color.textStrong)
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.filter === status ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -133,7 +133,7 @@ export struct PredictionListPage {
       Text('统计')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 8, right: 8 })
+        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8 })
         .onClick(() => {
           if (this.navStack !== null) {
             this.navStack.pushPathByName(ROUTES.PREDICTION_STATS, null);
@@ -142,7 +142,7 @@ export struct PredictionListPage {
       Text('＋')
         .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 4, right: 14 })
+        .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s16 })
         .onClick(() => {
           this.openCreate();
         })
@@ -191,7 +191,7 @@ export struct PredictionListPage {
       .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
-    .padding(16)
+    .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.lg)
   }
@@ -284,7 +284,7 @@ export struct PredictionListPage {
                   .fontColor(AppTheme.color.primary)
                   .width('100%')
                   .textAlign(TextAlign.Center)
-                  .padding({ top: 10, bottom: 10 })
+                  .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
                   .onClick(() => {
                     this.loadMore();
                   })
@@ -299,7 +299,7 @@ export struct PredictionListPage {
       }
       .width('100%')
       .height('100%')
-      .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+      .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
       .backgroundColor(Color.Transparent)
   }
 

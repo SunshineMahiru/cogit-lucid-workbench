@@ -48,7 +48,7 @@ export struct RelationCard {
             Text('未加工材料')
               .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.primaryDeep)
-              .padding({ left: 5, right: 5, top: 2, bottom: 2 })
+              .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
               .backgroundColor(AppTheme.color.tint)
               .borderRadius(AppTheme.radius.sm)
           }
@@ -56,7 +56,7 @@ export struct RelationCard {
             Text('禁分析')
               .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.danger)
-              .padding({ left: 5, right: 5, top: 2, bottom: 2 })
+              .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
               .backgroundColor(AppTheme.color.dangerSurface)
               .borderRadius(AppTheme.radius.sm)
           }
@@ -64,7 +64,7 @@ export struct RelationCard {
         .width('100%')
       }
       .width('100%')
-      .padding(14)
+      .padding(AppTheme.spacing.s16)
       .onClick(() => {
         this.onTap();
       })

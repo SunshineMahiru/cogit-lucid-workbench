@@ -286,7 +286,7 @@ export struct DashboardView {
         .fontColor(AppTheme.color.textMuted)
     }
     .width('100%')
-    .padding(24)
+    .padding(AppTheme.spacing.s24)
     .justifyContent(FlexAlign.Center)
   }
 
@@ -329,7 +329,7 @@ export struct DashboardView {
           }
         }
         .width('100%')
-        .padding({ left: 20, right: 20, top: 16, bottom: 12 })
+        .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s12 })
         .border({ width: { bottom: 0.5 }, color: AppTheme.color.border })
       }
 
@@ -347,7 +347,7 @@ export struct DashboardView {
             })
         }
         .width('100%')
-        .padding({ left: 20, right: 20, top: 6, bottom: 6 })
+        .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
         .backgroundColor(AppTheme.color.warningSurface)
       }
 
@@ -356,7 +356,7 @@ export struct DashboardView {
           .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primaryDeep)
           .width('100%')
-          .padding({ left: 20, right: 20, top: 6, bottom: 6 })
+          .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
           .backgroundColor(AppTheme.color.tint)
       }
 
@@ -389,7 +389,7 @@ export struct DashboardView {
               .rowsGap(0)
               .columnsGap(0)
               .width('100%')
-              .padding(16)
+              .padding(AppTheme.spacing.s16)
               .backgroundColor(AppTheme.color.surface)
               .borderRadius(AppTheme.radius.lg)
 
@@ -432,7 +432,7 @@ export struct DashboardView {
                 .alignItems(HorizontalAlign.Center)
               }
               .width('100%')
-              .padding(16)
+              .padding(AppTheme.spacing.s16)
               .backgroundColor(AppTheme.color.surface)
               .borderRadius(AppTheme.radius.lg)
 
@@ -473,7 +473,7 @@ export struct DashboardView {
                 .width('100%')
               }
               .width('100%')
-              .padding(14)
+              .padding(AppTheme.spacing.s16)
               .backgroundColor(AppTheme.color.selectedSurface)
               .borderRadius(AppTheme.radius.lg)
               .border({ width: 1, color: AppTheme.color.borderSelected })
@@ -540,12 +540,12 @@ export struct DashboardView {
                 }
               }
               .width('100%')
-              .padding(16)
+              .padding(AppTheme.spacing.s16)
               .backgroundColor(AppTheme.color.surface)
               .borderRadius(AppTheme.radius.lg)
             }
             .width('100%')
-            .padding({ left: 20, right: 20, bottom: 24 })
+            .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, bottom: AppTheme.spacing.s24 })
           }
           .width('100%')
           .layoutWeight(1)
@@ -556,7 +556,7 @@ export struct DashboardView {
               .fontSize(AppTheme.font.bodyStrong)
               .fontWeight(FontWeight.Medium)
               .fontColor(Color.White)
-              .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+              .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
               .backgroundColor(AppTheme.color.primary)
               .borderRadius(AppTheme.radius.xl)
               .onClick(() => {
@@ -565,7 +565,7 @@ export struct DashboardView {
           }
           .width('100%')
           .justifyContent(FlexAlign.End)
-          .padding({ left: 20, right: 20, top: 8, bottom: 20 })
+          .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s20 })
           .backgroundColor(AppTheme.color.page)
         }
         .width('100%')

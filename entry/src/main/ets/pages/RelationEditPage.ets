@@ -93,7 +93,7 @@ export struct RelationEditPage {
     Text(trustLevelText(level))
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.trustLevel === level ? Color.White : AppTheme.color.text)
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.trustLevel === level ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -106,7 +106,7 @@ export struct RelationEditPage {
     Text(securityLevelText(level))
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.level === level ? Color.White : AppTheme.color.text)
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.level === level ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -119,7 +119,7 @@ export struct RelationEditPage {
     Text(value ? `${label} · 已开启` : `${label} · 未开启`)
       .fontSize(AppTheme.font.body)
       .fontColor(value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
-      .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(value ? AppTheme.color.tint : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.md)
       .onClick(onToggle)
@@ -131,7 +131,7 @@ export struct RelationEditPage {
       Text(this.isSaving ? '保存中' : '保存')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
-        .padding({ left: 12, right: 16 })
+        .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s16 })
         .onClick(() => {
           this.save();
         })
@@ -301,7 +301,7 @@ export struct RelationEditPage {
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 12, bottom: 12 })
+              .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
               .borderRadius(AppTheme.radius.md)
               .onClick(() => {

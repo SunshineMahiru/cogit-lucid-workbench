@@ -171,7 +171,7 @@ export struct PlanListPage {
       .id('plan_create')
       .fontSize(AppTheme.font.headline)
       .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s16 })
       .height(56)
       .onClick(() => {
         this.openEditor(null);
@@ -186,7 +186,7 @@ export struct PlanListPage {
           Text('主目标')
             .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.primaryDeep)
-            .padding({ left: 7, right: 7, top: 2, bottom: 2 })
+            .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(AppTheme.radius.sm)
           Blank()
@@ -323,7 +323,7 @@ export struct PlanListPage {
       .width('100%')
       .height('100%')
       .justifyContent(FlexAlign.Center)
-      .padding({ left: 20, right: 20 })
+      .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20 })
     } else {
       Scroll() {
         Column({ space: 12 }) {
@@ -371,7 +371,7 @@ export struct PlanListPage {
           }
         }
         .width('100%')
-        .padding({ left: 20, right: 20, top: 10, bottom: 24 })
+        .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s24 })
       }
       .width('100%')
       .height('100%')

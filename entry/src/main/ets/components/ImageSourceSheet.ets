@@ -19,7 +19,7 @@ export struct ImageSourceSheet {
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
-    .padding({ left: 14, right: 14, top: 10, bottom: 10 })
+    .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
     .backgroundColor(AppTheme.color.surfaceAlt)
     .borderRadius(AppTheme.radius.md)
     .accessibilityText(title)
@@ -35,13 +35,13 @@ export struct ImageSourceSheet {
         .fontWeight(FontWeight.Medium)
         .fontColor(AppTheme.color.text)
         .width('100%')
-        .padding({ left: 4 })
+        .padding({ left: AppTheme.spacing.s4 })
       this.option('从相册选择', '挑一张已经存好的照片', BackgroundImageSource.GALLERY)
       this.option('拍一张', '打开系统相机，按快门后回到这里', BackgroundImageSource.CAMERA)
       this.option('选择文件', '从文件管理里挑 PNG、JPG、WEBP 或 HEIF', BackgroundImageSource.FILES)
     }
     .width('100%')
-    .padding({ left: 16, right: 16, top: 16, bottom: 24 })
+    .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s24 })
     .alignItems(HorizontalAlign.Start)
   }
 }

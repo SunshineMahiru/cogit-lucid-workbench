@@ -97,7 +97,7 @@ export struct ReviewDetailPage {
     Text('计划')
       .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s16 })
       .height(56)
       .onClick(() => {
         this.openAttach();
@@ -166,7 +166,7 @@ export struct ReviewDetailPage {
                   Text(this.detail.periodLabel)
                     .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.primaryDeep)
-                    .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                    .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                     .backgroundColor(AppTheme.color.tint)
                     .borderRadius(AppTheme.radius.sm)
                   Text(this.detail.rangeLabel)

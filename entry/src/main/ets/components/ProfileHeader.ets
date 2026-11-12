@@ -124,7 +124,7 @@ export struct ProfileHeader {
           Text(this.profile.title)
             .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.accentGold)
-            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
             .backgroundColor(AppTheme.color.surfaceWarm)
             .borderRadius(AppTheme.radius.sm)
             .flexShrink(0)
@@ -156,10 +156,10 @@ export struct ProfileHeader {
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .width('100%')
-        .margin({ top: 4 })
+        .margin({ top: AppTheme.spacing.s4 })
     }
     .width('100%')
-    .padding({ left: 20, right: 20, top: 12, bottom: 12 })
+    .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
     .border({ width: { bottom: 0.5 }, color: AppTheme.color.border })
   }
 }

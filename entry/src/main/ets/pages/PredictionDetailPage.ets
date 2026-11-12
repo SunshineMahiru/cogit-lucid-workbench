@@ -34,7 +34,7 @@ struct PredictionInfoRow {
         .textOverflow({ overflow: TextOverflow.Ellipsis })
     }
     .width('100%')
-    .padding({ top: 7, bottom: 7 })
+    .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
   }
 }
 
@@ -96,14 +96,14 @@ export struct PredictionDetailPage {
       Text('计划')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 12, right: 6 })
+        .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s6 })
         .onClick(() => {
           this.openAttach();
         })
       Text('修改')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 6, right: 16 })
+        .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s16 })
         .onClick(() => {
           this.openRevise();
         })
@@ -225,7 +225,7 @@ export struct PredictionDetailPage {
               Text(predictionStatusText(this.detail.status, this.detail.hit))
                 .fontSize(AppTheme.font.caption)
                 .fontColor(this.tagColor())
-                .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                 .backgroundColor(this.tagBackground())
                 .borderRadius(AppTheme.radius.sm)
               Text(`${this.detail.confidence}%`)
@@ -264,7 +264,7 @@ export struct PredictionDetailPage {
               PredictionInfoRow({ label: '创建时间', value: this.detail.createdAtLabel })
             }
             .width('100%')
-            .padding(16)
+            .padding(AppTheme.spacing.s16)
             .backgroundColor(AppTheme.color.surface)
             .borderRadius(AppTheme.radius.md)
 
@@ -281,7 +281,7 @@ export struct PredictionDetailPage {
                   .width('100%')
               }
               .width('100%')
-              .padding(16)
+              .padding(AppTheme.spacing.s16)
               .backgroundColor(AppTheme.color.surface)
               .borderRadius(AppTheme.radius.md)
               .alignItems(HorizontalAlign.Start)
@@ -294,7 +294,7 @@ export struct PredictionDetailPage {
                   .fontColor(AppTheme.color.primary)
                   .width('100%')
                   .textAlign(TextAlign.Center)
-                  .padding({ top: 10, bottom: 10 })
+                  .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
                   .backgroundColor(AppTheme.color.tint)
                   .borderRadius(AppTheme.radius.md)
                   .onClick(() => {
@@ -316,7 +316,7 @@ export struct PredictionDetailPage {
             }
           }
           .width('100%')
-          .padding(16)
+          .padding(AppTheme.spacing.s16)
           .alignItems(HorizontalAlign.Start)
         }
         .width('100%')

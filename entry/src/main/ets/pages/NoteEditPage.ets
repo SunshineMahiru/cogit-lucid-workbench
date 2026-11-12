@@ -266,7 +266,7 @@ export struct NoteEditPage {
       Text(this.isSaving ? '保存中' : '保存')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(this.isSaving ? AppTheme.color.textMuted : AppTheme.color.primary)
-        .padding({ left: 8, right: 16 })
+        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s16 })
         .onClick(() => {
           if (!this.isSaving) {
             this.save();
@@ -356,7 +356,7 @@ export struct NoteEditPage {
               TextArea({ text: this.draft.content, placeholder: '先记一句…' })
                 .fontSize(AppTheme.font.bodyStrong)
                 .height(88)
-                .padding(10)
+                .padding(AppTheme.spacing.s10)
                 .backgroundColor(AppTheme.color.surfaceTint)
                 .borderRadius(AppTheme.radius.md)
                 .border({ width: 0.5, color: this.errorFor(null).length > 0 ? AppTheme.color.danger : AppTheme.color.border })
@@ -413,10 +413,10 @@ export struct NoteEditPage {
                     Text(relation.name)
                       .fontSize(AppTheme.font.body)
                       .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? Color.White : AppTheme.color.textSecondaryStrong)
-                      .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
                       .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.primary : AppTheme.color.chip)
                       .borderRadius(AppTheme.radius.md)
-                      .margin({ right: 6, bottom: 6 })
+                      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
                       .onClick(() => {
                         this.toggleRelation(relation.id);
                       })
@@ -435,17 +435,17 @@ export struct NoteEditPage {
               Text(securityLevelText(this.draft.level))
                 .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondaryStrong)
-                .margin({ left: 12 })
+                .margin({ left: AppTheme.spacing.s12 })
               Blank()
               Text('跟随设置')
                 .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textMuted)
             }
             .width('100%')
-            .padding({ top: 4 })
+            .padding({ top: AppTheme.spacing.s4 })
           }
           .width('100%')
-          .padding(16)
+          .padding(AppTheme.spacing.s16)
         }
         .layoutWeight(1)
         .scrollBar(BarState.Off)
@@ -460,7 +460,7 @@ export struct NoteEditPage {
           })
         }
         .width('100%')
-        .padding({ left: 16, right: 16, top: 8, bottom: 24 })
+        .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s24 })
       }
       .width('100%')
       .height('100%')

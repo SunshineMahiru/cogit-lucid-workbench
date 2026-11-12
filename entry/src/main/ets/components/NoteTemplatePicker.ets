@@ -22,7 +22,7 @@ export struct NoteTemplatePicker {
     Text(label)
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.activeId === templateId ? Color.White : AppTheme.color.textStrong)
-      .padding({ left: 14, right: 14, top: 7, bottom: 7 })
+      .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
       .backgroundColor(this.activeId === templateId ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {

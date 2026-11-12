@@ -60,7 +60,7 @@ export struct StatusTrendCard {
       .width('100%')
     }
     .width('100%')
-    .padding({ top: 12, left: 14, right: 14, bottom: 12 })
+    .padding({ top: AppTheme.spacing.s12, left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, bottom: AppTheme.spacing.s12 })
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.md)
     .alignItems(HorizontalAlign.Start)

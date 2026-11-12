@@ -89,7 +89,8 @@ export struct PredictionTrendChart {
           }, (point: PredictionMonthPoint) => point.month)
         }
         .width('100%')
-        .padding({ left: 36, right: 8 })
+        // Axis label width sets this inset; it is not part of the spacing scale.
+      .padding({ left: 36, right: AppTheme.spacing.s8 })
       }
       .width('100%')
     } else {
@@ -97,7 +98,7 @@ export struct PredictionTrendChart {
         .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
-        .padding({ top: 16, bottom: 16 })
+        .padding({ top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s16 })
     }
   }
 }

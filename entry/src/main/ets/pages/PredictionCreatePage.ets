@@ -146,7 +146,7 @@ export struct PredictionCreatePage {
     Text(label)
       .fontSize(AppTheme.font.body)
       .fontColor(AppTheme.color.primaryDeep)
-      .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(AppTheme.color.tint)
       .borderRadius(AppTheme.radius.md)
       .onClick(() => {
@@ -303,7 +303,7 @@ export struct PredictionCreatePage {
             .fontColor(Color.White)
             .width('100%')
             .textAlign(TextAlign.Center)
-            .padding({ top: 12, bottom: 12 })
+            .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
             .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
             .borderRadius(AppTheme.radius.md)
             .accessibilityText(this.isSaving ? '正在保存预测' : (this.sourceId === null ? '保存预测' : '生成新版本预测'))
@@ -314,7 +314,7 @@ export struct PredictionCreatePage {
             })
         }
         .width('100%')
-        .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: 8, bottom: 24 })
+        .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s24 })
       }
       .width('100%')
       .height('100%')

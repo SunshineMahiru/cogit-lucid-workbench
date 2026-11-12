@@ -37,7 +37,7 @@ export struct ModuleGridCard {
       .height(266)
     }
     .width('100%')
-    .padding(16)
+    .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.lg)
   }

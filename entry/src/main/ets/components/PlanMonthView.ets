@@ -66,7 +66,7 @@ export struct PlanMonthView {
               .fontColor(AppTheme.color.textSecondary)
           }
           .width('100%')
-          .padding({ top: 5, bottom: 5 })
+          .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
           .onClick(() => {
             this.onOpen(row.nodeId);
           })

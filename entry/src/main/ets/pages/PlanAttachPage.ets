@@ -150,7 +150,7 @@ export struct PlanAttachPage {
       .id('plan_attach_save')
       .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s16 })
       .height(56)
       .onClick(() => {
         this.save();
@@ -232,7 +232,7 @@ export struct PlanAttachPage {
               .alignItems(HorizontalAlign.Start)
             }
             .width('100%')
-            .padding({ left: 12, right: 12, top: 10, bottom: 10 })
+            .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
             .backgroundColor(AppTheme.color.surface)
             .borderRadius(AppTheme.radius.md)
             .onClick(() => {
@@ -241,7 +241,7 @@ export struct PlanAttachPage {
           }, (row: AttachTarget) => `${row.nodeId}_${row.selected ? 1 : 0}`)
         }
         .width('100%')
-        .padding({ left: 20, right: 20, top: 10, bottom: 24 })
+        .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s24 })
       }
       .width('100%')
       .height('100%')

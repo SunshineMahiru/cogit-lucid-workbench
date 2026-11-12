@@ -182,7 +182,7 @@ export struct PlanLinkPickerPage {
       .id('plan_link_save')
       .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s16 })
       .height(56)
       .onClick(() => {
         this.save();
@@ -194,7 +194,7 @@ export struct PlanLinkPickerPage {
     Text(planLinkModuleLabel(module))
       .fontSize(AppTheme.font.body)
       .fontColor(this.module === module ? Color.White : AppTheme.color.textSecondary)
-      .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.module === module ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -223,7 +223,7 @@ export struct PlanLinkPickerPage {
             Text('本周')
               .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.primaryDeep)
-              .padding({ left: 5, right: 5, top: 1, bottom: 1 })
+              .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
               .backgroundColor(AppTheme.color.tint)
               .borderRadius(AppTheme.radius.xs)
           }
@@ -240,7 +240,7 @@ export struct PlanLinkPickerPage {
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .padding({ top: 7, bottom: 7 })
+    .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
     .onClick(() => {
       this.toggle(item);
     })
@@ -320,7 +320,7 @@ export struct PlanLinkPickerPage {
                   .fontColor(AppTheme.color.primary)
                   .width('100%')
                   .textAlign(TextAlign.Center)
-                  .padding({ top: 10, bottom: 10 })
+                  .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
                   .onClick(() => {
                     this.visibleCount = this.visibleCount + PAGE_SIZE;
                   })
@@ -341,7 +341,7 @@ export struct PlanLinkPickerPage {
       }
       .width('100%')
       .height('100%')
-      .padding({ left: 20, right: 20, top: 10, bottom: 16 })
+      .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s16 })
     }
   }
 

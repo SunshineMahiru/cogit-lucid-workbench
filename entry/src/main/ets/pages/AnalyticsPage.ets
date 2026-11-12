@@ -276,7 +276,7 @@ export struct AnalyticsPage {
         .onClick(() => this.load())
     }
     .width('100%')
-    .padding({ left: 20, right: 20, top: 10, bottom: 6 })
+    .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s6 })
   }
 
   @Builder
@@ -288,7 +288,7 @@ export struct AnalyticsPage {
             .id(index === 0 ? 'analytics_month_first' : (index === 1 ? 'analytics_month_second' : `analytics_month_${month.label}`))
             .fontSize(AppTheme.font.body)
             .fontColor(this.selectedMonth === month.label ? Color.White : AppTheme.color.textSecondary)
-            .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+            .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
             .backgroundColor(this.selectedMonth === month.label ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
             .borderRadius(AppTheme.radius.lg)
             .onClick(() => this.switchMonth(month.label))
@@ -298,7 +298,7 @@ export struct AnalyticsPage {
     .scrollable(ScrollDirection.Horizontal)
     .scrollBar(BarState.Off)
     .width('100%')
-    .padding({ left: 20, right: 20, bottom: 4 })
+    .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, bottom: AppTheme.spacing.s4 })
   }
 
   @Builder
@@ -309,7 +309,7 @@ export struct AnalyticsPage {
         Text('正在加载远端数据…').fontSize(AppTheme.font.body).fontColor(AppTheme.color.textMuted)
       }
       .width('100%')
-      .padding(16)
+      .padding(AppTheme.spacing.s16)
     } else if (this.errorText.length > 0) {
       Column({ space: 6 }) {
         Text('图表数据加载失败')
@@ -326,13 +326,13 @@ export struct AnalyticsPage {
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
-      .padding(16)
+      .padding(AppTheme.spacing.s16)
     } else if (this.stats !== null && this.stats.months.length === 0) {
       Text('远端暂无统计数据')
         .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
-        .padding(16)
+        .padding(AppTheme.spacing.s16)
     }
   }
 
@@ -389,7 +389,7 @@ export struct AnalyticsPage {
             .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
             .width('100%')
-            .padding({ top: 4, bottom: 20 })
+            .padding({ top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s20 })
         }
       }
       .width('100%')

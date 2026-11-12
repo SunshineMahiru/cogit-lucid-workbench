@@ -115,7 +115,7 @@ export struct NoteDetailPage {
       Text('编辑')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 10, right: 8 })
+        .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s8 })
         .accessibilityText('编辑速记')
         .onClick(() => {
           this.openEdit();
@@ -123,14 +123,14 @@ export struct NoteDetailPage {
       Text('计划')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 4, right: 8 })
+        .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s8 })
         .onClick(() => {
           this.openAttach();
         })
       Text('删除')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.danger)
-        .padding({ left: 4, right: 16 })
+        .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s16 })
         .accessibilityText('删除速记')
         .onClick(() => {
           this.confirmDelete();
@@ -145,7 +145,7 @@ export struct NoteDetailPage {
     Text('删除')
       .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.danger)
-      .padding({ left: 12, right: 16 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s16 })
       .onClick(() => {
         this.confirmDelete();
       })
@@ -211,7 +211,7 @@ export struct NoteDetailPage {
               Text(this.detail.type)
                 .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.primary)
-                .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                 .backgroundColor(AppTheme.color.tint)
                 .borderRadius(AppTheme.radius.sm)
               Text(this.detail.timeLabel)
@@ -236,10 +236,10 @@ export struct NoteDetailPage {
                   Text(tag)
                     .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.primaryDeep)
-                    .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+                    .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                     .backgroundColor(AppTheme.color.tint)
                     .borderRadius(AppTheme.radius.md)
-                    .margin({ right: 6, bottom: 6 })
+                    .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
                 }, (tag: string) => tag)
               }
               .width('100%')
@@ -252,7 +252,7 @@ export struct NoteDetailPage {
               .width('100%')
           }
           .width('100%')
-          .padding(20)
+          .padding(AppTheme.spacing.s20)
           .alignItems(HorizontalAlign.Start)
         }
         .width('100%')

@@ -264,7 +264,7 @@ export struct ReviewForm {
             .fontSize(AppTheme.font.body)
             .fontColor(index === this.step ? AppTheme.color.text : AppTheme.color.textSecondary)
         }
-        .margin({ right: 8 })
+        .margin({ right: AppTheme.spacing.s8 })
       }, (label: string) => label)
     }
     .width('100%')
@@ -286,7 +286,7 @@ export struct ReviewForm {
             })
         }
         .width('100%')
-        .padding({ left: 16, right: 16, top: 6, bottom: 2 })
+        .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
       }
       if (this.isLoading) {
         Column() {
@@ -315,10 +315,10 @@ export struct ReviewForm {
           Text('再写一条')
             .fontSize(AppTheme.font.bodyStrong)
             .fontColor(AppTheme.color.primary)
-            .padding({ left: 16, right: 16, top: 8, bottom: 8 })
+            .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(AppTheme.radius.lg)
-            .margin({ top: 8 })
+            .margin({ top: AppTheme.spacing.s8 })
             .onClick(() => {
               this.restart();
             })
@@ -326,7 +326,7 @@ export struct ReviewForm {
         .width('100%')
         .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
-        .padding(24)
+        .padding(AppTheme.spacing.s24)
       } else {
         Scroll() {
           Column({ space: 12 }) {
@@ -352,7 +352,7 @@ export struct ReviewForm {
               .width('100%')
             }
             .width('100%')
-            .padding(14)
+            .padding(AppTheme.spacing.s16)
             .backgroundColor(AppTheme.color.surface)
             .borderRadius(AppTheme.radius.md)
 
@@ -391,7 +391,7 @@ export struct ReviewForm {
                         Text('已对照')
                           .fontSize(AppTheme.font.caption)
                           .fontColor(AppTheme.color.primary)
-                          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                          .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                           .backgroundColor(AppTheme.color.tint)
                           .borderRadius(AppTheme.radius.sm)
                       }
@@ -403,7 +403,7 @@ export struct ReviewForm {
                       .width('100%')
                   }
                   .width('100%')
-                  .padding(10)
+                  .padding(AppTheme.spacing.s10)
                   .backgroundColor(this.isAnchorSelected(anchor.id) ? AppTheme.color.selectedSurface : AppTheme.color.surfaceWarm)
                   .borderRadius(AppTheme.radius.sm)
                   .border({
@@ -416,7 +416,7 @@ export struct ReviewForm {
                 }, (anchor: Anchor) => `${anchor.id}_${this.isAnchorSelected(anchor.id) ? 1 : 0}`)
               }
               .width('100%')
-              .padding(14)
+              .padding(AppTheme.spacing.s16)
               .backgroundColor(AppTheme.color.surfaceWarm)
               .borderRadius(AppTheme.radius.md)
               .alignItems(HorizontalAlign.Start)
@@ -436,7 +436,7 @@ export struct ReviewForm {
             TextArea({ text: this.currentText(), placeholder: STEP_PLACEHOLDERS[this.step] })
               .fontSize(AppTheme.font.bodyStrong)
               .height(180)
-              .padding(12)
+              .padding(AppTheme.spacing.s12)
               .backgroundColor(AppTheme.color.surface)
               .borderRadius(AppTheme.radius.md)
               .border({ width: 0.5, color: AppTheme.color.border })
@@ -445,7 +445,7 @@ export struct ReviewForm {
               })
           }
           .width('100%')
-          .padding(16)
+          .padding(AppTheme.spacing.s16)
           .alignItems(HorizontalAlign.Start)
         }
         .layoutWeight(1)
@@ -457,7 +457,7 @@ export struct ReviewForm {
             Text('上一步')
               .fontSize(AppTheme.font.subtitle)
               .fontColor(AppTheme.color.textSecondaryStrong)
-              .padding({ left: 20, right: 20, top: 11, bottom: 11 })
+              .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(AppTheme.color.chip)
               .borderRadius(AppTheme.radius.md)
               .onClick(() => {
@@ -469,7 +469,7 @@ export struct ReviewForm {
             .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
-            .padding({ left: 24, right: 24, top: 11, bottom: 11 })
+            .padding({ left: AppTheme.spacing.s24, right: AppTheme.spacing.s24, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
             .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
             .borderRadius(AppTheme.radius.md)
             .accessibilityText(this.step < 3 ? '进入下一步' : '完成复盘')
@@ -485,7 +485,7 @@ export struct ReviewForm {
             })
         }
         .width('100%')
-        .padding({ left: 16, right: 16, top: 8, bottom: 24 })
+        .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s24 })
       }
     }
     .width('100%')

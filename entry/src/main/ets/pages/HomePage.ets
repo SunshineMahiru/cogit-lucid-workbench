@@ -153,7 +153,7 @@ export struct HomePage {
           .fontColor(AppTheme.color.danger)
           .width('100%')
           .textAlign(TextAlign.Center)
-          .padding({ top: 8, bottom: 8 })
+          .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
           .onClick(() => {
             this.load();
           })
@@ -163,21 +163,21 @@ export struct HomePage {
           .fontColor(AppTheme.color.textMuted)
           .width('100%')
           .textAlign(TextAlign.Center)
-          .padding({ top: 6, bottom: 2 })
+          .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
       } else if (this.encryptionNotice.length > 0) {
         Text(this.encryptionNotice)
           .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.danger)
           .width('100%')
           .textAlign(TextAlign.Center)
-          .padding({ top: 6, bottom: 2 })
+          .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
       } else if (this.dataNotice.length > 0) {
         Text(this.dataNotice)
           .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.warning)
           .width('100%')
           .textAlign(TextAlign.Center)
-          .padding({ top: 6, bottom: 2 })
+          .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
       }
       Row({ space: 8 }) {
         Column({ space: 2 }) {
@@ -190,7 +190,7 @@ export struct HomePage {
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
-        .padding({ top: 6, bottom: 6 })
+        .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
         .backgroundColor(AppTheme.color.surfaceAlt)
         .borderRadius(AppTheme.radius.sm)
 
@@ -204,7 +204,7 @@ export struct HomePage {
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
-        .padding({ top: 6, bottom: 6 })
+        .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
         .backgroundColor(AppTheme.color.surfaceAlt)
         .borderRadius(AppTheme.radius.sm)
 
@@ -218,7 +218,7 @@ export struct HomePage {
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
-        .padding({ top: 6, bottom: 6 })
+        .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
         .backgroundColor(AppTheme.color.surfaceAlt)
         .borderRadius(AppTheme.radius.sm)
 
@@ -232,19 +232,19 @@ export struct HomePage {
             .fontColor(AppTheme.color.textMuted)
         }
         .layoutWeight(1)
-        .padding({ top: 6, bottom: 6 })
+        .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
         .backgroundColor(AppTheme.color.surfaceAlt)
         .borderRadius(AppTheme.radius.sm)
       }
       .width('100%')
-      .padding({ left: 20, right: 20, top: 8, bottom: 4 })
+      .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s4 })
 
       Row() {
         Text('数据看板 ›')
           .id('home_dashboard_entry')
           .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
-          .padding({ left: 12, right: 12, top: 10, bottom: 10 })
+          .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
           .backgroundColor(AppTheme.color.surfaceAlt)
           .borderRadius(AppTheme.radius.lg)
           .onClick(() => {
@@ -253,7 +253,7 @@ export struct HomePage {
       }
       .width('100%')
       .justifyContent(FlexAlign.End)
-      .padding({ left: 20, right: 20, top: 2, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s6 })
 
       Column() {
         DashboardView({ pathStack: this.pathStack, showTitleBar: false })
@@ -291,7 +291,7 @@ export struct HomePage {
         .fontColor(Color.White)
         .width('100%')
         .textAlign(TextAlign.Center)
-        .padding({ top: 12, bottom: 12 })
+        .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
         .backgroundColor(AppTheme.color.primary)
         .borderRadius(AppTheme.radius.md)
         .onClick(() => {
@@ -300,7 +300,7 @@ export struct HomePage {
       Text('退出应用')
         .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.textSecondary)
-        .padding({ top: 4, bottom: 4 })
+        .padding({ top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
         .onClick(() => {
           this.exitApplication();
         })
@@ -308,7 +308,7 @@ export struct HomePage {
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
-    .padding({ left: 28, right: 28 })
+    .padding({ left: AppTheme.spacing.s24, right: AppTheme.spacing.s24 })
     .backgroundColor(AppTheme.color.page)
   }
 }

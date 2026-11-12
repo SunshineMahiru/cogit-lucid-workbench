@@ -84,7 +84,7 @@ export struct WeeklySettlementPage {
     Text(label)
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.weekOffset === value ? Color.White : AppTheme.color.text)
-      .padding({ left: 14, right: 14, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.weekOffset === value ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -209,7 +209,7 @@ export struct WeeklySettlementPage {
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 12, bottom: 12 })
+              .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(AppTheme.color.primary)
               .borderRadius(AppTheme.radius.md)
               .onClick(() => {
@@ -217,7 +217,7 @@ export struct WeeklySettlementPage {
               })
           }
           .width('100%')
-          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: 8, bottom: 24 })
+          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s24 })
         }
         .width('100%')
         .height('100%')

@@ -129,7 +129,7 @@ export struct PredictionSettlePage {
     Text(label)
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.hitChoice === value ? Color.White : AppTheme.color.text)
-      .padding({ left: 18, right: 18, top: 8, bottom: 8 })
+      .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
       .backgroundColor(this.hitChoice === value ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -304,7 +304,7 @@ export struct PredictionSettlePage {
               .fontColor(Color.White)
               .width('100%')
               .textAlign(TextAlign.Center)
-              .padding({ top: 12, bottom: 12 })
+              .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
               .borderRadius(AppTheme.radius.md)
               .onClick(() => {
@@ -314,7 +314,7 @@ export struct PredictionSettlePage {
               })
           }
           .width('100%')
-          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: 8, bottom: 24 })
+          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s24 })
         }
         .width('100%')
         .height('100%')

@@ -183,14 +183,14 @@ export struct RelationDetailPage {
       Text('计划')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 10, right: 6 })
+        .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s6 })
         .onClick(() => {
           this.openAttach();
         })
       Text('编辑')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 10, right: 8 })
+        .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s8 })
         .accessibilityText('编辑关系')
         .onClick(() => {
           this.openEditor();
@@ -198,7 +198,7 @@ export struct RelationDetailPage {
       Text('删除')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.danger)
-        .padding({ left: 4, right: 16 })
+        .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s16 })
         .accessibilityText('删除关系，可撤销')
         .onClick(() => {
           this.deleteRelation();
@@ -221,7 +221,7 @@ export struct RelationDetailPage {
         .textAlign(TextAlign.End)
     }
     .width('100%')
-    .padding({ top: 6, bottom: 6 })
+    .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
   }
 
   build() {
@@ -316,7 +316,7 @@ export struct RelationDetailPage {
                     Text('未加工材料')
                       .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.primaryDeep)
-                      .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                       .backgroundColor(AppTheme.color.tint)
                       .borderRadius(AppTheme.radius.sm)
                   }
@@ -324,7 +324,7 @@ export struct RelationDetailPage {
                     Text('禁分析')
                       .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.danger)
-                      .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+                      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                       .backgroundColor(AppTheme.color.dangerSurface)
                       .borderRadius(AppTheme.radius.sm)
                   }
@@ -463,7 +463,7 @@ export struct RelationDetailPage {
                         .width('100%')
                     }
                     .width('100%')
-                    .padding({ bottom: 6 })
+                    .padding({ bottom: AppTheme.spacing.s6 })
                   }, (log: InteractionLog, index: number) => `${log.timestamp}_${index}`)
                 }
               }

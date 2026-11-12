@@ -426,7 +426,7 @@ export struct PlanDetailPage {
       Text('编辑')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 10, right: 8 })
+        .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s8 })
         .height(56)
         .onClick(() => {
           this.openEditor();
@@ -434,7 +434,7 @@ export struct PlanDetailPage {
       Text('归档')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.textSecondary)
-        .padding({ left: 8, right: 16 })
+        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s16 })
         .height(56)
         .onClick(() => {
           this.confirmArchive();
@@ -455,7 +455,7 @@ export struct PlanDetailPage {
           Text(view.status === PlanNodeStatus.OPEN ? '进行中' : '已结束')
             .fontSize(AppTheme.font.caption)
             .fontColor(view.status === PlanNodeStatus.OPEN ? AppTheme.color.success : AppTheme.color.textMuted)
-            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
             .backgroundColor(view.status === PlanNodeStatus.OPEN ? AppTheme.color.successSurface : AppTheme.color.chip)
             .borderRadius(AppTheme.radius.sm)
           Blank()
@@ -517,7 +517,7 @@ export struct PlanDetailPage {
                 Text(this.plan.isPrimary ? '主目标' : '目标')
                   .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.primaryDeep)
-                  .padding({ left: 7, right: 7, top: 2, bottom: 2 })
+                  .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                   .backgroundColor(AppTheme.color.tint)
                   .borderRadius(AppTheme.radius.sm)
               }
@@ -578,7 +578,7 @@ export struct PlanDetailPage {
                 Text('周视图')
                   .fontSize(AppTheme.font.body)
                   .fontColor(this.viewMode === 0 ? Color.White : AppTheme.color.textSecondary)
-                  .padding({ left: 12, right: 12, top: 5, bottom: 5 })
+                  .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
                   .backgroundColor(this.viewMode === 0 ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
                   .borderRadius(AppTheme.radius.lg)
                   .onClick(() => {
@@ -587,7 +587,7 @@ export struct PlanDetailPage {
                 Text('月视图')
                   .fontSize(AppTheme.font.body)
                   .fontColor(this.viewMode === 1 ? Color.White : AppTheme.color.textSecondary)
-                  .padding({ left: 12, right: 12, top: 5, bottom: 5 })
+                  .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
                   .backgroundColor(this.viewMode === 1 ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
                   .borderRadius(AppTheme.radius.lg)
                   .onClick(() => {
@@ -671,20 +671,20 @@ export struct PlanDetailPage {
                     Text('改名')
                       .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.primary)
-                      .padding({ left: 6, right: 6, top: 4, bottom: 4 })
+                      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                       .onClick(() => {
                         this.beginRenameProject(project);
                       })
                     Text('删除')
                       .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.danger)
-                      .padding({ left: 6, right: 6, top: 4, bottom: 4 })
+                      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                       .onClick(() => {
                         this.confirmDeleteProject(project);
                       })
                   }
                   .width('100%')
-                  .padding({ left: 8, right: 4, top: 4, bottom: 4 })
+                  .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s4, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .borderRadius(AppTheme.radius.sm)
                 }, (project: PlanProject) => `${project.id}_${project.name}`)
@@ -763,7 +763,7 @@ export struct PlanDetailPage {
           }
         }
         .width('100%')
-        .padding({ left: 20, right: 20, top: 10, bottom: 24 })
+        .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s24 })
       }
       .width('100%')
       .height('100%')

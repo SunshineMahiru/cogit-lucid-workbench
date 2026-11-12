@@ -57,7 +57,7 @@ export struct HeatmapGrid {
         .fontSize(AppTheme.font.body)
         .fontColor('#6B6A63')
         .width('100%')
-        .padding({ top: 16, bottom: 16 })
+        .padding({ top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s16 })
     } else {
       Column({ space: 4 }) {
         Row({ space: 4 }) {

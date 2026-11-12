@@ -124,7 +124,7 @@ export struct SimpleBarChart {
         .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
-        .padding({ top: 16, bottom: 16 })
+        .padding({ top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s16 })
     } else if (this.horizontal) {
       Column({ space: 6 }) {
         HorizontalBarChart({ model: this.horizontalModel })
@@ -161,7 +161,8 @@ export struct SimpleBarChart {
           }, (point: ChartPoint) => point.label)
         }
         .width('100%')
-        .padding({ left: 30, right: 6 })
+        // Axis label width sets this inset; it is not part of the spacing scale.
+      .padding({ left: 30, right: AppTheme.spacing.s6 })
       }
       .width('100%')
     }

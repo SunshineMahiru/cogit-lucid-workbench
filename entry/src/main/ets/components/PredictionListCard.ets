@@ -42,7 +42,7 @@ export struct PredictionListCard {
         Text(this.tagLabel())
           .fontSize(AppTheme.font.caption)
           .fontColor(this.tagColor())
-          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+          .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
           .backgroundColor(this.tagBackground())
           .borderRadius(AppTheme.radius.sm)
         Text(this.item.target)
@@ -54,7 +54,7 @@ export struct PredictionListCard {
         Text(`${this.item.confidence}%`)
           .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.primary)
-          .margin({ left: 8 })
+          .margin({ left: AppTheme.spacing.s8 })
       }
       .width('100%')
 
@@ -79,7 +79,7 @@ export struct PredictionListCard {
       .width('100%')
     }
     .width('100%')
-    .padding(14)
+    .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.md)
     .onClick(() => {

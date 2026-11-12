@@ -128,7 +128,8 @@ export struct SimpleLineChart {
             }, (point: ChartPoint) => point.label)
           }
           .width('100%')
-          .padding({ left: 34, right: 8 })
+          // Axis label width sets this inset; it is not part of the spacing scale.
+      .padding({ left: 34, right: AppTheme.spacing.s8 })
         }
       }
       .width('100%')
@@ -137,7 +138,7 @@ export struct SimpleLineChart {
         .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.textMuted)
         .width('100%')
-        .padding({ top: 16, bottom: 16 })
+        .padding({ top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s16 })
     }
   }
 }

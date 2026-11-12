@@ -25,7 +25,7 @@ export struct DebugPanel {
           Text('模拟加密失败')
             .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.danger)
-            .padding({ left: 10, right: 10, top: 7, bottom: 7 })
+            .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(AppTheme.radius.sm)
             .onClick(() => {
@@ -34,7 +34,7 @@ export struct DebugPanel {
           Text('模拟恢复部分失败')
             .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.danger)
-            .padding({ left: 10, right: 10, top: 7, bottom: 7 })
+            .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(AppTheme.radius.sm)
             .onClick(() => {
@@ -43,7 +43,7 @@ export struct DebugPanel {
           Text('清除调试标记')
             .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.primary)
-            .padding({ left: 10, right: 10, top: 7, bottom: 7 })
+            .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(AppTheme.radius.sm)
             .onClick(() => {

@@ -71,7 +71,7 @@ export struct ReviewAgentPanel {
         Text(this.isLoading ? '生成中…' : '生成提示')
           .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
-          .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+          .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
           .backgroundColor(AppTheme.color.tint)
           .borderRadius(AppTheme.radius.md)
           .onClick(() => {
@@ -116,7 +116,7 @@ export struct ReviewAgentPanel {
               Text('填入')
                 .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.primary)
-                .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+                .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
                 .backgroundColor(AppTheme.color.tint)
                 .borderRadius(AppTheme.radius.sm)
                 .onClick(() => {
@@ -126,14 +126,14 @@ export struct ReviewAgentPanel {
             .width('100%')
           }
           .width('100%')
-          .padding(10)
+          .padding(AppTheme.spacing.s10)
           .backgroundColor(AppTheme.color.surfaceAlt)
           .borderRadius(AppTheme.radius.sm)
         }, (candidate: ContradictionCandidate, index: number) => `${candidate.anchorId}_${index}`)
       }
     }
     .width('100%')
-    .padding(12)
+    .padding(AppTheme.spacing.s12)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.md)
     .border({ width: 0.5, color: AppTheme.color.border })

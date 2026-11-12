@@ -126,7 +126,7 @@ export struct RelationListPage {
     Text(label)
       .fontSize(AppTheme.font.bodyStrong)
       .fontColor(this.filter === level ? Color.White : AppTheme.color.text)
-      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
       .backgroundColor(this.filter === level ? AppTheme.color.primary : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
@@ -140,14 +140,14 @@ export struct RelationListPage {
       Text('＋')
         .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 8, right: 4 })
+        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s4 })
         .onClick(() => {
           this.openEditor();
         })
       Text('图谱')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 4, right: 16 })
+        .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s16 })
         .onClick(() => {
           if (this.navStack !== null) {
             this.navStack.pushPathByName(ROUTES.RELATION_GRAPH, null);
@@ -209,7 +209,7 @@ export struct RelationListPage {
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
-          .padding({ top: 2 })
+          .padding({ top: AppTheme.spacing.s2 })
         }
       }
       .width('100%')
@@ -247,7 +247,7 @@ export struct RelationListPage {
           this.headerCard()
         }
         .width('100%')
-        .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: 12 })
+        .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s12 })
 
         Scroll() {
           Row({ space: AppTheme.spacing.gap }) {
@@ -260,7 +260,7 @@ export struct RelationListPage {
         .scrollable(ScrollDirection.Horizontal)
         .scrollBar(BarState.Off)
         .width('100%')
-        .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: 10 })
+        .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s10 })
 
         if (this.isLoading) {
           Column() {
@@ -305,7 +305,7 @@ export struct RelationListPage {
           .width('100%')
           .layoutWeight(1)
           .scrollBar(BarState.Off)
-          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: 10, bottom: 16 })
+          .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s16 })
         }
       }
       .width('100%')

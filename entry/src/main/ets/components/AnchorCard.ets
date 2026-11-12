@@ -37,13 +37,13 @@ export struct AnchorCard {
       Text('关联计划')
         .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.primary)
-        .padding({ left: 6 })
+        .padding({ left: AppTheme.spacing.s6 })
         .onClick(() => {
           this.onAttachPlan();
         })
     }
     .width('100%')
-    .padding(14)
+    .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.md)
   }

@@ -31,7 +31,7 @@ export struct RelationTrustBadge {
     Text(trustLevelText(this.level))
       .fontSize(AppTheme.font.caption)
       .fontColor(this.textColor())
-      .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
       .backgroundColor(this.surfaceColor())
       .borderRadius(AppTheme.radius.sm)
   }

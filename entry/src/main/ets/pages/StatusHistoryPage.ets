@@ -202,7 +202,7 @@ export struct StatusHistoryPage {
                       Text('删除')
                         .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.danger)
-                        .padding({ top: 2, bottom: 2 })
+                        .padding({ top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                         .accessibilityText(`删除 ${row.date} 的状态读数，可撤销`)
                         .onClick(() => {
                           this.deleteRow(row);

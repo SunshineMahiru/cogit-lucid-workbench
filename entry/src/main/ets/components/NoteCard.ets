@@ -17,7 +17,7 @@ export struct NoteCard {
           Text(this.note.type)
             .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.primary)
-            .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+            .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(AppTheme.radius.sm)
           Text(this.note.title)
@@ -45,7 +45,7 @@ export struct NoteCard {
         .fontColor(AppTheme.color.textMuted)
     }
     .width('100%')
-    .padding(12)
+    .padding(AppTheme.spacing.s12)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.md)
     .onClick(() => {

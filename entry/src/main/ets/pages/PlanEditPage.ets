@@ -141,7 +141,7 @@ export struct PlanEditPage {
       .id('plan_save')
       .fontSize(AppTheme.font.subtitle)
       .fontColor(AppTheme.color.primary)
-      .padding({ left: 12, right: 16 })
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s16 })
       .height(56)
       .onClick(() => {
         this.save();
@@ -262,7 +262,7 @@ export struct PlanEditPage {
           .fontColor(Color.White)
           .width('100%')
           .textAlign(TextAlign.Center)
-          .padding({ top: 12, bottom: 12 })
+          .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
           .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
           .borderRadius(AppTheme.radius.md)
           .onClick(() => {
@@ -270,7 +270,7 @@ export struct PlanEditPage {
           })
       }
       .width('100%')
-      .padding({ left: 20, right: 20, top: 10, bottom: 24 })
+      .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s24 })
     }
     .width('100%')
     .height('100%')

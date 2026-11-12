@@ -26,7 +26,7 @@ export struct EntryChip {
         .fontSize(AppTheme.font.bodyStrong)
         .fontColor(AppTheme.color.text)
     }
-    .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+    .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.lg)
     .onClick(() => {

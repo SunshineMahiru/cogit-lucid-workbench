@@ -64,8 +64,17 @@ export interface RadiusTokens {
   xxl: number;
 }
 
-/** Spacing tokens, in vp. */
+/** Spacing scale, in vp, plus semantic aliases onto the same steps. */
 export interface SpacingTokens {
+  s2: number;
+  s4: number;
+  s6: number;
+  s8: number;
+  s10: number;
+  s12: number;
+  s16: number;
+  s20: number;
+  s24: number;
   page: number;
   card: number;
   section: number;
@@ -146,11 +155,30 @@ const RADIUS: RadiusTokens = {
   xxl: 28
 };
 
+const S2: number = 2;
+const S4: number = 4;
+const S6: number = 6;
+const S8: number = 8;
+const S10: number = 10;
+const S12: number = 12;
+const S16: number = 16;
+const S20: number = 20;
+const S24: number = 24;
+
 const SPACING: SpacingTokens = {
-  page: 16,
-  card: 14,
-  section: 12,
-  gap: 8
+  s2: S2,
+  s4: S4,
+  s6: S6,
+  s8: S8,
+  s10: S10,
+  s12: S12,
+  s16: S16,
+  s20: S20,
+  s24: S24,
+  page: S16,
+  card: S16,
+  section: S12,
+  gap: S8
 };
 
 const FONT: FontTokens = {

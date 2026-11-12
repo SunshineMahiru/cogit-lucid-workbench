@@ -41,7 +41,7 @@ export struct ModuleCard {
     }
     .width('100%')
     .height(82)
-    .padding({ left: 12, right: 12, top: 10, bottom: 10 })
+    .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
     .alignItems(HorizontalAlign.Start)
     .justifyContent(FlexAlign.Center)
     .backgroundColor(AppTheme.color.surfaceTint)

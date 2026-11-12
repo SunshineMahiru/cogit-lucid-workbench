@@ -36,10 +36,10 @@ export struct PredictionCard {
         Text(this.dueLabel())
           .fontSize(AppTheme.font.caption)
           .fontColor(this.dueColor())
-          .padding({ left: 6, right: 6, top: 2, bottom: 2 })
+          .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
           .backgroundColor(this.dueSurface())
           .borderRadius(AppTheme.radius.sm)
-          .margin({ right: 6 })
+          .margin({ right: AppTheme.spacing.s6 })
         Text(this.item.title)
           .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.text)
@@ -49,7 +49,7 @@ export struct PredictionCard {
         Text(`${this.item.confidence}%`)
           .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.primary)
-          .margin({ left: 8 })
+          .margin({ left: AppTheme.spacing.s8 })
       }
       .width('100%')
 
@@ -65,7 +65,7 @@ export struct PredictionCard {
       .width('100%')
     }
     .width('100%')
-    .padding(14)
+    .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(AppTheme.radius.md)
     .onClick(() => {
