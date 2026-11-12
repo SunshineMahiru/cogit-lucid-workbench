@@ -401,7 +401,7 @@ Cases live in three places: `entry/src/test` holds local unit tests that run on 
 |---|---|---|---|
 | Local unit | `src/test/List.test.ets` | 4 | Two prediction form checks, confidence calibration bands, the export level filter |
 | Device · analysis | `src/ohosTest/ets/test/Analysis.test.ets` | 4 | The same four as above, run again on the device |
-| Device · flow | `src/ohosTest/ets/test/UiFlow.test.ets` | 3 | Open the dashboard, switch month, return home |
+| Device · flow | `src/ohosTest/ets/test/UiFlow.test.ets` | 6 | Open the dashboard, switch month, return home, open settings, switch to the model provider, switch back |
 | Node scripts | `.test/check.js` and four siblings | 127 | Date and metric helpers, services, export, review agent fallbacks, plan factories |
 
 Local unit tests:
@@ -430,7 +430,7 @@ hdc install -r entry/build/default/outputs/ohosTest/entry-ohosTest-signed.hap
 hdc shell aa test -b com.sunshinemahiru.cogitlucid -m entry_test -s unittest OpenHarmonyTestRunner -w 10000
 ```
 
-Expected output: `Tests run: 7, Failure: 0, Error: 0, Pass: 7`.
+Expected output: `Tests run: 10, Failure: 0, Error: 0, Pass: 10`.
 
 Two things that trip people up: `hvigorw test` runs on Windows and macOS only, not on Linux; and `aa test` defaults to a 5 second timeout, which the flow cases outrun, so `-w 10000` raises it to ten.
 

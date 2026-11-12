@@ -232,7 +232,6 @@ export struct PredictionCreatePage {
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextArea({ placeholder: '写成到期能判断真假的句子', text: this.judgment })
-                  .id('prediction_judgment_input')
                   .height(84)
                   .maxLength(MAX_JUDGMENT_LENGTH)
                   .backgroundColor(AppTheme.color.surfaceAlt)

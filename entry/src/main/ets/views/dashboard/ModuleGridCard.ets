@@ -28,7 +28,6 @@ export struct ModuleGridCard {
               }
             })
           }
-          .id(`module_${module.route}`)
         }, (module: HomeModule) => `${module.route}_${this.dataVersion}`)
       }
       .columnsTemplate('1fr 1fr')
