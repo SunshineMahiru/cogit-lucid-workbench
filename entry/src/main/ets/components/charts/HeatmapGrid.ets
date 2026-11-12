@@ -19,16 +19,16 @@ export struct HeatmapGrid {
 
   private colorFor(value: number): string {
     if (value <= 0) {
-      return '#EDEBE4';
+      return AppTheme.color.heatEmpty;
     }
     const ratio = Math.min(1, value / Math.max(1, this.maxValue));
     if (ratio <= 0.34) {
-      return '#B7D3E8';
+      return AppTheme.color.heatLow;
     }
     if (ratio <= 0.67) {
-      return '#6FA8CC';
+      return AppTheme.color.heatMid;
     }
-    return '#2E6F9E';
+    return AppTheme.color.heatHigh;
   }
 
   private draw(): void {
@@ -55,7 +55,7 @@ export struct HeatmapGrid {
     if (this.data.rows.length === 0) {
       Text('数据不足，暂不绘图')
         .fontSize(AppTheme.font.body)
-        .fontColor('#6B6A63')
+        .fontColor(AppTheme.color.textSecondaryStrong)
         .width('100%')
         .padding({ top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s16 })
     } else {
@@ -65,7 +65,7 @@ export struct HeatmapGrid {
             ForEach(this.data.rows, (label: string) => {
               Text(label)
                 .fontSize(AppTheme.font.caption)
-                .fontColor('#6B6A63')
+                .fontColor(AppTheme.color.textSecondaryStrong)
                 .textAlign(TextAlign.Center)
                 .layoutWeight(1)
             }, (label: string) => label)
@@ -96,7 +96,7 @@ export struct HeatmapGrid {
             ForEach(this.data.columns, (label: string) => {
               Text(label)
                 .fontSize(AppTheme.font.caption)
-                .fontColor('#6B6A63')
+                .fontColor(AppTheme.color.textSecondaryStrong)
                 .textAlign(TextAlign.Center)
                 .layoutWeight(1)
             }, (label: string) => label)
@@ -106,15 +106,15 @@ export struct HeatmapGrid {
         Row({ space: 10 }) {
           Text(this.data.legend)
             .fontSize(AppTheme.font.caption)
-            .fontColor('#6B6A63')
+            .fontColor(AppTheme.color.textSecondaryStrong)
             .layoutWeight(1)
           Row({ space: 3 }) {
-            Text('少').fontSize(AppTheme.font.caption).fontColor('#6B6A63')
-            Row().width(9).height(9).backgroundColor('#EDEBE4').borderRadius(0)
-            Row().width(9).height(9).backgroundColor('#B7D3E8').borderRadius(0)
-            Row().width(9).height(9).backgroundColor('#6FA8CC').borderRadius(0)
-            Row().width(9).height(9).backgroundColor('#2E6F9E').borderRadius(0)
-            Text('多').fontSize(AppTheme.font.caption).fontColor('#6B6A63')
+            Text('少').fontSize(AppTheme.font.caption).fontColor(AppTheme.color.textSecondaryStrong)
+            Row().width(9).height(9).backgroundColor(AppTheme.color.heatEmpty).borderRadius(0)
+            Row().width(9).height(9).backgroundColor(AppTheme.color.heatLow).borderRadius(0)
+            Row().width(9).height(9).backgroundColor(AppTheme.color.heatMid).borderRadius(0)
+            Row().width(9).height(9).backgroundColor(AppTheme.color.heatHigh).borderRadius(0)
+            Text('多').fontSize(AppTheme.font.caption).fontColor(AppTheme.color.textSecondaryStrong)
           }
         }
         .width('100%')

@@ -28,6 +28,10 @@ export interface ThemePalette {
   successSurface: string;
   danger: string;
   dangerSurface: string;
+  heatEmpty: string;
+  heatLow: string;
+  heatMid: string;
+  heatHigh: string;
 }
 
 /** Colour fields that stay on the app palette and follow applyTheme. */
@@ -52,6 +56,10 @@ interface RetainedPalette {
   successSurface: string;
   danger: string;
   dangerSurface: string;
+  heatEmpty: string;
+  heatLow: string;
+  heatMid: string;
+  heatHigh: string;
 }
 
 /** Corner radius tokens, in vp. */
@@ -120,7 +128,11 @@ const LIGHT: RetainedPalette = {
   success: '#2E7D32',
   successSurface: '#E8F5E9',
   danger: '#A32D2D',
-  dangerSurface: '#FCEBEB'
+  dangerSurface: '#FCEBEB',
+  heatEmpty: '#EDEBE4',
+  heatLow: '#B7D3E8',
+  heatMid: '#6FA8CC',
+  heatHigh: '#2E6F9E'
 };
 
 const DARK: RetainedPalette = {
@@ -143,7 +155,11 @@ const DARK: RetainedPalette = {
   success: '#78C98A',
   successSurface: '#1E3424',
   danger: '#F08A8A',
-  dangerSurface: '#3E2020'
+  dangerSurface: '#3E2020',
+  heatEmpty: '#23272C',
+  heatLow: '#1F3A52',
+  heatMid: '#2E6F9E',
+  heatHigh: '#6FA8CC'
 };
 
 const RADIUS: RadiusTokens = {
@@ -221,6 +237,10 @@ function createColor(): ThemePalette {
     success: LIGHT.success,
     successSurface: LIGHT.successSurface,
     danger: LIGHT.danger,
+    heatEmpty: LIGHT.heatEmpty,
+    heatLow: LIGHT.heatLow,
+    heatMid: LIGHT.heatMid,
+    heatHigh: LIGHT.heatHigh,
     dangerSurface: LIGHT.dangerSurface
   };
 }
@@ -277,5 +297,9 @@ export function applyTheme(dark: boolean): void {
   target.success = source.success;
   target.successSurface = source.successSurface;
   target.danger = source.danger;
+  target.heatEmpty = source.heatEmpty;
+  target.heatLow = source.heatLow;
+  target.heatMid = source.heatMid;
+  target.heatHigh = source.heatHigh;
   target.dangerSurface = source.dangerSurface;
 }
