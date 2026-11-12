@@ -161,7 +161,7 @@ Settings (`设置`) writes the whole record set to `cogit-export-YYYYMMDD-HHMM.m
 
 ## Screens
 
-Captured on a Mate 70 Pro emulator from the current build, in dark mode. Every record in them is synthetic.
+Captured on a Mate 70 Pro emulator in dark mode. They predate the navigation refresh, so the title bar in them is still the app's own rather than the system one; a re-capture is pending. Every record in them is synthetic.
 
 | Home | Analytics, current month |
 |---|---|
