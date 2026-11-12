@@ -18,6 +18,7 @@ const {
 const { rangeFor } = require('./out2/review/ReviewRange');
 const { budgetAllows, estimateCostYuan, monthKey } = require('./out2/settings/LlmBudget');
 const { defaultAppSettings, sanitizeAppSettings } = require('./out2/settings/AppSettings');
+const { consumeJsonIssues, parseInteractionLog, parseStringArray } = require('./out2/db/SafeJson');
 const {
   addDaysToDate,
   formatClock,
@@ -901,6 +902,34 @@ test('空地址与空模型回落默认值', () => {
 test('非法密级回落为仅本地', () => {
   const cleaned = sanitizeAppSettings(Object.assign(defaultAppSettings(), { defaultLevel: 'whatever' }));
   assert.strictEqual(cleaned.defaultLevel, 'local_only');
+});
+
+test('字符串数组解析跳过坏元素并计数', () => {
+  consumeJsonIssues();
+  assert.deepStrictEqual(parseStringArray('["a","b"]'), ['a', 'b']);
+  assert.strictEqual(consumeJsonIssues(), 0);
+  assert.deepStrictEqual(parseStringArray('["a",1,null]'), ['a']);
+  assert.strictEqual(consumeJsonIssues(), 2);
+});
+
+test('空列不算异常，损坏与非数组各记一次', () => {
+  consumeJsonIssues();
+  assert.deepStrictEqual(parseStringArray('   '), []);
+  assert.strictEqual(consumeJsonIssues(), 0);
+  assert.deepStrictEqual(parseStringArray('not json'), []);
+  assert.strictEqual(consumeJsonIssues(), 1);
+  assert.deepStrictEqual(parseStringArray('{"a":1}'), []);
+  assert.strictEqual(consumeJsonIssues(), 1);
+});
+
+test('互动记录只保留字段齐全的条目', () => {
+  consumeJsonIssues();
+  const ok = parseInteractionLog('[{"timestamp":1,"content":"x"}]');
+  assert.strictEqual(ok.length, 1);
+  assert.strictEqual(ok[0].content, 'x');
+  const mixed = parseInteractionLog('[{"timestamp":1,"content":"x"},{"timestamp":2},{"content":"y"}]');
+  assert.strictEqual(mixed.length, 1);
+  assert.strictEqual(consumeJsonIssues(), 2);
 });
 
 if (failures.length > 0) {
