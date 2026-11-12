@@ -161,7 +161,7 @@ export struct AnchorPage {
     .width('100%')
     .padding(14)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(12)
+    .borderRadius(AppTheme.radius.md)
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -250,7 +250,7 @@ export struct AnchorPage {
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
               .backgroundColor(AppTheme.color.primary)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .onClick(() => {
                 this.openReview();
               })

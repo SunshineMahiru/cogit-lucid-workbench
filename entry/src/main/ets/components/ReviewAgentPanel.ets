@@ -73,7 +73,7 @@ export struct ReviewAgentPanel {
           .fontColor(AppTheme.color.primary)
           .padding({ left: 10, right: 10, top: 5, bottom: 5 })
           .backgroundColor(AppTheme.color.tint)
-          .borderRadius(10)
+          .borderRadius(AppTheme.radius.md)
           .onClick(() => {
             this.generate();
           })
@@ -118,7 +118,7 @@ export struct ReviewAgentPanel {
                 .fontColor(AppTheme.color.primary)
                 .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                 .backgroundColor(AppTheme.color.tint)
-                .borderRadius(8)
+                .borderRadius(AppTheme.radius.sm)
                 .onClick(() => {
                   this.insert(candidate);
                 })
@@ -128,14 +128,14 @@ export struct ReviewAgentPanel {
           .width('100%')
           .padding(10)
           .backgroundColor(AppTheme.color.surfaceAlt)
-          .borderRadius(8)
+          .borderRadius(AppTheme.radius.sm)
         }, (candidate: ContradictionCandidate, index: number) => `${candidate.anchorId}_${index}`)
       }
     }
     .width('100%')
     .padding(12)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(12)
+    .borderRadius(AppTheme.radius.md)
     .border({ width: 0.5, color: AppTheme.color.border })
     .alignItems(HorizontalAlign.Start)
   }

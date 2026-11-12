@@ -95,7 +95,7 @@ export struct RelationEditPage {
       .fontColor(this.trustLevel === level ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.trustLevel === level ? AppTheme.color.primary : AppTheme.color.chip)
-      .borderRadius(14)
+      .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.trustLevel = level;
       })
@@ -108,7 +108,7 @@ export struct RelationEditPage {
       .fontColor(this.level === level ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.level === level ? AppTheme.color.primary : AppTheme.color.chip)
-      .borderRadius(14)
+      .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.level = level;
       })
@@ -121,7 +121,7 @@ export struct RelationEditPage {
       .fontColor(value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
       .backgroundColor(value ? AppTheme.color.tint : AppTheme.color.chip)
-      .borderRadius(12)
+      .borderRadius(AppTheme.radius.md)
       .onClick(onToggle)
   }
 
@@ -303,7 +303,7 @@ export struct RelationEditPage {
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
               .backgroundColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .onClick(() => {
                 this.save();
               })

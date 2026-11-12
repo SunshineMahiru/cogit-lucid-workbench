@@ -27,7 +27,7 @@ export struct DebugPanel {
             .fontColor(AppTheme.color.danger)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(8)
+            .borderRadius(AppTheme.radius.sm)
             .onClick(() => {
               this.onSimulateEncryption();
             })
@@ -36,7 +36,7 @@ export struct DebugPanel {
             .fontColor(AppTheme.color.danger)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(8)
+            .borderRadius(AppTheme.radius.sm)
             .onClick(() => {
               this.onSimulateRestore();
             })
@@ -45,7 +45,7 @@ export struct DebugPanel {
             .fontColor(AppTheme.color.primary)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(8)
+            .borderRadius(AppTheme.radius.sm)
             .onClick(() => {
               this.onClearFlags();
             })

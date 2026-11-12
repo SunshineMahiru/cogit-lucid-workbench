@@ -234,7 +234,7 @@ export struct PlanAttachPage {
             .width('100%')
             .padding({ left: 12, right: 12, top: 10, bottom: 10 })
             .backgroundColor(AppTheme.color.surface)
-            .borderRadius(10)
+            .borderRadius(AppTheme.radius.md)
             .onClick(() => {
               this.toggle(index);
             })

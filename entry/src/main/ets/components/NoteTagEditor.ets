@@ -36,7 +36,7 @@ export struct NoteTagEditor {
               .fontColor(AppTheme.color.primaryDeep)
               .padding({ left: 8, right: 8, top: 4, bottom: 4 })
               .backgroundColor(AppTheme.color.tint)
-              .borderRadius(10)
+              .borderRadius(AppTheme.radius.md)
               .margin({ right: 6, bottom: 4 })
               .onClick(() => {
                 this.onRemove(tag);
@@ -53,7 +53,7 @@ export struct NoteTagEditor {
           .fontSize(AppTheme.font.bodyStrong)
           .padding({ left: 10, right: 10 })
           .backgroundColor(AppTheme.color.surfaceTint)
-          .borderRadius(AppTheme.radius.tag)
+          .borderRadius(AppTheme.radius.sm)
           .border({ width: 0.5, color: AppTheme.color.border })
           .maxLength(12)
           .accessibilityText('输入新标签')
@@ -69,7 +69,7 @@ export struct NoteTagEditor {
           .fontColor(this.canSubmit() ? Color.White : AppTheme.color.textMuted)
           .padding({ left: 14, right: 14, top: 9, bottom: 9 })
           .backgroundColor(this.canSubmit() ? AppTheme.color.primary : AppTheme.color.chip)
-          .borderRadius(AppTheme.radius.tag)
+          .borderRadius(AppTheme.radius.sm)
           .accessibilityText('添加标签')
           .onClick(() => {
             this.submit();

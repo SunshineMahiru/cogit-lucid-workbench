@@ -259,7 +259,7 @@ export struct ReviewForm {
             .textAlign(TextAlign.Center)
             .lineHeight(18)
             .backgroundColor(index <= this.step ? AppTheme.color.primary : AppTheme.color.tint)
-            .borderRadius(9)
+            .borderRadius(AppTheme.radius.sm)
           Text(label)
             .fontSize(AppTheme.font.body)
             .fontColor(index === this.step ? AppTheme.color.text : AppTheme.color.textSecondary)
@@ -317,7 +317,7 @@ export struct ReviewForm {
             .fontColor(AppTheme.color.primary)
             .padding({ left: 16, right: 16, top: 8, bottom: 8 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(16)
+            .borderRadius(AppTheme.radius.lg)
             .margin({ top: 8 })
             .onClick(() => {
               this.restart();
@@ -354,7 +354,7 @@ export struct ReviewForm {
             .width('100%')
             .padding(14)
             .backgroundColor(AppTheme.color.surface)
-            .borderRadius(12)
+            .borderRadius(AppTheme.radius.md)
 
             this.stepDots()
 
@@ -393,7 +393,7 @@ export struct ReviewForm {
                           .fontColor(AppTheme.color.primary)
                           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                           .backgroundColor(AppTheme.color.tint)
-                          .borderRadius(6)
+                          .borderRadius(AppTheme.radius.sm)
                       }
                     }
                     .width('100%')
@@ -405,7 +405,7 @@ export struct ReviewForm {
                   .width('100%')
                   .padding(10)
                   .backgroundColor(this.isAnchorSelected(anchor.id) ? AppTheme.color.selectedSurface : AppTheme.color.surfaceWarm)
-                  .borderRadius(8)
+                  .borderRadius(AppTheme.radius.sm)
                   .border({
                     width: this.isAnchorSelected(anchor.id) ? 1 : 0,
                     color: AppTheme.color.borderSelected
@@ -418,7 +418,7 @@ export struct ReviewForm {
               .width('100%')
               .padding(14)
               .backgroundColor(AppTheme.color.surfaceWarm)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .alignItems(HorizontalAlign.Start)
             }
 
@@ -438,7 +438,7 @@ export struct ReviewForm {
               .height(180)
               .padding(12)
               .backgroundColor(AppTheme.color.surface)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .border({ width: 0.5, color: AppTheme.color.border })
               .onChange((value: string) => {
                 this.updateCurrent(value);
@@ -459,7 +459,7 @@ export struct ReviewForm {
               .fontColor(AppTheme.color.textSecondaryStrong)
               .padding({ left: 20, right: 20, top: 11, bottom: 11 })
               .backgroundColor(AppTheme.color.chip)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .onClick(() => {
                 this.step -= 1;
               })
@@ -471,7 +471,7 @@ export struct ReviewForm {
             .fontColor(Color.White)
             .padding({ left: 24, right: 24, top: 11, bottom: 11 })
             .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
-            .borderRadius(12)
+            .borderRadius(AppTheme.radius.md)
             .accessibilityText(this.step < 3 ? '进入下一步' : '完成复盘')
             .onClick(() => {
               if (this.isSaving) {

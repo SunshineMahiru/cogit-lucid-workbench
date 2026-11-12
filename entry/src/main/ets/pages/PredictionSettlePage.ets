@@ -131,7 +131,7 @@ export struct PredictionSettlePage {
       .fontColor(this.hitChoice === value ? Color.White : AppTheme.color.text)
       .padding({ left: 18, right: 18, top: 8, bottom: 8 })
       .backgroundColor(this.hitChoice === value ? AppTheme.color.primary : AppTheme.color.chip)
-      .borderRadius(16)
+      .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.hitChoice = value;
         this.errorText = '';
@@ -306,7 +306,7 @@ export struct PredictionSettlePage {
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
               .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .onClick(() => {
                 if (!this.isSaving) {
                   this.save();

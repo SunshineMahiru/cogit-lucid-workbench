@@ -50,7 +50,7 @@ export struct RelationCard {
               .fontColor(AppTheme.color.primaryDeep)
               .padding({ left: 5, right: 5, top: 2, bottom: 2 })
               .backgroundColor(AppTheme.color.tint)
-              .borderRadius(6)
+              .borderRadius(AppTheme.radius.sm)
           }
           if (this.item.forbidAnalysis) {
             Text('禁分析')
@@ -58,7 +58,7 @@ export struct RelationCard {
               .fontColor(AppTheme.color.danger)
               .padding({ left: 5, right: 5, top: 2, bottom: 2 })
               .backgroundColor(AppTheme.color.dangerSurface)
-              .borderRadius(6)
+              .borderRadius(AppTheme.radius.sm)
           }
         }
         .width('100%')

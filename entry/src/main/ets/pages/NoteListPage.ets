@@ -132,7 +132,7 @@ export struct NoteListPage {
       .fontColor(this.filter === type ? Color.White : AppTheme.color.textStrong)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.filter === type ? AppTheme.color.primary : AppTheme.color.chip)
-      .borderRadius(14)
+      .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.selectFilter(type);
       })
@@ -189,7 +189,7 @@ export struct NoteListPage {
         Column({ space: 10 }) {
           TextInput({ text: this.search, placeholder: '搜索标题、摘要或标签' })
             .backgroundColor(AppTheme.color.surface)
-            .borderRadius(12)
+            .borderRadius(AppTheme.radius.md)
             .accessibilityText('搜索速记标题、摘要或标签')
             .onChange((value: string) => {
               this.search = value;
@@ -280,7 +280,7 @@ export struct NoteListPage {
           .lineHeight(48)
           .textAlign(TextAlign.Center)
           .backgroundColor(AppTheme.color.primary)
-          .borderRadius(24)
+          .borderRadius(AppTheme.radius.xl)
           .margin({ right: 16, bottom: 24 })
           .onClick(() => {
             this.openEditor();

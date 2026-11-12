@@ -246,7 +246,7 @@ export struct StatusPage {
                           .fontColor(AppTheme.color.danger)
                           .padding({ left: 6, right: 6, top: 3, bottom: 3 })
                           .backgroundColor(AppTheme.color.dangerSurface)
-                          .borderRadius(6)
+                          .borderRadius(AppTheme.radius.sm)
                           .margin({ right: 6, bottom: 4 })
                       }, (flag: ReadingFlag) => flag.code)
                     }

@@ -192,7 +192,7 @@ export struct HomePage {
         .layoutWeight(1)
         .padding({ top: 6, bottom: 6 })
         .backgroundColor(AppTheme.color.surfaceAlt)
-        .borderRadius(8)
+        .borderRadius(AppTheme.radius.sm)
 
         Column({ space: 2 }) {
           Text(`${this.summary.pendingPredictions} 条`)
@@ -206,7 +206,7 @@ export struct HomePage {
         .layoutWeight(1)
         .padding({ top: 6, bottom: 6 })
         .backgroundColor(AppTheme.color.surfaceAlt)
-        .borderRadius(8)
+        .borderRadius(AppTheme.radius.sm)
 
         Column({ space: 2 }) {
           Text(`${this.pulse.streakDays} 天`)
@@ -220,7 +220,7 @@ export struct HomePage {
         .layoutWeight(1)
         .padding({ top: 6, bottom: 6 })
         .backgroundColor(AppTheme.color.surfaceAlt)
-        .borderRadius(8)
+        .borderRadius(AppTheme.radius.sm)
 
         Column({ space: 2 }) {
           Text(this.pulse.lastReviewLabel)
@@ -234,7 +234,7 @@ export struct HomePage {
         .layoutWeight(1)
         .padding({ top: 6, bottom: 6 })
         .backgroundColor(AppTheme.color.surfaceAlt)
-        .borderRadius(8)
+        .borderRadius(AppTheme.radius.sm)
       }
       .width('100%')
       .padding({ left: 20, right: 20, top: 8, bottom: 4 })
@@ -246,7 +246,7 @@ export struct HomePage {
           .fontColor(AppTheme.color.primary)
           .padding({ left: 12, right: 12, top: 10, bottom: 10 })
           .backgroundColor(AppTheme.color.surfaceAlt)
-          .borderRadius(18)
+          .borderRadius(AppTheme.radius.lg)
           .onClick(() => {
             this.pathStack.pushPathByName(ROUTES.ANALYTICS, null);
           })
@@ -293,7 +293,7 @@ export struct HomePage {
         .textAlign(TextAlign.Center)
         .padding({ top: 12, bottom: 12 })
         .backgroundColor(AppTheme.color.primary)
-        .borderRadius(12)
+        .borderRadius(AppTheme.radius.md)
         .onClick(() => {
           this.retryDatabase();
         })

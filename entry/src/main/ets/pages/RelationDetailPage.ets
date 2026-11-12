@@ -318,7 +318,7 @@ export struct RelationDetailPage {
                       .fontColor(AppTheme.color.primaryDeep)
                       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                       .backgroundColor(AppTheme.color.tint)
-                      .borderRadius(6)
+                      .borderRadius(AppTheme.radius.sm)
                   }
                   if (this.detail.forbidAnalysis) {
                     Text('禁分析')
@@ -326,7 +326,7 @@ export struct RelationDetailPage {
                       .fontColor(AppTheme.color.danger)
                       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                       .backgroundColor(AppTheme.color.dangerSurface)
-                      .borderRadius(6)
+                      .borderRadius(AppTheme.radius.sm)
                   }
                   Blank()
                   Text(this.detail.lastInteractionLabel)

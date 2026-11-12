@@ -32,7 +32,7 @@ export struct NoteEmptyState {
           .fontColor(AppTheme.color.primary)
           .padding({ left: 16, right: 16, top: 8, bottom: 8 })
           .backgroundColor(AppTheme.color.tint)
-          .borderRadius(16)
+          .borderRadius(AppTheme.radius.lg)
           .margin({ top: 4 })
           .onClick(() => {
             this.onAction();
@@ -43,6 +43,6 @@ export struct NoteEmptyState {
     .padding(32)
     .justifyContent(FlexAlign.Center)
     .border(this.dashed ? { width: 1, color: AppTheme.color.borderStrong, style: BorderStyle.Dashed } : { width: 0 })
-    .borderRadius(this.dashed ? 12 : 0)
+    .borderRadius(this.dashed ? AppTheme.radius.md : 0)
   }
 }

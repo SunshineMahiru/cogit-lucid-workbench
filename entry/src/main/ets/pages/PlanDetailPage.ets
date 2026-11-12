@@ -457,7 +457,7 @@ export struct PlanDetailPage {
             .fontColor(view.status === PlanNodeStatus.OPEN ? AppTheme.color.success : AppTheme.color.textMuted)
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .backgroundColor(view.status === PlanNodeStatus.OPEN ? AppTheme.color.successSurface : AppTheme.color.chip)
-            .borderRadius(6)
+            .borderRadius(AppTheme.radius.sm)
           Blank()
           Text(`${view.done}/${view.total}`)
             .fontSize(AppTheme.font.body)
@@ -519,7 +519,7 @@ export struct PlanDetailPage {
                   .fontColor(AppTheme.color.primaryDeep)
                   .padding({ left: 7, right: 7, top: 2, bottom: 2 })
                   .backgroundColor(AppTheme.color.tint)
-                  .borderRadius(6)
+                  .borderRadius(AppTheme.radius.sm)
               }
               .width('100%')
 
@@ -580,7 +580,7 @@ export struct PlanDetailPage {
                   .fontColor(this.viewMode === 0 ? Color.White : AppTheme.color.textSecondary)
                   .padding({ left: 12, right: 12, top: 5, bottom: 5 })
                   .backgroundColor(this.viewMode === 0 ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
-                  .borderRadius(14)
+                  .borderRadius(AppTheme.radius.lg)
                   .onClick(() => {
                     this.viewMode = 0;
                   })
@@ -589,7 +589,7 @@ export struct PlanDetailPage {
                   .fontColor(this.viewMode === 1 ? Color.White : AppTheme.color.textSecondary)
                   .padding({ left: 12, right: 12, top: 5, bottom: 5 })
                   .backgroundColor(this.viewMode === 1 ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
-                  .borderRadius(14)
+                  .borderRadius(AppTheme.radius.lg)
                   .onClick(() => {
                     this.viewMode = 1;
                   })
@@ -686,7 +686,7 @@ export struct PlanDetailPage {
                   .width('100%')
                   .padding({ left: 8, right: 4, top: 4, bottom: 4 })
                   .backgroundColor(AppTheme.color.surfaceAlt)
-                  .borderRadius(8)
+                  .borderRadius(AppTheme.radius.sm)
                 }, (project: PlanProject) => `${project.id}_${project.name}`)
               }
               Row({ space: 8 }) {

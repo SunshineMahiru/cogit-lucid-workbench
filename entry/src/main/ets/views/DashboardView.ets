@@ -391,7 +391,7 @@ export struct DashboardView {
               .width('100%')
               .padding(16)
               .backgroundColor(AppTheme.color.surface)
-              .borderRadius(14)
+              .borderRadius(AppTheme.radius.lg)
 
               // Summary
               Row() {
@@ -434,7 +434,7 @@ export struct DashboardView {
               .width('100%')
               .padding(16)
               .backgroundColor(AppTheme.color.surface)
-              .borderRadius(14)
+              .borderRadius(AppTheme.radius.lg)
 
               // Weekly settlement
               Column({ space: 6 }) {
@@ -475,7 +475,7 @@ export struct DashboardView {
               .width('100%')
               .padding(14)
               .backgroundColor(AppTheme.color.selectedSurface)
-              .borderRadius(14)
+              .borderRadius(AppTheme.radius.lg)
               .border({ width: 1, color: AppTheme.color.borderSelected })
               .onClick(() => {
                 this.openWeeklySettlement();
@@ -542,7 +542,7 @@ export struct DashboardView {
               .width('100%')
               .padding(16)
               .backgroundColor(AppTheme.color.surface)
-              .borderRadius(14)
+              .borderRadius(AppTheme.radius.lg)
             }
             .width('100%')
             .padding({ left: 20, right: 20, bottom: 24 })
@@ -558,7 +558,7 @@ export struct DashboardView {
               .fontColor(Color.White)
               .padding({ left: 16, right: 16, top: 10, bottom: 10 })
               .backgroundColor(AppTheme.color.primary)
-              .borderRadius(22)
+              .borderRadius(AppTheme.radius.xl)
               .onClick(() => {
                 this.openNoteEditor();
               })

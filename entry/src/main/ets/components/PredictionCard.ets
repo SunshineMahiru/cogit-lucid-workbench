@@ -38,7 +38,7 @@ export struct PredictionCard {
           .fontColor(this.dueColor())
           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
           .backgroundColor(this.dueSurface())
-          .borderRadius(8)
+          .borderRadius(AppTheme.radius.sm)
           .margin({ right: 6 })
         Text(this.item.title)
           .fontSize(AppTheme.font.subtitle)
@@ -67,7 +67,7 @@ export struct PredictionCard {
     .width('100%')
     .padding(14)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(12)
+    .borderRadius(AppTheme.radius.md)
     .onClick(() => {
       this.onTap();
     })

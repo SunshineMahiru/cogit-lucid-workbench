@@ -188,7 +188,7 @@ export struct PlanListPage {
             .fontColor(AppTheme.color.primaryDeep)
             .padding({ left: 7, right: 7, top: 2, bottom: 2 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(6)
+            .borderRadius(AppTheme.radius.sm)
           Blank()
           Row({ space: 10 }) {
             Text('查看 ›')

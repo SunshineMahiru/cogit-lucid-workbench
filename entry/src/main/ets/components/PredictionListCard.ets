@@ -44,7 +44,7 @@ export struct PredictionListCard {
           .fontColor(this.tagColor())
           .padding({ left: 6, right: 6, top: 2, bottom: 2 })
           .backgroundColor(this.tagBackground())
-          .borderRadius(8)
+          .borderRadius(AppTheme.radius.sm)
         Text(this.item.target)
           .fontSize(AppTheme.font.subtitle)
           .fontColor(AppTheme.color.text)
@@ -81,7 +81,7 @@ export struct PredictionListCard {
     .width('100%')
     .padding(14)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(12)
+    .borderRadius(AppTheme.radius.md)
     .onClick(() => {
       this.onTap();
     })

@@ -28,7 +28,7 @@ export struct EntryChip {
     }
     .padding({ left: 12, right: 12, top: 8, bottom: 8 })
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(16)
+    .borderRadius(AppTheme.radius.lg)
     .onClick(() => {
       this.onTap();
     })

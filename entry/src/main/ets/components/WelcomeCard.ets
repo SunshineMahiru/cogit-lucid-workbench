@@ -17,7 +17,7 @@ export struct WelcomeCard {
         .height(22)
         .textAlign(TextAlign.Center)
         .backgroundColor(AppTheme.color.tint)
-        .borderRadius(11)
+        .borderRadius(AppTheme.radius.md)
       Column({ space: 2 }) {
         Text(title)
           .fontSize(AppTheme.font.bodyStrong)
@@ -67,7 +67,7 @@ export struct WelcomeCard {
           .fontColor(Color.White)
           .padding({ left: 14, right: 14, top: 8, bottom: 8 })
           .backgroundColor(AppTheme.color.primary)
-          .borderRadius(10)
+          .borderRadius(AppTheme.radius.md)
           .onClick(() => {
             this.onStart();
           })
@@ -84,7 +84,7 @@ export struct WelcomeCard {
     .width('100%')
     .padding(14)
     .backgroundColor(AppTheme.color.selectedSurface)
-    .borderRadius(AppTheme.radius.card)
+    .borderRadius(AppTheme.radius.md)
     .border({ width: 1, color: AppTheme.color.borderSelected })
     .alignItems(HorizontalAlign.Start)
     .accessibilityText('首次使用引导：先速记，再预测，最后复盘')

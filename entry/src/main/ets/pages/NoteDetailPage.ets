@@ -213,7 +213,7 @@ export struct NoteDetailPage {
                 .fontColor(AppTheme.color.primary)
                 .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                 .backgroundColor(AppTheme.color.tint)
-                .borderRadius(8)
+                .borderRadius(AppTheme.radius.sm)
               Text(this.detail.timeLabel)
                 .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textMuted)
@@ -238,7 +238,7 @@ export struct NoteDetailPage {
                     .fontColor(AppTheme.color.primaryDeep)
                     .padding({ left: 8, right: 8, top: 3, bottom: 3 })
                     .backgroundColor(AppTheme.color.tint)
-                    .borderRadius(10)
+                    .borderRadius(AppTheme.radius.md)
                     .margin({ right: 6, bottom: 6 })
                 }, (tag: string) => tag)
               }

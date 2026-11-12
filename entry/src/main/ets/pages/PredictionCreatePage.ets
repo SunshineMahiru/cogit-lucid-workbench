@@ -148,7 +148,7 @@ export struct PredictionCreatePage {
       .fontColor(AppTheme.color.primaryDeep)
       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
       .backgroundColor(AppTheme.color.tint)
-      .borderRadius(12)
+      .borderRadius(AppTheme.radius.md)
       .onClick(() => {
         this.useDeadline(days);
       })
@@ -305,7 +305,7 @@ export struct PredictionCreatePage {
             .textAlign(TextAlign.Center)
             .padding({ top: 12, bottom: 12 })
             .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
-            .borderRadius(12)
+            .borderRadius(AppTheme.radius.md)
             .accessibilityText(this.isSaving ? '正在保存预测' : (this.sourceId === null ? '保存预测' : '生成新版本预测'))
             .onClick(() => {
               if (!this.isSaving) {

@@ -227,7 +227,7 @@ export struct PredictionDetailPage {
                 .fontColor(this.tagColor())
                 .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                 .backgroundColor(this.tagBackground())
-                .borderRadius(8)
+                .borderRadius(AppTheme.radius.sm)
               Text(`${this.detail.confidence}%`)
                 .fontSize(AppTheme.font.subtitle)
                 .fontColor(AppTheme.color.primary)
@@ -266,7 +266,7 @@ export struct PredictionDetailPage {
             .width('100%')
             .padding(16)
             .backgroundColor(AppTheme.color.surface)
-            .borderRadius(12)
+            .borderRadius(AppTheme.radius.md)
 
             if (this.detail.reason.length > 0) {
               Column({ space: 6 }) {
@@ -283,7 +283,7 @@ export struct PredictionDetailPage {
               .width('100%')
               .padding(16)
               .backgroundColor(AppTheme.color.surface)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .alignItems(HorizontalAlign.Start)
             }
 
@@ -296,7 +296,7 @@ export struct PredictionDetailPage {
                   .textAlign(TextAlign.Center)
                   .padding({ top: 10, bottom: 10 })
                   .backgroundColor(AppTheme.color.tint)
-                  .borderRadius(10)
+                  .borderRadius(AppTheme.radius.md)
                   .onClick(() => {
                     this.openSettle();
                   })

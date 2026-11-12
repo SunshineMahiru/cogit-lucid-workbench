@@ -347,7 +347,7 @@ export struct BackgroundApplyPage {
                       .width('100%')
                       .height(190)
                       .objectFit(ImageFit.Cover)
-                      .borderRadius(10)
+                      .borderRadius(AppTheme.radius.md)
                       .opacity(this.imageOpacity + 0.35)
                       .accessibilityText('待应用的页面背景预览')
                       .onError(() => {
@@ -367,7 +367,7 @@ export struct BackgroundApplyPage {
                     .height(96)
                     .justifyContent(FlexAlign.Center)
                     .backgroundColor(AppTheme.color.surfaceAlt)
-                    .borderRadius(10)
+                    .borderRadius(AppTheme.radius.md)
                   }
                   Row({ space: 8 }) {
                     Text(this.busyKey === 'pick' ? '读取中…' : '重新选择图片')
@@ -375,7 +375,7 @@ export struct BackgroundApplyPage {
                       .fontColor(AppTheme.color.primary)
                       .padding({ left: 12, right: 12, top: 7, bottom: 7 })
                       .backgroundColor(AppTheme.color.tint)
-                      .borderRadius(8)
+                      .borderRadius(AppTheme.radius.sm)
                       .accessibilityText('重新选择背景图片来源')
                       .onClick(() => {
                         this.showSourceSheet = true;
@@ -409,7 +409,7 @@ export struct BackgroundApplyPage {
                       .fontColor(this.globalApplied ? AppTheme.color.success : AppTheme.color.textMuted)
                       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                       .backgroundColor(this.globalApplied ? AppTheme.color.successSurface : AppTheme.color.surfaceAlt)
-                      .borderRadius(6)
+                      .borderRadius(AppTheme.radius.sm)
                     Blank()
                     if (this.globalApplied) {
                       Text('清除')
@@ -426,7 +426,7 @@ export struct BackgroundApplyPage {
                       .fontColor(Color.White)
                       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
                       .backgroundColor(this.pendingPath.length > 0 ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
-                      .borderRadius(8)
+                      .borderRadius(AppTheme.radius.sm)
                       .accessibilityText('把背景设为全部页面的默认背景')
                       .onClick(() => {
                         this.applyToGlobal();
@@ -458,7 +458,7 @@ export struct BackgroundApplyPage {
                         .width(22)
                         .height(22)
                         .textAlign(TextAlign.Center)
-                        .borderRadius(6)
+                        .borderRadius(AppTheme.radius.sm)
                         .border({
                           width: 1,
                           color: this.isSelected(state.key) ? AppTheme.color.primary : AppTheme.color.borderStrong
@@ -478,7 +478,7 @@ export struct BackgroundApplyPage {
                         .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                         .backgroundColor(state.own ? AppTheme.color.successSurface :
                           (state.following ? AppTheme.color.tint : AppTheme.color.surfaceAlt))
-                        .borderRadius(6)
+                        .borderRadius(AppTheme.radius.sm)
                       Blank()
                       if (state.own) {
                         Text('清除')
@@ -496,7 +496,7 @@ export struct BackgroundApplyPage {
                         .fontColor(Color.White)
                         .padding({ left: 10, right: 10, top: 5, bottom: 5 })
                         .backgroundColor(this.pendingPath.length > 0 ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
-                        .borderRadius(8)
+                        .borderRadius(AppTheme.radius.sm)
                         .accessibilityText(`把背景应用到${state.label}`)
                         .onClick(() => {
                           if (this.pendingPath.length === 0) {
@@ -519,7 +519,7 @@ export struct BackgroundApplyPage {
                       .padding({ top: 9, bottom: 9 })
                       .backgroundColor(this.selectedKeys.length > 0 && this.pendingPath.length > 0 ?
                         AppTheme.color.primary : AppTheme.color.primaryDisabled)
-                      .borderRadius(10)
+                      .borderRadius(AppTheme.radius.md)
                       .accessibilityText('把背景应用到已勾选的页面')
                       .onClick(() => {
                         this.applyToSelected();
@@ -531,7 +531,7 @@ export struct BackgroundApplyPage {
                       .layoutWeight(1)
                       .padding({ top: 9, bottom: 9 })
                       .backgroundColor(AppTheme.color.tint)
-                      .borderRadius(10)
+                      .borderRadius(AppTheme.radius.md)
                       .accessibilityText('把背景应用到全部页面')
                       .onClick(() => {
                         this.applyToEveryGroup();
@@ -674,7 +674,7 @@ export struct BackgroundApplyPage {
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
               .backgroundColor(AppTheme.color.primary)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .accessibilityText('完成背景设置并返回')
               .onClick(() => {
                 this.finish();

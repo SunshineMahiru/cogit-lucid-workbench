@@ -36,7 +36,7 @@ export struct ReadingCard {
         .height(22)
         .textAlign(TextAlign.Center)
         .backgroundColor(AppTheme.color.tint)
-        .borderRadius(AppTheme.radius.tag)
+        .borderRadius(AppTheme.radius.sm)
       Text(this.reading.value + this.reading.unit)
         .fontSize(AppTheme.font.headline)
         .fontWeight(FontWeight.Medium)

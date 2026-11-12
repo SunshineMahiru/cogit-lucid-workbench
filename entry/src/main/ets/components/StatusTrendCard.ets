@@ -35,7 +35,7 @@ export struct StatusTrendCard {
               .width(16)
               .height(this.barHeight(row.sleepHours))
               .backgroundColor(row.sleepHours < 6.5 ? AppTheme.color.warning : AppTheme.color.primary)
-              .borderRadius(4)
+              .borderRadius(AppTheme.radius.xs)
             Text(row.date.length >= 5 ? row.date.slice(5) : row.date)
               .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
@@ -62,7 +62,7 @@ export struct StatusTrendCard {
     .width('100%')
     .padding({ top: 12, left: 14, right: 14, bottom: 12 })
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(AppTheme.radius.card)
+    .borderRadius(AppTheme.radius.md)
     .alignItems(HorizontalAlign.Start)
   }
 }

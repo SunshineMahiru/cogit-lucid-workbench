@@ -128,7 +128,7 @@ export struct PlanHomeCard {
           .fontColor(AppTheme.color.primaryDeep)
           .padding({ left: 10, right: 10, top: 6, bottom: 6 })
           .backgroundColor(AppTheme.color.tint)
-          .borderRadius(14)
+          .borderRadius(AppTheme.radius.lg)
           .onClick(() => {
             this.openPlan();
           })
@@ -148,7 +148,7 @@ export struct PlanHomeCard {
             .fontColor(AppTheme.color.primaryDeep)
             .padding({ left: 7, right: 7, top: 2, bottom: 2 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(6)
+            .borderRadius(AppTheme.radius.sm)
           Blank()
           Text('查看 ›')
             .fontSize(AppTheme.font.caption)

@@ -21,7 +21,7 @@ export struct ImageSourceSheet {
     .alignItems(HorizontalAlign.Start)
     .padding({ left: 14, right: 14, top: 10, bottom: 10 })
     .backgroundColor(AppTheme.color.surfaceAlt)
-    .borderRadius(10)
+    .borderRadius(AppTheme.radius.md)
     .accessibilityText(title)
     .onClick(() => {
       this.onPick(source);

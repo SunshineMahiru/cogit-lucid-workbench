@@ -33,6 +33,6 @@ export struct RelationTrustBadge {
       .fontColor(this.textColor())
       .padding({ left: 6, right: 6, top: 2, bottom: 2 })
       .backgroundColor(this.surfaceColor())
-      .borderRadius(AppTheme.radius.tag)
+      .borderRadius(AppTheme.radius.sm)
   }
 }

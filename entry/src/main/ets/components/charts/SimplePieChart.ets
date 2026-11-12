@@ -78,7 +78,7 @@ export struct SimplePieChart {
         Column({ space: 8 }) {
           ForEach(this.slices, (slice: ChartSlice) => {
             Row({ space: 6 }) {
-              Row().width(9).height(9).backgroundColor(slice.color).borderRadius(2)
+              Row().width(9).height(9).backgroundColor(slice.color).borderRadius(0)
               Text(`${slice.label} ${slice.value}`)
                 .fontSize(AppTheme.font.body)
                 .fontColor(AppTheme.color.textMuted)

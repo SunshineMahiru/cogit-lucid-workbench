@@ -290,7 +290,7 @@ export struct AnalyticsPage {
             .fontColor(this.selectedMonth === month.label ? Color.White : AppTheme.color.textSecondary)
             .padding({ left: 10, right: 10, top: 6, bottom: 6 })
             .backgroundColor(this.selectedMonth === month.label ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
-            .borderRadius(14)
+            .borderRadius(AppTheme.radius.lg)
             .onClick(() => this.switchMonth(month.label))
         }, (month: StatsMonth) => month.label)
       }

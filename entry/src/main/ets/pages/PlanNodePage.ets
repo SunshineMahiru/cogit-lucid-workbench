@@ -369,7 +369,7 @@ export struct PlanNodePage {
                   .fontColor(this.node.status === PlanNodeStatus.OPEN ? AppTheme.color.success : AppTheme.color.textMuted)
                   .padding({ left: 7, right: 7, top: 2, bottom: 2 })
                   .backgroundColor(this.node.status === PlanNodeStatus.OPEN ? AppTheme.color.successSurface : AppTheme.color.chip)
-                  .borderRadius(6)
+                  .borderRadius(AppTheme.radius.sm)
               }
               .width('100%')
               Text(`${this.node.startDate} 至 ${this.node.endDate}`)
@@ -395,7 +395,7 @@ export struct PlanNodePage {
                       .fontColor(this.selectedProjectId.length === 0 ? Color.White : AppTheme.color.textSecondary)
                       .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                       .backgroundColor(this.selectedProjectId.length === 0 ? AppTheme.color.primary : AppTheme.color.chip)
-                      .borderRadius(10)
+                      .borderRadius(AppTheme.radius.md)
                       .onClick(() => {
                         this.assignProject('');
                       })
@@ -405,7 +405,7 @@ export struct PlanNodePage {
                         .fontColor(this.selectedProjectId === project.id ? Color.White : AppTheme.color.textSecondary)
                         .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                         .backgroundColor(this.selectedProjectId === project.id ? AppTheme.color.primary : AppTheme.color.chip)
-                        .borderRadius(10)
+                        .borderRadius(AppTheme.radius.md)
                         .onClick(() => {
                           this.assignProject(project.id);
                         })
@@ -563,7 +563,7 @@ export struct PlanNodePage {
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
               .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .onClick(() => {
                 this.closeWeek();
               })

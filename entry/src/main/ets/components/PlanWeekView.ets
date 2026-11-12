@@ -35,7 +35,7 @@ export struct PlanWeekView {
         .textAlign(TextAlign.Center)
         .lineHeight(24)
         .backgroundColor(this.selected === day.date ? AppTheme.color.primary : Color.Transparent)
-        .borderRadius(6)
+        .borderRadius(AppTheme.radius.sm)
       Row({ space: 3 }) {
         Text(day.noteCount > 0 ? `${day.noteCount}` : '·')
           .fontSize(AppTheme.font.caption)

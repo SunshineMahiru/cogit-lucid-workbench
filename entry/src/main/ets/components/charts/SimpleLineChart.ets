@@ -109,7 +109,7 @@ export struct SimpleLineChart {
           Row({ space: 12 }) {
             ForEach(this.series, (item: ChartSeries) => {
               Row({ space: 4 }) {
-                Row().width(8).height(8).backgroundColor(item.color).borderRadius(2)
+                Row().width(8).height(8).backgroundColor(item.color).borderRadius(0)
                 Text(item.name).fontSize(AppTheme.font.caption).fontColor(AppTheme.color.textMuted)
               }
             }, (item: ChartSeries) => item.name)

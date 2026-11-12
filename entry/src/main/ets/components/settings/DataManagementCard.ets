@@ -32,7 +32,7 @@ export struct DataManagementCard {
             .fontColor(AppTheme.color.primary)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(8)
+            .borderRadius(AppTheme.radius.sm)
             .accessibilityText('备份本地数据并另存')
             .onClick(() => {
               this.onBackup();
@@ -42,7 +42,7 @@ export struct DataManagementCard {
             .fontColor(AppTheme.color.primary)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(8)
+            .borderRadius(AppTheme.radius.sm)
             .accessibilityText('从备份文件恢复数据')
             .onClick(() => {
               this.onRestore();
@@ -65,7 +65,7 @@ export struct DataManagementCard {
               .fontColor(AppTheme.color.danger)
               .padding({ left: 10, right: 10, top: 7, bottom: 7 })
               .backgroundColor(AppTheme.color.tint)
-              .borderRadius(8)
+              .borderRadius(AppTheme.radius.sm)
               .accessibilityText('清除加密失败标记，重启应用后再次尝试加密')
               .onClick(() => {
                 this.onRetryEncryption();
@@ -80,7 +80,7 @@ export struct DataManagementCard {
             .fontColor(AppTheme.color.primary)
             .padding({ left: 10, right: 10, top: 7, bottom: 7 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(8)
+            .borderRadius(AppTheme.radius.sm)
             .accessibilityText('重新读取本地记录并刷新首页摘要')
             .onClick(() => {
               this.onRefreshHome();

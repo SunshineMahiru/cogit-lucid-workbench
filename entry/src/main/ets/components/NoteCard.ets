@@ -19,7 +19,7 @@ export struct NoteCard {
             .fontColor(AppTheme.color.primary)
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .backgroundColor(AppTheme.color.tint)
-            .borderRadius(8)
+            .borderRadius(AppTheme.radius.sm)
           Text(this.note.title)
             .fontSize(AppTheme.font.subtitle)
             .fontColor(AppTheme.color.text)
@@ -47,7 +47,7 @@ export struct NoteCard {
     .width('100%')
     .padding(12)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(10)
+    .borderRadius(AppTheme.radius.md)
     .onClick(() => {
       this.onTap();
     })

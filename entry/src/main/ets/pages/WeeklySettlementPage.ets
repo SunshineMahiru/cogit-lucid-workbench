@@ -86,7 +86,7 @@ export struct WeeklySettlementPage {
       .fontColor(this.weekOffset === value ? Color.White : AppTheme.color.text)
       .padding({ left: 14, right: 14, top: 6, bottom: 6 })
       .backgroundColor(this.weekOffset === value ? AppTheme.color.primary : AppTheme.color.chip)
-      .borderRadius(14)
+      .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.selectOffset(value);
       })
@@ -211,7 +211,7 @@ export struct WeeklySettlementPage {
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
               .backgroundColor(AppTheme.color.primary)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .onClick(() => {
                 this.openReview();
               })

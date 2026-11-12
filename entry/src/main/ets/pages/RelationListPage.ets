@@ -128,7 +128,7 @@ export struct RelationListPage {
       .fontColor(this.filter === level ? Color.White : AppTheme.color.text)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.filter === level ? AppTheme.color.primary : AppTheme.color.chip)
-      .borderRadius(14)
+      .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.selectFilter(level);
       })

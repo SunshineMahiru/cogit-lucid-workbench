@@ -29,7 +29,7 @@ export struct PlanRhythmStrip {
                 .textAlign(TextAlign.Center)
                 .lineHeight(36)
                 .backgroundColor(row.status === PlanNodeStatus.CLOSED ? AppTheme.color.primary : AppTheme.color.tint)
-                .borderRadius(8)
+                .borderRadius(AppTheme.radius.sm)
                 .border({
                   width: row.nodeId === this.currentId ? 2 : 0,
                   color: AppTheme.color.primaryDeep

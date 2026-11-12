@@ -18,7 +18,7 @@ export struct AnchorCard {
         .textAlign(TextAlign.Center)
         .lineHeight(28)
         .backgroundColor(AppTheme.color.tint)
-        .borderRadius(14)
+        .borderRadius(AppTheme.radius.lg)
 
       Column({ space: 4 }) {
         Text(this.anchor.text)
@@ -45,6 +45,6 @@ export struct AnchorCard {
     .width('100%')
     .padding(14)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(12)
+    .borderRadius(AppTheme.radius.md)
   }
 }

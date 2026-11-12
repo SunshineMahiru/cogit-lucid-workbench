@@ -358,7 +358,7 @@ export struct NoteEditPage {
                 .height(88)
                 .padding(10)
                 .backgroundColor(AppTheme.color.surfaceTint)
-                .borderRadius(10)
+                .borderRadius(AppTheme.radius.md)
                 .border({ width: 0.5, color: this.errorFor(null).length > 0 ? AppTheme.color.danger : AppTheme.color.border })
                 .onChange((value: string) => {
                   this.updateContent(value);
@@ -415,7 +415,7 @@ export struct NoteEditPage {
                       .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? Color.White : AppTheme.color.textSecondaryStrong)
                       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
                       .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.primary : AppTheme.color.chip)
-                      .borderRadius(12)
+                      .borderRadius(AppTheme.radius.md)
                       .margin({ right: 6, bottom: 6 })
                       .onClick(() => {
                         this.toggleRelation(relation.id);

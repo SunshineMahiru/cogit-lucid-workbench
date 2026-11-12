@@ -35,7 +35,7 @@ export struct NoteFieldEditor {
           .height(72)
           .padding(10)
           .backgroundColor(AppTheme.color.surfaceTint)
-          .borderRadius(10)
+          .borderRadius(AppTheme.radius.md)
           .border({ width: 0.5, color: this.error.length > 0 ? AppTheme.color.danger : AppTheme.color.border })
           .onChange((value: string) => {
             this.onValueChange(value);
@@ -46,7 +46,7 @@ export struct NoteFieldEditor {
           .height(40)
           .padding({ left: 10, right: 10 })
           .backgroundColor(AppTheme.color.surfaceTint)
-          .borderRadius(10)
+          .borderRadius(AppTheme.radius.md)
           .border({ width: 0.5, color: this.error.length > 0 ? AppTheme.color.danger : AppTheme.color.border })
           .onChange((value: string) => {
             this.onValueChange(value);

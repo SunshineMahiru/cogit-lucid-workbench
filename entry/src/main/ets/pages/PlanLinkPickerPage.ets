@@ -196,7 +196,7 @@ export struct PlanLinkPickerPage {
       .fontColor(this.module === module ? Color.White : AppTheme.color.textSecondary)
       .padding({ left: 10, right: 10, top: 6, bottom: 6 })
       .backgroundColor(this.module === module ? AppTheme.color.primary : AppTheme.color.surfaceAlt)
-      .borderRadius(14)
+      .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.module = module;
         this.resetPaging();
@@ -225,7 +225,7 @@ export struct PlanLinkPickerPage {
               .fontColor(AppTheme.color.primaryDeep)
               .padding({ left: 5, right: 5, top: 1, bottom: 1 })
               .backgroundColor(AppTheme.color.tint)
-              .borderRadius(4)
+              .borderRadius(AppTheme.radius.xs)
           }
         }
         .width('100%')

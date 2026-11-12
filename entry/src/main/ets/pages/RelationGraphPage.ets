@@ -82,7 +82,7 @@ export struct RelationGraphPage {
       Row()
         .width(8)
         .height(8)
-        .borderRadius(4)
+        .borderRadius(AppTheme.radius.xs)
         .backgroundColor(level === TrustLevel.TRANSPARENT ? AppTheme.color.success :
           (level === TrustLevel.SINCERE ? AppTheme.color.warning : AppTheme.color.primaryDeep))
       Text(`${trustLevelText(level)} ${this.count(level)}`)

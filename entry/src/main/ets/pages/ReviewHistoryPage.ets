@@ -102,7 +102,7 @@ export struct ReviewHistoryPage {
                         .fontColor(AppTheme.color.primaryDeep)
                         .padding({ left: 6, right: 6, top: 2, bottom: 2 })
                         .backgroundColor(AppTheme.color.tint)
-                        .borderRadius(6)
+                        .borderRadius(AppTheme.radius.sm)
                       Text(item.rangeLabel)
                         .fontSize(AppTheme.font.body)
                         .fontColor(AppTheme.color.textSecondary)

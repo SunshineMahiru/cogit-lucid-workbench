@@ -270,7 +270,7 @@ export struct StatusEditPage {
               .textAlign(TextAlign.Center)
               .padding({ top: 12, bottom: 12 })
               .backgroundColor(this.isPreview ? AppTheme.color.textMuted : AppTheme.color.primary)
-              .borderRadius(12)
+              .borderRadius(AppTheme.radius.md)
               .onClick(() => {
                 this.save();
               })

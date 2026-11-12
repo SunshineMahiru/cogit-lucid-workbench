@@ -110,10 +110,10 @@ export struct HeatmapGrid {
             .layoutWeight(1)
           Row({ space: 3 }) {
             Text('少').fontSize(AppTheme.font.caption).fontColor('#6B6A63')
-            Row().width(9).height(9).backgroundColor('#EDEBE4').borderRadius(1)
-            Row().width(9).height(9).backgroundColor('#B7D3E8').borderRadius(1)
-            Row().width(9).height(9).backgroundColor('#6FA8CC').borderRadius(1)
-            Row().width(9).height(9).backgroundColor('#2E6F9E').borderRadius(1)
+            Row().width(9).height(9).backgroundColor('#EDEBE4').borderRadius(0)
+            Row().width(9).height(9).backgroundColor('#B7D3E8').borderRadius(0)
+            Row().width(9).height(9).backgroundColor('#6FA8CC').borderRadius(0)
+            Row().width(9).height(9).backgroundColor('#2E6F9E').borderRadius(0)
             Text('多').fontSize(AppTheme.font.caption).fontColor('#6B6A63')
           }
         }

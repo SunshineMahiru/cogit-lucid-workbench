@@ -17,6 +17,6 @@ export struct SectionCard {
     .width('100%')
     .padding(this.contentPadding)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(AppTheme.radius.card)
+    .borderRadius(AppTheme.radius.md)
   }
 }

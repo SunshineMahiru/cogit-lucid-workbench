@@ -19,7 +19,7 @@ export struct ModuleCard {
           .height(24)
           .textAlign(TextAlign.Center)
           .backgroundColor(AppTheme.color.tint)
-          .borderRadius(AppTheme.radius.tag)
+          .borderRadius(AppTheme.radius.sm)
         Text(this.title)
           .fontSize(AppTheme.font.subtitle)
           .fontWeight(FontWeight.Medium)
@@ -45,7 +45,7 @@ export struct ModuleCard {
     .alignItems(HorizontalAlign.Start)
     .justifyContent(FlexAlign.Center)
     .backgroundColor(AppTheme.color.surfaceTint)
-    .borderRadius(AppTheme.radius.card)
+    .borderRadius(AppTheme.radius.md)
     .accessibilityText(`${this.title}，${this.summary}`)
     .onClick(() => {
       this.onTap();

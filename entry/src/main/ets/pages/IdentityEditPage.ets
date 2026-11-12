@@ -182,7 +182,7 @@ export struct IdentityEditPage {
               .textAlign(TextAlign.Center)
               .padding({ top: 10, bottom: 10 })
               .backgroundColor(AppTheme.color.surfaceAlt)
-              .borderRadius(10)
+              .borderRadius(AppTheme.radius.md)
               .onClick(() => {
                 this.cancel();
               })
@@ -193,7 +193,7 @@ export struct IdentityEditPage {
               .textAlign(TextAlign.Center)
               .padding({ top: 10, bottom: 10 })
               .backgroundColor(AppTheme.color.primary)
-              .borderRadius(10)
+              .borderRadius(AppTheme.radius.md)
               .accessibilityText('保存身份信息')
               .onClick(() => {
                 this.save();
@@ -234,7 +234,7 @@ export struct IdentityEditPage {
         .width(56)
         .height(56)
         .objectFit(ImageFit.Cover)
-        .borderRadius(28)
+        .borderRadius(AppTheme.radius.xxl)
     } else {
       Column() {
         Text(this.draftNickname.slice(0, 1))
@@ -245,7 +245,7 @@ export struct IdentityEditPage {
       .height(56)
       .justifyContent(FlexAlign.Center)
       .backgroundColor(AppTheme.color.tint)
-      .borderRadius(28)
+      .borderRadius(AppTheme.radius.xxl)
     }
   }
 
@@ -256,7 +256,7 @@ export struct IdentityEditPage {
       .fontColor(AppTheme.color.primary)
       .padding({ left: 10, right: 10, top: 5, bottom: 5 })
       .backgroundColor(AppTheme.color.tint)
-      .borderRadius(8)
+      .borderRadius(AppTheme.radius.sm)
       .accessibilityText(label)
       .onClick(() => {
         this.showSourceSheet = true;
@@ -273,7 +273,7 @@ export struct IdentityEditPage {
         .fontSize(AppTheme.font.bodyStrong)
         .maxLength(limit)
         .backgroundColor(AppTheme.color.surfaceAlt)
-        .borderRadius(8)
+        .borderRadius(AppTheme.radius.sm)
         .padding({ left: 10, right: 10 })
         .onChange((text: string) => {
           onChange(text);

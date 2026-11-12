@@ -126,7 +126,7 @@ export struct ProfileHeader {
             .fontColor(AppTheme.color.accentGold)
             .padding({ left: 6, right: 6, top: 2, bottom: 2 })
             .backgroundColor(AppTheme.color.surfaceWarm)
-            .borderRadius(6)
+            .borderRadius(AppTheme.radius.sm)
             .flexShrink(0)
         }
         .layoutWeight(1)

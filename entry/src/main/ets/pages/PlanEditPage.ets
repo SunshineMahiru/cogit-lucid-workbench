@@ -264,7 +264,7 @@ export struct PlanEditPage {
           .textAlign(TextAlign.Center)
           .padding({ top: 12, bottom: 12 })
           .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
-          .borderRadius(12)
+          .borderRadius(AppTheme.radius.md)
           .onClick(() => {
             this.save();
           })

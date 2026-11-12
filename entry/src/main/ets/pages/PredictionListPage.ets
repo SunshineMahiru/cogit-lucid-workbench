@@ -121,7 +121,7 @@ export struct PredictionListPage {
       .fontColor(this.filter === status ? Color.White : AppTheme.color.textStrong)
       .padding({ left: 12, right: 12, top: 6, bottom: 6 })
       .backgroundColor(this.filter === status ? AppTheme.color.primary : AppTheme.color.chip)
-      .borderRadius(14)
+      .borderRadius(AppTheme.radius.lg)
       .onClick(() => {
         this.selectFilter(status);
       })
@@ -193,7 +193,7 @@ export struct PredictionListPage {
     .width('100%')
     .padding(16)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(14)
+    .borderRadius(AppTheme.radius.lg)
   }
 
   build() {
