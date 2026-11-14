@@ -371,6 +371,17 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // The other person's correction arrived with the relation rework.
+    const relationCorrectionMigrations: string[] = [
+      `ALTER TABLE relation ADD COLUMN correction TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE relation ADD COLUMN correction_at INTEGER NOT NULL DEFAULT 0`
+    ];
+    for (const sql of relationCorrectionMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     const indexSqls: string[] = [
       `CREATE INDEX IF NOT EXISTS idx_event_timestamp ON event(timestamp)`,
       `CREATE INDEX IF NOT EXISTS idx_prediction_status_date ON prediction(status, settlement_date)`,

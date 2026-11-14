@@ -1,6 +1,7 @@
 import { InteractionLog, Relation } from '../model/Relation';
 import { TrustLevel } from '../model/TrustLevel';
 import { RelationDetail, RelationListItem } from './RelationListItem';
+import { normalizeInteractionLog } from './InteractionSource';
 
 /** Chinese label for a trust tier; unknown values fall back to 友好. */
 export function trustLevelText(level: TrustLevel): string {
@@ -62,7 +63,10 @@ export function filterRelationItems(items: RelationListItem[], level: TrustLevel
 
 /** Projects one relation into the detail model, newest interaction first. */
 export function toRelationDetail(relation: Relation): RelationDetail {
-  const logs: InteractionLog[] = relation.interactionLog.slice();
+  const logs: InteractionLog[] = [];
+  for (const log of relation.interactionLog) {
+    logs.push(normalizeInteractionLog(log));
+  }
   logs.sort((left: InteractionLog, right: InteractionLog) => right.timestamp - left.timestamp);
   return {
     id: relation.id,
@@ -76,6 +80,8 @@ export function toRelationDetail(relation: Relation): RelationDetail {
     level: relation.level,
     notes: relation.notes,
     interactionLog: logs,
+    correction: relation.correction ?? '',
+    correctionAt: relation.correctionAt ?? 0,
     linkedEvents: [],
     linkedDecisions: []
   };

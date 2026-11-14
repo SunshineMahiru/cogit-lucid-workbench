@@ -1,4 +1,4 @@
-import { InteractionLog } from '../model/Relation';
+import { CitationScope, InteractionLog, InteractionSource } from '../model/Relation';
 import { ReviewPayload } from '../model/ReviewPayload';
 
 /** 整个进程累计的字段解析异常次数，供首页提示使用。 */
@@ -63,7 +63,20 @@ export function parseInteractionLog(raw: string): InteractionLog[] {
     const timestamp = entry.timestamp;
     const content = entry.content;
     if (typeof timestamp === 'number' && typeof content === 'string') {
-      result.push({ timestamp: timestamp, content: content });
+      const log: InteractionLog = { timestamp: timestamp, content: content };
+      const source = entry.source;
+      const citation = entry.citation;
+      const allowContext = entry.allowContext;
+      if (typeof source === 'string') {
+        log.source = source as InteractionSource;
+      }
+      if (typeof citation === 'string') {
+        log.citation = citation as CitationScope;
+      }
+      if (typeof allowContext === 'boolean') {
+        log.allowContext = allowContext;
+      }
+      result.push(log);
     } else {
       issueCount += 1;
     }

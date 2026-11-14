@@ -25,6 +25,8 @@ export class RelationDao {
       [RELATION_COLS.FORBID_ANALYSIS]: relation.forbidAnalysis ? 1 : 0,
       [RELATION_COLS.LEVEL]: relation.level,
       [RELATION_COLS.DELETED]: relation.deleted === true ? 1 : 0,
+      [RELATION_COLS.CORRECTION]: relation.correction ?? '',
+      [RELATION_COLS.CORRECTION_AT]: relation.correctionAt ?? 0,
       [RELATION_COLS.NOTES]: relation.notes
     };
     return this.store.insert(DB_TABLES.RELATION, values);
@@ -32,14 +34,17 @@ export class RelationDao {
 
   /** Updates the editable profile fields of a relation. */
   async updateProfile(id: string, name: string, trustLevel: TrustLevel, rawMaterialTest: boolean,
-    forbidAnalysis: boolean, level: SecurityLevel, notes: string): Promise<number> {
+    forbidAnalysis: boolean, level: SecurityLevel, notes: string, correction: string,
+    correctionAt: number): Promise<number> {
     const values: relationalStore.ValuesBucket = {
       [RELATION_COLS.NAME]: name,
       [RELATION_COLS.TRUST_LEVEL]: trustLevel,
       [RELATION_COLS.RAW_MATERIAL_TEST]: rawMaterialTest ? 1 : 0,
       [RELATION_COLS.FORBID_ANALYSIS]: forbidAnalysis ? 1 : 0,
       [RELATION_COLS.LEVEL]: level,
-      [RELATION_COLS.NOTES]: notes
+      [RELATION_COLS.NOTES]: notes,
+      [RELATION_COLS.CORRECTION]: correction,
+      [RELATION_COLS.CORRECTION_AT]: correctionAt
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.RELATION);
     predicates.equalTo(RELATION_COLS.ID, id);
@@ -123,7 +128,25 @@ export class RelationDao {
       forbidAnalysis: resultSet.getLong(resultSet.getColumnIndex(RELATION_COLS.FORBID_ANALYSIS)) === 1,
       level: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.LEVEL)) as SecurityLevel,
       deleted: resultSet.getLong(resultSet.getColumnIndex(RELATION_COLS.DELETED)) === 1,
+      correction: this.readText(resultSet, RELATION_COLS.CORRECTION),
+      correctionAt: this.readLong(resultSet, RELATION_COLS.CORRECTION_AT),
       notes: resultSet.getString(resultSet.getColumnIndex(RELATION_COLS.NOTES))
     };
+  }
+
+  /** Reads an optional text column; a missing column reads as empty. */
+  private readText(resultSet: relationalStore.ResultSet, column: string): string {
+    const index = resultSet.getColumnIndex(column);
+    if (index < 0) {
+      return '';
+    }
+    const value = resultSet.getString(index);
+    return value === undefined ? '' : value;
+  }
+
+  /** Reads an optional integer column; a missing column reads as zero. */
+  private readLong(resultSet: relationalStore.ResultSet, column: string): number {
+    const index = resultSet.getColumnIndex(column);
+    return index < 0 ? 0 : resultSet.getLong(index);
   }
 }

@@ -36,6 +36,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     forbid_analysis INTEGER NOT NULL,
     level TEXT NOT NULL,
     deleted INTEGER NOT NULL DEFAULT 0,
+    correction TEXT NOT NULL DEFAULT '',
+    correction_at INTEGER NOT NULL DEFAULT 0,
     notes TEXT NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PREDICTION} (

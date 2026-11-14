@@ -146,6 +146,11 @@ export struct RelationGraphPage {
                     .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
+                  Text('星图只表示你记录过的人与层级，不表示这些人彼此之间的关系，也不推断任何人的动机。')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(15)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
                   Row({ space: 12 }) {
                     this.legendItem(TrustLevel.FRIENDLY)
                     this.legendItem(TrustLevel.SINCERE)

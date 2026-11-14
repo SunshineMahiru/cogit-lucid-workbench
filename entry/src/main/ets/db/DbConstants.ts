@@ -97,6 +97,8 @@ export const RELATION_COLS = {
   FORBID_ANALYSIS: 'forbid_analysis',
   LEVEL: 'level',
   DELETED: 'deleted',
+  CORRECTION: 'correction',
+  CORRECTION_AT: 'correction_at',
   NOTES: 'notes'
 } as const;
 

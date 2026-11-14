@@ -44,14 +44,6 @@ export struct RelationCard {
             .layoutWeight(1)
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
-          if (this.item.rawMaterialTest) {
-            Text('未加工材料')
-              .fontSize(AppTheme.font.caption)
-              .fontColor(AppTheme.color.primaryDeep)
-              .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
-              .backgroundColor(AppTheme.color.tint)
-              .borderRadius(AppTheme.radius.sm)
-          }
           if (this.item.forbidAnalysis) {
             Text('禁分析')
               .fontSize(AppTheme.font.caption)

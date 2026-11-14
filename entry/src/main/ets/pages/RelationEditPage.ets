@@ -16,10 +16,12 @@ export struct RelationEditPage {
   @Local notes: string = '';
   @Local rawMaterialTest: boolean = false;
   @Local forbidAnalysis: boolean = false;
+  @Local correction: string = '';
   @Local level: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
   @Local isDirty: boolean = false;
+  @Local isEditing: boolean = false;
   @Local errorText: string = '';
   @Local isPreview: boolean = false;
   private relationId: string | null = null;
@@ -27,6 +29,7 @@ export struct RelationEditPage {
 
   private async load(relationId: string | null): Promise<void> {
     this.relationId = relationId;
+    this.isEditing = relationId !== null;
     if (relationId === null) {
       this.isLoading = false;
       return;
@@ -47,6 +50,7 @@ export struct RelationEditPage {
         this.notes = detail.notes;
         this.rawMaterialTest = detail.rawMaterialTest;
         this.forbidAnalysis = detail.forbidAnalysis;
+        this.correction = detail.correction;
         this.level = detail.level;
       } else {
         this.errorText = '关系记录不存在';
@@ -76,7 +80,7 @@ export struct RelationEditPage {
     try {
       const service = await RelationService.open(hostContext);
       await service.save(this.relationId, this.name, this.trustLevel, this.rawMaterialTest,
-        this.forbidAnalysis, this.level, this.notes);
+        this.forbidAnalysis, this.level, this.notes, this.correction);
       notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '关系已保存' });
       this.isDirty = false;
@@ -147,7 +151,7 @@ export struct RelationEditPage {
   build() {
     AppDestination({
       route: 'relation_edit',
-      title: this.relationId === null ? '新建关系' : '编辑关系',
+      title: this.isEditing ? '编辑关系' : '新建关系',
       content: () => {
         this.relationEditBody();
       },
@@ -232,11 +236,11 @@ export struct RelationEditPage {
 
             SectionCard() {
               Column({ space: 8 }) {
-                Text('信任层级')
+                Text('披露层级')
                   .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
-                Text('友好：日常往来；真诚：能谈真实想法；透明：能看未加工的材料。')
+                Text('友好：日常往来；真诚：可以表达真实想法；透明：可以共同承担敏感材料。层级只说明你能谈到哪一层，不代表可以推断对方动机。')
                   .fontSize(AppTheme.font.caption)
                   .lineHeight(15)
                   .fontColor(AppTheme.color.textMuted)
@@ -274,25 +278,44 @@ export struct RelationEditPage {
 
             SectionCard() {
               Column({ space: 8 }) {
-                Text('分析边界')
+                Text('披露与引用边界')
                   .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
-                Text('未加工材料测试：对方是否看过你未整理的材料；禁止动机分析：复盘 Agent 不推测对方动机。')
+                Text('本应用不推断对方动机、人格或关系结局。对方的话与自己的推测分开记录，引用范围按每条互动单独设置。')
                   .fontSize(AppTheme.font.caption)
                   .lineHeight(15)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
-                Row({ space: 8 }) {
-                  this.flagChip('未加工材料测试', this.rawMaterialTest, () => {
-                    this.rawMaterialTest = !this.rawMaterialTest;
+                this.flagChip('禁止任何动机推断', this.forbidAnalysis, () => {
+                  this.forbidAnalysis = !this.forbidAnalysis;
+                  this.isDirty = true;
+                })
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
+
+            SectionCard() {
+              Column({ space: 6 }) {
+                Text('对方怎样纠正了我的理解')
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                Text('只写对方明确说过的内容；这条会参与模型修订，不写猜测。')
+                  .fontSize(AppTheme.font.caption)
+                  .lineHeight(15)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+                TextArea({ text: this.correction, placeholder: '例如：他说那天只是累了，不是对我不满' })
+                  .height(90)
+                  .maxLength(200)
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .id('relation_correction')
+                  .onChange((value: string) => {
+                    this.correction = value;
                     this.isDirty = true;
                   })
-                  this.flagChip('禁止动机分析', this.forbidAnalysis, () => {
-                    this.forbidAnalysis = !this.forbidAnalysis;
-                    this.isDirty = true;
-                  })
-                }
               }
               .width('100%')
               .alignItems(HorizontalAlign.Start)

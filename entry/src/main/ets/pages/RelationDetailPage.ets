@@ -3,8 +3,21 @@ import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { RelationTrustBadge } from '../components/RelationTrustBadge';
 import { NoteEmptyState } from '../components/NoteEmptyState';
-import { RelationDetail, RelationService, formatInteractionTime, trustLevelText, relationTrustDecision } from '../relation';
-import { InteractionLog } from '../model/Relation';
+import {
+  RelationDetail,
+  RelationService,
+  formatInteractionTime,
+  trustLevelText,
+  disclosureBoundaryOf,
+  SOURCE_OPTIONS,
+  CITATION_OPTIONS,
+  sourceText,
+  citationText,
+  toInteractionSource,
+  toCitationScope,
+  isOtherStatement
+} from '../relation';
+import { CitationScope, InteractionLog, InteractionSource } from '../model/Relation';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
 import { securityLevelText } from '../note';
@@ -28,20 +41,26 @@ export struct RelationDetailPage {
     level: SecurityLevel.LOCAL_ONLY,
     notes: '',
     interactionLog: [],
+    correction: '',
+    correctionAt: 0,
     linkedEvents: [],
     linkedDecisions: []
   };
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
-  @Local trustAllowed: boolean = false;
-  @Local trustReason: string = '';
+  @Local boundaryShare: string = '';
+  @Local boundaryRule: string = '';
   @Local isPreview: boolean = false;
   @Local deleted: boolean = false;
   @Local undoVisible: boolean = false;
   @Local newInteraction: string = '';
+  @Local newSource: InteractionSource = 'observation';
+  @Local newCitation: CitationScope = 'hidden';
+  @Local newAllowContext: boolean = false;
   @Local isAdding: boolean = false;
   private navStack: NavPathStack | null = null;
   private service: RelationService | null = null;
+  private hasShownOnce: boolean = false;
 
   private async load(relationId: string): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
@@ -57,9 +76,9 @@ export struct RelationDetailPage {
         this.missing = true;
       } else {
         this.detail = detail;
-        const decision = relationTrustDecision(detail);
-        this.trustAllowed = decision.allowMotiveAnalysis;
-        this.trustReason = decision.reason;
+        const boundary = disclosureBoundaryOf(detail.trustLevel, detail.forbidAnalysis);
+        this.boundaryShare = boundary.shareable;
+        this.boundaryRule = boundary.rule;
       }
     } catch (error) {
       this.loadPreview(relationId);
@@ -75,9 +94,9 @@ export struct RelationDetailPage {
       this.missing = true;
     } else {
       this.detail = detail;
-      const decision = relationTrustDecision(detail);
-      this.trustAllowed = decision.allowMotiveAnalysis;
-      this.trustReason = decision.reason;
+      const boundary = disclosureBoundaryOf(detail.trustLevel, detail.forbidAnalysis);
+      this.boundaryShare = boundary.shareable;
+      this.boundaryRule = boundary.rule;
     }
     this.isLoading = false;
   }
@@ -135,7 +154,13 @@ export struct RelationDetailPage {
     try {
       if (this.isPreview) {
         const now = Date.now();
-        const entry: InteractionLog = { timestamp: now, content: text };
+        const entry: InteractionLog = {
+          timestamp: now,
+          content: text,
+          source: this.newSource,
+          citation: this.newCitation,
+          allowContext: this.newAllowContext
+        };
         const log: InteractionLog[] = [entry].concat(this.detail.interactionLog);
         this.detail = {
           id: this.detail.id,
@@ -149,17 +174,57 @@ export struct RelationDetailPage {
           level: this.detail.level,
           notes: this.detail.notes,
           interactionLog: log,
+          correction: this.detail.correction,
+          correctionAt: this.detail.correctionAt,
           linkedEvents: this.detail.linkedEvents,
           linkedDecisions: this.detail.linkedDecisions
         };
       } else if (this.service !== null) {
-        this.detail = await this.service.addInteraction(this.detail.id, text);
+        this.detail = await this.service.addInteraction(this.detail.id, text,
+          this.newSource, this.newCitation, this.newAllowContext);
       }
       this.newInteraction = '';
+      this.newSource = 'observation';
+      this.newCitation = 'hidden';
+      this.newAllowContext = false;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '互动记录保存失败，请重试' });
     } finally {
       this.isAdding = false;
+    }
+  }
+
+  private async cycleCitation(log: InteractionLog): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: '演示模式下不能修改引用范围' });
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    const current = toCitationScope(log.citation ?? '');
+    const next: CitationScope = current === 'hidden' ? 'paraphrase' : (current === 'paraphrase' ? 'quote' : 'hidden');
+    try {
+      this.detail = await this.service.updateInteractionScope(this.detail.id, log.timestamp, next,
+        log.allowContext === true);
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '引用范围保存失败，请重试' });
+    }
+  }
+
+  private async toggleContext(log: InteractionLog): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: '演示模式下不能修改上下文许可' });
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    try {
+      this.detail = await this.service.updateInteractionScope(this.detail.id, log.timestamp,
+        toCitationScope(log.citation ?? ''), log.allowContext !== true);
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '上下文许可保存失败，请重试' });
     }
   }
 
@@ -243,6 +308,15 @@ export struct RelationDetailPage {
         }
         const params = context.pathInfo.param as RelationDetailParams;
         this.load(params.relationId);
+      },
+      onDestinationShown: () => {
+        if (!this.hasShownOnce) {
+          this.hasShownOnce = true;
+          return;
+        }
+        if (this.detail.id.length > 0) {
+          this.load(this.detail.id);
+        }
       }
     })
   }
@@ -312,14 +386,6 @@ export struct RelationDetailPage {
                 .width('100%')
 
                 Row({ space: 6 }) {
-                  if (this.detail.rawMaterialTest) {
-                    Text('未加工材料')
-                      .fontSize(AppTheme.font.caption)
-                      .fontColor(AppTheme.color.primaryDeep)
-                      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
-                      .backgroundColor(AppTheme.color.tint)
-                      .borderRadius(AppTheme.radius.sm)
-                  }
                   if (this.detail.forbidAnalysis) {
                     Text('禁分析')
                       .fontSize(AppTheme.font.caption)
@@ -341,7 +407,7 @@ export struct RelationDetailPage {
 
             SectionCard() {
               Column() {
-                this.infoRow('信任层级', trustLevelText(this.detail.trustLevel))
+                this.infoRow('披露层级', trustLevelText(this.detail.trustLevel))
                 this.infoRow('密级', securityLevelText(this.detail.level))
                 this.infoRow('互动次数', `${this.detail.interactionCount} 次`)
                 this.infoRow('最近互动', this.detail.lastInteractionLabel)
@@ -351,16 +417,17 @@ export struct RelationDetailPage {
 
             SectionCard() {
               Column({ space: 5 }) {
-                Text('可分析边界')
+                Text('披露与引用边界')
                   .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
-                Text(this.trustAllowed ? '允许动机分析' : '仅描述，不做动机分析')
+                Text(this.boundaryShare)
                   .fontSize(AppTheme.font.bodyStrong)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor(this.trustAllowed ? AppTheme.color.success : AppTheme.color.warning)
+                  .lineHeight(20)
+                  .fontColor(AppTheme.color.text)
                   .width('100%')
-                Text(this.trustReason)
+                Text(this.boundaryRule)
                   .fontSize(AppTheme.font.body)
                   .lineHeight(18)
                   .fontColor(AppTheme.color.textMuted)
@@ -368,6 +435,24 @@ export struct RelationDetailPage {
               }
               .width('100%')
               .alignItems(HorizontalAlign.Start)
+            }
+
+            if (this.detail.correction.length > 0) {
+              SectionCard() {
+                Column({ space: 5 }) {
+                  Text('对方怎样纠正了我的理解')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Text(this.detail.correction)
+                    .fontSize(AppTheme.font.bodyStrong)
+                    .lineHeight(20)
+                    .fontColor(AppTheme.color.text)
+                    .width('100%')
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
             }
 
             SectionCard() {
@@ -426,6 +511,64 @@ export struct RelationDetailPage {
                   .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
+                Text('先选这条属于谁的：自己的观察、对方明确说过的话、共同做的事，还是自己的推测。')
+                  .fontSize(AppTheme.font.caption)
+                  .lineHeight(15)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+                Flex({ wrap: FlexWrap.Wrap }) {
+                  ForEach(SOURCE_OPTIONS, (option: InteractionSource) => {
+                    Text(sourceText(option))
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(this.newSource === option ? Color.White : AppTheme.color.text)
+                      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+                      .backgroundColor(this.newSource === option ? AppTheme.color.primary : AppTheme.color.chip)
+                      .borderRadius(AppTheme.radius.md)
+                      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+                      .id(`relation_source_${option}`)
+                      .onClick(() => {
+                        this.newSource = option;
+                        if (option !== 'stated') {
+                          this.newCitation = 'hidden';
+                          this.newAllowContext = false;
+                        }
+                      })
+                  }, (option: InteractionSource) => option)
+                }
+                .width('100%')
+                if (this.newSource === 'stated') {
+                  Text('对方的话默认只留在本机；引用范围与上下文许可按这一条单独选择。')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(15)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  Flex({ wrap: FlexWrap.Wrap }) {
+                    ForEach(CITATION_OPTIONS, (option: CitationScope) => {
+                      Text(citationText(option))
+                        .fontSize(AppTheme.font.caption)
+                        .fontColor(this.newCitation === option ? Color.White : AppTheme.color.text)
+                        .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+                        .backgroundColor(this.newCitation === option ? AppTheme.color.primary : AppTheme.color.chip)
+                        .borderRadius(AppTheme.radius.md)
+                        .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+                        .id(`relation_citation_${option}`)
+                        .onClick(() => {
+                          this.newCitation = option;
+                        })
+                    }, (option: CitationScope) => option)
+                  }
+                  .width('100%')
+                  Text(this.newAllowContext ? '可进入模型上下文 · 已允许' : '可进入模型上下文 · 未允许')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(this.newAllowContext ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+                    .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+                    .backgroundColor(this.newAllowContext ? AppTheme.color.tint : AppTheme.color.chip)
+                    .borderRadius(AppTheme.radius.md)
+                    .id('relation_context_toggle')
+                    .onClick(() => {
+                      this.newAllowContext = !this.newAllowContext;
+                    })
+                }
                 Row({ space: 8 }) {
                   TextInput({ text: this.newInteraction, placeholder: '补一条互动记录' })
                     .id('relation_interaction_input')
@@ -452,19 +595,53 @@ export struct RelationDetailPage {
                 } else {
                   ForEach(this.detail.interactionLog, (log: InteractionLog, index: number) => {
                     Column({ space: 3 }) {
-                      Text(formatInteractionTime(log.timestamp))
-                        .fontSize(AppTheme.font.caption)
-                        .fontColor(AppTheme.color.textMuted)
-                        .width('100%')
+                      Row({ space: 6 }) {
+                        Text(sourceText(toInteractionSource(log.source ?? '')))
+                          .fontSize(AppTheme.font.caption)
+                          .fontColor(isOtherStatement(log) ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+                          .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                          .backgroundColor(isOtherStatement(log) ? AppTheme.color.tint : AppTheme.color.chip)
+                          .borderRadius(AppTheme.radius.sm)
+                        Blank()
+                        Text(formatInteractionTime(log.timestamp))
+                          .fontSize(AppTheme.font.caption)
+                          .fontColor(AppTheme.color.textMuted)
+                      }
+                      .width('100%')
                       Text(log.content)
                         .fontSize(AppTheme.font.bodyStrong)
                         .lineHeight(20)
                         .fontColor(AppTheme.color.text)
                         .width('100%')
+                      if (isOtherStatement(log)) {
+                        Row({ space: 6 }) {
+                          Text(citationText(toCitationScope(log.citation ?? '')))
+                            .fontSize(AppTheme.font.caption)
+                            .fontColor(AppTheme.color.primary)
+                            .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                            .backgroundColor(AppTheme.color.surfaceAlt)
+                            .borderRadius(AppTheme.radius.sm)
+                            .accessibilityText('切换引用范围')
+                            .onClick(() => {
+                              this.cycleCitation(log);
+                            })
+                          Text(log.allowContext === true ? '可进上下文' : '不进上下文')
+                            .fontSize(AppTheme.font.caption)
+                            .fontColor(log.allowContext === true ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+                            .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                            .backgroundColor(log.allowContext === true ? AppTheme.color.tint : AppTheme.color.chip)
+                            .borderRadius(AppTheme.radius.sm)
+                            .onClick(() => {
+                              this.toggleContext(log);
+                            })
+                        }
+                        .width('100%')
+                      }
                     }
                     .width('100%')
                     .padding({ bottom: AppTheme.spacing.s6 })
-                  }, (log: InteractionLog, index: number) => `${log.timestamp}_${index}`)
+                  }, (log: InteractionLog, index: number) =>
+                    `${log.timestamp}_${index}_${log.citation ?? ''}_${log.allowContext === true ? 1 : 0}`)
                 }
               }
               .width('100%')

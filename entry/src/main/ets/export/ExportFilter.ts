@@ -1,8 +1,9 @@
 import { Anchor } from '../model/Anchor';
 import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
+import { InteractionLog, Relation } from '../model/Relation';
 import { Prediction } from '../model/Prediction';
-import { Relation } from '../model/Relation';
+import { visibleInExport } from '../relation/InteractionSource';
 import { ReviewResult } from '../model/ReviewResult';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { StatusRecord } from '../model/StatusRecord';
@@ -95,7 +96,32 @@ function prepareRelations(relations: Relation[]): Relation[] {
   const items: Relation[] = [];
   for (const relation of relations) {
     if (isExportable(relation.level)) {
-      items.push(relation);
+      const logs: InteractionLog[] = [];
+      for (const log of relation.interactionLog) {
+        if (visibleInExport(log)) {
+          logs.push(log);
+          continue;
+        }
+        logs.push({
+          timestamp: log.timestamp,
+          content: '（对方陈述仅保存在本机）',
+          source: 'stated',
+          citation: 'hidden',
+          allowContext: false
+        });
+      }
+      items.push({
+        id: relation.id,
+        name: relation.name,
+        trustLevel: relation.trustLevel,
+        interactionLog: logs,
+        rawMaterialTest: relation.rawMaterialTest,
+        forbidAnalysis: relation.forbidAnalysis,
+        correction: relation.correction ?? '',
+        correctionAt: relation.correctionAt ?? 0,
+        level: relation.level,
+        notes: relation.notes
+      });
     }
   }
   return items;

@@ -1,7 +1,7 @@
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { MOCK_RELATIONS } from '../model/mockData';
-import { Relation } from '../model/Relation';
+import { InteractionLog, CitationScope, InteractionSource, Relation } from '../model/Relation';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
 import { createRelation } from '../model/factories';
@@ -56,7 +56,7 @@ export class RelationService {
 
   /** Creates or updates one relation profile and returns its detail. */
   async save(id: string | null, name: string, trustLevel: TrustLevel, rawMaterialTest: boolean,
-    forbidAnalysis: boolean, level: SecurityLevel, notes: string): Promise<RelationDetail> {
+    forbidAnalysis: boolean, level: SecurityLevel, notes: string, correction: string = ''): Promise<RelationDetail> {
     const relation: Relation = id === null ? createRelation() : await this.requireRelation(id);
     relation.name = name.trim();
     relation.trustLevel = trustLevel;
@@ -64,11 +64,17 @@ export class RelationService {
     relation.forbidAnalysis = forbidAnalysis;
     relation.level = level;
     relation.notes = notes.trim();
+    const correctionText = correction.trim();
+    if (correctionText !== (relation.correction ?? '')) {
+      relation.correction = correctionText;
+      relation.correctionAt = correctionText.length === 0 ? 0 : Date.now();
+    }
     if (id === null) {
       await this.relationDao.insert(relation);
     } else {
       await this.relationDao.updateProfile(relation.id, relation.name, relation.trustLevel,
-        relation.rawMaterialTest, relation.forbidAnalysis, relation.level, relation.notes);
+        relation.rawMaterialTest, relation.forbidAnalysis, relation.level, relation.notes,
+        relation.correction ?? '', relation.correctionAt ?? 0);
     }
     return toRelationDetail(relation);
   }
@@ -84,14 +90,38 @@ export class RelationService {
   }
 
   /** Appends one interaction to the relation log and returns the refreshed detail. */
-  async addInteraction(id: string, content: string): Promise<RelationDetail> {
+  async addInteraction(id: string, content: string, source: InteractionSource = 'observation',
+    citation: CitationScope = 'hidden', allowContext: boolean = false): Promise<RelationDetail> {
     const relation = await this.requireRelation(id);
     const text = content.trim();
     if (text.length === 0) {
       throw new Error('empty interaction');
     }
     const log = relation.interactionLog.slice();
-    log.push({ timestamp: Date.now(), content: text });
+    log.push({ timestamp: Date.now(), content: text, source: source, citation: citation, allowContext: allowContext });
+    await this.relationDao.update(id, log, relation.notes);
+    relation.interactionLog = log;
+    return toRelationDetail(relation);
+  }
+
+  /** Changes how far one existing entry may travel. */
+  async updateInteractionScope(id: string, timestamp: number, citation: CitationScope,
+    allowContext: boolean): Promise<RelationDetail> {
+    const relation = await this.requireRelation(id);
+    const log: InteractionLog[] = [];
+    for (const entry of relation.interactionLog) {
+      if (entry.timestamp === timestamp) {
+        log.push({
+          timestamp: entry.timestamp,
+          content: entry.content,
+          source: entry.source ?? 'observation',
+          citation: citation,
+          allowContext: allowContext
+        });
+      } else {
+        log.push(entry);
+      }
+    }
     await this.relationDao.update(id, log, relation.notes);
     relation.interactionLog = log;
     return toRelationDetail(relation);

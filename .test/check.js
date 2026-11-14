@@ -49,7 +49,20 @@ const {
   statusRevisionOf
 } = require('./out2/status/StatusRevisions');
 const { parseReviewPrompts } = require('./out2/network/ReviewPrompt');
-const { BasicTrustPolicy } = require('./out2/analysis/trust/BasicTrustPolicy');
+const {
+  disclosureBoundaryOf
+} = require('./out2/relation/DisclosureBoundary');
+const {
+  normalizeInteractionLog,
+  visibleInExport,
+  allowedInContext,
+  toInteractionSource,
+  toCitationScope,
+  sourceText,
+  citationText,
+  SOURCE_OPTIONS,
+  CITATION_OPTIONS
+} = require('./out2/relation/InteractionSource');
 const { buildPredictionStats } = require('./out2/prediction/PredictionStats');
 const {
   toReviewHistoryItem,
@@ -893,13 +906,46 @@ test('复盘历史投影保留锚点顺序并标注周月', () => {
   assert.strictEqual(detail.periodLabel, '周复盘');
 });
 
-test('信任策略按层级与标记决定是否做动机分析', () => {
-  const policy = new BasicTrustPolicy();
-  assert.strictEqual(policy.decide({ trustLevel: 'friendly', rawMaterialTest: true, forbidAnalysis: false }).allowMotiveAnalysis, false);
-  assert.strictEqual(policy.decide({ trustLevel: 'sincere', rawMaterialTest: false, forbidAnalysis: false }).allowMotiveAnalysis, false);
-  assert.strictEqual(policy.decide({ trustLevel: 'sincere', rawMaterialTest: true, forbidAnalysis: false }).allowMotiveAnalysis, true);
-  assert.strictEqual(policy.decide({ trustLevel: 'transparent', rawMaterialTest: true, forbidAnalysis: false }).allowMotiveAnalysis, true);
-  assert.strictEqual(policy.decide({ trustLevel: 'transparent', rawMaterialTest: true, forbidAnalysis: true }).allowMotiveAnalysis, false);
+test('披露层级只说明可分享范围，不授予动机分析', () => {
+  const friendly = disclosureBoundaryOf('friendly', false);
+  assert.ok(friendly.shareable.indexOf('默认只留在本机') >= 0);
+  assert.ok(friendly.rule.indexOf('不推断') >= 0);
+  assert.strictEqual(friendly.rule.indexOf('允许'), -1);
+
+  const transparent = disclosureBoundaryOf('transparent', false);
+  assert.ok(transparent.shareable.indexOf('共同承担') >= 0);
+  assert.strictEqual(transparent.tierText, '透明');
+
+  const blocked = disclosureBoundaryOf('transparent', true);
+  assert.ok(blocked.rule.indexOf('已禁止') >= 0);
+});
+
+test('互动来源与引用范围默认为观察、仅本机、不进上下文', () => {
+  assert.deepStrictEqual(SOURCE_OPTIONS, ['observation', 'stated', 'joint', 'inference']);
+  assert.deepStrictEqual(CITATION_OPTIONS, ['hidden', 'paraphrase', 'quote']);
+  assert.strictEqual(sourceText('stated'), '对方明确陈述');
+  assert.strictEqual(citationText('paraphrase'), '可转述');
+  assert.strictEqual(toInteractionSource('unknown'), 'observation');
+  assert.strictEqual(toCitationScope('unknown'), 'hidden');
+
+  const normalized = normalizeInteractionLog({ timestamp: 1, content: '他说不用等' });
+  assert.strictEqual(normalized.source, 'observation');
+  assert.strictEqual(normalized.citation, 'hidden');
+  assert.strictEqual(normalized.allowContext, false);
+  assert.strictEqual(allowedInContext(normalized), false);
+});
+
+test('对方陈述默认不进导出，提高范围后才出现', () => {
+  const statement = { timestamp: 1, content: '他说那天只是累了', source: 'stated', citation: 'hidden', allowContext: false };
+  assert.strictEqual(visibleInExport(statement), false);
+  assert.strictEqual(visibleInExport({ timestamp: 1, content: '我看到的', source: 'observation' }), true);
+  assert.strictEqual(visibleInExport({
+    timestamp: 1,
+    content: '他说那天只是累了',
+    source: 'stated',
+    citation: 'paraphrase',
+    allowContext: false
+  }), true);
 });
 
 test('数据库状态与能力缺失码', () => {

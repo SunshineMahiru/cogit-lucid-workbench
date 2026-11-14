@@ -23,6 +23,10 @@ export interface RelationListItem {
 export interface RelationDetail extends RelationListItem {
   /** Newest interaction first */
   interactionLog: InteractionLog[];
+  /** How the other person corrected the author's understanding */
+  correction: string;
+  /** Epoch milliseconds of the latest correction; zero when never corrected */
+  correctionAt: number;
   /** Titles of notes that reference this relation */
   linkedEvents: string[];
   /** Titles of decisions that reference this relation */

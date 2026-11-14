@@ -8,4 +8,17 @@ export {
   trustLevelText
 } from './RelationListMapper';
 export { RelationService } from './RelationService';
-export { relationTrustDecision } from './RelationTrust';
+export type { DisclosureBoundary } from './DisclosureBoundary';
+export { disclosureBoundaryOf } from './DisclosureBoundary';
+export {
+  CITATION_OPTIONS,
+  SOURCE_OPTIONS,
+  allowedInContext,
+  citationText,
+  isOtherStatement,
+  normalizeInteractionLog,
+  sourceText,
+  toCitationScope,
+  toInteractionSource,
+  visibleInExport
+} from './InteractionSource';

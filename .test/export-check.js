@@ -585,16 +585,33 @@ async function main() {
 
   await test('关系与预测字段完整，空值有兜底', () => {
     const markdown = renderExportDocument(bundle({
-      relations: [relation({ interactionLog: [] })],
+      relations: [relation({ interactionLog: [], correction: '他说那天只是累了' })],
       predictions: [prediction({ hit: null, status: 'pending', actualResult: '' })]
     }));
-    assert.ok(markdown.includes('- 信任分层：真诚'));
-    assert.ok(markdown.includes('- 未加工材料测试：是'));
-    assert.ok(markdown.includes('- 禁止动机分析：否'));
+    assert.ok(markdown.includes('- 披露层级：真诚'));
+    assert.ok(markdown.includes('- 披露与引用边界：'));
+    assert.ok(markdown.includes('- 禁止推断：否，但本应用不推断动机与关系结局'));
+    assert.ok(markdown.includes('- 对方怎样纠正了我的理解：他说那天只是累了'));
     assert.ok(markdown.includes('- 互动记录：—'));
     assert.ok(markdown.includes('- 命中：未结算'));
     assert.ok(markdown.includes('- 实际结果：—'));
     assert.ok(markdown.includes('- 置信度：70%'));
+  });
+
+  await test('对方陈述默认不进导出文件', () => {
+    const markdown = renderExportDocument(prepareExportBundle(bundle({
+      relations: [relation({
+        interactionLog: [
+          { timestamp: NOW, content: '我看到的：他沉默了', source: 'observation' },
+          { timestamp: NOW + 1000, content: '他说不想再讨论', source: 'stated', citation: 'hidden', allowContext: false },
+          { timestamp: NOW + 2000, content: '他说可以晚点再谈', source: 'stated', citation: 'paraphrase', allowContext: true }
+        ]
+      })]
+    })));
+    assert.ok(markdown.includes('我看到的：他沉默了'));
+    assert.ok(markdown.includes('（对方陈述仅保存在本机）'));
+    assert.strictEqual(markdown.includes('他说不想再讨论'), false);
+    assert.ok(markdown.includes('他说可以晚点再谈'));
   });
 
   await test('锚点按 order 编号，状态按日期倒序', () => {
