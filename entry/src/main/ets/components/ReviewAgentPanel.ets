@@ -19,6 +19,8 @@ export struct ReviewAgentPanel {
   @Param interpretationLevel: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Param relationForbidsAnalysis: boolean = false;
   @Event onInsert: (text: string) => void = () => {};
+  @Local factsLevelValue: SecurityLevel = SecurityLevel.LOCAL_ONLY;
+  @Local interpretationLevelValue: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Local candidates: ContradictionCandidate[] = [];
   @Local isLoading: boolean = false;
   @Local message: string = '';
@@ -71,13 +73,18 @@ export struct ReviewAgentPanel {
     }
   }
 
+  aboutToAppear(): void {
+    this.factsLevelValue = this.factsLevel;
+    this.interpretationLevelValue = this.interpretationLevel;
+  }
+
   private buildInput(): ContradictionInput {
     return {
       facts: this.facts,
       interpretation: this.interpretation,
       anchors: this.anchors,
-      factsLevel: this.factsLevel,
-      interpretationLevel: this.interpretationLevel,
+      factsLevel: this.factsLevelValue,
+      interpretationLevel: this.interpretationLevelValue,
       relationForbidsAnalysis: this.relationForbidsAnalysis
     };
   }
@@ -179,6 +186,87 @@ export struct ReviewAgentPanel {
           })
       }
       .width('100%')
+
+      Row({ space: 6 }) {
+        Text('事实密级')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textSecondary)
+          .width(64)
+        Text('可分析')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(this.factsLevelValue === SecurityLevel.ANALYZABLE ? Color.White : AppTheme.color.text)
+          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+          .backgroundColor(this.factsLevelValue === SecurityLevel.ANALYZABLE ? AppTheme.color.primary : AppTheme.color.chip)
+          .borderRadius(AppTheme.radius.sm)
+          .id('agent_level_facts_analyzable')
+          .onClick(() => {
+            this.factsLevelValue = SecurityLevel.ANALYZABLE;
+          })
+        Text('仅本地')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(this.factsLevelValue === SecurityLevel.LOCAL_ONLY ? Color.White : AppTheme.color.text)
+          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+          .backgroundColor(this.factsLevelValue === SecurityLevel.LOCAL_ONLY ? AppTheme.color.primary : AppTheme.color.chip)
+          .borderRadius(AppTheme.radius.sm)
+          .id('agent_level_facts_local')
+          .onClick(() => {
+            this.factsLevelValue = SecurityLevel.LOCAL_ONLY;
+          })
+        Text('已封存')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(this.factsLevelValue === SecurityLevel.SEALED ? Color.White : AppTheme.color.text)
+          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+          .backgroundColor(this.factsLevelValue === SecurityLevel.SEALED ? AppTheme.color.primary : AppTheme.color.chip)
+          .borderRadius(AppTheme.radius.sm)
+          .id('agent_level_facts_sealed')
+          .onClick(() => {
+            this.factsLevelValue = SecurityLevel.SEALED;
+          })
+      }
+      .width('100%')
+
+      Row({ space: 6 }) {
+        Text('解释密级')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textSecondary)
+          .width(64)
+        Text('可分析')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(this.interpretationLevelValue === SecurityLevel.ANALYZABLE ? Color.White : AppTheme.color.text)
+          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+          .backgroundColor(this.interpretationLevelValue === SecurityLevel.ANALYZABLE ? AppTheme.color.primary : AppTheme.color.chip)
+          .borderRadius(AppTheme.radius.sm)
+          .id('agent_level_interpretation_analyzable')
+          .onClick(() => {
+            this.interpretationLevelValue = SecurityLevel.ANALYZABLE;
+          })
+        Text('仅本地')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(this.interpretationLevelValue === SecurityLevel.LOCAL_ONLY ? Color.White : AppTheme.color.text)
+          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+          .backgroundColor(this.interpretationLevelValue === SecurityLevel.LOCAL_ONLY ? AppTheme.color.primary : AppTheme.color.chip)
+          .borderRadius(AppTheme.radius.sm)
+          .id('agent_level_interpretation_local')
+          .onClick(() => {
+            this.interpretationLevelValue = SecurityLevel.LOCAL_ONLY;
+          })
+        Text('已封存')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(this.interpretationLevelValue === SecurityLevel.SEALED ? Color.White : AppTheme.color.text)
+          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+          .backgroundColor(this.interpretationLevelValue === SecurityLevel.SEALED ? AppTheme.color.primary : AppTheme.color.chip)
+          .borderRadius(AppTheme.radius.sm)
+          .id('agent_level_interpretation_sealed')
+          .onClick(() => {
+            this.interpretationLevelValue = SecurityLevel.SEALED;
+          })
+      }
+      .width('100%')
+
+      Text('只有「可分析」的文字会进入请求清单；仅本地与已封存会留在本机。')
+        .fontSize(AppTheme.font.caption)
+        .fontColor(AppTheme.color.textMuted)
+        .width('100%')
 
       if (this.droppedCount > 0) {
         Text(`已排除 ${this.droppedCount} 项不可发送内容`)
