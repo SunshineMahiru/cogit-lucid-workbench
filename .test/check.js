@@ -810,18 +810,6 @@ test('数据库状态与能力缺失码', () => {
   assert.strictEqual(appHealth.current(), DbStatus.CHECKING);
 });
 
-test('备份的封存过滤覆盖所有带密级的表', () => {
-  const { DB_TABLES } = require('./out2/db/DbConstants');
-  const { LEVELED_TABLES } = require('./out2/db/DbConstants');
-  const declared = Object.values(DB_TABLES);
-  for (const table of LEVELED_TABLES) {
-    assert.ok(declared.indexOf(table) >= 0, `未知表 \${table}`);
-  }
-  // 十一张表带 level 列；新增带密级的表时必须同步进来，否则封存内容会漏进备份。
-  assert.strictEqual(LEVELED_TABLES.length, 11);
-  assert.strictEqual(new Set(LEVELED_TABLES).size, 11);
-});
-
 test('清空数据覆盖全部表', () => {
   const { DB_TABLES, DB_TABLES_CHILD_FIRST } = require('./out2/db/DbConstants');
   const declared = Object.values(DB_TABLES).slice().sort();

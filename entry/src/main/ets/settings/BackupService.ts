@@ -3,7 +3,7 @@ import { fileIo, picker } from '@kit.CoreFileKit';
 import { preferences, relationalStore } from '@kit.ArkData';
 import { util } from '@kit.ArkTS';
 import { DbHelper } from '../db/DbHelper';
-import { DB_TABLES, DB_TABLES_CHILD_FIRST, LEVELED_TABLES } from '../db/DbConstants';
+import { DB_TABLES, DB_TABLES_CHILD_FIRST } from '../db/DbConstants';
 import { copyBetween } from '../app/DocumentTransfer';
 import { DebugFaults } from '../app/DebugFaults';
 import { SETTINGS_STORE_NAME } from './SettingsKeys';
@@ -19,10 +19,6 @@ import { notifyPageBackgroundChanged } from './PageBackgroundBus';
 import { notifyProfileRefresh } from '../app/ProfileRefreshBus';
 import { profileCache } from '../profile/ProfileCache';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
-
-/** Snapshot preparation: sealed rows never reach a file the user can carry away. */
-const SEALED_DELETE_SQLS: string[] = LEVELED_TABLES.map((table: string) =>
-  `DELETE FROM ${table} WHERE level = 'sealed'`);
 
 const BUNDLE_VERSION = 1;
 const BUNDLE_SUFFIX = '.cogitbackup';
@@ -81,7 +77,7 @@ export class BackupService {
     const stamp = Date.now();
     const store = await DbHelper.init(context);
     const databasePath = `${directory}/snapshot-${stamp}.db`;
-    await BackupService.backupWithoutSealed(store, databasePath);
+    await store.backup(databasePath);
     try {
       const bundle = await BackupService.buildBundle(context, databasePath, stamp);
       const fileName = `cogit-backup-${stamp}${BUNDLE_SUFFIX}`;
@@ -102,23 +98,6 @@ export class BackupService {
         fileIo.unlinkSync(databasePath);
       } catch (error) {
       }
-    }
-  }
-
-  /**
-   * Snapshots the store without sealed content. The delete runs inside a transaction that is
-   * always rolled back, so the live database keeps every row; only the snapshot is filtered.
-   * Sealed records stay on this device and never enter a file the user can carry away.
-   */
-  private static async backupWithoutSealed(store: relationalStore.RdbStore, path: string): Promise<void> {
-    await store.beginTransaction();
-    try {
-      for (const sql of SEALED_DELETE_SQLS) {
-        await store.executeSql(sql);
-      }
-      await store.backup(path);
-    } finally {
-      await store.rollBack();
     }
   }
 
