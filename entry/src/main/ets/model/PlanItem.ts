@@ -8,6 +8,10 @@ export interface PlanItem {
   done: boolean;
   /** Source item id when the item was carried into this node */
   carriedFrom?: string;
+  /** How the item was handled when its week closed: pending, carried, paused or discarded */
+  disposition?: string;
+  /** Why it was discarded; empty otherwise */
+  discardReason?: string;
   sortOrder: number;
   level?: SecurityLevel;
 }

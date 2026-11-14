@@ -13,6 +13,10 @@ export interface Plan {
   /** Optional end date used by the settlement progress; empty means no deadline */
   targetDate?: string;
   status: PlanStatus;
+  /** Why the plan is paused; empty while active */
+  pauseReason?: string;
+  /** Optional date to look at it again, YYYY-MM-DD */
+  resumeAt?: string;
   isPrimary: boolean;
   /** Security level controlling aggregation and export */
   level?: SecurityLevel;

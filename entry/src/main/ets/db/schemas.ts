@@ -104,6 +104,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     status TEXT NOT NULL,
     is_primary INTEGER NOT NULL DEFAULT 0,
     level TEXT NOT NULL DEFAULT 'local_only',
+    pause_reason TEXT NOT NULL DEFAULT '',
+    resume_at TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN_PROJECT} (
@@ -131,7 +133,9 @@ export const TABLE_CREATE_SQLS: string[] = [
     done INTEGER NOT NULL DEFAULT 0,
     carried_from TEXT,
     sort_order INTEGER NOT NULL,
-    level TEXT NOT NULL DEFAULT 'local_only'
+    level TEXT NOT NULL DEFAULT 'local_only',
+    disposition TEXT NOT NULL DEFAULT 'pending',
+    discard_reason TEXT NOT NULL DEFAULT ''
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN_LINK} (
     id TEXT PRIMARY KEY,

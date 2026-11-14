@@ -175,6 +175,8 @@ export const PLAN_COLS = {
   STATUS: 'status',
   IS_PRIMARY: 'is_primary',
   LEVEL: 'level',
+  PAUSE_REASON: 'pause_reason',
+  RESUME_AT: 'resume_at',
   CREATED_AT: 'created_at'
 } as const;
 
@@ -208,7 +210,9 @@ export const PLAN_ITEM_COLS = {
   DONE: 'done',
   CARRIED_FROM: 'carried_from',
   SORT_ORDER: 'sort_order',
-  LEVEL: 'level'
+  LEVEL: 'level',
+  DISPOSITION: 'disposition',
+  DISCARD_REASON: 'discard_reason'
 } as const;
 
 /** Column names for the request audit table. */

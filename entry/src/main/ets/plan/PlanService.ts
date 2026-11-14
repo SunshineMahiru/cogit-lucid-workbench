@@ -17,6 +17,13 @@ import {
   createPlanProject
 } from './PlanFactory';
 
+/** How one unfinished item is handled when its week closes. */
+export interface ItemDecision {
+  itemId: string;
+  action: 'carry' | 'pause' | 'discard';
+  reason?: string;
+}
+
 /** Application service for plans and their seven-day nodes. */
 export class PlanService {
   private dao: PlanDao;
@@ -188,19 +195,84 @@ export class PlanService {
     if (node === null || node.status === PlanNodeStatus.CLOSED) {
       return null;
     }
+    const items = await this.dao.queryItems(nodeId);
+    const decisions: ItemDecision[] = items
+      .filter((item: PlanItem) => !item.done)
+      .map((item: PlanItem) => ({ itemId: item.id, action: 'carry' as const }));
+    return this.closeNodeWithDecisions(nodeId, decisions, reviewId);
+  }
+
+  /**
+   * Closes a node and carries only the items the user chose to keep. Paused and discarded items
+   * stay in the closed week with their disposition recorded, so a discarded item never returns.
+   */
+  async closeNodeWithDecisions(nodeId: string, decisions: ItemDecision[],
+    reviewId: string = ''): Promise<PlanNode | null> {
+    const node = await this.dao.findNode(nodeId);
+    if (node === null || node.status === PlanNodeStatus.CLOSED) {
+      return null;
+    }
     const nodes = await this.dao.queryNodes(node.planId);
     const next = createPlanNode(node.planId, nodes.length + 1, addPlanDays(node.startDate, 7), node.projectId);
     const items = await this.dao.queryItems(nodeId);
+    const byId: Map<string, ItemDecision> = new Map<string, ItemDecision>();
+    for (const decision of decisions) {
+      byId.set(decision.itemId, decision);
+    }
     const carried: PlanItem[] = [];
     let order = 0;
     for (const item of items) {
-      if (!item.done) {
+      if (item.done) {
+        continue;
+      }
+      const decision = byId.get(item.id);
+      const action = decision === undefined ? 'carry' : decision.action;
+      if (action === 'carry') {
         carried.push(createPlanItem(next.id, item.text, order, item.id));
         order += 1;
       }
     }
     await this.dao.closeNodeWithNext(nodeId, reviewId, next, carried);
+    for (const item of items) {
+      if (item.done) {
+        continue;
+      }
+      const decision = byId.get(item.id);
+      const action = decision === undefined ? 'carry' : decision.action;
+      if (action === 'carry') {
+        await this.dao.updateItemDisposition(item.id, 'carried');
+      } else if (action === 'pause') {
+        await this.dao.updateItemDisposition(item.id, 'paused');
+      } else {
+        await this.dao.updateItemDisposition(item.id, 'discarded', decision === undefined ? '' : (decision.reason ?? ''));
+      }
+    }
     return next;
+  }
+
+  /** Pauses a plan with a reason and an optional date to look again. */
+  async pausePlan(id: string, reason: string, resumeAt: string = ''): Promise<void> {
+    const plan = await this.dao.findPlan(id);
+    if (plan === null) {
+      return;
+    }
+    plan.status = PlanStatus.PAUSED;
+    plan.pauseReason = reason.trim();
+    plan.resumeAt = resumeAt.trim();
+    await this.dao.updatePlan(plan);
+    await this.promoteFirstActive(id);
+  }
+
+  /** Returns a paused plan to active and clears the pause fields. */
+  async resumePlan(id: string): Promise<void> {
+    const plan = await this.dao.findPlan(id);
+    if (plan === null) {
+      return;
+    }
+    plan.status = PlanStatus.ACTIVE;
+    plan.pauseReason = '';
+    plan.resumeAt = '';
+    await this.dao.updatePlan(plan);
   }
 
   /** Appends the next Monday-to-Sunday node to a plan. */

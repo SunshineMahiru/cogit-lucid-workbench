@@ -36,6 +36,8 @@ export class PlanDao {
       [PLAN_COLS.STATUS]: plan.status,
       [PLAN_COLS.IS_PRIMARY]: plan.isPrimary ? 1 : 0,
       [PLAN_COLS.LEVEL]: plan.level ?? SecurityLevel.LOCAL_ONLY,
+      [PLAN_COLS.PAUSE_REASON]: plan.pauseReason ?? '',
+      [PLAN_COLS.RESUME_AT]: plan.resumeAt ?? '',
       [PLAN_COLS.CREATED_AT]: plan.createdAt
     };
     return this.store.insert(DB_TABLES.PLAN, values);
@@ -63,7 +65,9 @@ export class PlanDao {
       [PLAN_COLS.TARGET_DATE]: plan.targetDate ?? '',
       [PLAN_COLS.STATUS]: plan.status,
       [PLAN_COLS.IS_PRIMARY]: plan.isPrimary ? 1 : 0,
-      [PLAN_COLS.LEVEL]: plan.level ?? SecurityLevel.LOCAL_ONLY
+      [PLAN_COLS.LEVEL]: plan.level ?? SecurityLevel.LOCAL_ONLY,
+      [PLAN_COLS.PAUSE_REASON]: plan.pauseReason ?? '',
+      [PLAN_COLS.RESUME_AT]: plan.resumeAt ?? ''
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN);
     predicates.equalTo(PLAN_COLS.ID, plan.id);
@@ -215,6 +219,17 @@ export class PlanDao {
     }
   }
 
+  /** Records how one item was handled when its week closed. */
+  async updateItemDisposition(itemId: string, disposition: string, discardReason: string = ''): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [PLAN_ITEM_COLS.DISPOSITION]: disposition,
+      [PLAN_ITEM_COLS.DISCARD_REASON]: discardReason
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_ITEM);
+    predicates.equalTo(PLAN_ITEM_COLS.ID, itemId);
+    return this.store.update(values, predicates);
+  }
+
   async insertItem(item: PlanItem): Promise<number> {
     const values: relationalStore.ValuesBucket = {
       [PLAN_ITEM_COLS.ID]: item.id,
@@ -223,7 +238,9 @@ export class PlanDao {
       [PLAN_ITEM_COLS.DONE]: item.done ? 1 : 0,
       [PLAN_ITEM_COLS.CARRIED_FROM]: item.carriedFrom ?? '',
       [PLAN_ITEM_COLS.SORT_ORDER]: item.sortOrder,
-      [PLAN_ITEM_COLS.LEVEL]: item.level ?? SecurityLevel.LOCAL_ONLY
+      [PLAN_ITEM_COLS.LEVEL]: item.level ?? SecurityLevel.LOCAL_ONLY,
+      [PLAN_ITEM_COLS.DISPOSITION]: item.disposition ?? 'pending',
+      [PLAN_ITEM_COLS.DISCARD_REASON]: item.discardReason ?? ''
     };
     return this.store.insert(DB_TABLES.PLAN_ITEM, values);
   }
@@ -332,6 +349,8 @@ export class PlanDao {
       status: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.STATUS)) as PlanStatus,
       isPrimary: resultSet.getLong(resultSet.getColumnIndex(PLAN_COLS.IS_PRIMARY)) === 1,
       level: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.LEVEL)) as SecurityLevel,
+      pauseReason: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.PAUSE_REASON)),
+      resumeAt: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.RESUME_AT)),
       createdAt: resultSet.getLong(resultSet.getColumnIndex(PLAN_COLS.CREATED_AT))
     };
     if (projectId.length > 0) {
@@ -382,7 +401,9 @@ export class PlanDao {
       text: resultSet.getString(resultSet.getColumnIndex(PLAN_ITEM_COLS.TEXT)),
       done: resultSet.getLong(resultSet.getColumnIndex(PLAN_ITEM_COLS.DONE)) === 1,
       sortOrder: resultSet.getLong(resultSet.getColumnIndex(PLAN_ITEM_COLS.SORT_ORDER)),
-      level: resultSet.getString(resultSet.getColumnIndex(PLAN_ITEM_COLS.LEVEL)) as SecurityLevel
+      level: resultSet.getString(resultSet.getColumnIndex(PLAN_ITEM_COLS.LEVEL)) as SecurityLevel,
+      disposition: resultSet.getString(resultSet.getColumnIndex(PLAN_ITEM_COLS.DISPOSITION)),
+      discardReason: resultSet.getString(resultSet.getColumnIndex(PLAN_ITEM_COLS.DISCARD_REASON))
     };
     if (carriedFrom.length > 0) {
       item.carriedFrom = carriedFrom;
