@@ -8,6 +8,12 @@ export interface NoteEntry {
   value: string;
 }
 
+/** One optional typed material captured alongside the body. */
+export interface NoteMaterialDraft {
+  kind: string;
+  text: string;
+}
+
 /** Editable state of one quick note before it is persisted. */
 export interface NoteDraft {
   /** Null records a free-form note without template fields */
@@ -23,6 +29,8 @@ export interface NoteDraft {
   relatedRelationIds: string[];
   /** Security level copied onto the saved event */
   level: SecurityLevel;
+  /** Optional typed materials; an empty list means the body is the only material */
+  materials?: NoteMaterialDraft[];
   /** Capture time in milliseconds */
   timestamp: number;
 }

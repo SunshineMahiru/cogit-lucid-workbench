@@ -2,6 +2,7 @@ import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import {
   NoteDraft,
+  NoteMaterialDraft,
   NoteDetail,
   NoteEntry,
   NoteFieldKey,
@@ -39,6 +40,10 @@ export struct NoteEditPage {
   @Local isPreview: boolean = false;
   @Local noteId: string | null = null;
   @Local isEditing: boolean = false;
+  @Local materialScene: string = '';
+  @Local materialFeeling: string = '';
+  @Local materialBody: string = '';
+  @Local materialAction: string = '';
   private navStack: NavPathStack | null = null;
 
   async aboutToAppear(): Promise<void> {
@@ -176,6 +181,58 @@ export struct NoteEditPage {
     this.isDirty = true;
   }
 
+
+  /** Collects the optional typed materials the user filled in. */
+  private collectMaterials(): NoteMaterialDraft[] {
+    const items: NoteMaterialDraft[] = [];
+    this.pushMaterial(items, 'scene', this.materialScene);
+    this.pushMaterial(items, 'feeling', this.materialFeeling);
+    this.pushMaterial(items, 'body', this.materialBody);
+    this.pushMaterial(items, 'existing_action', this.materialAction);
+    return items;
+  }
+
+  private pushMaterial(items: NoteMaterialDraft[], kind: string, value: string): void {
+    const trimmed = value.trim();
+    if (trimmed.length > 0) {
+      items.push({ kind: kind, text: trimmed });
+    }
+  }
+
+  private setMaterial(kind: string, value: string): void {
+    if (kind === 'scene') {
+      this.materialScene = value;
+    } else if (kind === 'feeling') {
+      this.materialFeeling = value;
+    } else if (kind === 'body') {
+      this.materialBody = value;
+    } else if (kind === 'existing_action') {
+      this.materialAction = value;
+    }
+    this.isDirty = true;
+  }
+
+  @Builder
+  materialRow(label: string, hint: string, value: string, kind: string) {
+    Row({ space: AppTheme.spacing.s8 }) {
+      Text(label)
+        .fontSize(AppTheme.font.caption)
+        .fontColor(AppTheme.color.textSecondary)
+        .width(48)
+      TextInput({ text: value, placeholder: hint })
+        .id(`material_${kind}`)
+        .fontSize(AppTheme.font.body)
+        .height(40)
+        .layoutWeight(1)
+        .backgroundColor(AppTheme.color.surfaceTint)
+        .borderRadius(AppTheme.radius.md)
+        .onChange((next: string) => {
+          this.setMaterial(kind, next);
+        })
+    }
+    .width('100%')
+  }
+
   private async save(): Promise<void> {
     if (this.isSaving) {
       return;
@@ -184,6 +241,7 @@ export struct NoteEditPage {
       this.getUIContext().getPromptAction().showToast({ message: '数据库尚未就绪' });
       return;
     }
+    this.draft.materials = this.collectMaterials();
     const validation = validateNoteDraft(this.draft);
     this.errors = validation.errors;
     if (!validation.valid) {
@@ -424,6 +482,23 @@ export struct NoteEditPage {
                 }
                 .width('100%')
               }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+
+            Column({ space: 6 }) {
+              Text('分类补充（可选）')
+                .fontSize(AppTheme.font.bodyStrong)
+                .fontColor(AppTheme.color.textSecondaryStrong)
+                .width('100%')
+              Text('分开写现场、感受、身体和已经做过的事；不填也能保存，正文会作为未分类材料留档。')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+              this.materialRow('现场', '看到、听到、发生了什么', this.materialScene, 'scene')
+              this.materialRow('感受', '当时的情绪', this.materialFeeling, 'feeling')
+              this.materialRow('身体', '睡眠、疼痛、疲劳等', this.materialBody, 'body')
+              this.materialRow('已做', '解释之前已经采取了什么行动', this.materialAction, 'existing_action')
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)

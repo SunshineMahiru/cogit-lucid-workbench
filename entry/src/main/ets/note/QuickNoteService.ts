@@ -6,8 +6,10 @@ import { SecurityLevel } from '../model/SecurityLevel';
 import { createEvent } from '../model/factories';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
+import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
 import { DbHelper } from '../db/DbHelper';
-import { NoteDraft } from './NoteDraft';
+import { ExperienceMaterial } from '../model/ExperienceMaterial';
+import { NoteDraft, NoteMaterialDraft } from './NoteDraft';
 import { composeNoteContent, deriveNoteTitle } from './NoteContentComposer';
 import { buildDecisionFromNote } from './NoteDecisionComposer';
 import { NoteListItem } from './NoteListItem';
@@ -34,11 +36,13 @@ export class QuickNoteService {
   private store: relationalStore.RdbStore;
   private eventDao: EventDao;
   private decisionDao: DecisionDao;
+  private materialDao: ExperienceMaterialDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.store = store;
     this.eventDao = new EventDao(store);
     this.decisionDao = new DecisionDao(store);
+    this.materialDao = new ExperienceMaterialDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -62,6 +66,7 @@ export class QuickNoteService {
     this.store.beginTransaction();
     try {
       await this.eventDao.insert(event);
+      await this.saveMaterials(draft, event.id, event.timestamp, event.level);
       if (decision !== null) {
         await this.decisionDao.insert(decision);
       }
@@ -72,6 +77,54 @@ export class QuickNoteService {
     }
 
     return { eventId: event.id, decisionId: decision === null ? null : decision.id };
+  }
+
+
+  /**
+   * Stores the typed materials captured with this note. When the user did not classify anything,
+   * the body itself becomes one unclassified material so the review flow still has something to cite.
+   */
+  private async saveMaterials(draft: NoteDraft, eventId: string, observedAt: number,
+    level: SecurityLevel): Promise<void> {
+    const typed = (draft.materials ?? []).filter((item: NoteMaterialDraft) => item.text.trim().length > 0);
+    if (typed.length === 0) {
+      if (draft.content.trim().length === 0) {
+        return;
+      }
+      await this.materialDao.insert({
+        id: `mt-${eventId}-0`,
+        eventId: eventId,
+        kind: 'unclassified',
+        form: '',
+        text: draft.content,
+        observedAt: observedAt,
+        source: 'direct',
+        sourceStance: '',
+        level: level,
+        revisionOf: '',
+        deleted: false,
+        createdAt: Date.now()
+      });
+      return;
+    }
+    let index = 0;
+    for (const item of typed) {
+      index += 1;
+      await this.materialDao.insert({
+        id: `mt-${eventId}-${index}`,
+        eventId: eventId,
+        kind: item.kind as ExperienceMaterial['kind'],
+        form: '',
+        text: item.text,
+        observedAt: observedAt,
+        source: 'direct',
+        sourceStance: '',
+        level: level,
+        revisionOf: '',
+        deleted: false,
+        createdAt: Date.now()
+      });
+    }
   }
 
   /** Returns the newest notes as list rows. */

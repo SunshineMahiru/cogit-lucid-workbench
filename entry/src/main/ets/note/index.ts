@@ -9,7 +9,7 @@ export {
   NOTE_TEMPLATES,
   findNoteTemplate
 } from './templates';
-export type { NoteEntry, NoteDraft } from './NoteDraft';
+export type { NoteEntry, NoteDraft, NoteMaterialDraft } from './NoteDraft';
 export { readNoteEntry } from './NoteDraft';
 export { createNoteDraft, createFreeformNoteDraft } from './NoteDraftFactory';
 export { mergeDraftEntries } from './NoteDraftMerger';
