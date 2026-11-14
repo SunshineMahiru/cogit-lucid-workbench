@@ -10,6 +10,7 @@ import {
   PageBackgroundService
 } from '../settings/PageBackgroundService';
 import { PageBackgroundStore } from '../settings/PageBackgroundStore';
+import { contrastHint } from '../theme/Contrast';
 
 /** Lets the user send one staged image to a single page group, several groups, or all of them. */
 @ComponentV2
@@ -261,6 +262,39 @@ export struct BackgroundApplyPage {
       this.getUIContext().getPromptAction().showToast({ message: '清除失败，请重试' });
     } finally {
       this.busyKey = '';
+    }
+  }
+
+  private confirmPlainReset(): void {
+    this.getUIContext().showAlertDialog({
+      title: '恢复默认纯色底？',
+      message: '会清除全部页面的背景图片，并把浓淡恢复为 10%。',
+      primaryButton: {
+        value: '恢复',
+        action: () => {
+          this.applyPlainReset();
+        }
+      },
+      secondaryButton: {
+        value: '取消',
+        action: () => {
+        }
+      }
+    });
+  }
+
+  private async applyPlainReset(): Promise<void> {
+    if (this.hostContext === null) {
+      return;
+    }
+    try {
+      await PageBackgroundService.clearAll(this.hostContext);
+      await PageBackgroundService.setOpacity(this.hostContext, 0.1);
+      this.imageOpacity = 0.1;
+      await this.refreshStates();
+      this.getUIContext().getPromptAction().showToast({ message: '已恢复默认纯色底' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '恢复失败，请重试' });
     }
   }
 
@@ -634,6 +668,12 @@ export struct BackgroundApplyPage {
                     .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
+                  Text(contrastHint(AppTheme.color.textStrong, AppTheme.color.page, 1 - this.imageOpacity))
+                    .id('background_contrast_hint')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(15)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)
@@ -652,7 +692,11 @@ export struct BackgroundApplyPage {
                     Blank()
                     Text('恢复默认纯色底')
                       .fontSize(AppTheme.font.body)
-                      .fontColor(AppTheme.color.textMuted)
+                      .fontColor(AppTheme.color.primary)
+                      .id('background_reset_plain')
+                      .onClick(() => {
+                        this.confirmPlainReset();
+                      })
                   }
                   .width('100%')
                 }

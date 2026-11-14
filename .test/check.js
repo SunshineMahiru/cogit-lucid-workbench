@@ -48,6 +48,13 @@ const {
   stringifyStatusRevisions,
   statusRevisionOf
 } = require('./out2/status/StatusRevisions');
+const {
+  contrastRatio,
+  worstCaseContrastRatio,
+  contrastHint,
+  compositeOver,
+  MIN_BODY_CONTRAST
+} = require('./out2/theme/Contrast');
 const { parseReviewPrompts } = require('./out2/network/ReviewPrompt');
 const {
   disclosureBoundaryOf
@@ -804,6 +811,22 @@ test('承受判断只接受四个选项', () => {
   assert.strictEqual(capacityText('pause'), '需要暂停');
   assert.strictEqual(capacityText('unknown'), '无法判断');
   assert.strictEqual(capacityText(''), '未填写');
+});
+
+test('背景浓淡按最差情况给出对比度提示', () => {
+  assert.ok(Math.abs(contrastRatio('#000000', '#FFFFFF') - 21) < 0.1);
+  assert.strictEqual(compositeOver('#FFFFFF', '#000000', 1), '#FFFFFF');
+
+  const lightSafe = worstCaseContrastRatio('#444441', '#F5F6F8', 0.9);
+  assert.ok(lightSafe >= MIN_BODY_CONTRAST);
+  assert.ok(contrastHint('#444441', '#F5F6F8', 0.9).indexOf('满足') >= 0);
+
+  const darkSafe = worstCaseContrastRatio('#D5D8DC', '#121417', 0.9);
+  assert.ok(darkSafe >= MIN_BODY_CONTRAST);
+
+  const weak = worstCaseContrastRatio('#444441', '#F5F6F8', 0.05);
+  assert.ok(weak < MIN_BODY_CONTRAST);
+  assert.ok(contrastHint('#444441', '#F5F6F8', 0.05).indexOf('建议调淡') >= 0);
 });
 
 test('复盘提示解析：正常、空列表与坏数据', () => {
