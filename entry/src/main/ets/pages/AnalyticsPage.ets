@@ -9,6 +9,7 @@ import { ChartSection } from '../components/charts/ChartSection';
 import { ChartPoint, ChartSeries, ChartSlice, HeatCell, HeatmapData } from '../components/charts/ChartModels';
 import { RemoteStatsRepository } from '../network/RemoteStatsRepository';
 import { RemoteStats, StatsMonth, StatsMonthDetail } from '../network/RemoteStats';
+import { SAMPLE_FLOOR } from '../analysis/metrics/SampleFloor';
 
 const HIT_COLOR = 0xFF185FA5;
 const MISS_COLOR = 0xFFC0563F;
@@ -356,7 +357,7 @@ export struct AnalyticsPage {
                   xMin: 0,
                   xMax: 100
                 })
-            Text(`校准共 ${this.stats !== null ? this.stats.calibration.length : 0} 档，样本不足 20 条时仅作观察`)
+            Text(`校准共 ${this.stats !== null ? this.stats.calibration.length : 0} 档，样本不足 ${SAMPLE_FLOOR} 条时仅作观察`)
               .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')

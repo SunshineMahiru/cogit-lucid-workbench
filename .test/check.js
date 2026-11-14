@@ -810,6 +810,21 @@ test('数据库状态与能力缺失码', () => {
   assert.strictEqual(appHealth.current(), DbStatus.CHECKING);
 });
 
+test('样本下限统一为十，五档结果分别计数', () => {
+  const { SAMPLE_FLOOR, hasEnoughSamples } = require('./out2/analysis/metrics/SampleFloor');
+  assert.strictEqual(SAMPLE_FLOOR, 10);
+  assert.strictEqual(hasEnoughSamples(9), false);
+  assert.strictEqual(hasEnoughSamples(10), true);
+
+  const stats = buildPredictionStats([
+    prediction({ id: 'a', status: 'settled', hit: true, settlementDate: '2026-10-20' }),
+    prediction({ id: 'b', status: 'settled', hit: null, settlementDate: '2026-10-21' })
+  ]);
+  assert.strictEqual(stats.outcomes.hold, 1);
+  assert.strictEqual(stats.outcomes.fail, 0);
+  assert.strictEqual(stats.settled, 1);
+});
+
 test('五档结果：旧命中映射为成立与未成立，其余单列', () => {
   const { outcomeFromLegacy, isBinaryOutcome, isNonBinaryOutcome, NO_OUTCOME } =
     require('./out2/model/PredictionOutcome');

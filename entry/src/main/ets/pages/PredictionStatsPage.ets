@@ -6,6 +6,7 @@ import { PredictionTrendChart } from '../components/PredictionTrendChart';
 import { PredictionShareChart } from '../components/PredictionShareChart';
 import { PredictionService, PredictionStats } from '../prediction';
 import { CalibrationBucket } from '../analysis';
+import { hasEnoughSamples, SAMPLE_FLOOR } from '../analysis/metrics/SampleFloor';
 import { formatHitRate } from '../model/HomeModel';
 import { previewStore } from '../preview/PreviewStore';
 
@@ -15,6 +16,7 @@ export struct PredictionStatsPage {
   @Local service: PredictionService | null = null;
   @Local stats: PredictionStats = {
     settled: 0, hits: 0, misses: 0, hitRate: 0, months: [],
+    outcomes: { hold: 0, fail: 0, partial: 0, insufficient: 0, undecidable: 0 },
     calibration: { settled: 0, hits: 0, hitRate: 0, brierScore: 0, buckets: [] }
   };
   @Local isLoading: boolean = true;
@@ -228,11 +230,29 @@ export struct PredictionStatsPage {
                       .fontColor(AppTheme.color.primary)
                   }
                   .width('100%')
-                  Text(this.stats.settled < 10 ?
-                    '样本不足 10 条，校准结果仅供观察' : '按置信度区间统计命中率')
+                  Text(hasEnoughSamples(this.stats.settled) ?
+                    '按置信度区间统计命中率' : `样本不足 ${SAMPLE_FLOOR} 条，校准结果仅供观察`)
                     .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
+                  Row({ space: 12 }) {
+                    Text(`成立 ${this.stats.outcomes.hold}`)
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.textSecondary)
+                    Text(`未成立 ${this.stats.outcomes.fail}`)
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.textSecondary)
+                    Text(`部分成立 ${this.stats.outcomes.partial}`)
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.warning)
+                    Text(`证据不足 ${this.stats.outcomes.insufficient}`)
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.textMuted)
+                    Text(`无法判断 ${this.stats.outcomes.undecidable}`)
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.textMuted)
+                  }
+                  .width('100%')
                   ForEach(this.stats.calibration.buckets, (bucket: CalibrationBucket) => {
                     Row() {
                       Text(bucket.label)

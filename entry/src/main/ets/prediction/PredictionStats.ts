@@ -1,4 +1,5 @@
 import { Prediction } from '../model/Prediction';
+import { outcomeFromLegacy } from '../model/PredictionOutcome';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { CalibrationReport } from '../analysis/calibration/CalibrationAnalyzer';
@@ -22,18 +23,36 @@ export interface PredictionStats {
   misses: number;
   /** 0-100, rounded */
   hitRate: number;
+  /** Counts per outcome; the three non-binary ones never enter hitRate */
+  outcomes: OutcomeCounts;
   /** Months with at least one settled prediction, oldest first, capped by monthLimit */
   months: PredictionMonthPoint[];
   /** Confidence calibration over the same settled sample */
   calibration: CalibrationReport;
 }
 
+/** One counter per outcome value. */
+export interface OutcomeCounts {
+  hold: number;
+  fail: number;
+  partial: number;
+  insufficient: number;
+  undecidable: number;
+}
+
 /** Builds the chart payload from settled predictions only. */
 export function buildPredictionStats(predictions: Prediction[], monthLimit: number = 6): PredictionStats {
   const samples: SettledSample[] = [];
+  const outcomes: OutcomeCounts = { hold: 0, fail: 0, partial: 0, insufficient: 0, undecidable: 0 };
   for (const prediction of predictions) {
     if (prediction.status !== PredictionStatus.SETTLED || prediction.level === SecurityLevel.SEALED) {
       continue;
+    }
+    const outcome = (prediction.outcome ?? '').length > 0 ?
+      prediction.outcome : outcomeFromLegacy(prediction.hit);
+    if (outcome === 'hold' || outcome === 'fail' || outcome === 'partial' ||
+      outcome === 'insufficient' || outcome === 'undecidable') {
+      outcomes[outcome] += 1;
     }
     // Partial, insufficient and undecidable leave hit null; they stay out of the binary rate.
     if (prediction.hit === null) {
@@ -61,6 +80,7 @@ export function buildPredictionStats(predictions: Prediction[], monthLimit: numb
     hits: metrics.hits,
     misses: metrics.misses,
     hitRate: metrics.hitRate,
+    outcomes: outcomes,
     months: months,
     calibration: metrics.calibration
   };
