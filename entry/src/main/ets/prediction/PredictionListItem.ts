@@ -5,7 +5,8 @@ export interface PredictionListItem {
   id: string;
   target: string;
   judgment: string;
-  confidence: number;
+  /** Null means the user could not quantify it */
+  confidence: number | null;
   /** Due date in YYYY-MM-DD */
   settlementDate: string;
   status: PredictionStatus;
@@ -28,7 +29,8 @@ export interface PredictionDetail {
   id: string;
   target: string;
   judgment: string;
-  confidence: number;
+  /** Null means the user could not quantify it */
+  confidence: number | null;
   reason: string;
   settlementDate: string;
   status: PredictionStatus;

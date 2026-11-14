@@ -1,5 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
 import { Prediction } from '../../model/Prediction';
+import { NO_OUTCOME, outcomeFromLegacy, PredictionOutcome } from '../../model/PredictionOutcome';
 import { PredictionStatus } from '../../model/PredictionStatus';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, PREDICTION_COLS } from '../DbConstants';
@@ -10,6 +11,15 @@ export class PredictionDao {
 
   constructor(store: relationalStore.RdbStore) {
     this.store = store;
+  }
+
+  /**
+   * Reads a text column that may be absent when an ALTER was skipped; those migrations swallow
+   * their errors, so a missing column must degrade to an empty string rather than throw.
+   */
+  private static readText(resultSet: relationalStore.ResultSet, column: string): string {
+    const index = resultSet.getColumnIndex(column);
+    return index < 0 || resultSet.isColumnNull(index) ? '' : resultSet.getString(index);
   }
 
   /** Inserts a prediction, returns the row id. */
@@ -27,6 +37,15 @@ export class PredictionDao {
       [PREDICTION_COLS.VERSION]: prediction.version,
       [PREDICTION_COLS.ROOT_ID]: prediction.rootId ?? prediction.id,
       [PREDICTION_COLS.LEVEL]: prediction.level ?? SecurityLevel.LOCAL_ONLY,
+      [PREDICTION_COLS.OUTCOME]: prediction.outcome ?? NO_OUTCOME,
+      [PREDICTION_COLS.SCOPE]: prediction.scope ?? '',
+      [PREDICTION_COLS.FALSIFICATION]: prediction.falsification ?? '',
+      [PREDICTION_COLS.UNKNOWNS]: prediction.unknowns ?? '',
+      [PREDICTION_COLS.REVISION_REASON]: prediction.revisionReason ?? '',
+      [PREDICTION_COLS.INVALIDATED]: prediction.invalidated ?? '',
+      [PREDICTION_COLS.PRESERVED]: prediction.preserved ?? '',
+      [PREDICTION_COLS.REPOSITIONED]: prediction.repositioned ?? '',
+      [PREDICTION_COLS.EVIDENCE_LEVEL]: prediction.evidenceLevel ?? '',
       [PREDICTION_COLS.CREATED_AT]: prediction.createdAt
     };
     return this.store.insert(DB_TABLES.PREDICTION, values);
@@ -112,11 +131,13 @@ export class PredictionDao {
   private mapRow(resultSet: relationalStore.ResultSet): Prediction {
     const hitIndex = resultSet.getColumnIndex(PREDICTION_COLS.HIT);
     const hitValue = resultSet.isColumnNull(hitIndex) ? null : resultSet.getLong(hitIndex) === 1;
+    const confidenceIndex = resultSet.getColumnIndex(PREDICTION_COLS.CONFIDENCE);
+    const storedOutcome = PredictionDao.readText(resultSet, PREDICTION_COLS.OUTCOME);
     return {
       id: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.ID)),
       target: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.TARGET)),
       judgment: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.JUDGMENT)),
-      confidence: resultSet.getLong(resultSet.getColumnIndex(PREDICTION_COLS.CONFIDENCE)),
+      confidence: resultSet.isColumnNull(confidenceIndex) ? null : resultSet.getLong(confidenceIndex),
       reason: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.REASON)),
       settlementDate: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.SETTLEMENT_DATE)),
       status: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.STATUS)) as PredictionStatus,
@@ -125,6 +146,15 @@ export class PredictionDao {
       version: resultSet.getLong(resultSet.getColumnIndex(PREDICTION_COLS.VERSION)),
       rootId: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.ROOT_ID)),
       level: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.LEVEL)) as SecurityLevel,
+      outcome: storedOutcome.length > 0 ? storedOutcome as PredictionOutcome : outcomeFromLegacy(hitValue),
+      scope: PredictionDao.readText(resultSet, PREDICTION_COLS.SCOPE),
+      falsification: PredictionDao.readText(resultSet, PREDICTION_COLS.FALSIFICATION),
+      unknowns: PredictionDao.readText(resultSet, PREDICTION_COLS.UNKNOWNS),
+      revisionReason: PredictionDao.readText(resultSet, PREDICTION_COLS.REVISION_REASON),
+      invalidated: PredictionDao.readText(resultSet, PREDICTION_COLS.INVALIDATED),
+      preserved: PredictionDao.readText(resultSet, PREDICTION_COLS.PRESERVED),
+      repositioned: PredictionDao.readText(resultSet, PREDICTION_COLS.REPOSITIONED),
+      evidenceLevel: PredictionDao.readText(resultSet, PREDICTION_COLS.EVIDENCE_LEVEL),
       createdAt: resultSet.getLong(resultSet.getColumnIndex(PREDICTION_COLS.CREATED_AT))
     };
   }

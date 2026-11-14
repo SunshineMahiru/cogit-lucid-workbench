@@ -95,6 +95,91 @@ export class DbHelper {
 
 
   /**
+   * Adds the model-card columns, then makes confidence nullable so "cannot quantify" can be
+   * stored as NULL. Older installs carry `confidence INTEGER NOT NULL`, which SQLite cannot relax
+   * in place, so the table is rebuilt once and the guard below keeps later launches cheap.
+   */
+  private static async ensurePredictionOutcomeColumns(store: relationalStore.RdbStore): Promise<void> {
+    const addedColumns: string[] = [
+      `ALTER TABLE prediction ADD COLUMN outcome TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE prediction ADD COLUMN scope TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE prediction ADD COLUMN falsification TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE prediction ADD COLUMN unknowns TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE prediction ADD COLUMN revision_reason TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE prediction ADD COLUMN invalidated TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE prediction ADD COLUMN preserved TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE prediction ADD COLUMN repositioned TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE prediction ADD COLUMN evidence_level TEXT NOT NULL DEFAULT ''`
+    ];
+    for (const sql of addedColumns) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
+    if (!(await DbHelper.confidenceIsNotNull(store))) {
+      return;
+    }
+    const columns = `id, target, judgment, confidence, reason, settlement_date, status, actual_result,
+      hit, version, root_id, level, outcome, scope, falsification, unknowns, revision_reason,
+      invalidated, preserved, repositioned, evidence_level, created_at`;
+    try {
+      await store.executeSql(`CREATE TABLE prediction_rebuild (
+        id TEXT PRIMARY KEY,
+        target TEXT NOT NULL,
+        judgment TEXT NOT NULL,
+        confidence INTEGER,
+        reason TEXT NOT NULL,
+        settlement_date TEXT NOT NULL,
+        status TEXT NOT NULL,
+        actual_result TEXT NOT NULL,
+        hit INTEGER,
+        version INTEGER NOT NULL,
+        root_id TEXT NOT NULL DEFAULT '',
+        level TEXT NOT NULL DEFAULT 'local_only',
+        outcome TEXT NOT NULL DEFAULT '',
+        scope TEXT NOT NULL DEFAULT '',
+        falsification TEXT NOT NULL DEFAULT '',
+        unknowns TEXT NOT NULL DEFAULT '',
+        revision_reason TEXT NOT NULL DEFAULT '',
+        invalidated TEXT NOT NULL DEFAULT '',
+        preserved TEXT NOT NULL DEFAULT '',
+        repositioned TEXT NOT NULL DEFAULT '',
+        evidence_level TEXT NOT NULL DEFAULT '',
+        created_at INTEGER NOT NULL
+      )`);
+      await store.executeSql(`INSERT INTO prediction_rebuild (${columns}) SELECT ${columns} FROM prediction`);
+      await store.executeSql(`DROP TABLE prediction`);
+      await store.executeSql(`ALTER TABLE prediction_rebuild RENAME TO prediction`);
+      await store.executeSql(`CREATE INDEX IF NOT EXISTS idx_prediction_status_date ON prediction(status, settlement_date)`);
+    } catch (error) {
+      hilog.warn(DOMAIN, TAG, 'prediction rebuild skipped: %{public}s', (error as Error).message);
+    }
+  }
+
+  /** True while the live table still declares confidence as NOT NULL. */
+  private static async confidenceIsNotNull(store: relationalStore.RdbStore): Promise<boolean> {
+    let notNull = false;
+    try {
+      const set = await store.querySql(`PRAGMA table_info(${DB_TABLES.PREDICTION})`);
+      try {
+        const nameIndex = set.getColumnIndex('name');
+        const notNullIndex = set.getColumnIndex('notnull');
+        while (set.goToNextRow()) {
+          if (set.getString(nameIndex) === 'confidence' && set.getLong(notNullIndex) === 1) {
+            notNull = true;
+          }
+        }
+      } finally {
+        set.close();
+      }
+    } catch (error) {
+      return false;
+    }
+    return notNull;
+  }
+
+  /**
    * Turns every pre-existing note into one unclassified material so the review flow can cite
    * material kinds. The NOT IN guard makes it safe to run on every launch; old text is copied
    * verbatim and never re-classified by code.
@@ -243,6 +328,7 @@ export class DbHelper {
     }
     await DbHelper.mergeLegacyPredictionRoots(store);
     await DbHelper.backfillMaterials(store);
+    await DbHelper.ensurePredictionOutcomeColumns(store);
     // Soft-delete flags follow the same idempotent pattern as the columns above.
     const deleteMigrations: string[] = [
       `ALTER TABLE relation ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,

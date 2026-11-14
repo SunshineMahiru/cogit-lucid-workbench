@@ -810,6 +810,20 @@ test('数据库状态与能力缺失码', () => {
   assert.strictEqual(appHealth.current(), DbStatus.CHECKING);
 });
 
+test('五档结果：旧命中映射为成立与未成立，其余单列', () => {
+  const { outcomeFromLegacy, isBinaryOutcome, isNonBinaryOutcome, NO_OUTCOME } =
+    require('./out2/model/PredictionOutcome');
+  assert.strictEqual(outcomeFromLegacy(true), 'hold');
+  assert.strictEqual(outcomeFromLegacy(false), 'fail');
+  assert.strictEqual(outcomeFromLegacy(null), NO_OUTCOME);
+  assert.strictEqual(isBinaryOutcome('hold'), true);
+  assert.strictEqual(isBinaryOutcome('partial'), false);
+  assert.strictEqual(isNonBinaryOutcome('partial'), true);
+  assert.strictEqual(isNonBinaryOutcome('insufficient'), true);
+  assert.strictEqual(isNonBinaryOutcome('undecidable'), true);
+  assert.strictEqual(isNonBinaryOutcome('fail'), false);
+});
+
 test('复盘六区：空内容合法，旧记录读不到 payload', () => {
   const { emptyReviewPayload, hasAnyZone } = require('./out2/model/ReviewPayload');
   const { parseReviewPayload, consumeJsonIssues } = require('./out2/db/SafeJson');

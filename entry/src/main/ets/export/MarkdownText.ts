@@ -79,7 +79,10 @@ export function hitLabel(hit: boolean | null): string {
 }
 
 /** Formats a confidence value, clamped to the 0-100 range. */
-export function formatConfidence(confidence: number): string {
+export function formatConfidence(confidence: number | null): string {
+  if (confidence === null) {
+    return '未量化';
+  }
   const value = Math.min(Math.max(Math.round(confidence), 0), 100);
   return `${value}%`;
 }

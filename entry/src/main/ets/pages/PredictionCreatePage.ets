@@ -65,7 +65,9 @@ export struct PredictionCreatePage {
   private applySource(detail: PredictionDetail): void {
     this.target = detail.target;
     this.judgment = detail.judgment;
-    this.confidence = detail.confidence;
+    if (detail.confidence !== null) {
+      this.confidence = detail.confidence;
+    }
     this.reason = detail.reason;
     this.sourceVersion = detail.version;
   }

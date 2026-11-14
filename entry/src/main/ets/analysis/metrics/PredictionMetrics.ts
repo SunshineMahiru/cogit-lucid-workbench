@@ -4,8 +4,8 @@ import { hitRatePercent } from './Rates';
 
 /** One settled prediction handed to the aggregator. */
 export interface SettledSample {
-  /** Declared confidence, 0-100 */
-  confidence: number;
+  /** Declared confidence, 0-100; null keeps the sample out of calibration math */
+  confidence: number | null;
   hit: boolean;
   /** YYYY-MM, or a caller-provided key such as 未知 */
   month: string;
@@ -50,7 +50,9 @@ export function buildPredictionMetrics(samples: SettledSample[], monthLimit: num
     if (sample.hit) {
       hits += 1;
     }
-    outcomes.push({ confidence: sample.confidence, hit: sample.hit });
+    if (sample.confidence !== null) {
+      outcomes.push({ confidence: sample.confidence, hit: sample.hit });
+    }
     let bucket = buckets.get(sample.month);
     if (bucket === undefined) {
       bucket = { month: sample.month, settled: 0, hits: 0 };

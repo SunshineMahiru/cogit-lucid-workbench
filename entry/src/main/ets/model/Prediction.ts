@@ -1,3 +1,4 @@
+import { PredictionOutcome } from './PredictionOutcome';
 import { PredictionStatus } from './PredictionStatus';
 import { SecurityLevel } from './SecurityLevel';
 
@@ -8,8 +9,8 @@ export interface Prediction {
   target: string;
   /** Judgment with number and deadline */
   judgment: string;
-  /** Confidence 0-100 */
-  confidence: number;
+  /** Confidence 0-100; null means the user cannot quantify it */
+  confidence: number | null;
   /** Reason */
   reason: string;
   /** Settlement date, fixed like a contract */
@@ -23,6 +24,19 @@ export interface Prediction {
   version: number;
   /** Id of the first version; all revisions share it so the latest can be resolved */
   rootId?: string;
+  /** Settlement result; empty for records settled before outcomes existed */
+  outcome?: PredictionOutcome;
+  /** Where the model applies and what would falsify it */
+  scope?: string;
+  falsification?: string;
+  unknowns?: string;
+  /** Why this version was written, and what it cancels, keeps and repositions */
+  revisionReason?: string;
+  invalidated?: string;
+  preserved?: string;
+  repositioned?: string;
+  /** Evidence source recorded beside the actual result */
+  evidenceLevel?: string;
   /** Security level controlling aggregation and export; absent values are local-only */
   level?: SecurityLevel;
   /** Commit timestamp in milliseconds */

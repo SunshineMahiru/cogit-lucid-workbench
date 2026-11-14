@@ -68,11 +68,8 @@ class FakeResultSet {
   }
 
   getColumnIndex(name) {
-    const index = this.columns.indexOf(name);
-    if (index < 0) {
-      throw new Error(`missing column ${name}`);
-    }
-    return index;
+    // The real result set returns -1 for unknown columns; callers guard on it.
+    return this.columns.indexOf(name);
   }
 
   getString(index) {

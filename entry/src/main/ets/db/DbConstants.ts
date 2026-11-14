@@ -114,6 +114,15 @@ export const PREDICTION_COLS = {
   VERSION: 'version',
   ROOT_ID: 'root_id',
   LEVEL: 'level',
+  OUTCOME: 'outcome',
+  SCOPE: 'scope',
+  FALSIFICATION: 'falsification',
+  UNKNOWNS: 'unknowns',
+  REVISION_REASON: 'revision_reason',
+  INVALIDATED: 'invalidated',
+  PRESERVED: 'preserved',
+  REPOSITIONED: 'repositioned',
+  EVIDENCE_LEVEL: 'evidence_level',
   CREATED_AT: 'created_at'
 } as const;
 

@@ -9,7 +9,8 @@ export interface BodyReading {
 export interface PredictionItem {
   id: string;
   title: string;
-  confidence: number;
+  /** Null means the user could not quantify it */
+  confidence: number | null;
   dueDate: string;
 }
 
