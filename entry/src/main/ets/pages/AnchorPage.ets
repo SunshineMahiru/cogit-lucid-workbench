@@ -1,4 +1,5 @@
 import { Anchor } from '../model/Anchor';
+import { window } from '@kit.ArkUI';
 import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import { AnchorService } from '../anchor';
@@ -32,11 +33,39 @@ export struct AnchorPage {
   @Local versions: Anchor[] = [];
   private revisingAnchor: Anchor | null = null;
   private retiringAnchor: Anchor | null = null;
+  @Local keyboardHeight: number = 0;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
+  private windowRef: window.Window | null = null;
 
   aboutToAppear(): void {
     this.load();
+    this.bindKeyboard();
+  }
+
+  aboutToDisappear(): void {
+    if (this.windowRef !== null) {
+      this.windowRef.off('keyboardHeightChange');
+      this.windowRef = null;
+    }
+  }
+
+  /** Keeps the sheet above the keyboard by tracking its height. */
+  private bindKeyboard(): void {
+    const hostContext = this.getUIContext().getHostContext();
+    if (hostContext === undefined) {
+      return;
+    }
+    try {
+      window.getLastWindow(hostContext).then((win: window.Window) => {
+        this.windowRef = win;
+        win.on('keyboardHeightChange', (height: number) => {
+          this.keyboardHeight = height;
+        });
+      }).catch(() => {
+      });
+    } catch (error) {
+    }
   }
 
   private async load(): Promise<void> {
@@ -345,7 +374,8 @@ export struct AnchorPage {
     }
     .id('anchor_revise_panel')
     .width('100%')
-    .padding(AppTheme.spacing.s16)
+    .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s16,
+      bottom: AppTheme.spacing.s16 + this.keyboardHeight })
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -565,11 +595,9 @@ export struct AnchorPage {
       .height('100%')
       .backgroundColor(Color.Transparent)
       .bindSheet($$this.reviseVisible, this.reviseSheet(), {
-        height: 420,
+        height: 420 + this.keyboardHeight,
         dragBar: false,
-        backgroundColor: AppTheme.color.surface,
-        // The sheet holds three inputs; without this the confirm row ends up behind the keyboard.
-        keyboardAvoidMode: SheetKeyboardAvoidMode.TRANSLATE_AND_RESIZE
+        backgroundColor: AppTheme.color.surface
       })
   }
 }
