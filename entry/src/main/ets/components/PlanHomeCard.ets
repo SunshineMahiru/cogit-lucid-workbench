@@ -181,6 +181,7 @@ export struct PlanHomeCard {
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
+      .id('home_plan_entry')
       .onClick(() => {
         this.openPlan();
       })

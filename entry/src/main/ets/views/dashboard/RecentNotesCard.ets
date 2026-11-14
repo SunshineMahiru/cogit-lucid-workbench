@@ -19,6 +19,7 @@ export struct RecentNotesCard {
           .fontColor(AppTheme.color.text)
         Blank()
         Text('全部')
+          .id('home_notes_all')
           .fontSize(AppTheme.font.bodyStrong)
           .fontColor(AppTheme.color.textSecondary)
           .onClick(() => {

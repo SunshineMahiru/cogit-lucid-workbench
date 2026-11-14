@@ -517,6 +517,7 @@ export struct DashboardView {
                     .fontColor(AppTheme.color.text)
                   Blank()
                   Text('全部')
+                    .id('home_pending_all')
                     .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.textSecondary)
                     .onClick(() => {

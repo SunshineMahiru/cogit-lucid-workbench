@@ -231,6 +231,7 @@ export struct PredictionCreatePage {
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextInput({ placeholder: '例如：本周作息', text: this.target })
+                  .id('prediction_target')
                   .maxLength(MAX_TARGET_LENGTH)
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
@@ -250,6 +251,7 @@ export struct PredictionCreatePage {
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextArea({ placeholder: '写成到期能判断真假的句子', text: this.judgment })
+                  .id('prediction_judgment')
                   .height(84)
                   .maxLength(MAX_JUDGMENT_LENGTH)
                   .backgroundColor(AppTheme.color.surfaceAlt)
@@ -307,6 +309,7 @@ export struct PredictionCreatePage {
                   this.deadlineChip('30 天后', 30)
                 }
                 TextInput({ placeholder: 'YYYY-MM-DD', text: this.settlementDate })
+                  .id('prediction_date')
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.settlementDate = value;
@@ -325,6 +328,7 @@ export struct PredictionCreatePage {
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 TextArea({ placeholder: '当时为什么这么判断？', text: this.reason })
+                  .id('prediction_reason')
                   .height(72)
                   .maxLength(MAX_REASON_LENGTH)
                   .backgroundColor(AppTheme.color.surfaceAlt)
@@ -431,6 +435,7 @@ export struct PredictionCreatePage {
 
         Column() {
           Text(this.isSaving ? '保存中…' : (this.sourceId === null ? '保存这条预测' : '生成新版本'))
+            .id('prediction_save')
             .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
