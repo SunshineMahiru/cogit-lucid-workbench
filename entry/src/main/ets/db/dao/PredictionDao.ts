@@ -51,16 +51,23 @@ export class PredictionDao {
     return this.store.insert(DB_TABLES.PREDICTION, values);
   }
 
-  /** Settles the newest version of a prediction: updates status, actualResult, hit. */
-  async settle(id: string, actualResult: string, hit: boolean): Promise<number> {
+  /**
+   * Settles the newest version of a prediction. Only hold and fail set the legacy hit flag;
+   * the other three outcomes leave it null so the binary hit rate ignores them.
+   */
+  async settle(id: string, actualResult: string, outcome: PredictionOutcome,
+    evidenceLevel: string = ''): Promise<number> {
     const latest = await this.queryById(id);
     if (latest === null) {
       return 0;
     }
+    const hitValue: number | null = outcome === 'hold' ? 1 : (outcome === 'fail' ? 0 : null);
     const values: relationalStore.ValuesBucket = {
       [PREDICTION_COLS.STATUS]: PredictionStatus.SETTLED,
       [PREDICTION_COLS.ACTUAL_RESULT]: actualResult,
-      [PREDICTION_COLS.HIT]: hit ? 1 : 0
+      [PREDICTION_COLS.HIT]: hitValue,
+      [PREDICTION_COLS.OUTCOME]: outcome,
+      [PREDICTION_COLS.EVIDENCE_LEVEL]: evidenceLevel
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
     predicates.equalTo(PREDICTION_COLS.ID, latest.id);

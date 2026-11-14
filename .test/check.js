@@ -724,13 +724,13 @@ test('预测统计按结算月份分组并过滤待结算', () => {
   assert.strictEqual(limited.settled, 4);
 });
 
-test('已结算但缺命中结果按未命中计', () => {
+test('已结算但缺命中结果不进二值统计', () => {
   const stats = buildPredictionStats([
     prediction({ id: 'a', status: 'settled', hit: null, settlementDate: '2026-10-25' })
   ]);
-  assert.strictEqual(stats.settled, 1);
+  assert.strictEqual(stats.settled, 0);
   assert.strictEqual(stats.hits, 0);
-  assert.strictEqual(stats.misses, 1);
+  assert.strictEqual(stats.misses, 0);
   assert.strictEqual(stats.hitRate, 0);
 });
 

@@ -24,3 +24,23 @@ export function outcomeFromLegacy(hit: boolean | null): PredictionOutcome {
   }
   return NO_OUTCOME;
 }
+
+/** Human label for one outcome; empty input reads as 未结算. */
+export function outcomeLabel(outcome: string): string {
+  if (outcome === 'hold') {
+    return '成立';
+  }
+  if (outcome === 'fail') {
+    return '未成立';
+  }
+  if (outcome === 'partial') {
+    return '部分成立';
+  }
+  if (outcome === 'insufficient') {
+    return '证据不足';
+  }
+  if (outcome === 'undecidable') {
+    return '无法判断';
+  }
+  return '未结算';
+}

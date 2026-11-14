@@ -34,14 +34,18 @@ export function countReviewWindow(events: Event[], decisions: Decision[], predic
   }
   let pending = 0;
   let settled = 0;
+  let binary = 0;
   let hits = 0;
   for (const prediction of predictions) {
     if (prediction.status === PredictionStatus.PENDING) {
       pending += 1;
     } else if (prediction.createdAt >= start && prediction.createdAt < end) {
       settled += 1;
-      if (prediction.hit === true) {
-        hits += 1;
+      if (prediction.hit !== null) {
+        binary += 1;
+        if (prediction.hit === true) {
+          hits += 1;
+        }
       }
     }
   }
@@ -51,6 +55,6 @@ export function countReviewWindow(events: Event[], decisions: Decision[], predic
     pendingPredictions: pending,
     settledPredictions: settled,
     hits: hits,
-    hitRate: hitRatePercent(hits, settled)
+    hitRate: hitRatePercent(hits, binary)
   };
 }

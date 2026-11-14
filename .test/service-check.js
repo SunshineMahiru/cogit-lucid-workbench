@@ -614,7 +614,7 @@ async function main() {
       settlementDate: '2026-11-03'
     }, now);
     await assert.rejects(async () => {
-      await predictionService.settle(future.id, '提前结算', true, now);
+      await predictionService.settle(future.id, '提前结算', 'hold', '', now);
     });
 
     await assert.rejects(async () => {
@@ -627,7 +627,7 @@ async function main() {
       }, now);
     });
 
-    const settled = await predictionService.settle(created.id, '达成六天', true);
+    const settled = await predictionService.settle(created.id, '达成六天', 'hold');
     assert.ok(settled !== null);
     assert.strictEqual(settled.status, 'settled');
     assert.strictEqual(settled.hit, true);
@@ -637,7 +637,7 @@ async function main() {
     assert.strictEqual(stats.hitRate, 100);
 
     await assert.rejects(async () => {
-      await predictionService.settle(created.id, '再次结算', false);
+      await predictionService.settle(created.id, '再次结算', 'fail');
     });
   });
 
@@ -907,7 +907,7 @@ async function main() {
       reason: '',
       settlementDate: '2026-10-27'
     }, now);
-    await predictionService.settle(hit.id, '达成', true, now);
+    await predictionService.settle(hit.id, '达成', 'hold', '', now);
     const miss = await predictionService.create({
       target: '作息 B',
       judgment: '达成',
@@ -915,7 +915,7 @@ async function main() {
       reason: '',
       settlementDate: '2026-10-27'
     }, now);
-    await predictionService.settle(miss.id, '未达成', false, now);
+    await predictionService.settle(miss.id, '未达成', 'fail', '', now);
     await predictionService.create({
       target: '下月作息',
       judgment: '达成',
@@ -932,6 +932,19 @@ async function main() {
     assert.strictEqual(stats.settledPredictions, 2);
     assert.strictEqual(stats.hitRate, 50);
     assert.strictEqual(stats.anchorCount, 0);
+
+    // A partial result counts as settled but stays out of the binary hit rate.
+    const partial = await predictionService.create({
+      target: '作息 C',
+      judgment: '达成',
+      confidence: 50,
+      reason: '',
+      settlementDate: '2026-10-27'
+    }, now);
+    await predictionService.settle(partial.id, '部分达成', 'partial', '', now);
+    const afterPartial = await reviewService.loadStatsFor('week', now);
+    assert.strictEqual(afterPartial.settledPredictions, 3);
+    assert.strictEqual(afterPartial.hitRate, 50);
   });
 
   if (failures.length > 0) {

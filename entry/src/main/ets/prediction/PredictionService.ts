@@ -3,6 +3,7 @@ import { common } from '@kit.AbilityKit';
 import { MOCK_PREDICTIONS } from '../model/mockData';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { Prediction } from '../model/Prediction';
+import { PredictionOutcome } from '../model/PredictionOutcome';
 import { DbHelper } from '../db/DbHelper';
 import { PredictionDao } from '../db/dao/PredictionDao';
 import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
@@ -97,7 +98,8 @@ export class PredictionService {
    * Returns null when it is gone and throws when it is not due, already settled
    * or the result is empty.
    */
-  async settle(id: string, actualResult: string, hit: boolean, now: number = Date.now()): Promise<PredictionDetail | null> {
+  async settle(id: string, actualResult: string, outcome: PredictionOutcome,
+    evidenceLevel: string = '', now: number = Date.now()): Promise<PredictionDetail | null> {
     const existing = await this.predictionDao.queryById(id);
     if (existing === null) {
       return null;
@@ -112,7 +114,10 @@ export class PredictionService {
     if (result.length === 0) {
       throw new Error('actual result required');
     }
-    await this.predictionDao.settle(id, result, hit);
+    if (outcome.length === 0) {
+      throw new Error('outcome required');
+    }
+    await this.predictionDao.settle(id, result, outcome, evidenceLevel);
     const updated = await this.predictionDao.queryById(id);
     return updated === null ? null : toPredictionDetail(updated);
   }

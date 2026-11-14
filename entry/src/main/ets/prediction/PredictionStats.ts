@@ -35,6 +35,10 @@ export function buildPredictionStats(predictions: Prediction[], monthLimit: numb
     if (prediction.status !== PredictionStatus.SETTLED || prediction.level === SecurityLevel.SEALED) {
       continue;
     }
+    // Partial, insufficient and undecidable leave hit null; they stay out of the binary rate.
+    if (prediction.hit === null) {
+      continue;
+    }
     const month = prediction.settlementDate.length >= 7 ?
       prediction.settlementDate.slice(0, 7) : '未知';
     samples.push({ confidence: prediction.confidence, hit: prediction.hit === true, month: month });
