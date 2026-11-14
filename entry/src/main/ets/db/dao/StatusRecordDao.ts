@@ -1,5 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
 import { StatusRecord } from '../../model/StatusRecord';
+import { CapacityJudgment } from '../../model/CapacityJudgment';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, STATUS_RECORD_COLS } from '../DbConstants';
 import { queryRows } from '../QuerySupport';
@@ -21,6 +22,16 @@ export class StatusRecordDao {
       [STATUS_RECORD_COLS.EXERCISE_COUNT]: record.exerciseCount,
       [STATUS_RECORD_COLS.ALERT_COUNT]: record.alertCount,
       [STATUS_RECORD_COLS.NOTE]: record.note,
+      [STATUS_RECORD_COLS.BODY_SIGNALS]: record.bodySignals ?? '',
+      [STATUS_RECORD_COLS.FUNCTION_STATE]: record.functionState ?? '',
+      [STATUS_RECORD_COLS.EMOTION]: record.emotion ?? '',
+      [STATUS_RECORD_COLS.ENVIRONMENT]: record.environment ?? '',
+      [STATUS_RECORD_COLS.CAPACITY]: record.capacity ?? '',
+      [STATUS_RECORD_COLS.FUNCTION_GAIN]: record.functionGain ?? '',
+      [STATUS_RECORD_COLS.COST_PAID]: record.costPaid ?? '',
+      [STATUS_RECORD_COLS.UNKNOWN_READINGS]: record.unknownReadings ?? '',
+      [STATUS_RECORD_COLS.CORRECTED_AT]: record.correctedAt ?? 0,
+      [STATUS_RECORD_COLS.REVISIONS]: record.revisions ?? '',
       [STATUS_RECORD_COLS.LEVEL]: record.level ?? SecurityLevel.LOCAL_ONLY,
       [STATUS_RECORD_COLS.DELETED]: record.deleted === true ? 1 : 0
     };
@@ -35,6 +46,16 @@ export class StatusRecordDao {
       [STATUS_RECORD_COLS.EXERCISE_COUNT]: record.exerciseCount,
       [STATUS_RECORD_COLS.ALERT_COUNT]: record.alertCount,
       [STATUS_RECORD_COLS.NOTE]: record.note,
+      [STATUS_RECORD_COLS.BODY_SIGNALS]: record.bodySignals ?? '',
+      [STATUS_RECORD_COLS.FUNCTION_STATE]: record.functionState ?? '',
+      [STATUS_RECORD_COLS.EMOTION]: record.emotion ?? '',
+      [STATUS_RECORD_COLS.ENVIRONMENT]: record.environment ?? '',
+      [STATUS_RECORD_COLS.CAPACITY]: record.capacity ?? '',
+      [STATUS_RECORD_COLS.FUNCTION_GAIN]: record.functionGain ?? '',
+      [STATUS_RECORD_COLS.COST_PAID]: record.costPaid ?? '',
+      [STATUS_RECORD_COLS.UNKNOWN_READINGS]: record.unknownReadings ?? '',
+      [STATUS_RECORD_COLS.CORRECTED_AT]: record.correctedAt ?? 0,
+      [STATUS_RECORD_COLS.REVISIONS]: record.revisions ?? '',
       [STATUS_RECORD_COLS.LEVEL]: record.level ?? SecurityLevel.LOCAL_ONLY
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.STATUS_RECORD);
@@ -101,8 +122,34 @@ export class StatusRecordDao {
       exerciseCount: resultSet.getLong(resultSet.getColumnIndex(STATUS_RECORD_COLS.EXERCISE_COUNT)),
       alertCount: resultSet.getLong(resultSet.getColumnIndex(STATUS_RECORD_COLS.ALERT_COUNT)),
       note: resultSet.getString(resultSet.getColumnIndex(STATUS_RECORD_COLS.NOTE)),
+      bodySignals: this.readText(resultSet, STATUS_RECORD_COLS.BODY_SIGNALS),
+      functionState: this.readText(resultSet, STATUS_RECORD_COLS.FUNCTION_STATE),
+      emotion: this.readText(resultSet, STATUS_RECORD_COLS.EMOTION),
+      environment: this.readText(resultSet, STATUS_RECORD_COLS.ENVIRONMENT),
+      capacity: this.readText(resultSet, STATUS_RECORD_COLS.CAPACITY) as CapacityJudgment,
+      functionGain: this.readText(resultSet, STATUS_RECORD_COLS.FUNCTION_GAIN),
+      costPaid: this.readText(resultSet, STATUS_RECORD_COLS.COST_PAID),
+      unknownReadings: this.readText(resultSet, STATUS_RECORD_COLS.UNKNOWN_READINGS),
+      correctedAt: this.readLong(resultSet, STATUS_RECORD_COLS.CORRECTED_AT),
+      revisions: this.readText(resultSet, STATUS_RECORD_COLS.REVISIONS),
       level: resultSet.getString(resultSet.getColumnIndex(STATUS_RECORD_COLS.LEVEL)) as SecurityLevel,
       deleted: resultSet.getLong(resultSet.getColumnIndex(STATUS_RECORD_COLS.DELETED)) === 1
     };
+  }
+
+  /** Reads an optional text column; a missing column reads as empty instead of throwing. */
+  private readText(resultSet: relationalStore.ResultSet, column: string): string {
+    const index = resultSet.getColumnIndex(column);
+    if (index < 0) {
+      return '';
+    }
+    const value = resultSet.getString(index);
+    return value === undefined ? '' : value;
+  }
+
+  /** Reads an optional integer column; a missing column reads as zero. */
+  private readLong(resultSet: relationalStore.ResultSet, column: string): number {
+    const index = resultSet.getColumnIndex(column);
+    return index < 0 ? 0 : resultSet.getLong(index);
   }
 }

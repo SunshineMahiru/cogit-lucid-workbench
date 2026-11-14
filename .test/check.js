@@ -35,6 +35,19 @@ const {
   trustLevelText
 } = require('./out2/relation/RelationListMapper');
 const { ThresholdReadingRules } = require('./out2/analysis/status/ThresholdReadingRules');
+const { sanitizeObservationRule } = require('./out2/analysis/status/ObservationRule');
+const {
+  isReadingUnknown,
+  setReadingUnknown,
+  unknownReadingText,
+  unknownList
+} = require('./out2/analysis/status/ReadingPresence');
+const { toCapacityJudgment, capacityText, isCapacityJudgment } = require('./out2/model/CapacityJudgment');
+const {
+  parseStatusRevisions,
+  stringifyStatusRevisions,
+  statusRevisionOf
+} = require('./out2/status/StatusRevisions');
 const { parseReviewPrompts } = require('./out2/network/ReviewPrompt');
 const { BasicTrustPolicy } = require('./out2/analysis/trust/BasicTrustPolicy');
 const { buildPredictionStats } = require('./out2/prediction/PredictionStats');
@@ -685,6 +698,99 @@ test('状态按日期倒序并汇总平均值与标记天数', () => {
   const overview = buildStatusOverview(records, rules, 1);
   assert.strictEqual(overview.latest.date, '2026-10-27');
   assert.strictEqual(overview.recent.length, 1);
+});
+
+test('未记录的读数不参与平均，也不触发提示', () => {
+  const rules = new ThresholdReadingRules();
+  const records = [
+    {
+      id: 'a',
+      date: '2026-10-25',
+      sleepHours: 0,
+      exerciseCount: 0,
+      alertCount: 0,
+      note: '',
+      unknownReadings: 'sleep,exercise,alert'
+    },
+    { id: 'b', date: '2026-10-26', sleepHours: 8, exerciseCount: 2, alertCount: 0, note: '' }
+  ];
+  const rows = toStatusDayRows(records, rules);
+  assert.strictEqual(rows[1].flags.length, 0);
+  assert.strictEqual(unknownReadingText(rows[1].unknownReadings), '睡眠、运动、凌晨报警未记录');
+
+  const summary = summarizeStatus(rows);
+  assert.strictEqual(summary.days, 2);
+  assert.strictEqual(summary.sleepDays, 1);
+  assert.strictEqual(summary.averageSleep, 8);
+  assert.strictEqual(summary.totalExercise, 2);
+  assert.strictEqual(summary.totalAlerts, 0);
+  assert.strictEqual(summary.unknownDays, 1);
+});
+
+test('个人观察阈值与关闭提示生效', () => {
+  const custom = new ThresholdReadingRules(sanitizeObservationRule({
+    sleepMinHours: 7.5,
+    alertWarnCount: 3,
+    hintsEnabled: true
+  }));
+  const flags = custom.evaluate({ date: '2026-10-27', sleepHours: 7, exerciseCount: 1, alertCount: 2 });
+  assert.deepStrictEqual(flags.map((flag) => flag.code), ['sleep_low']);
+
+  const muted = new ThresholdReadingRules(sanitizeObservationRule({
+    sleepMinHours: 6.5,
+    alertWarnCount: 1,
+    hintsEnabled: false
+  }));
+  assert.strictEqual(muted.evaluate({
+    date: '2026-10-27',
+    sleepHours: 4,
+    exerciseCount: 0,
+    alertCount: 4
+  }).length, 0);
+
+  const clamped = sanitizeObservationRule({ sleepMinHours: 99, alertWarnCount: 0, hintsEnabled: true });
+  assert.strictEqual(clamped.sleepMinHours, 10);
+  assert.strictEqual(clamped.alertWarnCount, 1);
+});
+
+test('未知读数标记可增删并保持顺序', () => {
+  let marker = '';
+  marker = setReadingUnknown(marker, 'alert', true);
+  marker = setReadingUnknown(marker, 'sleep', true);
+  assert.strictEqual(marker, 'sleep,alert');
+  assert.deepStrictEqual(unknownList(marker), ['sleep', 'alert']);
+  assert.strictEqual(isReadingUnknown(marker, 'exercise'), false);
+  marker = setReadingUnknown(marker, 'sleep', false);
+  assert.strictEqual(marker, 'alert');
+  assert.strictEqual(unknownReadingText(marker), '凌晨报警未记录');
+  assert.strictEqual(unknownReadingText(''), '');
+});
+
+test('更正保留原读数并可读回', () => {
+  const revisions = [];
+  revisions.push(statusRevisionOf(1763200000000, 5.5, 0, 2, '前一天补记', 'limited'));
+  const stored = stringifyStatusRevisions(revisions);
+  const parsed = parseStatusRevisions(stored);
+  assert.strictEqual(parsed.length, 1);
+  assert.strictEqual(parsed[0].at, 1763200000000);
+  assert.strictEqual(parsed[0].sleepHours, 5.5);
+  assert.strictEqual(parsed[0].capacity, 'limited');
+  assert.strictEqual(parsed[0].note, '前一天补记');
+
+  assert.deepStrictEqual(parseStatusRevisions(''), []);
+  assert.deepStrictEqual(parseStatusRevisions('not json'), []);
+  assert.deepStrictEqual(parseStatusRevisions('[{"sleepHours":6}]'), []);
+});
+
+test('承受判断只接受四个选项', () => {
+  assert.strictEqual(isCapacityJudgment('pause'), true);
+  assert.strictEqual(isCapacityJudgment('healthy'), false);
+  assert.strictEqual(toCapacityJudgment('healthy'), '');
+  assert.strictEqual(capacityText('bearable'), '可以承受');
+  assert.strictEqual(capacityText('limited'), '需要限量');
+  assert.strictEqual(capacityText('pause'), '需要暂停');
+  assert.strictEqual(capacityText('unknown'), '无法判断');
+  assert.strictEqual(capacityText(''), '未填写');
 });
 
 test('复盘提示解析：正常、空列表与坏数据', () => {

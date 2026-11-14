@@ -9,5 +9,8 @@ export const SETTINGS_KEYS = {
   LLM_API_KEY: 'llm_api_key',
   LLM_MODEL: 'llm_model',
   LLM_MONTHLY_BUDGET: 'llm_monthly_budget',
-  DEFAULT_LEVEL: 'default_level'
+  DEFAULT_LEVEL: 'default_level',
+  STATUS_SLEEP_MIN: 'status_sleep_min',
+  STATUS_ALERT_WARN: 'status_alert_warn',
+  STATUS_HINTS_ENABLED: 'status_hints_enabled'
 } as const;

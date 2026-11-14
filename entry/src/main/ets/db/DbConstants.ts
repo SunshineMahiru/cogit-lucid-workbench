@@ -149,6 +149,16 @@ export const STATUS_RECORD_COLS = {
   EXERCISE_COUNT: 'exercise_count',
   ALERT_COUNT: 'alert_count',
   NOTE: 'note',
+  BODY_SIGNALS: 'body_signals',
+  FUNCTION_STATE: 'function_state',
+  EMOTION: 'emotion',
+  ENVIRONMENT: 'environment',
+  CAPACITY: 'capacity',
+  FUNCTION_GAIN: 'function_gain',
+  COST_PAID: 'cost_paid',
+  UNKNOWN_READINGS: 'unknown_readings',
+  CORRECTED_AT: 'corrected_at',
+  REVISIONS: 'revisions',
   LEVEL: 'level',
   DELETED: 'deleted'
 } as const;

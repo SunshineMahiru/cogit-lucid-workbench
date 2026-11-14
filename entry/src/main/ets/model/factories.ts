@@ -103,6 +103,16 @@ export function createStatusRecord(): StatusRecord {
     exerciseCount: 0,
     alertCount: 0,
     note: '',
+    bodySignals: '',
+    functionState: '',
+    emotion: '',
+    environment: '',
+    capacity: '',
+    functionGain: '',
+    costPaid: '',
+    unknownReadings: '',
+    correctedAt: 0,
+    revisions: '',
     level: SecurityLevel.LOCAL_ONLY
   };
 }

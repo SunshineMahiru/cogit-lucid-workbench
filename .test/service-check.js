@@ -222,12 +222,27 @@ class FakeStore {
 }
 
 const store = new FakeStore();
+const preferenceValues = new Map();
+const fakePreferences = {
+  getPreferences: async (context, options) => {
+    const name = options && options.name ? options.name : 'default';
+    return {
+      get: async (key, fallback) => preferenceValues.has(`${name}:${key}`) ? preferenceValues.get(`${name}:${key}`) : fallback,
+      put: async (key, value) => {
+        preferenceValues.set(`${name}:${key}`, value);
+      },
+      flush: async () => {
+      }
+    };
+  }
+};
 const fakeArkData = {
   relationalStore: {
     RdbPredicates: FakePredicates,
     SecurityLevel: { S1: 1 },
     getRdbStore: async () => store
-  }
+  },
+  preferences: fakePreferences
 };
 
 const originalLoad = Module._load;
@@ -319,6 +334,7 @@ function reset() {
   store.failTable = null;
   store.failUpdateTable = null;
   store.insertCount = 0;
+  preferenceValues.clear();
 }
 
 async function main() {
@@ -621,6 +637,58 @@ async function main() {
     assert.strictEqual(overview.summary.averageSleep, 6.7);
     assert.strictEqual(await statusService.seedDemoRecords(), 0);
     assert.strictEqual((await statusService.history()).length, 7);
+  });
+
+  await test('同日更正保留原读数并记住观察规则', async () => {
+    reset();
+    const statusService = await StatusService.open({});
+    await statusService.save({
+      date: '2026-10-28',
+      sleepHours: 5,
+      exerciseCount: 0,
+      alertCount: 1,
+      unknownReadings: '',
+      note: '原记录',
+      bodySignals: '头痛',
+      functionState: '能读十分钟',
+      emotion: '',
+      environment: '',
+      capacity: 'limited',
+      functionGain: '',
+      costPaid: ''
+    }, 1000);
+    const first = await statusService.find('2026-10-28');
+    assert.strictEqual(first.revisions.length, 0);
+    assert.strictEqual(first.bodySignals, '头痛');
+    assert.strictEqual(first.capacity, 'limited');
+
+    await statusService.save({
+      date: '2026-10-28',
+      sleepHours: 7,
+      exerciseCount: 1,
+      alertCount: 0,
+      unknownReadings: '',
+      note: '改过',
+      bodySignals: '头痛',
+      functionState: '能读十分钟',
+      emotion: '',
+      environment: '',
+      capacity: 'bearable',
+      functionGain: '',
+      costPaid: ''
+    }, 2000);
+    const second = await statusService.find('2026-10-28');
+    assert.strictEqual(second.correctedAt, 2000);
+    assert.strictEqual(second.revisions.length, 1);
+    assert.strictEqual(second.revisions[0].sleepHours, 5);
+    assert.strictEqual(second.revisions[0].capacity, 'limited');
+    assert.strictEqual(second.sleepHours, 7);
+
+    await statusService.saveObservationRule({ sleepMinHours: 8, alertWarnCount: 3, hintsEnabled: false });
+    const reopened = await StatusService.open({});
+    assert.strictEqual(reopened.observationRule().sleepMinHours, 8);
+    assert.strictEqual(reopened.observationRule().hintsEnabled, false);
+    assert.strictEqual((await reopened.find('2026-10-28')).flags.length, 0);
   });
 
   await test('预测示例数据载入一次并生成统计', async () => {

@@ -352,6 +352,25 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Body evidence columns arrived with the status rework; older rows keep empty values.
+    const statusEvidenceMigrations: string[] = [
+      `ALTER TABLE status_record ADD COLUMN body_signals TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE status_record ADD COLUMN function_state TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE status_record ADD COLUMN emotion TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE status_record ADD COLUMN environment TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE status_record ADD COLUMN capacity TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE status_record ADD COLUMN function_gain TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE status_record ADD COLUMN cost_paid TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE status_record ADD COLUMN unknown_readings TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE status_record ADD COLUMN corrected_at INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE status_record ADD COLUMN revisions TEXT NOT NULL DEFAULT ''`
+    ];
+    for (const sql of statusEvidenceMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     const indexSqls: string[] = [
       `CREATE INDEX IF NOT EXISTS idx_event_timestamp ON event(timestamp)`,
       `CREATE INDEX IF NOT EXISTS idx_prediction_status_date ON prediction(status, settlement_date)`,

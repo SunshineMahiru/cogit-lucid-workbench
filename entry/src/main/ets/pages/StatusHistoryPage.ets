@@ -4,6 +4,9 @@ import { SectionCard } from '../components/SectionCard';
 import { StatusDayRow } from '../components/StatusDayRow';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { StatusDayRow as StatusRow, StatusService } from '../status';
+import { StatusRevision } from '../model/StatusRecord';
+import { capacityText } from '../model/CapacityJudgment';
+import { formatDateTime } from '../analysis/time/DateTime';
 import { PREVIEW_STATUS_ROWS } from '../preview/PreviewData';
 import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 
@@ -18,6 +21,7 @@ export struct StatusHistoryPage {
   @Local undoId: string = '';
   @Local undoDate: string = '';
   @Local listVersion: number = 0;
+  @Local expandedId: string = '';
   private hasShownOnce: boolean = false;
 
   aboutToAppear(): void {
@@ -197,6 +201,41 @@ export struct StatusHistoryPage {
                 SectionCard() {
                   Column({ space: 4 }) {
                     StatusDayRow({ row: row })
+                    if (row.revisions.length > 0) {
+                      Text(this.expandedId === row.id ?
+                        `更正 ${row.revisions.length} 次 · 收起原读数` :
+                        `更正 ${row.revisions.length} 次 · 看原读数`)
+                        .fontSize(AppTheme.font.caption)
+                        .fontColor(AppTheme.color.primary)
+                        .padding({ top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                        .onClick(() => {
+                          this.expandedId = this.expandedId === row.id ? '' : row.id;
+                        })
+                      if (this.expandedId === row.id) {
+                        ForEach(row.revisions, (revision: StatusRevision) => {
+                          Column({ space: 2 }) {
+                            Text(`${formatDateTime(revision.at)} 的原读数`)
+                              .fontSize(AppTheme.font.caption)
+                              .fontColor(AppTheme.color.textMuted)
+                              .width('100%')
+                            Text(`睡眠 ${revision.sleepHours} 小时 · 运动 ${revision.exerciseCount} 次 · 报警 ${revision.alertCount} 次 · 判断 ${capacityText(revision.capacity)}`)
+                              .fontSize(AppTheme.font.body)
+                              .fontColor(AppTheme.color.textSecondary)
+                              .width('100%')
+                            if (revision.note.length > 0) {
+                              Text(revision.note)
+                                .fontSize(AppTheme.font.body)
+                                .fontColor(AppTheme.color.textMuted)
+                                .width('100%')
+                            }
+                          }
+                          .width('100%')
+                          .padding(AppTheme.spacing.s8)
+                          .backgroundColor(AppTheme.color.surfaceAlt)
+                          .borderRadius(AppTheme.radius.sm)
+                        }, (revision: StatusRevision) => `${row.id}_${revision.at}`)
+                      }
+                    }
                     Row() {
                       Blank()
                       Text('删除')

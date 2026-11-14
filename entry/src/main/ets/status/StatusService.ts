@@ -2,28 +2,75 @@ import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { ReadingRules } from '../analysis/status/ReadingRules';
 import { ThresholdReadingRules } from '../analysis/status/ThresholdReadingRules';
+import { ObservationRule, defaultObservationRule } from '../analysis/status/ObservationRule';
 import { MOCK_STATUS_RECORDS } from '../model/mockData';
 import { StatusRecord } from '../model/StatusRecord';
+import { CapacityJudgment } from '../model/CapacityJudgment';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { createStatusRecord } from '../model/factories';
 import { DbHelper } from '../db/DbHelper';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
+import { ObservationRuleStore } from '../settings/ObservationRuleStore';
 import { StatusDayRow, StatusOverview } from './StatusListItem';
 import { buildStatusOverview, toStatusDayRow, toStatusDayRows } from './StatusMapper';
+import { parseStatusRevisions, statusRevisionOf, stringifyStatusRevisions } from './StatusRevisions';
+
+/** Everything one status day carries when it is saved. */
+export interface StatusDraft {
+  date: string;
+  sleepHours: number;
+  exerciseCount: number;
+  alertCount: number;
+  unknownReadings: string;
+  note: string;
+  bodySignals: string;
+  functionState: string;
+  emotion: string;
+  environment: string;
+  capacity: CapacityJudgment;
+  functionGain: string;
+  costPaid: string;
+}
 
 /** Reads status records for the panel and the history page. */
 export class StatusService {
   private statusDao: StatusRecordDao;
-  private rules: ReadingRules = new ThresholdReadingRules();
+  private rules: ReadingRules;
+  private ruleStore: ObservationRuleStore;
+  private rule: ObservationRule;
 
-  private constructor(store: relationalStore.RdbStore) {
+  private constructor(store: relationalStore.RdbStore, ruleStore: ObservationRuleStore, rule: ObservationRule) {
     this.statusDao = new StatusRecordDao(store);
+    this.ruleStore = ruleStore;
+    this.rule = rule;
+    this.rules = new ThresholdReadingRules(rule);
   }
 
-  /** Opens the database and returns a service bound to it. */
+  /** Opens the database and settings, then returns a service bound to both. */
   static async open(context: common.Context): Promise<StatusService> {
     const store = await DbHelper.init(context);
-    return new StatusService(store);
+    const ruleStore = await ObservationRuleStore.open(context);
+    const rule = await ruleStore.load();
+    return new StatusService(store, ruleStore, rule);
+  }
+
+  /** Returns the observation rule currently in use. */
+  observationRule(): ObservationRule {
+    return this.rule;
+  }
+
+  /** Persists a new observation rule and applies it to later reads. */
+  async saveObservationRule(rule: ObservationRule): Promise<void> {
+    await this.ruleStore.save(rule);
+    this.rule = await this.ruleStore.load();
+    this.rules = new ThresholdReadingRules(this.rule);
+  }
+
+  /** Restores the default observation rule. */
+  async resetObservationRule(): Promise<ObservationRule> {
+    this.rule = await this.ruleStore.reset();
+    this.rules = new ThresholdReadingRules(this.rule);
+    return this.rule;
   }
 
   /** Returns the recent window used by the panel. */
@@ -44,16 +91,39 @@ export class StatusService {
     return record === null ? null : toStatusDayRow(record, this.rules);
   }
 
-  /** Creates or updates one day's reading and returns the refreshed overview. */
-  async save(date: string, sleepHours: number, exerciseCount: number, alertCount: number,
-    note: string): Promise<StatusOverview> {
-    const existing = await this.statusDao.queryByDate(date);
+  /** Returns the stored record for one date, used by the editor to keep corrections. */
+  async findRecord(date: string): Promise<StatusRecord | null> {
+    return this.statusDao.queryByDate(date);
+  }
+
+  /**
+   * Creates or updates one day's reading and returns the refreshed overview.
+   * A same-day change keeps the previous values as a revision and stamps the correction time.
+   */
+  async save(draft: StatusDraft, now: number = Date.now()): Promise<StatusOverview> {
+    const existing = await this.statusDao.queryByDate(draft.date);
     const record: StatusRecord = existing === null ? createStatusRecord() : existing;
-    record.date = date;
-    record.sleepHours = sleepHours;
-    record.exerciseCount = exerciseCount;
-    record.alertCount = alertCount;
-    record.note = note.trim();
+    if (existing !== null && hasReadingChanged(existing, draft)) {
+      const revisions = parseStatusRevisions(existing.revisions ?? '');
+      revisions.push(statusRevisionOf(existing.correctedAt !== undefined && existing.correctedAt > 0 ? existing.correctedAt : now,
+        existing.sleepHours, existing.exerciseCount, existing.alertCount, existing.note,
+        existing.capacity ?? ''));
+      record.revisions = stringifyStatusRevisions(revisions);
+      record.correctedAt = now;
+    }
+    record.date = draft.date;
+    record.sleepHours = draft.sleepHours;
+    record.exerciseCount = draft.exerciseCount;
+    record.alertCount = draft.alertCount;
+    record.note = draft.note.trim();
+    record.bodySignals = draft.bodySignals.trim();
+    record.functionState = draft.functionState.trim();
+    record.emotion = draft.emotion.trim();
+    record.environment = draft.environment.trim();
+    record.capacity = draft.capacity;
+    record.functionGain = draft.functionGain.trim();
+    record.costPaid = draft.costPaid.trim();
+    record.unknownReadings = draft.unknownReadings;
     if (existing === null) {
       await this.statusDao.insert(record);
     } else {
@@ -86,4 +156,38 @@ export class StatusService {
     }
     return MOCK_STATUS_RECORDS.length;
   }
+}
+
+/** Reports whether a same-day save replaces any reading, note or judgment. */
+function hasReadingChanged(existing: StatusRecord, draft: StatusDraft): boolean {
+  return existing.sleepHours !== draft.sleepHours ||
+    existing.exerciseCount !== draft.exerciseCount ||
+    existing.alertCount !== draft.alertCount ||
+    existing.note !== draft.note.trim() ||
+    (existing.capacity ?? '') !== draft.capacity ||
+    (existing.unknownReadings ?? '') !== draft.unknownReadings;
+}
+
+/** Returns the default draft for a date. */
+export function emptyStatusDraft(date: string): StatusDraft {
+  return {
+    date: date,
+    sleepHours: 0,
+    exerciseCount: 0,
+    alertCount: 0,
+    unknownReadings: '',
+    note: '',
+    bodySignals: '',
+    functionState: '',
+    emotion: '',
+    environment: '',
+    capacity: '',
+    functionGain: '',
+    costPaid: ''
+  };
+}
+
+/** Returns the defaults used before the author changes the observation rule. */
+export function defaultRule(): ObservationRule {
+  return defaultObservationRule();
 }
