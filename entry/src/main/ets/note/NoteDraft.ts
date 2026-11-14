@@ -1,4 +1,5 @@
 import { SecurityLevel } from '../model/SecurityLevel';
+import { MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
 import { NoteFieldKey } from './NoteFieldKey';
 import { NoteTemplateId } from './NoteTemplateId';
 
@@ -12,6 +13,12 @@ export interface NoteEntry {
 export interface NoteMaterialDraft {
   kind: string;
   text: string;
+  /** Where the material comes from; empty reads as a direct experience */
+  source?: MaterialSource;
+  /** Optional genre marker; empty reads as a first-person scene */
+  form?: MaterialForm;
+  /** Per-material level; absent means the material follows the note level */
+  level?: SecurityLevel;
 }
 
 /** Editable state of one quick note before it is persisted. */

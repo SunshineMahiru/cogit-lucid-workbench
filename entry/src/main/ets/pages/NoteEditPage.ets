@@ -17,6 +17,7 @@ import {
   validateNoteDraft
 } from '../note';
 import { SecurityLevel } from '../model/SecurityLevel';
+import { MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
 import { NoteEditParams } from '../navigation/RouteParams';
 import { SettingsStore } from '../settings';
 import { NoteFieldEditor } from '../components/NoteFieldEditor';
@@ -46,6 +47,10 @@ export struct NoteEditPage {
   @Local materialFeeling: string = '';
   @Local materialBody: string = '';
   @Local materialAction: string = '';
+  @Local materialInterpretation: string = '';
+  @Local showInterpretation: boolean = false;
+  /** Source, form and level chosen per material kind */
+  @Local metas: MaterialMeta[] = defaultMaterialMetas();
   private navStack: NavPathStack | null = null;
 
   async aboutToAppear(): Promise<void> {
@@ -195,14 +200,54 @@ export struct NoteEditPage {
     this.pushMaterial(items, 'feeling', this.materialFeeling);
     this.pushMaterial(items, 'body', this.materialBody);
     this.pushMaterial(items, 'existing_action', this.materialAction);
+    this.pushMaterial(items, 'interpretation', this.materialInterpretation);
     return items;
   }
 
   private pushMaterial(items: NoteMaterialDraft[], kind: string, value: string): void {
     const trimmed = value.trim();
-    if (trimmed.length > 0) {
-      items.push({ kind: kind, text: trimmed });
+    if (trimmed.length === 0) {
+      return;
     }
+    const meta = this.metaFor(kind);
+    const item: NoteMaterialDraft = {
+      kind: kind,
+      text: trimmed,
+      source: meta.source,
+      form: meta.form
+    };
+    if (meta.level !== null) {
+      item.level = meta.level;
+    }
+    items.push(item);
+  }
+
+  /** Returns the source, form and level chosen for one material kind. */
+  private metaFor(kind: string): MaterialMeta {
+    for (const meta of this.metas) {
+      if (meta.kind === kind) {
+        return meta;
+      }
+    }
+    return { kind: kind, source: 'direct', form: 'first_person', level: null };
+  }
+
+  private setSource(kind: string, source: MaterialSource): void {
+    this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
+      { kind: kind, source: source, form: meta.form, level: meta.level } : meta);
+    this.isDirty = true;
+  }
+
+  private setForm(kind: string, form: MaterialForm): void {
+    this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
+      { kind: kind, source: meta.source, form: form, level: meta.level } : meta);
+    this.isDirty = true;
+  }
+
+  private setMaterialLevel(kind: string, level: SecurityLevel | null): void {
+    this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
+      { kind: kind, source: meta.source, form: meta.form, level: level } : meta);
+    this.isDirty = true;
   }
 
   private setMaterial(kind: string, value: string): void {
@@ -214,6 +259,8 @@ export struct NoteEditPage {
       this.materialBody = value;
     } else if (kind === 'existing_action') {
       this.materialAction = value;
+    } else if (kind === 'interpretation') {
+      this.materialInterpretation = value;
     }
     this.isDirty = true;
   }
@@ -249,23 +296,93 @@ export struct NoteEditPage {
 
   @Builder
   materialRow(label: string, hint: string, value: string, kind: string) {
-    Row({ space: AppTheme.spacing.s8 }) {
-      Text(label)
-        .fontSize(AppTheme.font.caption)
-        .fontColor(AppTheme.color.textSecondary)
-        .width(48)
-      TextInput({ text: value, placeholder: hint })
-        .id(`material_${kind}`)
-        .fontSize(AppTheme.font.body)
-        .height(40)
-        .layoutWeight(1)
-        .backgroundColor(AppTheme.color.surfaceTint)
-        .borderRadius(AppTheme.radius.md)
-        .onChange((next: string) => {
-          this.setMaterial(kind, next);
-        })
+    Column({ space: 4 }) {
+      Row({ space: AppTheme.spacing.s8 }) {
+        Text(label)
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textSecondary)
+          .width(48)
+        TextInput({ text: value, placeholder: hint })
+          .id(`material_${kind}`)
+          .fontSize(AppTheme.font.body)
+          .height(40)
+          .layoutWeight(1)
+          .backgroundColor(AppTheme.color.surfaceTint)
+          .borderRadius(AppTheme.radius.md)
+          .onChange((next: string) => {
+            this.setMaterial(kind, next);
+          })
+      }
+      .width('100%')
+
+      if (value.trim().length > 0) {
+        Flex({ wrap: FlexWrap.Wrap }) {
+          ForEach(SOURCE_OPTIONS, (option: MetaOption) => {
+            Text(option.label)
+              .fontSize(AppTheme.font.caption)
+              .fontColor(this.metaFor(kind).source === option.value ? Color.White : AppTheme.color.textSecondary)
+              .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: 2, bottom: 2 })
+              .backgroundColor(this.metaFor(kind).source === option.value ?
+                AppTheme.color.primary : AppTheme.color.chip)
+              .borderRadius(AppTheme.radius.sm)
+              .margin({ right: AppTheme.spacing.s4, bottom: AppTheme.spacing.s2 })
+              .id(`material_source_${kind}_${option.value}`)
+              .onClick(() => {
+                this.setSource(kind, option.value as MaterialSource);
+              })
+          }, (option: MetaOption) => option.value)
+        }
+        .width('100%')
+
+        Flex({ wrap: FlexWrap.Wrap }) {
+          ForEach(FORM_OPTIONS, (option: MetaOption) => {
+            Text(option.label)
+              .fontSize(AppTheme.font.caption)
+              .fontColor(this.metaFor(kind).form === option.value ? Color.White : AppTheme.color.textSecondary)
+              .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: 2, bottom: 2 })
+              .backgroundColor(this.metaFor(kind).form === option.value ?
+                AppTheme.color.primary : AppTheme.color.chip)
+              .borderRadius(AppTheme.radius.sm)
+              .margin({ right: AppTheme.spacing.s4, bottom: AppTheme.spacing.s2 })
+              .id(`material_form_${kind}_${option.value}`)
+              .onClick(() => {
+                this.setForm(kind, option.value as MaterialForm);
+              })
+          }, (option: MetaOption) => option.value)
+        }
+        .width('100%')
+
+        Flex({ wrap: FlexWrap.Wrap }) {
+          ForEach(LEVEL_OPTIONS, (option: MetaOption) => {
+            Text(option.label)
+              .fontSize(AppTheme.font.caption)
+              .fontColor(this.levelPicked(kind, option.value) ? Color.White : AppTheme.color.textSecondary)
+              .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: 2, bottom: 2 })
+              .backgroundColor(this.levelPicked(kind, option.value) ?
+                AppTheme.color.primaryDeep : AppTheme.color.chip)
+              .borderRadius(AppTheme.radius.sm)
+              .margin({ right: AppTheme.spacing.s4, bottom: AppTheme.spacing.s2 })
+              .id(`material_level_${kind}_${option.value}`)
+              .onClick(() => {
+                const picked: SecurityLevel | null = option.value === 'inherit' ? null : option.value as SecurityLevel;
+                this.setMaterialLevel(kind, picked);
+              })
+          }, (option: MetaOption) => option.value)
+        }
+        .width('100%')
+      }
     }
     .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  /** True when this level option matches the material's own level (inherit matches none). */
+  private levelPicked(kind: string, value: string): boolean {
+    const current = this.metaFor(kind).level;
+    if (value === 'inherit') {
+      return current === null;
+    }
+    return current === value;
   }
 
   private async save(): Promise<void> {
@@ -534,6 +651,17 @@ export struct NoteEditPage {
               this.materialRow('感受', '当时的情绪', this.materialFeeling, 'feeling')
               this.materialRow('身体', '睡眠、疼痛、疲劳等', this.materialBody, 'body')
               this.materialRow('已做', '解释之前已经采取了什么行动', this.materialAction, 'existing_action')
+              if (this.showInterpretation) {
+                this.materialRow('解释', '我当时的解释是什么？（可留空）', this.materialInterpretation, 'interpretation')
+              } else {
+                Text('写解释（可留空）')
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.primary)
+                  .id('material_interpretation_toggle')
+                  .onClick(() => {
+                    this.showInterpretation = true;
+                  })
+              }
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)
@@ -589,4 +717,53 @@ export struct NoteEditPage {
       .height('100%')
       .backgroundColor(Color.Transparent)
   }
+}
+
+/** One chip option shared by the source, form and level rows. */
+interface MetaOption {
+  value: string;
+  label: string;
+}
+
+/** Source, form and level kept for one material kind. */
+interface MaterialMeta {
+  kind: string;
+  source: MaterialSource;
+  form: MaterialForm;
+  level: SecurityLevel | null;
+}
+
+const SOURCE_OPTIONS: MetaOption[] = [
+  { value: 'direct', label: '直接经历' },
+  { value: 'reading', label: '阅读' },
+  { value: 'exercise', label: '练习' },
+  { value: 'interaction', label: '互动' },
+  { value: 'reflection', label: '反思' },
+  { value: 'external', label: '外部资料' }
+];
+
+const FORM_OPTIONS: MetaOption[] = [
+  { value: 'first_person', label: '第一人称' },
+  { value: 'dialogue', label: '对话' },
+  { value: 'third_person', label: '第三人称' },
+  { value: 'poem', label: '诗' },
+  { value: 'reading_note', label: '读书笔记' },
+  { value: 'public_claim', label: '公开说法' }
+];
+
+const LEVEL_OPTIONS: MetaOption[] = [
+  { value: 'inherit', label: '跟随记录' },
+  { value: 'analyzable', label: '可分析' },
+  { value: 'local_only', label: '仅本地' },
+  { value: 'sealed', label: '已封存' }
+];
+
+/** Builds the default meta for every material kind supported by the editor. */
+function defaultMaterialMetas(): MaterialMeta[] {
+  const kinds: string[] = ['scene', 'feeling', 'body', 'existing_action', 'interpretation'];
+  const metas: MaterialMeta[] = [];
+  for (const kind of kinds) {
+    metas.push({ kind: kind, source: 'direct', form: 'first_person', level: null });
+  }
+  return metas;
 }

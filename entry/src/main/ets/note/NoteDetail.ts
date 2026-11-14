@@ -1,4 +1,5 @@
 import { Event } from '../model/Event';
+import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { formatNoteTime } from './NoteListMapper';
 
@@ -14,6 +15,8 @@ export interface NoteDetail {
   /** Relations linked to the note, used when editing */
   relatedRelationIds: string[];
   timeLabel: string;
+  /** Typed materials kept with this note; absent for preview data and old notes */
+  materials?: ExperienceMaterial[];
 }
 
 /** Projects an event into the detail view model. */
@@ -40,4 +43,64 @@ export function securityLevelText(level: SecurityLevel): string {
     return '已封存';
   }
   return '仅本地';
+}
+
+/** Chinese label for one material kind. */
+export function materialKindText(kind: string): string {
+  if (kind === 'scene') {
+    return '现场';
+  }
+  if (kind === 'feeling') {
+    return '感受';
+  }
+  if (kind === 'body') {
+    return '身体';
+  }
+  if (kind === 'existing_action') {
+    return '已做';
+  }
+  if (kind === 'interpretation') {
+    return '解释';
+  }
+  return '未分类';
+}
+
+/** Chinese label for where a material came from. */
+export function materialSourceText(source: string): string {
+  if (source === 'reading') {
+    return '阅读';
+  }
+  if (source === 'exercise') {
+    return '练习';
+  }
+  if (source === 'interaction') {
+    return '互动';
+  }
+  if (source === 'reflection') {
+    return '反思';
+  }
+  if (source === 'external') {
+    return '外部资料';
+  }
+  return '直接经历';
+}
+
+/** Chinese label for the genre a material was written in. */
+export function materialFormText(form: string): string {
+  if (form === 'dialogue') {
+    return '对话';
+  }
+  if (form === 'third_person') {
+    return '第三人称';
+  }
+  if (form === 'poem') {
+    return '诗';
+  }
+  if (form === 'reading_note') {
+    return '读书笔记';
+  }
+  if (form === 'public_claim') {
+    return '公开说法';
+  }
+  return '第一人称';
 }

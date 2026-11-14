@@ -1,6 +1,14 @@
 import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
-import { NoteDetail, QuickNoteService, securityLevelText } from '../note';
+import {
+  NoteDetail,
+  QuickNoteService,
+  materialFormText,
+  materialKindText,
+  materialSourceText,
+  securityLevelText
+} from '../note';
+import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { NoteDetailParams, NoteEditParams, PlanAttachParams } from '../navigation/RouteParams';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
@@ -250,6 +258,37 @@ export struct NoteDetailPage {
               .lineHeight(24)
               .fontColor(AppTheme.color.text)
               .width('100%')
+
+            if (this.detail.materials !== undefined && this.detail.materials.length > 0) {
+              Column({ space: 6 }) {
+                Text('材料')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                ForEach(this.detail.materials, (material: ExperienceMaterial) => {
+                  Column({ space: 4 }) {
+                    Text(`${materialKindText(material.kind)} · ${materialSourceText(material.source)} · ` +
+                      `${materialFormText(material.form)} · ${securityLevelText(material.level)}`)
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.textMuted)
+                      .width('100%')
+                    Text(material.text)
+                      .fontSize(AppTheme.font.body)
+                      .lineHeight(20)
+                      .fontColor(AppTheme.color.text)
+                      .width('100%')
+                  }
+                  .width('100%')
+                  .padding(AppTheme.spacing.s10)
+                  .backgroundColor(AppTheme.color.surfaceTint)
+                  .borderRadius(AppTheme.radius.md)
+                  .alignItems(HorizontalAlign.Start)
+                }, (material: ExperienceMaterial) => material.id)
+              }
+              .width('100%')
+              .margin({ top: AppTheme.spacing.s12 })
+              .alignItems(HorizontalAlign.Start)
+            }
           }
           .width('100%')
           .padding(AppTheme.spacing.s20)

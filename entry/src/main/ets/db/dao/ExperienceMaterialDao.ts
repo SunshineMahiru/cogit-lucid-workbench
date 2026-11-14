@@ -50,18 +50,28 @@ export class ExperienceMaterialDao {
   }
 
   /**
-   * Rewrites the level of every live material of one event; the record level governs its materials.
-   * Deleted rows keep their old level because they no longer travel anywhere.
+   * Applies a new record level to the materials that were inheriting the old one. Materials whose
+   * level differs from the previous record level were set on purpose and stay as they are.
    */
-  async updateLevelByEvent(eventId: string, level: SecurityLevel): Promise<number> {
-    const values: relationalStore.ValuesBucket = {
-      [MATERIAL_COLS.LEVEL]: level
-    };
-    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
-    predicates.equalTo(MATERIAL_COLS.EVENT_ID, eventId)
-      .and()
-      .equalTo(MATERIAL_COLS.DELETED, 0);
-    return this.store.update(values, predicates);
+  async updateInheritedLevelByEvent(eventId: string, previousLevel: SecurityLevel,
+    nextLevel: SecurityLevel): Promise<number> {
+    if (previousLevel === nextLevel) {
+      return 0;
+    }
+    const materials = await this.queryByEvent(eventId);
+    let changed = 0;
+    for (const material of materials) {
+      if (material.level !== previousLevel) {
+        continue;
+      }
+      const values: relationalStore.ValuesBucket = {
+        [MATERIAL_COLS.LEVEL]: nextLevel
+      };
+      const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
+      predicates.equalTo(MATERIAL_COLS.ID, material.id);
+      changed += await this.store.update(values, predicates);
+    }
+    return changed;
   }
 
   /** Marks a material deleted; the row stays so history can say "source deleted". */

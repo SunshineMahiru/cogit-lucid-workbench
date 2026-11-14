@@ -300,6 +300,7 @@ const { AnchorService } = require('./out2/anchor/AnchorService');
 const { RelationService } = require('./out2/relation/RelationService');
 const { StatusService } = require('./out2/status/StatusService');
 const { HomeDataService } = require('./out2/data/HomeDataService');
+const { ExperienceMaterialDao } = require('./out2/db/dao/ExperienceMaterialDao');
 const { PredictionService } = require('./out2/prediction/PredictionService');
 const { ReviewService } = require('./out2/review/ReviewService');
 const { rangeFor } = require('./out2/review/ReviewRange');
@@ -662,6 +663,25 @@ async function main() {
     const home = await HomeDataService.open({});
     const notes = await home.loadRecentNotes(5);
     assert.deepStrictEqual(notes.map((note) => note.id), ['ev_local']);
+  });
+
+  await test('整条改密级只带动继承的行，单独指定的材料保持原级', async () => {
+    reset();
+    store.rows('experience_material').push(
+      {
+        id: 'mt_1', event_id: 'ev_1', kind: 'body', form: '', text: '胸闷', observed_at: 1,
+        source: 'direct', source_stance: '', level: 'local_only', revision_of: '', deleted: 0, created_at: 1
+      },
+      {
+        id: 'mt_2', event_id: 'ev_1', kind: 'scene', form: '', text: '现场', observed_at: 2,
+        source: 'direct', source_stance: '', level: 'sealed', revision_of: '', deleted: 0, created_at: 1
+      }
+    );
+    const dao = new ExperienceMaterialDao(store);
+    await dao.updateInheritedLevelByEvent('ev_1', 'local_only', 'analyzable');
+    assert.deepStrictEqual(store.rows('experience_material').map((row) => row.level), ['analyzable', 'sealed']);
+    await dao.updateInheritedLevelByEvent('ev_1', 'analyzable', 'local_only');
+    assert.deepStrictEqual(store.rows('experience_material').map((row) => row.level), ['local_only', 'sealed']);
   });
 
   await test('同日更正保留原读数并记住观察规则', async () => {    reset();

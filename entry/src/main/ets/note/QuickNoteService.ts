@@ -114,12 +114,12 @@ export class QuickNoteService {
         id: `mt-${eventId}-${index}`,
         eventId: eventId,
         kind: item.kind as ExperienceMaterial['kind'],
-        form: '',
+        form: item.form ?? '',
         text: item.text,
         observedAt: observedAt,
-        source: 'direct',
+        source: item.source ?? 'direct',
         sourceStance: '',
-        level: level,
+        level: item.level ?? level,
         revisionOf: '',
         deleted: false,
         createdAt: Date.now()
@@ -171,7 +171,9 @@ export class QuickNoteService {
     if (event === null) {
       return null;
     }
-    return toNoteDetail(event);
+    const detail = toNoteDetail(event);
+    detail.materials = await this.materialDao.queryByEvent(noteId);
+    return detail;
   }
 
   /** Updates the editable fields of an existing note while keeping its id. */
@@ -184,11 +186,12 @@ export class QuickNoteService {
     if (event === null) {
       throw new Error('note not found');
     }
+    const previousLevel = event.level;
     applyDraft(event, draft);
     this.store.beginTransaction();
     try {
       await this.eventDao.update(event);
-      await this.materialDao.updateLevelByEvent(event.id, event.level);
+      await this.materialDao.updateInheritedLevelByEvent(event.id, previousLevel, event.level);
       this.store.commit();
     } catch (error) {
       this.store.rollBack();
