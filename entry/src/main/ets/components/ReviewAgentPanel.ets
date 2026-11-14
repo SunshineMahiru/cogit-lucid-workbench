@@ -1,8 +1,13 @@
+import { common } from '@kit.AbilityKit';
 import { Anchor } from '../model/Anchor';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { AppTheme } from '../theme/AppTheme';
-import { ContradictionCandidate } from '../analysis/contradiction/ContradictionAnalyzer';
+import { ContradictionCandidate, ContradictionInput } from '../analysis/contradiction/ContradictionAnalyzer';
 import { AgentOutcome, ReviewAgent } from '../review';
+import { buildAnalysisInput } from '../security/RequestBuilder';
+import { AppSettings, defaultAppSettings } from '../settings/AppSettings';
+import { SettingsStore } from '../settings/SettingsStore';
+import { ConfirmSheetItem, RequestConfirmSheet } from './RequestConfirmSheet';
 
 /** Self-contained agent panel: pass facts, interpretation and anchors, receive insert text. */
 @ComponentV2
@@ -20,6 +25,11 @@ export struct ReviewAgentPanel {
   @Local errorText: string = '';
   @Local requested: boolean = false;
   @Local droppedCount: number = 0;
+  @Local confirmVisible: boolean = false;
+  @Local confirmItems: ConfirmSheetItem[] = [];
+  @Local confirmDropped: number = 0;
+  @Local confirmProviderLabel: string = '';
+  @Local confirmHost: string = '';
 
   private async generate(): Promise<void> {
     if (this.isLoading) {
@@ -34,19 +44,83 @@ export struct ReviewAgentPanel {
       this.errorText = '运行环境未就绪';
       return;
     }
+    const settings = await this.readSettings(hostContext);
+    if (settings.llmProvider === 'template') {
+      await this.runAnalyze(hostContext, false);
+      return;
+    }
+    const built = buildAnalysisInput(this.buildInput(), settings.llmProvider);
+    const items = this.sheetItems(built.input);
+    if (items.length === 0) {
+      await this.runAnalyze(hostContext, true);
+      return;
+    }
+    this.confirmItems = items;
+    this.confirmDropped = built.dropped.length;
+    this.confirmProviderLabel = settings.llmProvider === 'mock' ? '本地模拟' : '模型端点';
+    this.confirmHost = settings.llmBaseUrl;
+    this.confirmVisible = true;
+  }
+
+  private async readSettings(hostContext: common.Context): Promise<AppSettings> {
+    try {
+      const store = await SettingsStore.open(hostContext);
+      return await store.load();
+    } catch (error) {
+      return defaultAppSettings();
+    }
+  }
+
+  private buildInput(): ContradictionInput {
+    return {
+      facts: this.facts,
+      interpretation: this.interpretation,
+      anchors: this.anchors,
+      factsLevel: this.factsLevel,
+      interpretationLevel: this.interpretationLevel,
+      relationForbidsAnalysis: this.relationForbidsAnalysis
+    };
+  }
+
+  private sheetItems(input: ContradictionInput): ConfirmSheetItem[] {
+    const items: ConfirmSheetItem[] = [];
+    if (input.facts.length > 0) {
+      items.push({ label: '事实', level: input.factsLevel, chars: input.facts.length });
+    }
+    if (input.interpretation.length > 0) {
+      items.push({ label: '解释', level: input.interpretationLevel, chars: input.interpretation.length });
+    }
+    input.anchors.forEach((anchor: Anchor, index: number) => {
+      const level: SecurityLevel = anchor.level ?? SecurityLevel.LOCAL_ONLY;
+      items.push({ label: `锚点 ${index + 1}`, level: level, chars: anchor.text.length });
+    });
+    return items;
+  }
+
+  private confirmSend(): void {
+    this.confirmVisible = false;
+    const hostContext = this.getUIContext().getHostContext();
+    if (hostContext === undefined) {
+      this.errorText = '运行环境未就绪';
+      return;
+    }
+    this.runAnalyze(hostContext, true);
+  }
+
+  private cancelSend(): void {
+    this.confirmVisible = false;
+  }
+
+  private async runAnalyze(hostContext: common.Context, confirmed: boolean): Promise<void> {
+    if (this.isLoading) {
+      return;
+    }
     this.isLoading = true;
     this.errorText = '';
     this.requested = true;
     try {
       const agent = await ReviewAgent.create(hostContext);
-      const outcome: AgentOutcome = await agent.analyze({
-        facts: this.facts,
-        interpretation: this.interpretation,
-        anchors: this.anchors,
-        factsLevel: this.factsLevel,
-        interpretationLevel: this.interpretationLevel,
-        relationForbidsAnalysis: this.relationForbidsAnalysis
-      });
+      const outcome: AgentOutcome = await agent.analyze(this.buildInput(), Date.now(), confirmed);
       this.candidates = outcome.candidates;
       this.droppedCount = outcome.dropped.length;
       this.message = outcome.fellBack ? `${outcome.message}（${outcome.provider}）` : outcome.message;
@@ -60,6 +134,23 @@ export struct ReviewAgentPanel {
   private insert(candidate: ContradictionCandidate): void {
     const text = `${candidate.gap}\n追问：${candidate.prompt}`;
     this.onInsert(text);
+  }
+
+  @Builder
+  confirmSheet() {
+    RequestConfirmSheet({
+      visible: this.confirmVisible,
+      providerLabel: this.confirmProviderLabel,
+      host: this.confirmHost,
+      items: this.confirmItems,
+      droppedCount: this.confirmDropped,
+      onConfirm: () => {
+        this.confirmSend();
+      },
+      onCancel: () => {
+        this.cancelSend();
+      }
+    })
   }
 
   build() {
@@ -153,5 +244,10 @@ export struct ReviewAgentPanel {
     .borderRadius(AppTheme.radius.md)
     .border({ width: 0.5, color: AppTheme.color.border })
     .alignItems(HorizontalAlign.Start)
+    .bindSheet($$this.confirmVisible, this.confirmSheet(), {
+      height: 380,
+      dragBar: false,
+      backgroundColor: AppTheme.color.surface
+    })
   }
 }
