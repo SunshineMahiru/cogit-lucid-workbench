@@ -21,7 +21,7 @@ export struct DataManagementCard {
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
           .width('100%')
-        Text('备份包含记录、身份、设置与本地图片；恢复需选择 .cogitbackup 文件。')
+        Text('备份包含记录、身份、设置与本地图片；封存内容只留本机，不进备份，恢复时也不会被覆盖。恢复需选择 .cogitbackup 文件。')
           .fontSize(AppTheme.font.body)
           .lineHeight(17)
           .fontColor(AppTheme.color.textSecondary)

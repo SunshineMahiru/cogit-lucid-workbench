@@ -810,6 +810,15 @@ test('数据库状态与能力缺失码', () => {
   assert.strictEqual(appHealth.current(), DbStatus.CHECKING);
 });
 
+test('备份按行导出时排除封存，恢复时保住本机封存', () => {
+  const { isSealedRow, deleteSqlFor } = require('./out2/settings/BackupRows');
+  assert.strictEqual(isSealedRow({ id: 'ev_1', level: 'sealed' }), true);
+  assert.strictEqual(isSealedRow({ id: 'ev_2', level: 'local_only' }), false);
+  assert.strictEqual(isSealedRow({ id: 'au_1', provider: 'model' }), false);
+  assert.strictEqual(deleteSqlFor('event', true), "DELETE FROM event WHERE level <> 'sealed'");
+  assert.strictEqual(deleteSqlFor('plan_link', false), 'DELETE FROM plan_link');
+});
+
 test('清空数据覆盖全部表', () => {
   const { DB_TABLES, DB_TABLES_CHILD_FIRST } = require('./out2/db/DbConstants');
   const declared = Object.values(DB_TABLES).slice().sort();

@@ -3,7 +3,7 @@ import { fileIo, picker } from '@kit.CoreFileKit';
 import { preferences, relationalStore } from '@kit.ArkData';
 import { util } from '@kit.ArkTS';
 import { DbHelper } from '../db/DbHelper';
-import { DB_TABLES, DB_TABLES_CHILD_FIRST } from '../db/DbConstants';
+import { DB_TABLES, DB_TABLES_CHILD_FIRST, LEVELED_TABLES } from '../db/DbConstants';
 import { copyBetween } from '../app/DocumentTransfer';
 import { DebugFaults } from '../app/DebugFaults';
 import { SETTINGS_STORE_NAME } from './SettingsKeys';
@@ -19,8 +19,10 @@ import { notifyPageBackgroundChanged } from './PageBackgroundBus';
 import { notifyProfileRefresh } from '../app/ProfileRefreshBus';
 import { profileCache } from '../profile/ProfileCache';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
+import { isSealedRow, deleteSqlFor } from './BackupRows';
 
-const BUNDLE_VERSION = 1;
+const BUNDLE_VERSION = 2;
+const LEGACY_BUNDLE_VERSION = 1;
 const BUNDLE_SUFFIX = '.cogitbackup';
 
 interface BundleBackground {
@@ -37,10 +39,18 @@ interface BundleProfile extends Profile {
   avatarData: string;
 }
 
+/** One table's rows, as the column map the store returns; sealed rows never appear here. */
+export interface BundleTable {
+  name: string;
+  rows: Record<string, string | null>[];
+}
+
 interface BackupBundle {
   version: number;
   createdAt: number;
-  database: string;
+  /** Present in version 1 bundles only; version 2 carries rows instead of a snapshot. */
+  database?: string;
+  tables?: BundleTable[];
   profile: BundleProfile;
   settings: AppSettings;
   backgrounds: BundleBackground[];
@@ -76,28 +86,74 @@ export class BackupService {
     }
     const stamp = Date.now();
     const store = await DbHelper.init(context);
-    const databasePath = `${directory}/snapshot-${stamp}.db`;
-    await store.backup(databasePath);
-    try {
-      const bundle = await BackupService.buildBundle(context, databasePath, stamp);
-      const fileName = `cogit-backup-${stamp}${BUNDLE_SUFFIX}`;
-      const bundlePath = `${directory}/${fileName}`;
-      await BackupService.writeText(bundlePath, JSON.stringify(bundle));
-      const options = new picker.DocumentSaveOptions();
-      options.newFileNames = [fileName];
-      const uris = await new picker.DocumentViewPicker(context).save(options);
-      if (uris.length === 0) {
-        BackupService.removeQuietly(bundlePath);
-        return '';
-      }
-      await copyBetween(bundlePath, uris[0]);
+    const bundle = await BackupService.buildBundle(context, store, stamp);
+    const fileName = `cogit-backup-${stamp}${BUNDLE_SUFFIX}`;
+    const bundlePath = `${directory}/${fileName}`;
+    await BackupService.writeText(bundlePath, JSON.stringify(bundle));
+    const options = new picker.DocumentSaveOptions();
+    options.newFileNames = [fileName];
+    const uris = await new picker.DocumentViewPicker(context).save(options);
+    if (uris.length === 0) {
       BackupService.removeQuietly(bundlePath);
-      return fileName;
-    } finally {
+      return '';
+    }
+    await copyBetween(bundlePath, uris[0]);
+    BackupService.removeQuietly(bundlePath);
+    return fileName;
+  }
+
+  /** Reads every table into plain rows; sealed records stay on this device. */
+  private static async readTables(store: relationalStore.RdbStore): Promise<BundleTable[]> {
+    const result: BundleTable[] = [];
+    for (const name of DB_TABLES_CHILD_FIRST) {
+      const rows: Record<string, string | null>[] = [];
+      const set = await store.querySql(`SELECT * FROM ${name}`);
       try {
-        fileIo.unlinkSync(databasePath);
-      } catch (error) {
+        const columns: string[] = set.columnNames;
+        while (set.goToNextRow()) {
+          const row: Record<string, string | null> = {};
+          for (let index = 0; index < columns.length; index += 1) {
+            const column: string = columns[index];
+            row[column] = set.isColumnNull(index) ? null : set.getString(index);
+          }
+          if (!isSealedRow(row)) {
+            rows.push(row);
+          }
+        }
+      } finally {
+        set.close();
       }
+      result.push({ name: name, rows: rows });
+    }
+    return result;
+  }
+
+  /**
+   * Replaces live rows with the bundle's rows. Tables that carry a level keep their sealed rows
+   * untouched, so a restore neither carries sealed content in nor wipes what is already local.
+   */
+  private static async writeTables(store: relationalStore.RdbStore, tables: BundleTable[]): Promise<void> {
+    const rowsByName = new Map<string, Record<string, string | null>[]>();
+    for (const table of tables) {
+      rowsByName.set(table.name, table.rows);
+    }
+    const leveled = new Set<string>(LEVELED_TABLES);
+    store.beginTransaction();
+    try {
+      for (const name of DB_TABLES_CHILD_FIRST) {
+        await store.executeSql(deleteSqlFor(name, leveled.has(name)));
+      }
+      const parentsFirst = DB_TABLES_CHILD_FIRST.slice().reverse();
+      for (const name of parentsFirst) {
+        const rows = rowsByName.get(name) ?? [];
+        for (const row of rows) {
+          await store.insert(name, row as relationalStore.ValuesBucket);
+        }
+      }
+      store.commit();
+    } catch (error) {
+      store.rollBack();
+      throw error;
     }
   }
 
@@ -108,7 +164,7 @@ export class BackupService {
     }
   }
 
-  private static async buildBundle(context: common.Context, databasePath: string,
+  private static async buildBundle(context: common.Context, store: relationalStore.RdbStore,
     stamp: number): Promise<BackupBundle> {
     const profile = await (await ProfileStore.open(context)).load();
     const settings = await (await SettingsStore.open(context)).load();
@@ -135,7 +191,7 @@ export class BackupService {
     return {
       version: BUNDLE_VERSION,
       createdAt: stamp,
-      database: BackupService.encode(BackupService.readBytes(databasePath)),
+      tables: await BackupService.readTables(store),
       profile: {
         nickname: profile.nickname,
         signature: profile.signature,
@@ -166,19 +222,27 @@ export class BackupService {
     await copyBetween(uris[0], bundlePath);
     try {
       const bundle = JSON.parse(await BackupService.readText(bundlePath)) as BackupBundle;
-      if (bundle.version !== BUNDLE_VERSION || typeof bundle.database !== 'string' ||
-        bundle.database.length === 0) {
+      const rowBundle = bundle.version === BUNDLE_VERSION && Array.isArray(bundle.tables);
+      const legacyBundle = bundle.version === LEGACY_BUNDLE_VERSION &&
+        typeof bundle.database === 'string' && bundle.database.length > 0;
+      if (!rowBundle && !legacyBundle) {
         throw new Error('备份格式不支持');
       }
-      await BackupService.writeBytes(databasePath, BackupService.decode(bundle.database));
-      if (!(await BackupService.isDatabaseFile(context, databasePath))) {
-        throw new Error('备份内的数据库无效');
+      if (legacyBundle) {
+        await BackupService.writeBytes(databasePath, BackupService.decode(bundle.database as string));
+        if (!(await BackupService.isDatabaseFile(context, databasePath))) {
+          throw new Error('备份内的数据库无效');
+        }
       }
       // Decode every picture first: a bad payload fails here, before the live database moves.
       const staged = await BackupService.stageSideData(context, bundle, stamp);
       const store = await DbHelper.init(context);
       await store.backup(`${directory}/pre-restore-${stamp}.db`);
-      await store.restore(databasePath);
+      if (rowBundle) {
+        await BackupService.writeTables(store, bundle.tables as BundleTable[]);
+      } else {
+        await store.restore(databasePath);
+      }
       let outcome: RestoreOutcome = RestoreOutcome.RESTORED;
       try {
         await BackupService.commitProfile(context, bundle.profile, staged.avatarPath, stamp);

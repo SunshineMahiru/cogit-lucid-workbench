@@ -56,7 +56,7 @@ The app is one module, targets `targetSdkVersion` 26.0.0 with a minimum of 6.1.1
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
 | Markdown export | Eight record groups render into one Markdown file, written to the sandbox first and then handed to the system save dialog; plan links to sealed records print a placeholder instead of their titles. |
-| Backup and restore | A database snapshot, identity, settings and background pictures travel in one `.cogitbackup`; the current database is copied aside before a restore, and the API key never enters the bundle. |
+| Backup and restore | Rows, identity, settings and background pictures travel in one `.cogitbackup`; sealed records stay on the device, the current database is copied aside before a restore, and the API key never enters the bundle. |
 | Home identity band | Avatar, nickname, signature, and a hand-written title sit above four counters: notes today, pending settlements, record streak, and the latest review. |
 | Backgrounds and page opacity | One default picture or one per module, from the gallery, the camera, or the file picker. Picture strength runs 4-30% and the page surface itself takes 0-60% transparency, so the setting works with or without a picture. |
 
@@ -338,7 +338,7 @@ Sealed records are dropped. A plan link that points at a sealed record prints `�
 | Item | Detail |
 |---|---|
 | Entry | Settings → `数据管理` → `备份并另存` / `恢复备份` |
-| What a backup is | A `cogit-backup-<timestamp>.cogitbackup` file: JSON carrying a database snapshot, the identity and avatar, settings, and every page background with its opacity |
+| What a backup is | A `cogit-backup-<timestamp>.cogitbackup` file: JSON carrying every table's rows, the identity and avatar, settings, and every page background with its opacity; rows at the `sealed` level are left out, and a restore keeps the sealed rows already on the device |
 | Saving it | A system save dialog opens straight away; pick a folder. Cancel it and the app reports `已生成备份，但未另存` |
 | Restore order | Version and database are validated, the current database is copied to `pre-restore-*.db`, then database, identity, settings and backgrounds come back, and the home page refreshes |
 | Left out | The API key. The field is emptied before packing and the restore writes non-secret options only, so enter it again on the new phone |
