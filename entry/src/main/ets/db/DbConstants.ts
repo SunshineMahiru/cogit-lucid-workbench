@@ -151,6 +151,7 @@ export const REVIEW_COLS = {
   PLAN_ID: 'plan_id',
   PLAN_NODE_ID: 'plan_node_id',
   LEVEL: 'level',
+  PAYLOAD: 'payload',
   CREATED_AT: 'created_at'
 } as const;
 

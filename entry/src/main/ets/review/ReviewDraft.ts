@@ -1,3 +1,5 @@
+import { emptyReviewPayload, ReviewPayload } from '../model/ReviewPayload';
+
 /** Counts shown at the top of a review session. */
 export interface ReviewStats {
   rangeLabel: string;
@@ -22,12 +24,14 @@ export function emptyReviewStats(): ReviewStats {
   };
 }
 
-/** Four-step review draft; only the facts and the action are required. */
+/** Review draft: the four legacy steps plus the six zones; only one zone needs text. */
 export interface ReviewDraft {
   facts: string;
   interpretation: string;
   contradiction: string;
   action: string;
+  /** Six-zone content; absent while a draft still uses the four steps */
+  payload?: ReviewPayload;
   anchorIds: string[];
   /** Plan context when the draft belongs to one plan node */
   planId?: string;
@@ -41,6 +45,7 @@ export function createReviewDraft(): ReviewDraft {
     interpretation: '',
     contradiction: '',
     action: '',
+    payload: emptyReviewPayload(),
     anchorIds: []
   };
 }

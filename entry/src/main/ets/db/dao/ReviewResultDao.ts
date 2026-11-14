@@ -3,7 +3,7 @@ import { ReviewPeriod } from '../../model/ReviewPeriod';
 import { ReviewResult } from '../../model/ReviewResult';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, REVIEW_COLS } from '../DbConstants';
-import { parseStringArray } from '../SafeJson';
+import { parseStringArray, parseReviewPayload } from '../SafeJson';
 
 /** Data access for saved review sessions. */
 export class ReviewResultDao {
@@ -27,6 +27,7 @@ export class ReviewResultDao {
       [REVIEW_COLS.PLAN_ID]: result.planId ?? '',
       [REVIEW_COLS.PLAN_NODE_ID]: result.planNodeId ?? '',
       [REVIEW_COLS.LEVEL]: result.level ?? SecurityLevel.LOCAL_ONLY,
+      [REVIEW_COLS.PAYLOAD]: result.payload === undefined ? '' : JSON.stringify(result.payload),
       [REVIEW_COLS.CREATED_AT]: result.createdAt
     };
     return this.store.insert(DB_TABLES.REVIEW_RESULT, values);
@@ -77,6 +78,7 @@ export class ReviewResultDao {
       action: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.ACTION)),
       anchorIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.ANCHOR_IDS))),
       level: resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.LEVEL)) as SecurityLevel,
+      payload: parseReviewPayload(resultSet.getString(resultSet.getColumnIndex(REVIEW_COLS.PAYLOAD))),
       createdAt: resultSet.getLong(resultSet.getColumnIndex(REVIEW_COLS.CREATED_AT))
     };
     if (planId.length > 0) {

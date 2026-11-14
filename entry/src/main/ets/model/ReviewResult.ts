@@ -1,7 +1,8 @@
 import { ReviewPeriod } from './ReviewPeriod';
+import { ReviewPayload } from './ReviewPayload';
 import { SecurityLevel } from './SecurityLevel';
 
-/** A completed review session: four steps plus the anchors it referenced. */
+/** A completed review session: six zones, plus the four legacy steps kept for old records. */
 export interface ReviewResult {
   id: string;
   period: ReviewPeriod;
@@ -11,6 +12,8 @@ export interface ReviewResult {
   interpretation: string;
   contradiction: string;
   action: string;
+  /** Six-zone content; absent on records saved before zones existed */
+  payload?: ReviewPayload;
   /** Anchors quoted during the contradiction step */
   anchorIds: string[];
   /** Optional plan context when the review came from a plan node */

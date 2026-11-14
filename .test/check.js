@@ -810,6 +810,22 @@ test('数据库状态与能力缺失码', () => {
   assert.strictEqual(appHealth.current(), DbStatus.CHECKING);
 });
 
+test('复盘六区：空内容合法，旧记录读不到 payload', () => {
+  const { emptyReviewPayload, hasAnyZone } = require('./out2/model/ReviewPayload');
+  const { parseReviewPayload, consumeJsonIssues } = require('./out2/db/SafeJson');
+  const blank = emptyReviewPayload();
+  assert.strictEqual(hasAnyZone(blank), false);
+  assert.strictEqual(hasAnyZone(Object.assign({}, blank, { scene: '只写了现场' })), true);
+  assert.strictEqual(parseReviewPayload(''), undefined);
+  const parsed = parseReviewPayload('{"scene":"现场","model":"模型","relation":"","evidence":"","cost":"","revision":""}');
+  assert.strictEqual(parsed.scene, '现场');
+  assert.strictEqual(parsed.model, '模型');
+  assert.strictEqual(parsed.cost, '');
+  consumeJsonIssues();
+  assert.strictEqual(parseReviewPayload('{坏数据'), undefined);
+  assert.strictEqual(consumeJsonIssues(), 1);
+});
+
 test('备份按行导出时排除封存，恢复时保住本机封存', () => {
   const { isSealedRow, deleteSqlFor } = require('./out2/settings/BackupRows');
   assert.strictEqual(isSealedRow({ id: 'ev_1', level: 'sealed' }), true);

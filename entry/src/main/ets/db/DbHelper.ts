@@ -247,7 +247,8 @@ export class DbHelper {
     const deleteMigrations: string[] = [
       `ALTER TABLE relation ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,
       `ALTER TABLE status_record ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,
-      `ALTER TABLE event ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`
+      `ALTER TABLE event ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE review_result ADD COLUMN payload TEXT NOT NULL DEFAULT ''`
     ];
     for (const sql of deleteMigrations) {
       try {

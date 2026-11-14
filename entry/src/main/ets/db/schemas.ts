@@ -82,6 +82,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     plan_id TEXT,
     plan_node_id TEXT,
     level TEXT NOT NULL DEFAULT 'local_only',
+    payload TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN} (

@@ -6,6 +6,7 @@ import { Event } from '../model/Event';
 import { createReviewResult } from '../model/factories';
 import { Prediction } from '../model/Prediction';
 import { ReviewPeriod } from '../model/ReviewPeriod';
+import { emptyReviewPayload } from '../model/ReviewPayload';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { countReviewWindow, ReviewWindowCounts } from '../analysis/metrics/ReviewMetrics';
 import { DbHelper } from '../db/DbHelper';
@@ -76,6 +77,7 @@ export class ReviewService {
     result.interpretation = draft.interpretation.trim();
     result.contradiction = draft.contradiction.trim();
     result.action = draft.action.trim();
+    result.payload = draft.payload ?? emptyReviewPayload();
     result.anchorIds = draft.anchorIds.slice();
     if (planId.length > 0) {
       result.planId = planId;

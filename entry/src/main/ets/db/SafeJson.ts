@@ -1,4 +1,5 @@
 import { InteractionLog } from '../model/Relation';
+import { ReviewPayload } from '../model/ReviewPayload';
 
 /** 整个进程累计的字段解析异常次数，供首页提示使用。 */
 let issueCount: number = 0;
@@ -68,4 +69,25 @@ export function parseInteractionLog(raw: string): InteractionLog[] {
     }
   }
   return result;
+}
+
+/** Reads the six-zone payload; returns undefined for old records without one. */
+export function parseReviewPayload(raw: string): ReviewPayload | undefined {
+  const value = readJson(raw);
+  if (value === null) {
+    return undefined;
+  }
+  const entry = value as Record<string, Object>;
+  const readZone = (key: string): string => {
+    const field = entry[key];
+    return typeof field === 'string' ? field as string : '';
+  };
+  return {
+    scene: readZone('scene'),
+    model: readZone('model'),
+    relation: readZone('relation'),
+    evidence: readZone('evidence'),
+    cost: readZone('cost'),
+    revision: readZone('revision')
+  };
 }
