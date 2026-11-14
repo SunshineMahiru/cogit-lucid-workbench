@@ -567,7 +567,9 @@ export struct AnchorPage {
       .bindSheet($$this.reviseVisible, this.reviseSheet(), {
         height: 420,
         dragBar: false,
-        backgroundColor: AppTheme.color.surface
+        backgroundColor: AppTheme.color.surface,
+        // The sheet holds three inputs; without this the confirm row ends up behind the keyboard.
+        keyboardAvoidMode: SheetKeyboardAvoidMode.TRANSLATE_AND_RESIZE
       })
   }
 }
