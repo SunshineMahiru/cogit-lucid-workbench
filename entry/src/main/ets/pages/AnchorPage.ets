@@ -20,6 +20,18 @@ export struct AnchorPage {
   @Local isPreview: boolean = false;
   @Local newAnchorText: string = '';
   @Local isAdding: boolean = false;
+  @Local reviseVisible: boolean = false;
+  @Local reviseText: string = '';
+  @Local reviseContext: string = '';
+  @Local reviseReason: string = '';
+  @Local reviseError: string = '';
+  @Local isRevising: boolean = false;
+  @Local retireVisible: boolean = false;
+  @Local isRetiring: boolean = false;
+  @Local versionsAnchorId: string = '';
+  @Local versions: Anchor[] = [];
+  private revisingAnchor: Anchor | null = null;
+  private retiringAnchor: Anchor | null = null;
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -106,6 +118,107 @@ export struct AnchorPage {
     this.navStack.pushPathByName(ROUTES.REVIEW, null);
   }
 
+  private openRevise(anchor: Anchor): void {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
+    this.revisingAnchor = anchor;
+    this.reviseText = anchor.text;
+    this.reviseContext = anchor.context ?? '';
+    this.reviseReason = '';
+    this.reviseError = '';
+    this.reviseVisible = true;
+  }
+
+  private async confirmRevise(): Promise<void> {
+    if (this.revisingAnchor === null || this.isRevising) {
+      return;
+    }
+    if (this.reviseText.trim().length === 0) {
+      this.reviseError = '写一句新的锚点';
+      return;
+    }
+    if (this.reviseReason.trim().length === 0) {
+      this.reviseError = '写一句这次修订的原因';
+      return;
+    }
+    if (this.service === null) {
+      this.reviseError = '数据库尚未就绪';
+      return;
+    }
+    this.reviseError = '';
+    this.isRevising = true;
+    try {
+      const next = await this.service.revise(this.revisingAnchor.id, this.reviseText,
+        this.reviseContext, this.reviseReason);
+      this.reviseVisible = false;
+      await this.reloadAnchors();
+      this.getUIContext().getPromptAction().showToast({ message: `已生成第 ${next.version ?? 1} 版` });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '修订失败，请重试' });
+    } finally {
+      this.isRevising = false;
+    }
+  }
+
+  private openRetire(anchor: Anchor): void {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
+    this.retiringAnchor = anchor;
+    this.retireVisible = true;
+  }
+
+  private async confirmRetire(): Promise<void> {
+    if (this.retiringAnchor === null || this.isRetiring) {
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    this.isRetiring = true;
+    try {
+      await this.service.retire(this.retiringAnchor.id);
+      this.retireVisible = false;
+      await this.reloadAnchors();
+      this.getUIContext().getPromptAction().showToast({ message: '已停用' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '停用失败，请重试' });
+    } finally {
+      this.isRetiring = false;
+    }
+  }
+
+  private async toggleVersions(anchor: Anchor): Promise<void> {
+    if (this.versionsAnchorId === anchor.id) {
+      this.versionsAnchorId = '';
+      this.versions = [];
+      return;
+    }
+    if (this.isPreview || this.service === null) {
+      this.versions = [anchor];
+      this.versionsAnchorId = anchor.id;
+      return;
+    }
+    try {
+      const rows = await this.service.versions(anchor.id);
+      this.versions = rows;
+      this.versionsAnchorId = anchor.id;
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '版本读取失败，请重试' });
+    }
+  }
+
+  private async reloadAnchors(): Promise<void> {
+    if (this.service !== null) {
+      this.anchors = await this.service.list();
+    }
+    this.versionsAnchorId = '';
+    this.versions = [];
+  }
+
   private openAttach(anchor: Anchor): void {
     if (this.navStack === null) {
       return;
@@ -165,6 +278,174 @@ export struct AnchorPage {
     .alignItems(HorizontalAlign.Start)
   }
 
+  @Builder
+  reviseSheet() {
+    Column({ space: AppTheme.spacing.s8 }) {
+      Text('修订锚点')
+        .fontSize(AppTheme.font.title)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppTheme.color.text)
+      TextArea({ text: this.reviseText, placeholder: '句子（必填）' })
+        .id('anchor_revise_text')
+        .height(72)
+        .maxLength(80)
+        .backgroundColor(AppTheme.color.surfaceAlt)
+        .onChange((value: string) => {
+          this.reviseText = value;
+          this.reviseError = '';
+        })
+      TextInput({ text: this.reviseContext, placeholder: '适用情境（可空）' })
+        .id('anchor_revise_context')
+        .backgroundColor(AppTheme.color.surfaceAlt)
+        .onChange((value: string) => {
+          this.reviseContext = value;
+        })
+      TextArea({ text: this.reviseReason, placeholder: '修订原因（必填）' })
+        .id('anchor_revise_reason')
+        .height(56)
+        .maxLength(120)
+        .backgroundColor(AppTheme.color.surfaceAlt)
+        .onChange((value: string) => {
+          this.reviseReason = value;
+          this.reviseError = '';
+        })
+      if (this.reviseError.length > 0) {
+        Text(this.reviseError)
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.danger)
+          .width('100%')
+      }
+      Row({ space: AppTheme.spacing.s8 }) {
+        Text('取消')
+          .id('anchor_revise_cancel')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+          .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .borderRadius(AppTheme.radius.sm)
+          .onClick(() => {
+            this.reviseVisible = false;
+          })
+        Text(this.isRevising ? '修订中…' : '确认修订')
+          .id('anchor_revise_confirm')
+          .fontSize(AppTheme.font.body)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+          .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+          .backgroundColor(this.isRevising ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
+          .borderRadius(AppTheme.radius.sm)
+          .onClick(() => {
+            this.confirmRevise();
+          })
+      }
+      .width('100%')
+    }
+    .id('anchor_revise_panel')
+    .width('100%')
+    .padding(AppTheme.spacing.s16)
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  retireSheet() {
+    Column({ space: AppTheme.spacing.s8 }) {
+      Text('停用这条锚点？')
+        .fontSize(AppTheme.font.title)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppTheme.color.text)
+      Text('停用后不再出现在新复盘里，历史复盘仍保留这句话。')
+        .fontSize(AppTheme.font.body)
+        .lineHeight(18)
+        .fontColor(AppTheme.color.textSecondary)
+        .width('100%')
+      Row({ space: AppTheme.spacing.s8 }) {
+        Text('取消')
+          .id('anchor_retire_cancel')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+          .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .borderRadius(AppTheme.radius.sm)
+          .onClick(() => {
+            this.retireVisible = false;
+          })
+        Text(this.isRetiring ? '停用中…' : '确认停用')
+          .id('anchor_retire_confirm')
+          .fontSize(AppTheme.font.body)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+          .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+          .backgroundColor(this.isRetiring ? AppTheme.color.primaryDisabled : AppTheme.color.danger)
+          .borderRadius(AppTheme.radius.sm)
+          .onClick(() => {
+            this.confirmRetire();
+          })
+      }
+      .width('100%')
+    }
+    .id('anchor_retire_panel')
+    .width('100%')
+    .padding(AppTheme.spacing.s16)
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  versionList() {
+    Column({ space: AppTheme.spacing.s6 }) {
+      Text('历史版本')
+        .fontSize(AppTheme.font.bodyStrong)
+        .fontColor(AppTheme.color.textSecondary)
+        .width('100%')
+      ForEach(this.versions, (item: Anchor) => {
+        Column({ space: 3 }) {
+          Row({ space: AppTheme.spacing.s8 }) {
+            Text(`v${item.version ?? 1}`)
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.primaryDeep)
+            Text(item.status === 'retired' ? '已停用' : '在用')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(item.status === 'retired' ? AppTheme.color.textMuted : AppTheme.color.success)
+            Text(item.source)
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.textMuted)
+              .layoutWeight(1)
+              .textAlign(TextAlign.End)
+          }
+          .width('100%')
+          Text(item.text)
+            .fontSize(AppTheme.font.body)
+            .lineHeight(18)
+            .fontColor(AppTheme.color.text)
+            .width('100%')
+          if (item.revisionReason !== undefined && item.revisionReason.length > 0) {
+            Text(`原因：${item.revisionReason}`)
+              .fontSize(AppTheme.font.caption)
+              .lineHeight(17)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+          }
+        }
+        .width('100%')
+        .padding(AppTheme.spacing.s10)
+        .backgroundColor(AppTheme.color.surfaceAlt)
+        .borderRadius(AppTheme.radius.sm)
+        .alignItems(HorizontalAlign.Start)
+      }, (item: Anchor) => item.id)
+    }
+    .id('anchor_version_list')
+    .width('100%')
+    .padding(AppTheme.spacing.s12)
+    .backgroundColor(AppTheme.color.surface)
+    .borderRadius(AppTheme.radius.md)
+    .alignItems(HorizontalAlign.Start)
+  }
+
   build() {
     AppDestination({
       route: 'anchor',
@@ -193,6 +474,11 @@ export struct AnchorPage {
         }
         .width('100%')
         .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s12 })
+        .bindSheet($$this.retireVisible, this.retireSheet(), {
+          height: 240,
+          dragBar: false,
+          backgroundColor: AppTheme.color.surface
+        })
 
         if (this.isLoading) {
           Column() {
@@ -224,13 +510,29 @@ export struct AnchorPage {
           Scroll() {
             Column({ space: 8 }) {
               ForEach(this.anchors, (anchor: Anchor, index: number) => {
-                AnchorCard({
-                  anchor: anchor,
-                  index: index + 1,
-                  onAttachPlan: () => {
-                    this.openAttach(anchor);
+                Column({ space: AppTheme.spacing.s8 }) {
+                  AnchorCard({
+                    anchor: anchor,
+                    index: index + 1,
+                    onAttachPlan: () => {
+                      this.openAttach(anchor);
+                    },
+                    onRevise: () => {
+                      this.openRevise(anchor);
+                    },
+                    onRetire: () => {
+                      this.openRetire(anchor);
+                    },
+                    onVersions: () => {
+                      this.toggleVersions(anchor);
+                    }
+                  })
+                  if (this.versionsAnchorId === anchor.id) {
+                    this.versionList()
                   }
-                })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
               }, (anchor: Anchor) => anchor.id)
             }
             .width('100%')
@@ -262,5 +564,10 @@ export struct AnchorPage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
+      .bindSheet($$this.reviseVisible, this.reviseSheet(), {
+        height: 420,
+        dragBar: false,
+        backgroundColor: AppTheme.color.surface
+      })
   }
 }
