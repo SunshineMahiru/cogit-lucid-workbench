@@ -191,6 +191,11 @@ export struct PredictionStatsPage {
 
                   PredictionTrendChart({ points: this.stats.months })
 
+                  Text('数据来自本机预测记录，只统计成立与未成立两档')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+
                   Text(`整体样本 ${this.stats.settled} 条；趋势最多显示最近 6 个月`)
                     .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
