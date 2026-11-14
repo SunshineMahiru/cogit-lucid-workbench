@@ -1031,11 +1031,15 @@ test('复盘六区：空内容合法，旧记录读不到 payload', () => {
   assert.strictEqual(consumeJsonIssues(), 1);
 });
 
-test('备份按行导出时排除封存，恢复时保住本机封存', () => {
-  const { isSealedRow, deleteSqlFor } = require('./out2/settings/BackupRows');
+test('备份按行导出时排除封存与已删除行，恢复时保住本机封存', () => {
+  const { isSealedRow, isDeletedRow, deleteSqlFor } = require('./out2/settings/BackupRows');
   assert.strictEqual(isSealedRow({ id: 'ev_1', level: 'sealed' }), true);
   assert.strictEqual(isSealedRow({ id: 'ev_2', level: 'local_only' }), false);
   assert.strictEqual(isSealedRow({ id: 'au_1', provider: 'model' }), false);
+  assert.strictEqual(isDeletedRow({ id: 'ev_3', deleted: '1' }), true);
+  assert.strictEqual(isDeletedRow({ id: 'ev_4', deleted: '0' }), false);
+  assert.strictEqual(isDeletedRow({ id: 'ev_5' }), false);
+  assert.strictEqual(isDeletedRow({ id: 'ev_6', deleted: null }), false);
   assert.strictEqual(deleteSqlFor('event', true), "DELETE FROM event WHERE level <> 'sealed'");
   assert.strictEqual(deleteSqlFor('plan_link', false), 'DELETE FROM plan_link');
 });

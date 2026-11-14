@@ -20,7 +20,7 @@ import { notifyPageBackgroundChanged } from './PageBackgroundBus';
 import { notifyProfileRefresh } from '../app/ProfileRefreshBus';
 import { profileCache } from '../profile/ProfileCache';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
-import { isSealedRow, deleteSqlFor } from './BackupRows';
+import { isSealedRow, isDeletedRow, deleteSqlFor } from './BackupRows';
 
 const BUNDLE_VERSION = 2;
 const LEGACY_BUNDLE_VERSION = 1;
@@ -78,6 +78,21 @@ export enum RestoreOutcome {
   PARTIAL = 'partial'
 }
 
+/** Per-category result of one restore; a single success line must never hide a failed category. */
+export interface RestoreReport {
+  outcome: RestoreOutcome;
+  /** Whether records were written from the backup */
+  records: boolean;
+  /** Whether settings were applied */
+  settings: boolean;
+  /** Whether the identity block was applied */
+  profile: boolean;
+  /** Whether background images were applied */
+  backgrounds: boolean;
+  /** One line describing the background category, including the case with no pictures */
+  backgroundNote: string;
+}
+
 /** Portable backup: one JSON file carrying the database, identity, settings and pictures. */
 export class BackupService {
   static async backupToUser(context: common.Context): Promise<string> {
@@ -117,7 +132,7 @@ export class BackupService {
             const column: string = columns[index];
             row[column] = set.isColumnNull(index) ? null : set.getString(index);
           }
-          if (!isSealedRow(row)) {
+          if (!isSealedRow(row) && !isDeletedRow(row)) {
             rows.push(row);
           }
         }
@@ -212,10 +227,17 @@ export class BackupService {
     };
   }
 
-  static async restoreFromUser(context: common.Context): Promise<RestoreOutcome> {
+  static async restoreFromUser(context: common.Context): Promise<RestoreReport> {
     const uris = await new picker.DocumentViewPicker(context).select();
     if (uris.length === 0) {
-      return RestoreOutcome.CANCELLED;
+      return {
+        outcome: RestoreOutcome.CANCELLED,
+        records: false,
+        settings: false,
+        profile: false,
+        backgrounds: false,
+        backgroundNote: '未选择文件'
+      };
     }
     const directory = `${context.filesDir}/backups`;
     if (!fileIo.accessSync(directory)) {
@@ -243,23 +265,52 @@ export class BackupService {
       const staged = await BackupService.stageSideData(context, bundle, stamp);
       const store = await DbHelper.init(context);
       await store.backup(`${directory}/pre-restore-${stamp}.db`);
-      if (rowBundle) {
-        await BackupService.writeTables(store, bundle.tables as BundleTable[]);
-      } else {
-        await store.restore(databasePath);
+      let records = true;
+      try {
+        if (rowBundle) {
+          await BackupService.writeTables(store, bundle.tables as BundleTable[]);
+        } else {
+          await store.restore(databasePath);
+        }
+      } catch (recordError) {
+        records = false;
       }
-      let outcome: RestoreOutcome = RestoreOutcome.RESTORED;
+      let profile = true;
       try {
         await BackupService.commitProfile(context, bundle.profile, staged.avatarPath, stamp);
+      } catch (profileError) {
+        profile = false;
+      }
+      let settings = true;
+      try {
         await SettingsStore.savePreferencesOnly(context, bundle.settings);
-        await BackupService.commitBackgrounds(context, bundle, staged, stamp);
-      } catch (sideError) {
-        outcome = RestoreOutcome.PARTIAL;
+      } catch (settingsError) {
+        settings = false;
+      }
+      let backgrounds = true;
+      let backgroundNote = bundle.backgrounds.length === 0 ?
+        '备份未包含背景图片，本机保持现状' : '背景图片已恢复';
+      if (bundle.backgrounds.length > 0) {
+        try {
+          await BackupService.commitBackgrounds(context, bundle, staged, stamp);
+        } catch (backgroundError) {
+          backgrounds = false;
+          backgroundNote = '背景图片恢复失败，本机保持原样';
+        }
       }
       notifyProfileRefresh();
       notifyPageBackgroundChanged();
       notifyHomeRefresh();
-      return outcome;
+      const outcome = records && profile && settings && backgrounds ?
+        RestoreOutcome.RESTORED : RestoreOutcome.PARTIAL;
+      return {
+        outcome: outcome,
+        records: records,
+        settings: settings,
+        profile: profile,
+        backgrounds: backgrounds,
+        backgroundNote: backgroundNote
+      };
     } finally {
       try {
         fileIo.unlinkSync(bundlePath);

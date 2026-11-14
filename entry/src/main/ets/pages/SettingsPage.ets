@@ -18,8 +18,9 @@ import {
   PAGE_BACKGROUND_GROUPS,
   PageBackgroundService
 } from '../settings/PageBackgroundService';
-import { BackupService, RestoreOutcome } from '../settings/BackupService';
+import { BackupService, RestoreOutcome, RestoreReport } from '../settings/BackupService';
 import { BackupOptionsStore } from '../settings/BackupOptionsStore';
+import { BackupInventory } from '../settings/BackupInventory';
 import { ROUTES } from '../navigation/Routes';
 import { ExportService, totalExportRecords, ExportOptions, carriesLocalContent, describeExportOptions } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
@@ -67,6 +68,8 @@ export struct SettingsPage {
   @Local exportStatements: boolean = false;
   @Local exportDemo: boolean = false;
   @Local backupIncludeBackgrounds: boolean = false;
+  @Local safetyCount: number = 0;
+  @Local safetyLatest: string = '';
   @Local lastExportName: string = '';
   @Local lastExportPath: string = '';
   @Local lastExportChars: number = 0;
@@ -113,6 +116,7 @@ export struct SettingsPage {
       } catch (error) {
         this.backupIncludeBackgrounds = false;
       }
+      await this.loadSafetyCopies();
       this.isLoading = false;
     } catch (error) {
       this.isLoading = false;
@@ -246,19 +250,36 @@ export struct SettingsPage {
     }
     this.dataBusy = true;
     try {
-      const outcome = await BackupService.restoreFromUser(this.hostContext);
-      if (outcome === RestoreOutcome.CANCELLED) {
+      const report = await BackupService.restoreFromUser(this.hostContext);
+      if (report.outcome === RestoreOutcome.CANCELLED) {
         this.showToast('未选择备份文件');
-      } else if (outcome === RestoreOutcome.PARTIAL) {
-        this.showToast('数据库已恢复，身份或设置未完全恢复；建议重启应用后重新设置');
-      } else {
-        this.showToast('已恢复备份，建议重启应用');
+        return;
       }
+      this.showRestoreReport(report);
     } catch (error) {
       this.showToast('恢复失败；请确认文件是本应用导出的备份');
     } finally {
       this.dataBusy = false;
     }
+  }
+
+  private showRestoreReport(report: RestoreReport): void {
+    const lines: string[] = [
+      `记录：${report.records ? '已恢复' : '未恢复'}`,
+      `设置：${report.settings ? '已恢复' : '未恢复'}`,
+      `身份：${report.profile ? '已恢复' : '未恢复'}`,
+      `背景：${report.backgrounds ? report.backgroundNote : '未恢复，' + report.backgroundNote}`
+    ];
+    const allDone = report.outcome === RestoreOutcome.RESTORED;
+    this.getUIContext().showAlertDialog({
+      title: allDone ? '恢复完成' : '部分恢复完成',
+      message: `${lines.join('\n')}\n\n恢复前已保留当前数据库副本。建议重启应用后核对。`,
+      primaryButton: {
+        value: '知道了',
+        action: () => {
+        }
+      }
+    });
   }
 
   /** Debug only: makes the next launch report an unencrypted store. */
@@ -330,6 +351,54 @@ export struct SettingsPage {
       this.showToast('清空失败，请重试');
     } finally {
       this.dataBusy = false;
+    }
+  }
+
+  private async loadSafetyCopies(): Promise<void> {
+    if (this.hostContext === null) {
+      return;
+    }
+    try {
+      const copies = await BackupInventory.list(this.hostContext);
+      this.safetyCount = copies.length;
+      this.safetyLatest = copies.length > 0 ? formatCopyTime(copies[0].createdAt) : '';
+    } catch (error) {
+      this.safetyCount = 0;
+      this.safetyLatest = '';
+    }
+  }
+
+  private confirmClearSafetyCopies(): void {
+    if (this.safetyCount === 0) {
+      return;
+    }
+    this.getUIContext().showAlertDialog({
+      title: '清理本机安全副本？',
+      message: `会删除 ${this.safetyCount} 份恢复前自动保留的数据库副本。删除后无法再从这些副本回退。`,
+      primaryButton: {
+        value: '清理',
+        action: () => {
+          this.clearSafetyCopies();
+        }
+      },
+      secondaryButton: {
+        value: '取消',
+        action: () => {
+        }
+      }
+    });
+  }
+
+  private async clearSafetyCopies(): Promise<void> {
+    if (this.hostContext === null) {
+      return;
+    }
+    try {
+      const removed = await BackupInventory.deleteAll(this.hostContext);
+      await this.loadSafetyCopies();
+      this.showToast(`已清理 ${removed} 份安全副本`);
+    } catch (error) {
+      this.showToast('清理失败，请重试');
     }
   }
 
@@ -767,6 +836,28 @@ export struct SettingsPage {
                     .lineHeight(15)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
+                  Row() {
+                    Text(this.safetyCount === 0 ? '本机安全副本：暂无' :
+                      `本机安全副本：${this.safetyCount} 份 · 最近 ${this.safetyLatest}`)
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.textMuted)
+                      .layoutWeight(1)
+                    if (this.safetyCount > 0) {
+                      Text('清理')
+                        .fontSize(AppTheme.font.body)
+                        .fontColor(AppTheme.color.danger)
+                        .id('settings_backup_clean')
+                        .onClick(() => {
+                          this.confirmClearSafetyCopies();
+                        })
+                    }
+                  }
+                  .width('100%')
+                  Text('每次恢复前都会先保留一份当前数据库副本；清理后无法再从这些副本回退。')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(15)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)
@@ -894,4 +985,18 @@ export struct SettingsPage {
         .backgroundColor(Color.Transparent)
       }
   }
+}
+
+/** Formats a safety-copy timestamp as YYYY-MM-DD HH:mm. */
+function formatCopyTime(stamp: number): string {
+  if (stamp <= 0) {
+    return '时间未知';
+  }
+  const date = new Date(stamp);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const pad = (value: number): string => value < 10 ? `0${value}` : `${value}`;
+  return `${date.getFullYear()}-${pad(month)}-${pad(day)} ${pad(hour)}:${pad(minute)}`;
 }
