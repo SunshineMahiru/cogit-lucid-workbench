@@ -607,11 +607,23 @@ async function main() {
           { timestamp: NOW + 2000, content: '他说可以晚点再谈', source: 'stated', citation: 'paraphrase', allowContext: true }
         ]
       })]
-    })));
+    }), { includeLocalOnly: true, includeOtherStatements: true, includeDemoRecords: true }));
     assert.ok(markdown.includes('我看到的：他沉默了'));
     assert.ok(markdown.includes('（对方陈述仅保存在本机）'));
     assert.strictEqual(markdown.includes('他说不想再讨论'), false);
     assert.ok(markdown.includes('他说可以晚点再谈'));
+  });
+
+  await test('仅本地与示例数据默认不写入导出', () => {
+    const prepared = prepareExportBundle(bundle({
+      events: [event({ id: 'ev_demo_1', title: '示例速记' }), event({ id: 'ev_real', level: 'analyzable' })]
+    }), { includeLocalOnly: false, includeOtherStatements: false, includeDemoRecords: false });
+    assert.deepStrictEqual(prepared.events.map((item) => item.id), ['ev_real']);
+
+    const kept = prepareExportBundle(bundle({
+      events: [event({ id: 'ev_demo_1', title: '示例速记' }), event({ id: 'ev_real', level: 'analyzable' })]
+    }), { includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: true });
+    assert.deepStrictEqual(kept.events.map((item) => item.id).sort(), ['ev_demo_1', 'ev_real']);
   });
 
   await test('锚点按 order 编号，状态按日期倒序', () => {
@@ -749,13 +761,16 @@ async function main() {
     );
 
     const service = await ExportService.open({ filesDir: '/root' });
-    const markdown = await service.buildMarkdown(NOW);
+    const safe = await service.buildMarkdown(NOW);
+    assert.strictEqual(safe.includes('一次长谈'), false, '默认不写仅本地内容');
+    const options = { includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: true };
+    const markdown = await service.buildMarkdown(NOW, options);
     assert.strictEqual(markdown.includes('封存事件'), false);
     assert.ok(markdown.includes('## 事件'));
     assert.ok(markdown.includes('- 记录总数：9'));
     assert.ok(markdown.indexOf('1. 第一条') < markdown.indexOf('2. 第二条'));
 
-    const result = await service.exportMarkdown({ filesDir: '/root' }, NOW);
+    const result = await service.exportMarkdown({ filesDir: '/root' }, NOW, options);
     assert.strictEqual(result.fileName, 'cogit-export-20261027-0805.md');
     assert.strictEqual(result.filePath, '/root/exports/cogit-export-20261027-0805.md');
     assert.strictEqual(result.charCount, markdown.length);

@@ -19,8 +19,9 @@ import {
   PageBackgroundService
 } from '../settings/PageBackgroundService';
 import { BackupService, RestoreOutcome } from '../settings/BackupService';
+import { BackupOptionsStore } from '../settings/BackupOptionsStore';
 import { ROUTES } from '../navigation/Routes';
-import { ExportService, totalExportRecords } from '../export';
+import { ExportService, totalExportRecords, ExportOptions, carriesLocalContent, describeExportOptions } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { DbHelper } from '../db/DbHelper';
 import { DebugFaults } from '../app/DebugFaults';
@@ -62,6 +63,10 @@ export struct SettingsPage {
   @Local isSaving: boolean = false;
   @Local isDirty: boolean = false;
   @Local isExporting: boolean = false;
+  @Local exportLocalOnly: boolean = false;
+  @Local exportStatements: boolean = false;
+  @Local exportDemo: boolean = false;
+  @Local backupIncludeBackgrounds: boolean = false;
   @Local lastExportName: string = '';
   @Local lastExportPath: string = '';
   @Local lastExportChars: number = 0;
@@ -103,6 +108,11 @@ export struct SettingsPage {
         this.spentYuan = 0;
       }
       await this.loadBackgrounds(context);
+      try {
+        this.backupIncludeBackgrounds = await (await BackupOptionsStore.open(context)).includeBackgrounds();
+      } catch (error) {
+        this.backupIncludeBackgrounds = false;
+      }
       this.isLoading = false;
     } catch (error) {
       this.isLoading = false;
@@ -323,6 +333,54 @@ export struct SettingsPage {
     }
   }
 
+  private async toggleBackupBackgrounds(): Promise<void> {
+    if (this.hostContext === null) {
+      return;
+    }
+    const next = !this.backupIncludeBackgrounds;
+    try {
+      await (await BackupOptionsStore.open(this.hostContext)).saveIncludeBackgrounds(next);
+      this.backupIncludeBackgrounds = next;
+      this.showToast(next ? '背景图片会写入备份' : '背景图片不写入备份');
+    } catch (error) {
+      this.showToast('保存失败，请重试');
+    }
+  }
+
+  private currentExportOptions(): ExportOptions {
+    return {
+      includeLocalOnly: this.exportLocalOnly,
+      includeOtherStatements: this.exportStatements,
+      includeDemoRecords: this.exportDemo
+    };
+  }
+
+  private requestExport(): void {
+    if (this.isExporting) {
+      return;
+    }
+    const options = this.currentExportOptions();
+    if (!carriesLocalContent(options)) {
+      this.exportMarkdown();
+      return;
+    }
+    this.getUIContext().showAlertDialog({
+      title: '文件会离开应用沙箱',
+      message: '你选择了仅本地内容或对方陈述原文。导出文件可以被其他应用打开，也可能被分享出去。',
+      primaryButton: {
+        value: '继续导出',
+        action: () => {
+          this.exportMarkdown();
+        }
+      },
+      secondaryButton: {
+        value: '取消',
+        action: () => {
+        }
+      }
+    });
+  }
+
   private async exportMarkdown(): Promise<void> {
     if (this.isExporting) {
       return;
@@ -334,7 +392,7 @@ export struct SettingsPage {
     this.isExporting = true;
     try {
       const service = await ExportService.open(this.hostContext);
-      const result = await service.exportMarkdown(this.hostContext);
+      const result = await service.exportMarkdown(this.hostContext, Date.now(), this.currentExportOptions());
       this.lastExportName = result.fileName;
       this.lastExportPath = result.filePath;
       this.lastExportChars = result.charCount;
@@ -566,21 +624,87 @@ export struct SettingsPage {
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
-                  Text('把全部可导出记录写成 Markdown，并另存到你选择的位置。')
+                  Text('先选要写进文件的内容，再另存到你选择的位置。')
                     .fontSize(AppTheme.font.body)
                     .lineHeight(17)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
 
-                    Text(this.isExporting ? '导出中…' : '导出并另存为')
-                      .fontSize(AppTheme.font.bodyStrong)
-                      .fontColor(AppTheme.color.primary)
-                      .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
-                      .backgroundColor(AppTheme.color.tint)
-                      .borderRadius(AppTheme.radius.md)
-                      .accessibilityText('导出记录并另存为 Markdown')
+                  ForEach(describeExportOptions(), (line: string) => {
+                    Text(line)
+                      .fontSize(AppTheme.font.caption)
+                      .lineHeight(16)
+                      .fontColor(AppTheme.color.textMuted)
+                      .width('100%')
+                  }, (line: string) => line)
+
+                  Row() {
+                    Text('仅本地内容')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.text)
+                    Blank()
+                    Text(this.exportLocalOnly ? '纳入 · 已开启' : '不纳入')
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(this.exportLocalOnly ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+                      .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                      .backgroundColor(this.exportLocalOnly ? AppTheme.color.tint : AppTheme.color.chip)
+                      .borderRadius(AppTheme.radius.sm)
+                      .id('settings_export_local')
+                  }
+                  .width('100%')
+                  .height(40)
+                  .onClick(() => {
+                    this.exportLocalOnly = !this.exportLocalOnly;
+                  })
+
+                  Row() {
+                    Text('对方陈述原文')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.text)
+                    Blank()
+                    Text(this.exportStatements ? '纳入 · 已开启' : '不纳入')
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(this.exportStatements ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+                      .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                      .backgroundColor(this.exportStatements ? AppTheme.color.tint : AppTheme.color.chip)
+                      .borderRadius(AppTheme.radius.sm)
+                      .id('settings_export_statement')
+                  }
+                  .width('100%')
+                  .height(40)
+                  .onClick(() => {
+                    this.exportStatements = !this.exportStatements;
+                  })
+
+                  Row() {
+                    Text('示例数据')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.text)
+                    Blank()
+                    Text(this.exportDemo ? '纳入 · 已开启' : '不纳入')
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(this.exportDemo ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+                      .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                      .backgroundColor(this.exportDemo ? AppTheme.color.tint : AppTheme.color.chip)
+                      .borderRadius(AppTheme.radius.sm)
+                      .id('settings_export_demo')
+                  }
+                  .width('100%')
+                  .height(40)
+                  .onClick(() => {
+                    this.exportDemo = !this.exportDemo;
+                  })
+
+                  Text(this.isExporting ? '导出中…' : '导出并另存为')
+                    .id('settings_export_button')
+                    .fontSize(AppTheme.font.bodyStrong)
+                    .fontColor(this.isExporting ? AppTheme.color.textMuted : AppTheme.color.primary)
+                    .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+                    .backgroundColor(AppTheme.color.tint)
+                    .borderRadius(AppTheme.radius.md)
+                    .accessibilityText('导出记录并另存为 Markdown')
                     .onClick(() => {
-                      this.exportMarkdown();
+                      this.requestExport();
                     })
 
                   if (this.lastExportPath.length > 0) {
@@ -603,6 +727,46 @@ export struct SettingsPage {
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
                   }
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
+
+              SectionCard() {
+                Column({ space: 8 }) {
+                  Text('备份范围')
+                    .fontSize(AppTheme.font.subtitle)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor(AppTheme.color.text)
+                    .width('100%')
+                  Text('记录、身份与设置始终写入备份；封存内容只留本机，不进备份，也不支持随备份迁移。')
+                    .fontSize(AppTheme.font.body)
+                    .lineHeight(17)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Row() {
+                    Text('备份包含背景图片')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.text)
+                    Blank()
+                    Text(this.backupIncludeBackgrounds ? '包含 · 已开启' : '不包含')
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(this.backupIncludeBackgrounds ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+                      .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                      .backgroundColor(this.backupIncludeBackgrounds ? AppTheme.color.tint : AppTheme.color.chip)
+                      .borderRadius(AppTheme.radius.sm)
+                      .id('settings_export_backup_background')
+                  }
+                  .width('100%')
+                  .height(40)
+                  .onClick(() => {
+                    this.toggleBackupBackgrounds();
+                  })
+                  Text('背景图片默认只留在本机；开启后才会写进备份文件。')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(15)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)

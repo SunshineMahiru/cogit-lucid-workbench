@@ -3,14 +3,15 @@ import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
 import { InteractionLog, Relation } from '../model/Relation';
 import { Prediction } from '../model/Prediction';
-import { visibleInExport } from '../relation/InteractionSource';
 import { ReviewResult } from '../model/ReviewResult';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { StatusRecord } from '../model/StatusRecord';
 import { PlanItem } from '../model/PlanItem';
 import { PlanLink } from '../model/PlanLink';
 import { PlanLinkModule } from '../model/PlanLinkModule';
+import { visibleInExport } from '../relation/InteractionSource';
 import { ExportBundle } from './ExportBundle';
+import { ExportOptions } from './ExportOptions';
 import { PlanExport } from './PlanExport';
 
 /** Sealed records never leave the device, so exports drop them. */
@@ -18,20 +19,49 @@ export function isExportable(level: SecurityLevel): boolean {
   return level !== SecurityLevel.SEALED;
 }
 
+/** Options kept for callers that export every level except sealed records. */
+export function allExportOptions(): ExportOptions {
+  return {
+    includeLocalOnly: true,
+    includeOtherStatements: false,
+    includeDemoRecords: true
+  };
+}
+
 /** Drops sealed records and orders every section for reading. */
-export function prepareExportBundle(bundle: ExportBundle): ExportBundle {
+export function prepareExportBundle(bundle: ExportBundle,
+  options: ExportOptions = allExportOptions()): ExportBundle {
   const sealedKeys = collectSealedKeys(bundle);
   return {
-    events: prepareEvents(bundle.events),
-    decisions: prepareDecisions(bundle.decisions),
-    relations: prepareRelations(bundle.relations),
-    predictions: preparePredictions(bundle.predictions),
-    anchors: prepareAnchors(bundle.anchors),
-    statusRecords: prepareStatusRecords(bundle.statusRecords),
-    reviews: prepareReviews(bundle.reviews),
-    plans: preparePlans(bundle.plans ?? [], sealedKeys),
+    events: prepareEvents(bundle.events, options),
+    decisions: prepareDecisions(bundle.decisions, options),
+    relations: prepareRelations(bundle.relations, options),
+    predictions: preparePredictions(bundle.predictions, options),
+    anchors: prepareAnchors(bundle.anchors, options),
+    statusRecords: prepareStatusRecords(bundle.statusRecords, options),
+    reviews: prepareReviews(bundle.reviews, options),
+    plans: preparePlans(bundle.plans ?? [], sealedKeys, options),
     exportedAt: bundle.exportedAt
   };
+}
+
+/** Reports whether a record at this level is written under the chosen options. */
+function keepLevel(level: SecurityLevel, options: ExportOptions): boolean {
+  if (!isExportable(level)) {
+    return false;
+  }
+  if (level === SecurityLevel.LOCAL_ONLY) {
+    return options.includeLocalOnly;
+  }
+  return true;
+}
+
+/** Synthetic demo rows carry a "demo" id segment; they are written only on request. */
+function keepRecord(id: string, options: ExportOptions): boolean {
+  if (options.includeDemoRecords) {
+    return true;
+  }
+  return id.indexOf('demo') < 0;
 }
 
 /** 记录被封存的六模块目标，导出时只用占位文字代替它们的标题。 */
@@ -70,10 +100,10 @@ function collectSealedKeys(bundle: ExportBundle): string[] {
   return keys;
 }
 
-function prepareEvents(events: Event[]): Event[] {
+function prepareEvents(events: Event[], options: ExportOptions): Event[] {
   const items: Event[] = [];
   for (const event of events) {
-    if (isExportable(event.level)) {
+    if (keepLevel(event.level, options) && keepRecord(event.id, options)) {
       items.push(event);
     }
   }
@@ -81,10 +111,10 @@ function prepareEvents(events: Event[]): Event[] {
   return items;
 }
 
-function prepareDecisions(decisions: Decision[]): Decision[] {
+function prepareDecisions(decisions: Decision[], options: ExportOptions): Decision[] {
   const items: Decision[] = [];
   for (const decision of decisions) {
-    if (isExportable(decision.level)) {
+    if (keepLevel(decision.level, options) && keepRecord(decision.id, options)) {
       items.push(decision);
     }
   }
@@ -92,13 +122,13 @@ function prepareDecisions(decisions: Decision[]): Decision[] {
   return items;
 }
 
-function prepareRelations(relations: Relation[]): Relation[] {
+function prepareRelations(relations: Relation[], options: ExportOptions): Relation[] {
   const items: Relation[] = [];
   for (const relation of relations) {
-    if (isExportable(relation.level)) {
+    if (keepLevel(relation.level, options) && keepRecord(relation.id, options)) {
       const logs: InteractionLog[] = [];
       for (const log of relation.interactionLog) {
-        if (visibleInExport(log)) {
+        if (options.includeOtherStatements && visibleInExport(log)) {
           logs.push(log);
           continue;
         }
@@ -127,10 +157,11 @@ function prepareRelations(relations: Relation[]): Relation[] {
   return items;
 }
 
-function preparePredictions(predictions: Prediction[]): Prediction[] {
+function preparePredictions(predictions: Prediction[], options: ExportOptions): Prediction[] {
   const items: Prediction[] = [];
   for (const prediction of predictions) {
-    if (isExportable(prediction.level ?? SecurityLevel.LOCAL_ONLY)) {
+    const level = prediction.level ?? SecurityLevel.LOCAL_ONLY;
+    if (keepLevel(level, options) && keepRecord(prediction.id, options)) {
       items.push(prediction);
     }
   }
@@ -138,10 +169,11 @@ function preparePredictions(predictions: Prediction[]): Prediction[] {
   return items;
 }
 
-function prepareAnchors(anchors: Anchor[]): Anchor[] {
+function prepareAnchors(anchors: Anchor[], options: ExportOptions): Anchor[] {
   const items: Anchor[] = [];
   for (const anchor of anchors) {
-    if (isExportable(anchor.level ?? SecurityLevel.LOCAL_ONLY)) {
+    const level = anchor.level ?? SecurityLevel.LOCAL_ONLY;
+    if (keepLevel(level, options) && keepRecord(anchor.id, options)) {
       items.push(anchor);
     }
   }
@@ -149,10 +181,11 @@ function prepareAnchors(anchors: Anchor[]): Anchor[] {
   return items;
 }
 
-function prepareStatusRecords(records: StatusRecord[]): StatusRecord[] {
+function prepareStatusRecords(records: StatusRecord[], options: ExportOptions): StatusRecord[] {
   const items: StatusRecord[] = [];
   for (const record of records) {
-    if (isExportable(record.level ?? SecurityLevel.LOCAL_ONLY)) {
+    const level = record.level ?? SecurityLevel.LOCAL_ONLY;
+    if (keepLevel(level, options) && keepRecord(record.id, options)) {
       items.push(record);
     }
   }
@@ -160,10 +193,11 @@ function prepareStatusRecords(records: StatusRecord[]): StatusRecord[] {
   return items;
 }
 
-function prepareReviews(reviews: ReviewResult[]): ReviewResult[] {
+function prepareReviews(reviews: ReviewResult[], options: ExportOptions): ReviewResult[] {
   const items: ReviewResult[] = [];
   for (const review of reviews) {
-    if (isExportable(review.level ?? SecurityLevel.LOCAL_ONLY)) {
+    const level = review.level ?? SecurityLevel.LOCAL_ONLY;
+    if (keepLevel(level, options) && keepRecord(review.id, options)) {
       items.push(review);
     }
   }
@@ -171,15 +205,17 @@ function prepareReviews(reviews: ReviewResult[]): ReviewResult[] {
   return items;
 }
 
-function preparePlans(plans: PlanExport[], sealedKeys: string[]): PlanExport[] {
+function preparePlans(plans: PlanExport[], sealedKeys: string[], options: ExportOptions): PlanExport[] {
   const rows: PlanExport[] = [];
   for (const entry of plans) {
-    if (!isExportable(entry.plan.level ?? SecurityLevel.LOCAL_ONLY)) {
+    const level = entry.plan.level ?? SecurityLevel.LOCAL_ONLY;
+    if (!keepLevel(level, options) || !keepRecord(entry.plan.id, options)) {
       continue;
     }
     const items: PlanItem[] = [];
     for (const item of entry.items) {
-      if (isExportable(item.level ?? SecurityLevel.LOCAL_ONLY)) {
+      const itemLevel = item.level ?? SecurityLevel.LOCAL_ONLY;
+      if (keepLevel(itemLevel, options)) {
         items.push(item);
       }
     }

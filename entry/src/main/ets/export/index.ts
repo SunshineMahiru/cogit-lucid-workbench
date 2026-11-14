@@ -2,6 +2,8 @@ export type { ExportBundle, ExportCounts } from './ExportBundle';
 export type { PlanExport } from './PlanExport';
 export { countExportBundle, totalExportRecords } from './ExportBundle';
 export { isExportable, prepareExportBundle } from './ExportFilter';
+export type { ExportOptions } from './ExportOptions';
+export { carriesLocalContent, defaultExportOptions, describeExportOptions } from './ExportOptions';
 export {
   EMPTY_FIELD,
   formatConfidence,

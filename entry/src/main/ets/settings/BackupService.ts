@@ -11,6 +11,7 @@ import { SecretStore } from './SecretStore';
 
 
 import { SettingsStore } from './SettingsStore';
+import { BackupOptionsStore } from './BackupOptionsStore';
 import { AppSettings } from './AppSettings';
 import { ProfileStore, Profile } from '../profile/ProfileStore';
 import { PageBackgroundStore, GLOBAL_BACKGROUND_KEY } from './PageBackgroundStore';
@@ -170,17 +171,21 @@ export class BackupService {
     const settings = await (await SettingsStore.open(context)).load();
     settings.llmApiKey = '';
     const backgroundStore = await PageBackgroundStore.open(context);
+    const backupOptions = await BackupOptionsStore.open(context);
+    const includeBackgrounds = await backupOptions.includeBackgrounds();
     const backgrounds: BundleBackground[] = [];
     const keys: string[] = [GLOBAL_BACKGROUND_KEY];
     for (const group of PAGE_BACKGROUND_GROUPS) {
       keys.push(group.key);
     }
-    for (const key of keys) {
-      const path = await backgroundStore.get(key);
-      if (path.length === 0 || !fileIo.accessSync(path)) {
-        continue;
+    if (includeBackgrounds) {
+      for (const key of keys) {
+        const path = await backgroundStore.get(key);
+        if (path.length === 0 || !fileIo.accessSync(path)) {
+          continue;
+        }
+        backgrounds.push({ key: key, data: BackupService.encode(BackupService.readBytes(path)) });
       }
-      backgrounds.push({ key: key, data: BackupService.encode(BackupService.readBytes(path)) });
     }
     const alphas: BundleAlpha[] = [];
     for (const group of PAGE_BACKGROUND_GROUPS) {

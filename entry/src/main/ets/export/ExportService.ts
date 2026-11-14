@@ -15,6 +15,7 @@ import { PlanItem } from '../model/PlanItem';
 import { PlanExport } from './PlanExport';
 import { countExportBundle, ExportBundle, ExportCounts } from './ExportBundle';
 import { prepareExportBundle } from './ExportFilter';
+import { ExportOptions, defaultExportOptions } from './ExportOptions';
 import { buildExportFileName, writeExportFile } from './ExportFileWriter';
 import { renderExportDocument } from './render';
 
@@ -56,8 +57,9 @@ export class ExportService {
   }
 
   /** Renders the document without writing a file, for previews. */
-  async buildMarkdown(now: number = Date.now()): Promise<string> {
-    const bundle = await this.loadPreparedBundle(now);
+  async buildMarkdown(now: number = Date.now(),
+    options: ExportOptions = defaultExportOptions()): Promise<string> {
+    const bundle = await this.loadPreparedBundle(now, options);
     return renderExportDocument(bundle);
   }
 
@@ -85,8 +87,9 @@ export class ExportService {
   }
 
   /** Exports every exportable record and returns the file that was written. */
-  async exportMarkdown(context: common.Context, now: number = Date.now()): Promise<ExportResult> {
-    const bundle = await this.loadPreparedBundle(now);
+  async exportMarkdown(context: common.Context, now: number = Date.now(),
+    options: ExportOptions = defaultExportOptions()): Promise<ExportResult> {
+    const bundle = await this.loadPreparedBundle(now, options);
     const markdown = renderExportDocument(bundle);
     const fileName = buildExportFileName(now);
     const filePath = await writeExportFile(context, fileName, markdown);
@@ -98,7 +101,8 @@ export class ExportService {
     };
   }
 
-  private async loadPreparedBundle(exportedAt: number): Promise<ExportBundle> {
+  private async loadPreparedBundle(exportedAt: number,
+    options: ExportOptions = defaultExportOptions()): Promise<ExportBundle> {
     const plans: PlanExport[] = [];
     for (const plan of await this.planDao.queryPlans()) {
       const nodes = await this.planDao.queryNodes(plan.id);
@@ -127,6 +131,6 @@ export class ExportService {
       plans: plans,
       exportedAt: exportedAt
     };
-    return prepareExportBundle(bundle);
+    return prepareExportBundle(bundle, options);
   }
 }

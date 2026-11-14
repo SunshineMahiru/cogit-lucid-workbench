@@ -12,5 +12,6 @@ export const SETTINGS_KEYS = {
   DEFAULT_LEVEL: 'default_level',
   STATUS_SLEEP_MIN: 'status_sleep_min',
   STATUS_ALERT_WARN: 'status_alert_warn',
-  STATUS_HINTS_ENABLED: 'status_hints_enabled'
+  STATUS_HINTS_ENABLED: 'status_hints_enabled',
+  BACKUP_INCLUDE_BACKGROUND: 'backup_include_background'
 } as const;
