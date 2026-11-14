@@ -689,7 +689,7 @@ export struct SettingsPage {
                     .lineHeight(18)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
-                  Text('密级为「已封存」的记录不会进入导出与模型上下文。')
+                  Text('密级为「已封存」的记录不会进入导出、备份与模型上下文。')
                     .fontSize(AppTheme.font.body)
                     .lineHeight(18)
                     .fontColor(AppTheme.color.textSecondary)

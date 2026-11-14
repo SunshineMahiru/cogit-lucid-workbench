@@ -19,6 +19,22 @@ export const DB_TABLES = {
  * Every table, children before parents, for operations that wipe the store.
  * Keep this list in sync with DB_TABLES; the fixture in `.test/check.js` asserts it.
  */
+/**
+ * Tables that carry a `level` column. Exported so fixtures can assert the sealed-filter list
+ * stays complete: add a table here the moment it gains a security level.
+ */
+export const LEVELED_TABLES: string[] = [
+  DB_TABLES.EVENT,
+  DB_TABLES.DECISION,
+  DB_TABLES.RELATION,
+  DB_TABLES.PREDICTION,
+  DB_TABLES.ANCHOR,
+  DB_TABLES.STATUS_RECORD,
+  DB_TABLES.REVIEW_RESULT,
+  DB_TABLES.PLAN,
+  DB_TABLES.PLAN_ITEM
+];
+
 export const DB_TABLES_CHILD_FIRST: string[] = [
   DB_TABLES.REQUEST_AUDIT,
   DB_TABLES.PLAN_LINK,
