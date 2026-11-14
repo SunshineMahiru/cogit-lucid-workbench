@@ -35,6 +35,11 @@ export struct PredictionCreatePage {
   @Local isDirty: boolean = false;
   @Local sourceId: string | null = null;
   @Local sourceVersion: number = 0;
+  @Local revisionReason: string = '';
+  @Local invalidated: string = '';
+  @Local preserved: string = '';
+  @Local repositioned: string = '';
+  @Local revisionError: string = '';
   private navStack: NavPathStack | null = null;
 
   aboutToAppear(): void {
@@ -90,6 +95,12 @@ export struct PredictionCreatePage {
       reason: this.reason,
       settlementDate: this.settlementDate
     };
+    if (this.sourceId !== null) {
+      draft.revisionReason = this.revisionReason;
+      draft.invalidated = this.invalidated;
+      draft.preserved = this.preserved;
+      draft.repositioned = this.repositioned;
+    }
     const errors = validatePredictionDraft(draft);
     this.errors = errors;
     if (hasPredictionErrors(errors)) {
@@ -99,6 +110,11 @@ export struct PredictionCreatePage {
       this.getUIContext().getPromptAction().showToast({ message: first });
       return;
     }
+    if (this.sourceId !== null && this.revisionReason.trim().length === 0) {
+      this.revisionError = '写一句这次修订的原因';
+      return;
+    }
+    this.revisionError = '';
 
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
@@ -317,6 +333,86 @@ export struct PredictionCreatePage {
               }
               .width('100%')
               .alignItems(HorizontalAlign.Start)
+            }
+
+            if (this.sourceId !== null) {
+              SectionCard() {
+                Column({ space: 6 }) {
+                  Text('修订原因（必填）')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  TextArea({ placeholder: '这一版为什么改？', text: this.revisionReason })
+                    .height(64)
+                    .maxLength(MAX_REASON_LENGTH)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.revisionReason = value;
+                      this.revisionError = '';
+                      this.isDirty = true;
+                    })
+                  this.fieldError(this.revisionError)
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
+
+              SectionCard() {
+                Column({ space: 6 }) {
+                  Text('取消什么')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  TextArea({ placeholder: '这一版不再成立的内容', text: this.invalidated })
+                    .height(56)
+                    .maxLength(MAX_REASON_LENGTH)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.invalidated = value;
+                      this.isDirty = true;
+                    })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
+
+              SectionCard() {
+                Column({ space: 6 }) {
+                  Text('保存什么')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  TextArea({ placeholder: '仍然成立、要保留的内容', text: this.preserved })
+                    .height(56)
+                    .maxLength(MAX_REASON_LENGTH)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.preserved = value;
+                      this.isDirty = true;
+                    })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
+
+              SectionCard() {
+                Column({ space: 6 }) {
+                  Text('重新定位')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  TextArea({ placeholder: '这一版放在什么位置、针对什么范围', text: this.repositioned })
+                    .height(56)
+                    .maxLength(MAX_REASON_LENGTH)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.repositioned = value;
+                      this.isDirty = true;
+                    })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
             }
 
             Text('提交后不可修改；到期后才能结算，结算日用于排序与提醒。')

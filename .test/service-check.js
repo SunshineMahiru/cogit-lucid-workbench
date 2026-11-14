@@ -866,22 +866,44 @@ async function main() {
       judgment: '本周日均睡眠达到 7 小时',
       confidence: 80,
       reason: '补充理由',
-      settlementDate: '2026-11-03'
+      settlementDate: '2026-11-03',
+      revisionReason: '初版把原因归到睡眠',
+      invalidated: '睡眠决定状态',
+      preserved: '临时改期确实影响节奏',
+      repositioned: '放到关系条件里看'
     }, now + 1000);
     assert.strictEqual(revised.version, 2);
     assert.strictEqual(lastRow('prediction').root_id, created.id);
     assert.strictEqual(revised.confidence, 80);
     assert.strictEqual(revised.reason, '补充理由');
+    assert.strictEqual(revised.revisionReason, '初版把原因归到睡眠');
+    assert.strictEqual(revised.preserved, '临时改期确实影响节奏');
 
     const again = await predictionService.revise(revised.id, {
       target: '本周作息',
       judgment: '本周日均睡眠达到 7 小时',
       confidence: 90,
       reason: '',
-      settlementDate: '2026-11-03'
+      settlementDate: '2026-11-03',
+      revisionReason: '置信度再抬高'
     }, now + 2000);
     assert.strictEqual(again.version, 3);
     assert.strictEqual(lastRow('prediction').root_id, created.id);
+
+    const versions = await predictionService.versions(created.id);
+    assert.strictEqual(versions.length, 3);
+    assert.strictEqual(versions[0].version, 1);
+    assert.strictEqual(versions[2].version, 3);
+
+    await assert.rejects(async () => {
+      await predictionService.revise(created.id, {
+        target: '本周作息',
+        judgment: '本周日均睡眠达到 7 小时',
+        confidence: 90,
+        reason: '',
+        settlementDate: '2026-11-03'
+      }, now + 3000);
+    });
   });
 
   await test('复盘窗口统计非空样本的计数与命中率', async () => {

@@ -38,4 +38,13 @@ export interface PredictionDetail {
   hit: boolean | null;
   version: number;
   createdAtLabel: string;
+  /** Settlement result; empty for records settled before outcomes existed */
+  outcome?: string;
+  /** Evidence source recorded beside the result */
+  evidenceLevel?: string;
+  /** Why this version was written, and what it cancels, keeps and repositions */
+  revisionReason?: string;
+  invalidated?: string;
+  preserved?: string;
+  repositioned?: string;
 }

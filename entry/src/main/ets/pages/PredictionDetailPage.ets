@@ -6,6 +6,7 @@ import {
   todayDateString
 } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
+import { outcomeLabel } from '../model/PredictionOutcome';
 import { PredictionDetailParams, PredictionSettleParams, PredictionCreateParams, PlanAttachParams } from '../navigation/RouteParams';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
@@ -57,6 +58,7 @@ export struct PredictionDetailPage {
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   @Local isPreview: boolean = false;
+  @Local versions: PredictionDetail[] = [];
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -125,6 +127,11 @@ export struct PredictionDetailPage {
         this.missing = true;
       } else {
         this.detail = detail;
+        try {
+          this.versions = await service.versions(detail.id);
+        } catch (error) {
+          this.versions = [];
+        }
       }
     } catch (error) {
       this.loadPreview(id);
@@ -149,6 +156,18 @@ export struct PredictionDetailPage {
       return AppTheme.color.warning;
     }
     return this.detail.hit === true ? AppTheme.color.success : AppTheme.color.danger;
+  }
+
+  /** Outcome label when the record has one, otherwise the legacy hit/miss text. */
+  private resultText(item: PredictionDetail): string {
+    if (item.outcome !== undefined && item.outcome.length > 0) {
+      return outcomeLabel(item.outcome);
+    }
+    return predictionStatusText(item.status, item.hit);
+  }
+
+  private confidenceText(item: PredictionDetail): string {
+    return item.confidence === null ? '未量化' : `${item.confidence}%`;
   }
 
   private tagBackground(): string {
@@ -254,9 +273,15 @@ export struct PredictionDetailPage {
               PredictionInfoRow({ label: '结算日', value: this.detail.settlementDate })
               PredictionInfoRow({
                 label: '状态',
-                value: predictionStatusText(this.detail.status, this.detail.hit)
+                value: this.resultText(this.detail)
               })
-              PredictionInfoRow({ label: '命中', value: predictionHitText(this.detail.hit) })
+              if (this.detail.outcome !== undefined && this.detail.outcome.length > 0) {
+                if (this.detail.evidenceLevel !== undefined && this.detail.evidenceLevel.length > 0) {
+                  PredictionInfoRow({ label: '证据来源', value: this.detail.evidenceLevel })
+                }
+              } else {
+                PredictionInfoRow({ label: '命中', value: predictionHitText(this.detail.hit) })
+              }
               PredictionInfoRow({
                 label: '实际结果',
                 value: this.detail.actualResult.length > 0 ? this.detail.actualResult : '—'
@@ -280,6 +305,90 @@ export struct PredictionDetailPage {
                   .fontColor(AppTheme.color.text)
                   .width('100%')
               }
+              .width('100%')
+              .padding(AppTheme.spacing.s16)
+              .backgroundColor(AppTheme.color.surface)
+              .borderRadius(AppTheme.radius.md)
+              .alignItems(HorizontalAlign.Start)
+            }
+
+if (this.versions.length > 0) {
+              Column({ space: 8 }) {
+                Text('版本时间线')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                ForEach(this.versions, (item: PredictionDetail) => {
+                  Column({ space: 4 }) {
+                    Row({ space: 8 }) {
+                      Text(`v${item.version}`)
+                        .fontSize(AppTheme.font.caption)
+                        .fontColor(AppTheme.color.primaryDeep)
+                        .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                        .backgroundColor(AppTheme.color.tint)
+                        .borderRadius(AppTheme.radius.sm)
+                      Text(item.createdAtLabel)
+                        .fontSize(AppTheme.font.caption)
+                        .fontColor(AppTheme.color.textMuted)
+                      Blank()
+                      Text(this.resultText(item))
+                        .fontSize(AppTheme.font.caption)
+                        .fontColor(AppTheme.color.textSecondary)
+                    }
+                    .width('100%')
+
+                    Text(item.judgment)
+                      .fontSize(AppTheme.font.bodyStrong)
+                      .lineHeight(20)
+                      .fontColor(AppTheme.color.text)
+                      .width('100%')
+                    Text(`置信度 ${this.confidenceText(item)}`)
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.textSecondary)
+                      .width('100%')
+
+                    if (item.revisionReason !== undefined && item.revisionReason.length > 0) {
+                      Column({ space: 3 }) {
+                        Text(`修订原因：${item.revisionReason}`)
+                          .fontSize(AppTheme.font.caption)
+                          .lineHeight(17)
+                          .fontColor(AppTheme.color.textSecondary)
+                          .width('100%')
+                        if (item.invalidated !== undefined && item.invalidated.length > 0) {
+                          Text(`取消什么：${item.invalidated}`)
+                            .fontSize(AppTheme.font.caption)
+                            .lineHeight(17)
+                            .fontColor(AppTheme.color.textMuted)
+                            .width('100%')
+                        }
+                        if (item.preserved !== undefined && item.preserved.length > 0) {
+                          Text(`保存什么：${item.preserved}`)
+                            .fontSize(AppTheme.font.caption)
+                            .lineHeight(17)
+                            .fontColor(AppTheme.color.textMuted)
+                            .width('100%')
+                        }
+                        if (item.repositioned !== undefined && item.repositioned.length > 0) {
+                          Text(`重新定位：${item.repositioned}`)
+                            .fontSize(AppTheme.font.caption)
+                            .lineHeight(17)
+                            .fontColor(AppTheme.color.textMuted)
+                            .width('100%')
+                        }
+                      }
+                      .width('100%')
+                      .padding({ top: AppTheme.spacing.s4 })
+                      .alignItems(HorizontalAlign.Start)
+                    }
+                  }
+                  .width('100%')
+                  .padding(AppTheme.spacing.s12)
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .borderRadius(AppTheme.radius.sm)
+                  .alignItems(HorizontalAlign.Start)
+                }, (item: PredictionDetail) => item.id)
+              }
+              .id('prediction_timeline')
               .width('100%')
               .padding(AppTheme.spacing.s16)
               .backgroundColor(AppTheme.color.surface)

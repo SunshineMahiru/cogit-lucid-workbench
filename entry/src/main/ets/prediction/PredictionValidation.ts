@@ -8,6 +8,12 @@ export interface PredictionDraft {
   reason: string;
   /** YYYY-MM-DD */
   settlementDate: string;
+  /** Required when writing a new version: why it changed */
+  revisionReason?: string;
+  /** What the new version cancels, keeps and repositions */
+  invalidated?: string;
+  preserved?: string;
+  repositioned?: string;
 }
 
 /** Field-level messages; empty strings mean valid. */

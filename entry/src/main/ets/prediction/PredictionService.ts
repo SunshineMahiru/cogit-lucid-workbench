@@ -75,10 +75,24 @@ export class PredictionService {
     return toPredictionDetail(prediction);
   }
 
+  /** Returns every version of one prediction, oldest first; empty when it does not exist. */
+  async versions(id: string): Promise<PredictionDetail[]> {
+    const existing = await this.predictionDao.queryById(id);
+    if (existing === null) {
+      return [];
+    }
+    const rootId = existing.rootId !== undefined && existing.rootId.length > 0 ? existing.rootId : existing.id;
+    const rows = await this.predictionDao.queryVersions(rootId);
+    return rows.map((row: Prediction) => toPredictionDetail(row));
+  }
+
   /** Creates and stores a new version of an existing prediction. */
   async revise(id: string, draft: PredictionDraft, now: number = Date.now()): Promise<PredictionDetail> {
     if (hasPredictionErrors(validatePredictionDraft(draft, now))) {
       throw new Error('invalid prediction draft');
+    }
+    if ((draft.revisionReason ?? '').trim().length === 0) {
+      throw new Error('revision reason required');
     }
     const existing = await this.predictionDao.queryById(id);
     if (existing === null) {
@@ -144,4 +158,8 @@ function fillFromDraft(prediction: Prediction, draft: PredictionDraft): void {
   prediction.confidence = Math.round(draft.confidence);
   prediction.reason = draft.reason.trim();
   prediction.settlementDate = draft.settlementDate.trim();
+  prediction.revisionReason = (draft.revisionReason ?? '').trim();
+  prediction.invalidated = (draft.invalidated ?? '').trim();
+  prediction.preserved = (draft.preserved ?? '').trim();
+  prediction.repositioned = (draft.repositioned ?? '').trim();
 }

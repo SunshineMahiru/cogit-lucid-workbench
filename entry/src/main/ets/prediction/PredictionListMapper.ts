@@ -85,7 +85,13 @@ export function toPredictionDetail(prediction: Prediction): PredictionDetail {
     actualResult: prediction.actualResult,
     hit: prediction.hit,
     version: prediction.version,
-    createdAtLabel: formatDateTime(prediction.createdAt)
+    createdAtLabel: formatDateTime(prediction.createdAt),
+    outcome: prediction.outcome ?? '',
+    evidenceLevel: prediction.evidenceLevel ?? '',
+    revisionReason: prediction.revisionReason ?? '',
+    invalidated: prediction.invalidated ?? '',
+    preserved: prediction.preserved ?? '',
+    repositioned: prediction.repositioned ?? ''
   };
 }
 

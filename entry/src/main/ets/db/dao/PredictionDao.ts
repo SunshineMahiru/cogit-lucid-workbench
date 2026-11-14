@@ -110,6 +110,13 @@ export class PredictionDao {
     return latest.length > 0 ? latest[0] : rows[0];
   }
 
+  /** Returns every version of one prediction, oldest first. */
+  async queryVersions(rootId: string): Promise<Prediction[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
+    predicates.equalTo(PREDICTION_COLS.ROOT_ID, rootId).orderByAsc(PREDICTION_COLS.VERSION);
+    return this.queryWith(predicates);
+  }
+
   private latestByRoot(predictions: Prediction[]): Prediction[] {
     const newest: Map<string, Prediction> = new Map();
     for (const prediction of predictions) {
