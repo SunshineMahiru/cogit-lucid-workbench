@@ -8,6 +8,7 @@ import { PlanService } from '../plan';
 import { PlanDetailParams, PlanEditParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
+import { PREVIEW_WRITE_BLOCKED } from '../preview/PreviewMode';
 import { notifyHomeRefresh, subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Lists the single primary goal and the other plans. */
@@ -103,6 +104,34 @@ export struct PlanListPage {
       }
     }
     return rows;
+  }
+
+  private pausedPlans(): Plan[] {
+    const rows: Plan[] = [];
+    for (const plan of this.plans) {
+      if (!plan.isPrimary && plan.status === PlanStatus.PAUSED) {
+        rows.push(plan);
+      }
+    }
+    return rows;
+  }
+
+  private async resume(planId: string): Promise<void> {
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: PREVIEW_WRITE_BLOCKED });
+      return;
+    }
+    if (this.service === null) {
+      return;
+    }
+    try {
+      await this.service.resumePlan(planId);
+      await this.refresh();
+      notifyHomeRefresh();
+      this.getUIContext().getPromptAction().showToast({ message: '目标已恢复' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '恢复失败，请重试' });
+    }
   }
 
   private async restore(planId: string): Promise<void> {
@@ -297,6 +326,37 @@ export struct PlanListPage {
   }
 
   @Builder
+  pausedRow(plan: Plan) {
+    SectionCard() {
+      Row({ space: 8 }) {
+        Column({ space: 3 }) {
+          Text(plan.title)
+            .fontSize(AppTheme.font.bodyStrong)
+            .fontColor(AppTheme.color.textSecondary)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .width('100%')
+          Text(plan.pauseReason !== undefined && plan.pauseReason.length > 0 ?
+            `已暂停 · 原因：${plan.pauseReason}` : `已暂停 · 起始 ${plan.startDate}`)
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textMuted)
+            .width('100%')
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+        Text('恢复')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.primary)
+          .id(`plan_resume_${plan.id}`)
+          .onClick(() => {
+            this.resume(plan.id);
+          })
+      }
+      .width('100%')
+    }
+  }
+
+  @Builder
   listBody() {
     if (this.isLoading) {
       Column() {
@@ -357,6 +417,16 @@ export struct PlanListPage {
               .width('100%')
             ForEach(this.otherPlans(), (plan: Plan) => {
               this.planRow(plan)
+            }, (plan: Plan) => `${plan.id}_${this.listVersion}`)
+          }
+
+          if (this.pausedPlans().length > 0) {
+            Text('已暂停')
+              .fontSize(AppTheme.font.bodyStrong)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            ForEach(this.pausedPlans(), (plan: Plan) => {
+              this.pausedRow(plan)
             }, (plan: Plan) => `${plan.id}_${this.listVersion}`)
           }
 
