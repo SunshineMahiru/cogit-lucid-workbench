@@ -426,7 +426,7 @@ export struct StatusPage {
                           .backgroundColor(AppTheme.color.dangerSurface)
                           .borderRadius(AppTheme.radius.sm)
                           .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
-                      }, (flag: ReadingFlag) => flag.code)
+                      }, (flag: ReadingFlag) => `${flag.code}_${flag.message}`)
                     }
                     .width('100%')
                   }
