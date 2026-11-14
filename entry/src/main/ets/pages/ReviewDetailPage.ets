@@ -1,16 +1,20 @@
 import { AppTheme } from '../theme/AppTheme';
+import { common } from '@kit.AbilityKit';
 import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewDetailView, ReviewService } from '../review';
 import { Anchor } from '../model/Anchor';
+import { ReviewPayload } from '../model/ReviewPayload';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewDetailParams, PlanNodeParams, PlanAttachParams } from '../navigation/RouteParams';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
 import { previewStore } from '../preview/PreviewStore';
+import { DbHelper } from '../db/DbHelper';
+import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 
-/** Read-only four-step review with the anchors it actually referenced. */
+/** Read-only review: six zones when the record carries them, otherwise the four legacy steps. */
 @ComponentV2
 export struct ReviewDetailPage {
   @Local detail: ReviewDetailView = {
@@ -26,6 +30,7 @@ export struct ReviewDetailPage {
     contradiction: '',
     anchors: []
   };
+  @Local payload: ReviewPayload | null = null;
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   private navStack: NavPathStack | null = null;
@@ -43,11 +48,26 @@ export struct ReviewDetailPage {
         this.missing = true;
       } else {
         this.detail = detail;
+        this.payload = await this.loadPayload(reviewId, hostContext);
       }
     } catch (error) {
       this.loadPreview(reviewId);
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  /** Reads the six-zone payload; older records and failed reads leave it absent. */
+  private async loadPayload(reviewId: string, hostContext: common.Context): Promise<ReviewPayload | null> {
+    try {
+      const store = await DbHelper.init(hostContext);
+      const result = await new ReviewResultDao(store).queryById(reviewId);
+      if (result === null || result.payload === undefined) {
+        return null;
+      }
+      return result.payload;
+    } catch (error) {
+      return null;
     }
   }
 
@@ -73,6 +93,25 @@ export struct ReviewDetailPage {
           .fontSize(AppTheme.font.bodyStrong)
           .lineHeight(21)
           .fontColor(AppTheme.color.text)
+          .width('100%')
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
+  @Builder
+  zoneSection(title: string, body: string) {
+    SectionCard() {
+      Column({ space: 5 }) {
+        Text(title)
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        Text(body.trim().length > 0 ? body : '未填写')
+          .fontSize(AppTheme.font.bodyStrong)
+          .lineHeight(21)
+          .fontColor(body.trim().length > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
           .width('100%')
       }
       .width('100%')
@@ -200,24 +239,33 @@ export struct ReviewDetailPage {
               .alignItems(HorizontalAlign.Start)
             }
 
-            this.stepSection('1. 事实', this.detail.facts)
-            this.stepSection('2. 解释', this.detail.interpretation)
-            this.stepSection('3. 矛盾', this.detail.contradiction)
+            if (this.payload !== null) {
+              this.zoneSection('1. 现场与既有行动', this.payload.scene)
+              this.zoneSection('2. 当前模型', this.payload.model)
+              this.zoneSection('3. 关系与主要矛盾', this.payload.relation)
+              this.zoneSection('4. 多源校正', this.payload.evidence)
+              this.zoneSection('5. 成本与动机', this.payload.cost)
+              this.zoneSection('6. 调节与修订', this.payload.revision)
+            } else {
+              this.stepSection('1. 事实', this.detail.facts)
+              this.stepSection('2. 解释', this.detail.interpretation)
+              this.stepSection('3. 矛盾', this.detail.contradiction)
 
-            SectionCard() {
-              Column({ space: 6 }) {
-                Text('4. 行动')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textSecondary)
-                  .width('100%')
-                Text(this.detail.action.length > 0 ? this.detail.action : '（未填写）')
-                  .fontSize(AppTheme.font.bodyStrong)
-                  .lineHeight(21)
-                  .fontColor(AppTheme.color.text)
-                  .width('100%')
+              SectionCard() {
+                Column({ space: 6 }) {
+                  Text('4. 行动')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Text(this.detail.action.length > 0 ? this.detail.action : '（未填写）')
+                    .fontSize(AppTheme.font.bodyStrong)
+                    .lineHeight(21)
+                    .fontColor(AppTheme.color.text)
+                    .width('100%')
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
               }
-              .width('100%')
-              .alignItems(HorizontalAlign.Start)
             }
 
             SectionCard() {

@@ -4,6 +4,7 @@ import { AppTheme } from '../theme/AppTheme';
 import { formatHitRate } from '../model/HomeModel';
 import { ReviewPromptPanel } from './ReviewPromptPanel';
 import { ReviewAgentPanel } from './ReviewAgentPanel';
+import { hasAnyZone, ReviewPayload } from '../model/ReviewPayload';
 import {
   ReviewDraft,
   ReviewService,
@@ -15,21 +16,33 @@ import { previewStore } from '../preview/PreviewStore';
 import { ReviewDraftStore } from '../review/ReviewDraftStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
-const STEP_LABELS: string[] = ['事实', '解释', '矛盾', '行动'];
-const STEP_HINTS: string[] = [
-  '这段时间实际发生了什么？先只写事实，不写评价。',
-  '我当时怎么解释这些事？把解释单独拎出来。',
-  '解释和事实哪里对不上？对照下面的价值锚点。',
-  '下一次遇到类似情况，准备怎么做？'
+const ZONE_LABELS: string[] = [
+  '现场与既有行动',
+  '当前模型',
+  '关系与主要矛盾',
+  '多源校正',
+  '成本与动机',
+  '调节与修订'
 ];
-const STEP_PLACEHOLDERS: string[] = [
+const ZONE_HINTS: string[] = [
+  '先写现场：发生了什么，我已经做了什么。',
+  '我现在的解释、预测、适用范围，以及什么能证明它错。',
+  '这件事牵涉哪些人，主要矛盾在哪一条关系上。',
+  '实践、他人、身体、时间、书里的说法，哪里和我的模型不一致。',
+  '维持现状的代价是什么，我为什么要改。',
+  '下一次遇到类似情况，准备怎么做。'
+];
+const ZONE_PLACEHOLDERS: string[] = [
   '例如：连续四天睡不到 7 小时，周三临时改期两次。',
   '例如：我把它归因于「最近状态差」，但没有具体证据。',
-  '例如：锚点说「先记录，再解释」，我却先下了结论。',
+  '例如：我答应同事的事一拖再拖，和我在意的可靠冲突。',
+  '例如：记录显示熬夜后的第二天效率更低。',
+  '例如：拖延让我每天多耗两小时，代价是不被信任。',
   '例如：晚上十点后不再安排需要集中注意力的事。'
 ];
+const LAST_ZONE: number = 5;
 
-/** Four-step review form for one period; each tab owns its own draft. */
+/** Six-zone review form for one period; each tab owns its own draft. */
 @ComponentV2
 export struct ReviewForm {
   @Param period: ReviewPeriod = ReviewPeriod.WEEK;
@@ -43,6 +56,12 @@ export struct ReviewForm {
   @Local interpretation: string = '';
   @Local contradiction: string = '';
   @Local action: string = '';
+  @Local zoneScene: string = '';
+  @Local zoneModel: string = '';
+  @Local zoneRelation: string = '';
+  @Local zoneEvidence: string = '';
+  @Local zoneCost: string = '';
+  @Local zoneRevision: string = '';
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
   @Local saved: boolean = false;
@@ -77,6 +96,14 @@ export struct ReviewForm {
         this.interpretation = draft.interpretation;
         this.contradiction = draft.contradiction;
         this.action = draft.action;
+        if (draft.payload !== undefined) {
+          this.zoneScene = draft.payload.scene;
+          this.zoneModel = draft.payload.model;
+          this.zoneRelation = draft.payload.relation;
+          this.zoneEvidence = draft.payload.evidence;
+          this.zoneCost = draft.payload.cost;
+          this.zoneRevision = draft.payload.revision;
+        }
         if (draft.anchorIds.length > 0) {
           this.selectedAnchorIds = draft.anchorIds.slice();
         }
@@ -88,19 +115,35 @@ export struct ReviewForm {
     }
   }
 
-  private persistDraft(): void {
-    if (this.draftStore === null) {
-      return;
-    }
-    const draft: ReviewDraft = {
+  private currentPayload(): ReviewPayload {
+    return {
+      scene: this.zoneScene,
+      model: this.zoneModel,
+      relation: this.zoneRelation,
+      evidence: this.zoneEvidence,
+      cost: this.zoneCost,
+      revision: this.zoneRevision
+    };
+  }
+
+  private buildDraft(): ReviewDraft {
+    return {
       facts: this.facts,
       interpretation: this.interpretation,
       contradiction: this.contradiction,
       action: this.action,
+      payload: this.currentPayload(),
       anchorIds: this.selectedAnchorIds.slice(),
       planId: this.planId,
       planNodeId: this.planNodeId
     };
+  }
+
+  private persistDraft(): void {
+    if (this.draftStore === null) {
+      return;
+    }
+    const draft: ReviewDraft = this.buildDraft();
     this.draftStore.saveFor(this.period, this.planNodeId, draft).catch(() => {
     });
   }
@@ -115,34 +158,54 @@ export struct ReviewForm {
 
   private currentText(): string {
     if (this.step === 0) {
-      return this.facts;
+      return this.zoneScene;
     }
     if (this.step === 1) {
-      return this.interpretation;
+      return this.zoneModel;
     }
     if (this.step === 2) {
-      return this.contradiction;
+      return this.zoneRelation;
     }
-    return this.action;
+    if (this.step === 3) {
+      return this.zoneEvidence;
+    }
+    if (this.step === 4) {
+      return this.zoneCost;
+    }
+    return this.zoneRevision;
   }
 
   private updateCurrent(value: string): void {
     if (this.step === 0) {
-      this.facts = value;
+      this.zoneScene = value;
     } else if (this.step === 1) {
-      this.interpretation = value;
+      this.zoneModel = value;
     } else if (this.step === 2) {
-      this.contradiction = value;
+      this.zoneRelation = value;
+    } else if (this.step === 3) {
+      this.zoneEvidence = value;
+    } else if (this.step === 4) {
+      this.zoneCost = value;
     } else {
-      this.action = value;
+      this.zoneRevision = value;
     }
     this.persistDraft();
   }
 
-  private appendContradiction(text: string): void {
-    const current = this.contradiction.trim();
-    this.contradiction = current.length > 0 ? `${current}\n${text}` : text;
+  private appendRelation(text: string): void {
+    const current = this.zoneRelation.trim();
+    this.zoneRelation = current.length > 0 ? `${current}\n${text}` : text;
     this.persistDraft();
+  }
+
+  private savedSummary(): string {
+    if (this.zoneRevision.trim().length > 0) {
+      return this.zoneRevision;
+    }
+    if (this.zoneScene.trim().length > 0) {
+      return this.zoneScene;
+    }
+    return this.action;
   }
 
   private isAnchorSelected(id: string): boolean {
@@ -162,27 +225,13 @@ export struct ReviewForm {
     if (this.isSaving) {
       return;
     }
-    if (this.facts.trim().length === 0) {
+    if (!hasAnyZone(this.currentPayload())) {
       this.step = 0;
-      this.getUIContext().getPromptAction().showToast({ message: '先写下这一期的事实' });
-      return;
-    }
-    if (this.action.trim().length === 0) {
-      this.step = 3;
-      this.getUIContext().getPromptAction().showToast({ message: '补一条下一步行动' });
+      this.getUIContext().getPromptAction().showToast({ message: '先写一句现场，或填任意一区' });
       return;
     }
     if (this.isPreview) {
-      const draft: ReviewDraft = {
-        facts: this.facts,
-        interpretation: this.interpretation,
-        contradiction: this.contradiction,
-        action: this.action,
-        anchorIds: this.selectedAnchorIds.slice(),
-        planId: this.planId,
-        planNodeId: this.planNodeId
-      };
-      previewStore.saveReview(this.period, draft, this.stats.rangeLabel);
+      previewStore.saveReview(this.period, this.buildDraft(), this.stats.rangeLabel);
       notifyHomeRefresh();
       this.saved = true;
       this.getUIContext().getPromptAction().showToast({ message: '演示模式：复盘已保存在当前会话' });
@@ -194,16 +243,7 @@ export struct ReviewForm {
     }
     this.isSaving = true;
     try {
-      const draft: ReviewDraft = {
-        facts: this.facts,
-        interpretation: this.interpretation,
-        contradiction: this.contradiction,
-        action: this.action,
-        anchorIds: this.selectedAnchorIds.slice(),
-        planId: this.planId,
-        planNodeId: this.planNodeId
-      };
-      await this.service.save(this.period, draft, this.stats.rangeLabel, this.planId, this.planNodeId);
+      await this.service.save(this.period, this.buildDraft(), this.stats.rangeLabel, this.planId, this.planNodeId);
       if (this.draftStore !== null) {
         await this.draftStore.clearFor(this.period, this.planNodeId);
       }
@@ -223,6 +263,12 @@ export struct ReviewForm {
     this.interpretation = '';
     this.contradiction = '';
     this.action = '';
+    this.zoneScene = '';
+    this.zoneModel = '';
+    this.zoneRelation = '';
+    this.zoneEvidence = '';
+    this.zoneCost = '';
+    this.zoneRevision = '';
     this.saved = false;
     if (this.draftStore !== null) {
       this.draftStore.clearFor(this.period, this.planNodeId).catch(() => {
@@ -247,24 +293,34 @@ export struct ReviewForm {
   }
 
   @Builder
-  stepDots() {
-    Row({ space: 6 }) {
-      ForEach(STEP_LABELS, (label: string, index: number) => {
+  zoneTabs() {
+    Flex({ wrap: FlexWrap.Wrap }) {
+      ForEach(ZONE_LABELS, (label: string, index: number) => {
         Row({ space: 4 }) {
           Text(String(index + 1))
             .fontSize(AppTheme.font.caption)
-            .fontColor(index <= this.step ? Color.White : AppTheme.color.textSecondary)
+            .fontColor(index === this.step ? Color.White : AppTheme.color.textSecondary)
             .width(18)
             .height(18)
             .textAlign(TextAlign.Center)
             .lineHeight(18)
-            .backgroundColor(index <= this.step ? AppTheme.color.primary : AppTheme.color.tint)
+            .backgroundColor(index === this.step ? AppTheme.color.primary : AppTheme.color.tint)
             .borderRadius(AppTheme.radius.sm)
           Text(label)
-            .fontSize(AppTheme.font.body)
+            .fontSize(AppTheme.font.caption)
             .fontColor(index === this.step ? AppTheme.color.text : AppTheme.color.textSecondary)
         }
-        .margin({ right: AppTheme.spacing.s8 })
+        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+        .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+        .backgroundColor(index === this.step ? AppTheme.color.selectedSurface : AppTheme.color.surfaceAlt)
+        .borderRadius(AppTheme.radius.sm)
+        .border({
+          width: index === this.step ? 1 : 0,
+          color: AppTheme.color.borderSelected
+        })
+        .onClick(() => {
+          this.step = index;
+        })
       }, (label: string) => label)
     }
     .width('100%')
@@ -307,7 +363,7 @@ export struct ReviewForm {
           Text(this.stats.rangeLabel)
             .fontSize(AppTheme.font.bodyStrong)
             .fontColor(AppTheme.color.textSecondary)
-          Text(this.action)
+          Text(this.savedSummary())
             .fontSize(AppTheme.font.subtitle)
             .lineHeight(22)
             .fontColor(AppTheme.color.text)
@@ -356,18 +412,18 @@ export struct ReviewForm {
             .backgroundColor(AppTheme.color.surface)
             .borderRadius(AppTheme.radius.md)
 
-            this.stepDots()
+            this.zoneTabs()
 
             if (this.step === 0) {
               ReviewPromptPanel({ period: this.period })
             }
 
-            Text(`${this.step + 1}. ${STEP_LABELS[this.step]}`)
+            Text(`${this.step + 1}. ${ZONE_LABELS[this.step]}`)
               .fontSize(AppTheme.font.title)
               .fontWeight(FontWeight.Medium)
               .fontColor(AppTheme.color.text)
               .width('100%')
-            Text(STEP_HINTS[this.step])
+            Text(ZONE_HINTS[this.step])
               .fontSize(AppTheme.font.bodyStrong)
               .lineHeight(18)
               .fontColor(AppTheme.color.textSecondary)
@@ -424,16 +480,16 @@ export struct ReviewForm {
 
             if (this.step === 2) {
               ReviewAgentPanel({
-                facts: this.facts,
-                interpretation: this.interpretation,
+                facts: this.zoneScene,
+                interpretation: this.zoneModel,
                 anchors: this.anchors,
                 onInsert: (text: string) => {
-                  this.appendContradiction(text);
+                  this.appendRelation(text);
                 }
               })
             }
 
-            TextArea({ text: this.currentText(), placeholder: STEP_PLACEHOLDERS[this.step] })
+            TextArea({ text: this.currentText(), placeholder: ZONE_PLACEHOLDERS[this.step] })
               .fontSize(AppTheme.font.bodyStrong)
               .height(180)
               .padding(AppTheme.spacing.s12)
@@ -465,19 +521,19 @@ export struct ReviewForm {
               })
           }
           Blank()
-          Text(this.step < 3 ? '下一步' : '完成复盘')
+          Text(this.step < LAST_ZONE ? '下一步' : '完成复盘')
             .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
             .padding({ left: AppTheme.spacing.s24, right: AppTheme.spacing.s24, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
             .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
             .borderRadius(AppTheme.radius.md)
-            .accessibilityText(this.step < 3 ? '进入下一步' : '完成复盘')
+            .accessibilityText(this.step < LAST_ZONE ? '进入下一步' : '完成复盘')
             .onClick(() => {
               if (this.isSaving) {
                 return;
               }
-              if (this.step < 3) {
+              if (this.step < LAST_ZONE) {
                 this.step += 1;
               } else {
                 this.complete();
