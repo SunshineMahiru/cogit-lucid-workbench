@@ -11,7 +11,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     tags TEXT NOT NULL,
     level TEXT NOT NULL,
     related_decision_ids TEXT NOT NULL,
-    related_relation_ids TEXT NOT NULL
+    related_relation_ids TEXT NOT NULL,
+    deleted INTEGER NOT NULL DEFAULT 0
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.DECISION} (
     id TEXT PRIMARY KEY,

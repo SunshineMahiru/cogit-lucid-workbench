@@ -69,7 +69,8 @@ export const EVENT_COLS = {
   TAGS: 'tags',
   LEVEL: 'level',
   RELATED_DECISION_IDS: 'related_decision_ids',
-  RELATED_RELATION_IDS: 'related_relation_ids'
+  RELATED_RELATION_IDS: 'related_relation_ids',
+  DELETED: 'deleted'
 } as const;
 
 /** Column names for the decision table. */

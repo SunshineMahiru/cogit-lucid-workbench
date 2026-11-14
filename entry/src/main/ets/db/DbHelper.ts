@@ -246,7 +246,8 @@ export class DbHelper {
     // Soft-delete flags follow the same idempotent pattern as the columns above.
     const deleteMigrations: string[] = [
       `ALTER TABLE relation ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,
-      `ALTER TABLE status_record ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`
+      `ALTER TABLE status_record ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE event ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`
     ];
     for (const sql of deleteMigrations) {
       try {

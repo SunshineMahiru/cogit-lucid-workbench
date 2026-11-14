@@ -18,6 +18,10 @@ class FakePredicates {
     return this;
   }
 
+  and() {
+    return this;
+  }
+
   greaterThanOrEqualTo(field, value) {
     this.filters.push({ field: field, value: value, op: 'gte' });
     return this;
@@ -99,6 +103,7 @@ class FakeStore {
     this.tables = new Map();
     this.snapshot = null;
     this.failTable = null;
+    this.failUpdateTable = null;
     this.insertCount = 0;
   }
 
@@ -144,6 +149,9 @@ class FakeStore {
   }
 
   async update(values, predicates) {
+    if (this.failUpdateTable === predicates.table) {
+      throw new Error(`update failed: ${predicates.table}`);
+    }
     let changed = 0;
     for (const row of this.rows(predicates.table)) {
       let match = true;
@@ -195,7 +203,7 @@ class FakeStore {
   beginTransaction() {
     this.snapshot = new Map();
     for (const [table, rows] of this.tables) {
-      this.snapshot.set(table, rows.slice());
+      this.snapshot.set(table, rows.map((row) => Object.assign({}, row)));
     }
   }
 
@@ -271,6 +279,8 @@ const { PredictionService } = require('./out2/prediction/PredictionService');
 const { ReviewService } = require('./out2/review/ReviewService');
 const { rangeFor } = require('./out2/review/ReviewRange');
 const { PlanService } = require('./out2/plan/PlanService');
+const { buildAnalysisInput } = require('./out2/security/RequestBuilder');
+const { SecurityLevel } = require('./out2/model/SecurityLevel');
 
 let passed = 0;
 const failures = [];
@@ -305,6 +315,7 @@ function reset() {
   store.tables = new Map();
   store.snapshot = null;
   store.failTable = null;
+  store.failUpdateTable = null;
   store.insertCount = 0;
 }
 
@@ -727,6 +738,90 @@ async function main() {
     assert.deepStrictEqual(JSON.parse(row.related_relation_ids), ['rl_1']);
     assert.strictEqual(row.level, 'analyzable');
     assert.strictEqual(detail.id, saved.eventId);
+  });
+
+  await test('改密级后材料跟着改，并决定请求是否放行', async () => {
+    reset();
+    const draft = createFreeformNoteDraft();
+    draft.content = 'MARKER_BODY_4a1';
+    draft.timestamp = 1000;
+    const saved = await service.save(draft);
+    assert.strictEqual(store.rows('experience_material').length, 1);
+    assert.strictEqual(store.rows('experience_material')[0].level, SecurityLevel.LOCAL_ONLY);
+
+    const loosened = createFreeformNoteDraft();
+    loosened.content = 'MARKER_BODY_4a1';
+    loosened.timestamp = 1000;
+    loosened.level = SecurityLevel.ANALYZABLE;
+    await service.updateNote(saved.eventId, loosened);
+    assert.strictEqual(store.rows('experience_material')[0].level, SecurityLevel.ANALYZABLE);
+
+    const allowed = buildAnalysisInput({
+      facts: 'MARKER_BODY_4a1',
+      interpretation: '',
+      anchors: [],
+      factsLevel: store.rows('experience_material')[0].level,
+      interpretationLevel: SecurityLevel.LOCAL_ONLY,
+      relationForbidsAnalysis: false
+    }, 'model');
+    assert.strictEqual(allowed.input.facts, 'MARKER_BODY_4a1');
+    assert.deepStrictEqual(allowed.dropped.map((item) => item.kind), []);
+
+    const sealedDraft = createFreeformNoteDraft();
+    sealedDraft.content = 'MARKER_BODY_4a1';
+    sealedDraft.timestamp = 1000;
+    sealedDraft.level = SecurityLevel.SEALED;
+    await service.updateNote(saved.eventId, sealedDraft);
+    assert.strictEqual(store.rows('experience_material')[0].level, SecurityLevel.SEALED);
+
+    const blocked = buildAnalysisInput({
+      facts: 'MARKER_BODY_4a1',
+      interpretation: '',
+      anchors: [],
+      factsLevel: store.rows('experience_material')[0].level,
+      interpretationLevel: SecurityLevel.LOCAL_ONLY,
+      relationForbidsAnalysis: false
+    }, 'model');
+    assert.strictEqual(blocked.input.facts, '');
+    assert.deepStrictEqual(blocked.dropped.map((item) => item.kind), ['facts']);
+    assert.ok(!JSON.stringify(blocked).includes('MARKER_BODY_4a1'), '拦下后仍带出了正文');
+  });
+
+  await test('改密级时材料写失败，记录密级一并回滚', async () => {
+    reset();
+    const draft = createFreeformNoteDraft();
+    draft.content = '回滚正文';
+    const saved = await service.save(draft);
+
+    const edited = createFreeformNoteDraft();
+    edited.content = '回滚正文';
+    edited.level = SecurityLevel.SEALED;
+    store.failUpdateTable = 'experience_material';
+    let failed = false;
+    try {
+      await service.updateNote(saved.eventId, edited);
+    } catch (error) {
+      failed = true;
+    }
+    store.failUpdateTable = null;
+    assert.strictEqual(failed, true);
+    assert.strictEqual(store.rows('event')[0].level, SecurityLevel.LOCAL_ONLY);
+    assert.strictEqual(store.rows('experience_material')[0].level, SecurityLevel.LOCAL_ONLY);
+  });
+
+  await test('删除记录只做标记，正文与材料仍留在库里', async () => {
+    reset();
+    const draft = createFreeformNoteDraft();
+    draft.content = 'MARKER_DEL_9f2';
+    const saved = await service.save(draft);
+
+    await service.delete(saved.eventId);
+
+    assert.strictEqual(store.rows('event')[0].deleted, 1);
+    assert.strictEqual(store.rows('event')[0].content, 'MARKER_DEL_9f2');
+    assert.strictEqual(store.rows('experience_material')[0].deleted, 1);
+    const listed = await service.listRecent(50);
+    assert.ok(!listed.some((row) => row.id === saved.eventId), '删除后仍出现在列表里');
   });
 
   await test('修订预测递增版本并继承 rootId', async () => {

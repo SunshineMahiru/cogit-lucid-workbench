@@ -14,4 +14,6 @@ export interface Event {
   level: SecurityLevel;
   relatedDecisionIds: string[];
   relatedRelationIds: string[];
+  /** True once the note is deleted; the row stays so history can point at it */
+  deleted?: boolean;
 }

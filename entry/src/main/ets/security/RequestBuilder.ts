@@ -39,11 +39,15 @@ export function buildAnalysisInput(raw: ContradictionInput, provider: LlmProvide
   let interpretation = raw.interpretation;
   if (raw.factsLevel !== SecurityLevel.ANALYZABLE) {
     facts = '';
-    dropped.push({ kind: 'facts', reason: '现场内容不是可分析级' });
+    if (raw.facts.length > 0) {
+      dropped.push({ kind: 'facts', reason: '现场内容不是可分析级' });
+    }
   }
   if (raw.interpretationLevel !== SecurityLevel.ANALYZABLE) {
     interpretation = '';
-    dropped.push({ kind: 'interpretation', reason: '解释内容不是可分析级' });
+    if (raw.interpretation.length > 0) {
+      dropped.push({ kind: 'interpretation', reason: '解释内容不是可分析级' });
+    }
   }
   const anchors = raw.anchors.filter((anchor) => {
     if (anchor.level === SecurityLevel.ANALYZABLE) {

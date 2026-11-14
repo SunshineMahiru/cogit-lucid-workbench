@@ -24,7 +24,8 @@ export class EventDao {
       [EVENT_COLS.TAGS]: JSON.stringify(event.tags),
       [EVENT_COLS.LEVEL]: event.level,
       [EVENT_COLS.RELATED_DECISION_IDS]: JSON.stringify(event.relatedDecisionIds),
-      [EVENT_COLS.RELATED_RELATION_IDS]: JSON.stringify(event.relatedRelationIds)
+      [EVENT_COLS.RELATED_RELATION_IDS]: JSON.stringify(event.relatedRelationIds),
+      [EVENT_COLS.DELETED]: 0
     };
     return this.store.insert(DB_TABLES.EVENT, values);
   }
@@ -46,27 +47,33 @@ export class EventDao {
     return this.store.update(values, predicates);
   }
 
-  /** Deletes an event by id. */
-  async delete(id: string): Promise<number> {
+  /** Marks an event deleted; the row and its text stay for history references. */
+  async markDeleted(id: string): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [EVENT_COLS.DELETED]: 1
+    };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
     predicates.equalTo(EVENT_COLS.ID, id);
-    return this.store.delete(predicates);
+    return this.store.update(values, predicates);
   }
 
-  /** Returns all events. */
+  /** Returns all live events. */
   async queryAll(): Promise<Event[]> {
-    return this.queryWith(new relationalStore.RdbPredicates(DB_TABLES.EVENT));
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.DELETED, 0);
+    return this.queryWith(predicates);
   }
 
-  /** Returns the total number of events without materialising rows. */
+  /** Returns the total number of live events without materialising rows. */
   async countVisible(): Promise<number> {
-    return queryCount(this.store, `SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed'`);
+    return queryCount(this.store,
+      `SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed' AND deleted = 0`);
   }
 
-  /** Counts visible notes whose local calendar day matches the given YYYY-MM-DD. */
+  /** Counts live notes whose local calendar day matches the given YYYY-MM-DD. */
   async countVisibleOn(date: string): Promise<number> {
     return queryCount(this.store,
-      `SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed' ` +
+      `SELECT COUNT(*) AS total FROM ${DB_TABLES.EVENT} WHERE level <> 'sealed' AND deleted = 0 ` +
       `AND date(timestamp / 1000, 'unixepoch', 'localtime') = ?`, [date]);
   }
 
@@ -83,16 +90,18 @@ export class EventDao {
     return this.queryRecentPage(limit, 0);
   }
 
-  /** Returns one page of events ordered newest first. */
+  /** Returns one page of live events ordered newest first. */
   async queryRecentPage(limit: number, offset: number): Promise<Event[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.DELETED, 0);
     predicates.orderByDesc(EVENT_COLS.TIMESTAMP).limitAs(limit).offsetAs(offset);
     return this.queryWith(predicates);
   }
 
-  /** Returns every event inside the millisecond range, newest first. */
+  /** Returns every live event inside the millisecond range, newest first. */
   async queryBetween(startMs: number, endMs: number): Promise<Event[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.DELETED, 0);
     predicates.greaterThanOrEqualTo(EVENT_COLS.TIMESTAMP, startMs);
     predicates.lessThanOrEqualTo(EVENT_COLS.TIMESTAMP, endMs);
     predicates.orderByDesc(EVENT_COLS.TIMESTAMP);
@@ -104,9 +113,10 @@ export class EventDao {
     return this.queryByTypePage(type, limit, 0);
   }
 
-  /** Returns one page of events of one type. */
+  /** Returns one page of live events of one type. */
   async queryByTypePage(type: string, limit: number, offset: number): Promise<Event[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.DELETED, 0);
     predicates.equalTo(EVENT_COLS.TYPE, type).orderByDesc(EVENT_COLS.TIMESTAMP)
       .limitAs(limit).offsetAs(offset);
     return this.queryWith(predicates);
@@ -127,7 +137,8 @@ export class EventDao {
       tags: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.TAGS))),
       level: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.LEVEL)) as SecurityLevel,
       relatedDecisionIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_DECISION_IDS))),
-      relatedRelationIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_RELATION_IDS)))
+      relatedRelationIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_RELATION_IDS))),
+      deleted: resultSet.getLong(resultSet.getColumnIndex(EVENT_COLS.DELETED)) === 1
     };
   }
 }

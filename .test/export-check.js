@@ -90,7 +90,7 @@ class FakeStore {
   }
 
   async insert(table, values) {
-    this.rows(table).push(Object.assign({}, values));
+    this.rows(table).push(Object.assign({ deleted: 0 }, values));
     return this.rows(table).length;
   }
 
@@ -693,12 +693,12 @@ async function main() {
       {
         id: 'ev_1', title: '一次长谈', content: '和朋友聊了节奏。\n第二段。', type: '人际',
         timestamp: NOW, tags: JSON.stringify(['人际']), level: 'local_only',
-        related_decision_ids: JSON.stringify(['dc_1']), related_relation_ids: '[]'
+        related_decision_ids: JSON.stringify(['dc_1']), related_relation_ids: '[]', deleted: 0
       },
       {
         id: 'ev_sealed', title: '封存事件', content: '不导出', type: '情绪',
         timestamp: EARLIER, tags: '[]', level: 'sealed',
-        related_decision_ids: '[]', related_relation_ids: '[]'
+        related_decision_ids: '[]', related_relation_ids: '[]', deleted: 0
       }
     );
     store.rows('decision').push({

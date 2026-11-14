@@ -49,6 +49,21 @@ export class ExperienceMaterialDao {
     }
   }
 
+  /**
+   * Rewrites the level of every live material of one event; the record level governs its materials.
+   * Deleted rows keep their old level because they no longer travel anywhere.
+   */
+  async updateLevelByEvent(eventId: string, level: SecurityLevel): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [MATERIAL_COLS.LEVEL]: level
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
+    predicates.equalTo(MATERIAL_COLS.EVENT_ID, eventId)
+      .and()
+      .equalTo(MATERIAL_COLS.DELETED, 0);
+    return this.store.update(values, predicates);
+  }
+
   /** Marks a material deleted; the row stays so history can say "source deleted". */
   async markDeleted(id: string): Promise<number> {
     const values: relationalStore.ValuesBucket = {
@@ -56,6 +71,16 @@ export class ExperienceMaterialDao {
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
     predicates.equalTo(MATERIAL_COLS.ID, id);
+    return this.store.update(values, predicates);
+  }
+
+  /** Marks every material of one event deleted, used when the note itself is deleted. */
+  async markDeletedByEvent(eventId: string): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [MATERIAL_COLS.DELETED]: 1
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
+    predicates.equalTo(MATERIAL_COLS.EVENT_ID, eventId);
     return this.store.update(values, predicates);
   }
 

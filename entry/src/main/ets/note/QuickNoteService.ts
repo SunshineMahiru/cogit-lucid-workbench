@@ -185,13 +185,29 @@ export class QuickNoteService {
       throw new Error('note not found');
     }
     applyDraft(event, draft);
-    await this.eventDao.update(event);
+    this.store.beginTransaction();
+    try {
+      await this.eventDao.update(event);
+      await this.materialDao.updateLevelByEvent(event.id, event.level);
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
     return toNoteDetail(event);
   }
 
-  /** Deletes one note and its event row. */
+  /** Marks one note and its materials deleted; the rows stay for history references. */
   async delete(noteId: string): Promise<void> {
-    await this.eventDao.delete(noteId);
+    this.store.beginTransaction();
+    try {
+      await this.eventDao.markDeleted(noteId);
+      await this.materialDao.markDeletedByEvent(noteId);
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
   }
 }
 

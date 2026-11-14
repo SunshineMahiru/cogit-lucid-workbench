@@ -40,6 +40,8 @@ export struct NoteEditPage {
   @Local isPreview: boolean = false;
   @Local noteId: string | null = null;
   @Local isEditing: boolean = false;
+  /** Level from settings; the draft keeps its own level once the user picks one. */
+  @Local defaultLevel: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Local materialScene: string = '';
   @Local materialFeeling: string = '';
   @Local materialBody: string = '';
@@ -56,7 +58,11 @@ export struct NoteEditPage {
     try {
       const settings = await SettingsStore.open(hostContext);
       const values = await settings.load();
-      this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags, values.defaultLevel);
+      this.defaultLevel = values.defaultLevel;
+      // A note opened for editing keeps the level stored with it, so the default must not overwrite it.
+      if (!this.isEditing) {
+        this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags, values.defaultLevel);
+      }
       this.service = await QuickNoteService.open(hostContext);
       const relationService = await RelationService.open(hostContext);
       this.relations = await relationService.list(null);
@@ -210,6 +216,35 @@ export struct NoteEditPage {
       this.materialAction = value;
     }
     this.isDirty = true;
+  }
+
+  private setLevel(level: SecurityLevel): void {
+    this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags, level);
+    this.isDirty = true;
+  }
+
+  /** Says what the chosen level changes about this note leaving the device. */
+  private levelImpact(): string {
+    if (this.draft.level === SecurityLevel.ANALYZABLE) {
+      return '切到模型档并逐次确认后，这条记录可进入模型请求。';
+    }
+    if (this.draft.level === SecurityLevel.SEALED) {
+      return '不进入模型请求、汇总、导出与备份，只在本机详情页可见。';
+    }
+    return '不进入任何模型请求；导出时需要你单独勾选。';
+  }
+
+  @Builder
+  levelChip(level: SecurityLevel) {
+    Text(securityLevelText(level))
+      .fontSize(AppTheme.font.bodyStrong)
+      .fontColor(this.draft.level === level ? Color.White : AppTheme.color.text)
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+      .backgroundColor(this.draft.level === level ? AppTheme.color.primary : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.lg)
+      .onClick(() => {
+        this.setLevel(level);
+      })
   }
 
   @Builder
@@ -503,20 +538,33 @@ export struct NoteEditPage {
             .width('100%')
             .alignItems(HorizontalAlign.Start)
 
-            Row() {
-              Text('密级')
-                .fontSize(AppTheme.font.bodyStrong)
-                .fontColor(AppTheme.color.textSecondary)
-              Text(securityLevelText(this.draft.level))
-                .fontSize(AppTheme.font.bodyStrong)
-                .fontColor(AppTheme.color.textSecondaryStrong)
-                .margin({ left: AppTheme.spacing.s12 })
-              Blank()
-              Text('跟随设置')
-                .fontSize(AppTheme.font.body)
+            Column({ space: 8 }) {
+              Row() {
+                Text('密级')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.textSecondary)
+                Blank()
+                Text(this.draft.level === this.defaultLevel ? '跟随设置' : '本条第独立指定')
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.textMuted)
+              }
+              .width('100%')
+
+              Flex({ wrap: FlexWrap.Wrap }) {
+                this.levelChip(SecurityLevel.ANALYZABLE)
+                this.levelChip(SecurityLevel.LOCAL_ONLY)
+                this.levelChip(SecurityLevel.SEALED)
+              }
+              .width('100%')
+
+              Text(this.levelImpact())
+                .fontSize(AppTheme.font.caption)
+                .lineHeight(15)
                 .fontColor(AppTheme.color.textMuted)
+                .width('100%')
             }
             .width('100%')
+            .alignItems(HorizontalAlign.Start)
             .padding({ top: AppTheme.spacing.s4 })
           }
           .width('100%')
