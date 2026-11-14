@@ -273,6 +273,8 @@ export class PlanService {
     plan.pauseReason = '';
     plan.resumeAt = '';
     await this.dao.updatePlan(plan);
+    // Pausing handed the primary flag to another plan; resuming takes it back.
+    await this.dao.setPrimary(id);
   }
 
   /** Appends the next Monday-to-Sunday node to a plan. */

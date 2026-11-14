@@ -67,6 +67,11 @@ class FakeResultSet {
     return this.index < this.rows.length;
   }
 
+  goToFirstRow() {
+    this.index = 0;
+    return this.rows.length > 0;
+  }
+
   getColumnIndex(name) {
     // The real result set returns -1 for unknown columns; callers guard on it.
     return this.columns.indexOf(name);
@@ -482,6 +487,24 @@ async function main() {
     const detail = await relationService.find(items[0].id);
     assert.ok(detail !== null);
     assert.strictEqual(detail.interactionCount, 1);
+  });
+
+  await test('暂停让出主目标，恢复时收回', async () => {
+    reset();
+    const planService = await PlanService.open({});
+    const first = await planService.createPlan('甲目标', '2026-11-02');
+    const second = await planService.createPlan('乙目标', '2026-11-02');
+    await planService.setPrimary(first.id);
+    await planService.pausePlan(first.id, '这周先停');
+
+    const paused = await planService.listPlans();
+    const primaryAfterPause = paused.find((plan) => plan.isPrimary);
+    assert.ok(primaryAfterPause !== undefined);
+    assert.strictEqual(primaryAfterPause.id, second.id);
+
+    await planService.resumePlan(first.id);
+    const resumed = await planService.listPlans();
+    assert.strictEqual(resumed.find((plan) => plan.isPrimary).id, first.id);
   });
 
   await test('目标与首周同事务创建，失败时不留下空目标', async () => {
