@@ -132,7 +132,13 @@ export const ANCHOR_COLS = {
   TEXT: 'text',
   SOURCE: 'source',
   ORDER: 'sort_order',
-  LEVEL: 'level'
+  LEVEL: 'level',
+  ROOT_ID: 'root_id',
+  VERSION: 'version',
+  STATUS: 'status',
+  CONTEXT: 'context',
+  REVISION_REASON: 'revision_reason',
+  SYNTHETIC: 'synthetic'
 } as const;
 
 /** Column names for the status record table. */

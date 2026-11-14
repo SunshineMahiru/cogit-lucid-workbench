@@ -507,6 +507,30 @@ async function main() {
     assert.strictEqual(resumed.find((plan) => plan.isPrimary).id, first.id);
   });
 
+  await test('锚点修订生成新版本并停用旧版', async () => {
+    reset();
+    const anchorService = await AnchorService.open({});
+    await anchorService.seedDemoAnchors();
+    const before = await anchorService.list();
+    const first = before[0];
+
+    const revised = await anchorService.revise(first.id, '改过的句子', '适用于工作', '换了说法');
+    assert.strictEqual(revised.version, 2);
+
+    const active = await anchorService.list();
+    assert.ok(!active.some((anchor) => anchor.id === first.id));
+    assert.ok(active.some((anchor) => anchor.id === revised.id));
+
+    const versions = await anchorService.versions(revised.id);
+    assert.strictEqual(versions.length, 2);
+    assert.strictEqual(versions[0].status, 'retired');
+    assert.strictEqual(versions[1].status, 'active');
+
+    await assert.rejects(async () => {
+      await anchorService.revise(revised.id, '再改一次', '', '');
+    });
+  });
+
   await test('目标与首周同事务创建，失败时不留下空目标', async () => {
     reset();
     const planService = await PlanService.open({});

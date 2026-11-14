@@ -338,7 +338,13 @@ export class DbHelper {
       `ALTER TABLE plan ADD COLUMN pause_reason TEXT NOT NULL DEFAULT ''`,
       `ALTER TABLE plan ADD COLUMN resume_at TEXT NOT NULL DEFAULT ''`,
       `ALTER TABLE plan_item ADD COLUMN disposition TEXT NOT NULL DEFAULT 'pending'`,
-      `ALTER TABLE plan_item ADD COLUMN discard_reason TEXT NOT NULL DEFAULT ''`
+      `ALTER TABLE plan_item ADD COLUMN discard_reason TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE anchor ADD COLUMN root_id TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE anchor ADD COLUMN version INTEGER NOT NULL DEFAULT 1`,
+      `ALTER TABLE anchor ADD COLUMN status TEXT NOT NULL DEFAULT 'active'`,
+      `ALTER TABLE anchor ADD COLUMN context TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE anchor ADD COLUMN revision_reason TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE anchor ADD COLUMN synthetic INTEGER NOT NULL DEFAULT 0`
     ];
     for (const sql of deleteMigrations) {
       try {

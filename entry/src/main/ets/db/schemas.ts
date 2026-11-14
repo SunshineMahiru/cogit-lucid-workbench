@@ -67,7 +67,13 @@ export const TABLE_CREATE_SQLS: string[] = [
     text TEXT NOT NULL,
     source TEXT NOT NULL,
     sort_order INTEGER NOT NULL,
-    level TEXT NOT NULL DEFAULT 'local_only'
+    level TEXT NOT NULL DEFAULT 'local_only',
+    root_id TEXT NOT NULL DEFAULT '',
+    version INTEGER NOT NULL DEFAULT 1,
+    status TEXT NOT NULL DEFAULT 'active',
+    context TEXT NOT NULL DEFAULT '',
+    revision_reason TEXT NOT NULL DEFAULT '',
+    synthetic INTEGER NOT NULL DEFAULT 0
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.STATUS_RECORD} (
     id TEXT PRIMARY KEY,
