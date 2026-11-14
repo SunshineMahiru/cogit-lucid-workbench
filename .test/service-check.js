@@ -672,6 +672,34 @@ async function main() {
     assert.strictEqual(await reviewService.find('missing'), null);
   });
 
+  await test('六区有内容时旧四列按六区回填，草稿里的旧行动不进入记录', async () => {
+    reset();
+    const reviewService = await ReviewService.open({});
+    const id = await reviewService.save('week', {
+      facts: '',
+      interpretation: '',
+      contradiction: '',
+      action: '上次草稿留下的行动',
+      payload: {
+        scene: '只写了现场',
+        model: '',
+        relation: '',
+        evidence: '',
+        cost: '',
+        revision: ''
+      },
+      anchorIds: []
+    }, '11-09 ~ 11-15');
+
+    const detail = await reviewService.find(id);
+    assert.ok(detail !== null);
+    assert.strictEqual(detail.facts, '只写了现场');
+    assert.strictEqual(detail.action, '');
+    const stored = JSON.parse(store.rows('review_result')[0].payload);
+    assert.strictEqual(stored.scene, '只写了现场');
+    assert.strictEqual(stored.revision, '');
+  });
+
   await test('速记引用关系后可在关系详情反向看到', async () => {
     reset();
     const relationService = await RelationService.open({});

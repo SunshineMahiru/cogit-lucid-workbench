@@ -6,7 +6,7 @@ import { Event } from '../model/Event';
 import { createReviewResult } from '../model/factories';
 import { Prediction } from '../model/Prediction';
 import { ReviewPeriod } from '../model/ReviewPeriod';
-import { emptyReviewPayload } from '../model/ReviewPayload';
+import { emptyReviewPayload, hasAnyZone } from '../model/ReviewPayload';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { countReviewWindow, ReviewWindowCounts } from '../analysis/metrics/ReviewMetrics';
 import { DbHelper } from '../db/DbHelper';
@@ -73,11 +73,20 @@ export class ReviewService {
     const result = createReviewResult();
     result.period = period;
     result.rangeLabel = rangeLabel;
-    result.facts = draft.facts.trim();
-    result.interpretation = draft.interpretation.trim();
-    result.contradiction = draft.contradiction.trim();
-    result.action = draft.action.trim();
     result.payload = draft.payload ?? emptyReviewPayload();
+    if (hasAnyZone(result.payload)) {
+      // Zone content is the source of truth for new sessions; the four legacy columns mirror it
+      // so history rows and Markdown export keep reading something meaningful.
+      result.facts = result.payload.scene.trim();
+      result.interpretation = result.payload.model.trim();
+      result.contradiction = result.payload.relation.trim();
+      result.action = result.payload.revision.trim();
+    } else {
+      result.facts = draft.facts.trim();
+      result.interpretation = draft.interpretation.trim();
+      result.contradiction = draft.contradiction.trim();
+      result.action = draft.action.trim();
+    }
     result.anchorIds = draft.anchorIds.slice();
     if (planId.length > 0) {
       result.planId = planId;
