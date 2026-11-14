@@ -13,7 +13,7 @@ import { PlanNode } from '../model/PlanNode';
 import { PlanLink } from '../model/PlanLink';
 import { PlanItem } from '../model/PlanItem';
 import { PlanProject } from '../model/PlanProject';
-import { PlanNodeStatus } from '../model/PlanStatus';
+import { PlanNodeStatus, PlanStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
 import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import {
@@ -59,6 +59,11 @@ export struct PlanDetailPage {
   @Local viewMode: number = 0;
   @Local weekDays: DayActivity[] = [];
   @Local monthOffset: number = 0;
+  @Local pauseVisible: boolean = false;
+  @Local pauseReason: string = '';
+  @Local pauseResumeAt: string = '';
+  @Local pauseError: string = '';
+  @Local isPausing: boolean = false;
   private planId: string = '';
   private service: PlanService | null = null;
   private noteService: QuickNoteService | null = null;
@@ -420,6 +425,74 @@ export struct PlanDetailPage {
     }
   }
 
+  private openPause(): void {
+    this.pauseReason = '';
+    this.pauseResumeAt = '';
+    this.pauseError = '';
+    this.pauseVisible = true;
+  }
+
+  private async confirmPause(): Promise<void> {
+    if (this.plan === null || this.isPausing) {
+      return;
+    }
+    const reason = this.pauseReason.trim();
+    if (reason.length === 0) {
+      this.pauseError = '写一句暂停原因';
+      return;
+    }
+    const resumeAt = this.pauseResumeAt.trim();
+    if (resumeAt.length > 0 && !isPlanDateText(resumeAt)) {
+      this.pauseError = '恢复日期格式应为 YYYY-MM-DD';
+      return;
+    }
+    this.pauseError = '';
+    this.isPausing = true;
+    try {
+      if (this.isPreview) {
+        const preview = planPreviewStore.find(this.plan.id);
+        if (preview !== null) {
+          preview.status = PlanStatus.PAUSED;
+          preview.pauseReason = reason;
+          preview.resumeAt = resumeAt;
+        }
+      } else if (this.service !== null) {
+        await this.service.pausePlan(this.plan.id, reason, resumeAt);
+      }
+      this.pauseVisible = false;
+      this.getUIContext().getPromptAction().showToast({ message: '已暂停' });
+      notifyHomeRefresh();
+      await this.refresh();
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '暂停失败，请重试' });
+    } finally {
+      this.isPausing = false;
+    }
+  }
+
+  private async resumePlan(): Promise<void> {
+    if (this.plan === null) {
+      return;
+    }
+    try {
+      if (this.isPreview) {
+        const preview = planPreviewStore.find(this.plan.id);
+        if (preview !== null) {
+          preview.status = PlanStatus.ACTIVE;
+          preview.pauseReason = '';
+          preview.resumeAt = '';
+        }
+      } else if (this.service !== null) {
+        await this.service.resumePlan(this.plan.id);
+      }
+      this.getUIContext().getPromptAction().showToast({ message: '已恢复' });
+      notifyHomeRefresh();
+      await this.refresh();
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '恢复失败，请重试' });
+    }
+  }
+
   @Builder
   editMenu() {
     Row({ space: 4 }) {
@@ -431,6 +504,26 @@ export struct PlanDetailPage {
         .onClick(() => {
           this.openEditor();
         })
+      if (this.plan !== null && this.plan.status === PlanStatus.ACTIVE) {
+        Text('暂停')
+          .fontSize(AppTheme.font.subtitle)
+          .fontColor(AppTheme.color.primary)
+          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8 })
+          .height(56)
+          .onClick(() => {
+            this.openPause();
+          })
+      }
+      if (this.plan !== null && this.plan.status === PlanStatus.PAUSED) {
+        Text('恢复')
+          .fontSize(AppTheme.font.subtitle)
+          .fontColor(AppTheme.color.primary)
+          .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8 })
+          .height(56)
+          .onClick(() => {
+            this.resumePlan();
+          })
+      }
       Text('归档')
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.textSecondary)
@@ -441,6 +534,71 @@ export struct PlanDetailPage {
         })
     }
     .alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  pauseSheet() {
+    Column({ space: AppTheme.spacing.s8 }) {
+      Text('暂停目标')
+        .fontSize(AppTheme.font.title)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppTheme.color.text)
+      Text('暂停后周节点保持原状，恢复后继续排周。')
+        .fontSize(AppTheme.font.caption)
+        .fontColor(AppTheme.color.textMuted)
+        .width('100%')
+      TextInput({ text: this.pauseReason, placeholder: '暂停原因（必填）' })
+        .id('plan_pause_reason')
+        .backgroundColor(AppTheme.color.surfaceAlt)
+        .onChange((value: string) => {
+          this.pauseReason = value;
+          this.pauseError = '';
+        })
+      if (this.pauseError.length > 0) {
+        Text(this.pauseError)
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.danger)
+          .width('100%')
+      }
+      TextInput({ text: this.pauseResumeAt, placeholder: '恢复日期 YYYY-MM-DD（可空）' })
+        .id('plan_pause_resume')
+        .backgroundColor(AppTheme.color.surfaceAlt)
+        .onChange((value: string) => {
+          this.pauseResumeAt = value;
+          this.pauseError = '';
+        })
+      Row({ space: AppTheme.spacing.s8 }) {
+        Text('取消')
+          .id('plan_pause_cancel')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+          .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .borderRadius(AppTheme.radius.sm)
+          .onClick(() => {
+            this.pauseVisible = false;
+          })
+        Text(this.isPausing ? '暂停中…' : '确认暂停')
+          .id('plan_pause_confirm')
+          .fontSize(AppTheme.font.body)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+          .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+          .backgroundColor(this.isPausing ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
+          .borderRadius(AppTheme.radius.sm)
+          .onClick(() => {
+            this.confirmPause();
+          })
+      }
+      .width('100%')
+    }
+    .id('plan_pause_panel')
+    .width('100%')
+    .padding(AppTheme.spacing.s16)
+    .alignItems(HorizontalAlign.Start)
   }
 
   @Builder
@@ -537,6 +695,32 @@ export struct PlanDetailPage {
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)
+          }
+
+          if (this.plan.status === PlanStatus.PAUSED) {
+            SectionCard() {
+              Column({ space: 4 }) {
+                Text('已暂停')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.warning)
+                  .width('100%')
+                if (this.plan.pauseReason !== undefined && this.plan.pauseReason.length > 0) {
+                  Text(`原因：${this.plan.pauseReason}`)
+                    .fontSize(AppTheme.font.body)
+                    .lineHeight(18)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                }
+                if (this.plan.resumeAt !== undefined && this.plan.resumeAt.length > 0) {
+                  Text(`恢复日期：${this.plan.resumeAt}`)
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                }
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
           }
 
           SectionCard() {
@@ -769,6 +953,11 @@ export struct PlanDetailPage {
       .height('100%')
       .align(Alignment.TopStart)
       .scrollBar(BarState.Off)
+      .bindSheet($$this.pauseVisible, this.pauseSheet(), {
+        height: 320,
+        dragBar: false,
+        backgroundColor: AppTheme.color.surface
+      })
     }
   }
 
@@ -808,4 +997,16 @@ function todayString(): string {
 
 function monthPad(value: number): string {
   return value < 10 ? `0${value}` : `${value}`;
+}
+
+function isPlanDateText(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+  const parts = value.split('-');
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }

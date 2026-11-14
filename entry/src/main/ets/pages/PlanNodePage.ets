@@ -10,6 +10,7 @@ import { PlanLink } from '../model/PlanLink';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PlanNodeStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
+import { ItemDecision } from '../plan/PlanService';
 import { buildPlanReviewFacts, writePlanReviewDraft } from '../plan/PlanReviewDraft';
 import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import { NodeDays, NodeProgress, buildNodeProgress, nodeDays } from '../plan/PlanInsights';
@@ -26,6 +27,25 @@ import { ROUTES } from '../navigation/Routes';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
+/** How one pending item leaves the week that is being closed. */
+type CloseAction = 'carry' | 'pause' | 'discard';
+
+/** One pending item's choice on the close-week panel. */
+@ObservedV2
+class CloseDecisionRow {
+  itemId: string;
+  text: string;
+  @Trace action: CloseAction;
+  @Trace reason: string;
+
+  constructor(itemId: string, text: string) {
+    this.itemId = itemId;
+    this.text = text;
+    this.action = 'carry';
+    this.reason = '';
+  }
+}
+
 /** One seven-day node: checklist, carry-over marks and closing action. */
 @ComponentV2
 export struct PlanNodePage {
@@ -39,6 +59,8 @@ export struct PlanNodePage {
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
   @Local isPreview: boolean = false;
+  @Local closePanelVisible: boolean = false;
+  @Local closeRows: CloseDecisionRow[] = [];
   private nodeId: string = '';
   private service: PlanService | null = null;
   private navStack: NavPathStack | null = null;
@@ -231,7 +253,32 @@ export struct PlanNodePage {
     this.links = await this.service.listLinks(this.nodeId);
   }
 
-  private async closeWeek(): Promise<void> {
+  private openClosePanel(): void {
+    const rows: CloseDecisionRow[] = [];
+    for (const item of this.items) {
+      if (!item.done) {
+        rows.push(new CloseDecisionRow(item.id, item.text));
+      }
+    }
+    this.closeRows = rows;
+    this.closePanelVisible = true;
+  }
+
+  private setAllActions(action: CloseAction): void {
+    for (const row of this.closeRows) {
+      row.action = action;
+    }
+  }
+
+  private setRowAction(row: CloseDecisionRow, action: CloseAction): void {
+    row.action = action;
+  }
+
+  private setRowReason(row: CloseDecisionRow, reason: string): void {
+    row.reason = reason;
+  }
+
+  private async closeWeek(decisions: ItemDecision[]): Promise<void> {
     if (this.node === null || this.node.status === PlanNodeStatus.CLOSED || this.isSaving) {
       return;
     }
@@ -244,7 +291,7 @@ export struct PlanNodePage {
       if (this.isPreview) {
         next = planPreviewStore.closeAndCarry(closedNode.id);
       } else if (this.service !== null) {
-        next = await this.service.closeNodeAndCarry(closedNode.id);
+        next = await this.service.closeNodeWithDecisions(closedNode.id, decisions);
       }
       const facts = buildPlanReviewFacts(this.plan !== null ? this.plan.title : '', closedNode, closedItems, next);
       const hostContext = this.getUIContext().getHostContext();
@@ -255,6 +302,7 @@ export struct PlanNodePage {
           draftFailed = true;
         }
       }
+      this.closePanelVisible = false;
       this.getUIContext().getPromptAction().showToast({
         message: this.closeMessage(next, draftFailed)
       });
@@ -267,6 +315,19 @@ export struct PlanNodePage {
     } finally {
       this.isSaving = false;
     }
+  }
+
+  private confirmClose(): void {
+    const decisions: ItemDecision[] = [];
+    for (const row of this.closeRows) {
+      const decision: ItemDecision = { itemId: row.itemId, action: row.action };
+      const reason = row.reason.trim();
+      if (row.action === 'discard' && reason.length > 0) {
+        decision.reason = reason;
+      }
+      decisions.push(decision);
+    }
+    this.closeWeek(decisions);
   }
 
   private closeMessage(next: PlanNode | null, draftFailed: boolean): string {
@@ -326,6 +387,143 @@ export struct PlanNodePage {
     }
     .width('100%')
     .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+  }
+
+  @Builder
+  closeActionChip(label: string, action: CloseAction, row: CloseDecisionRow) {
+    Text(label)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(row.action === action ? Color.White : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(row.action === action ? AppTheme.color.primary : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.md)
+      .onClick(() => {
+        this.setRowAction(row, action);
+      })
+  }
+
+  @Builder
+  closePanel() {
+    Column({ space: AppTheme.spacing.s8 }) {
+      Text('结束本周')
+        .fontSize(AppTheme.font.title)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppTheme.color.text)
+      Text('逐项选择延续、暂停或舍弃；没有列出的未完成项默认延续。')
+        .fontSize(AppTheme.font.caption)
+        .fontColor(AppTheme.color.textMuted)
+        .width('100%')
+
+      Row({ space: AppTheme.spacing.s6 }) {
+        Text('全部延续')
+          .id('node_close_all_carry')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.primary)
+          .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+          .backgroundColor(AppTheme.color.tint)
+          .borderRadius(AppTheme.radius.md)
+          .onClick(() => {
+            this.setAllActions('carry');
+          })
+        Text('全部暂停')
+          .id('node_close_all_pause')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.primary)
+          .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+          .backgroundColor(AppTheme.color.tint)
+          .borderRadius(AppTheme.radius.md)
+          .onClick(() => {
+            this.setAllActions('pause');
+          })
+        Text('全部舍弃')
+          .id('node_close_all_discard')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.danger)
+          .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+          .backgroundColor(AppTheme.color.dangerSurface)
+          .borderRadius(AppTheme.radius.md)
+          .onClick(() => {
+            this.setAllActions('discard');
+          })
+      }
+      .width('100%')
+
+      Scroll() {
+        Column({ space: AppTheme.spacing.s6 }) {
+          if (this.closeRows.length === 0) {
+            Text('本周没有未完成项，确认后直接结束。')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+          } else {
+            ForEach(this.closeRows, (row: CloseDecisionRow) => {
+              Column({ space: AppTheme.spacing.s4 }) {
+                Text(row.text)
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.text)
+                  .width('100%')
+                Row({ space: AppTheme.spacing.s6 }) {
+                  this.closeActionChip('延续', 'carry', row)
+                  this.closeActionChip('暂停', 'pause', row)
+                  this.closeActionChip('舍弃', 'discard', row)
+                }
+                .width('100%')
+                if (row.action === 'discard') {
+                  TextInput({ text: row.reason, placeholder: '舍弃原因（可空）' })
+                    .id(`node_close_reason_${row.itemId}`)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.setRowReason(row, value);
+                    })
+                }
+              }
+              .width('100%')
+              .padding(AppTheme.spacing.s8)
+              .backgroundColor(AppTheme.color.surfaceAlt)
+              .borderRadius(AppTheme.radius.sm)
+              .alignItems(HorizontalAlign.Start)
+            }, (row: CloseDecisionRow) => row.itemId)
+          }
+        }
+        .width('100%')
+      }
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+      .align(Alignment.Top)
+
+      Row({ space: AppTheme.spacing.s8 }) {
+        Text('取消')
+          .id('node_close_cancel')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+          .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+          .backgroundColor(AppTheme.color.chip)
+          .borderRadius(AppTheme.radius.sm)
+          .onClick(() => {
+            this.closePanelVisible = false;
+          })
+        Text(this.isSaving ? '处理中…' : '确认结束本周')
+          .id('node_close_confirm')
+          .fontSize(AppTheme.font.body)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+          .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+          .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
+          .borderRadius(AppTheme.radius.sm)
+          .onClick(() => {
+            this.confirmClose();
+          })
+      }
+      .width('100%')
+    }
+    .id('node_close_panel')
+    .width('100%')
+    .height('100%')
+    .padding(AppTheme.spacing.s16)
+    .alignItems(HorizontalAlign.Start)
   }
 
   @Builder
@@ -555,7 +753,7 @@ export struct PlanNodePage {
           }
 
           if (this.node.status === PlanNodeStatus.OPEN) {
-            Text(this.isSaving ? '处理中…' : '结束本周，未完成带入下周')
+            Text(this.isSaving ? '处理中…' : '结束本周')
               .id('plan_node_close')
               .fontSize(AppTheme.font.subtitle)
               .fontColor(Color.White)
@@ -565,7 +763,9 @@ export struct PlanNodePage {
               .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
               .borderRadius(AppTheme.radius.md)
               .onClick(() => {
-                this.closeWeek();
+                if (!this.isSaving) {
+                  this.openClosePanel();
+                }
               })
           } else {
             Text(this.isPreview ? '本周已结束' : '本周已结束，清单已写入周复盘草稿')
@@ -596,6 +796,11 @@ export struct PlanNodePage {
       .height('100%')
       .align(Alignment.TopStart)
       .scrollBar(BarState.Off)
+      .bindSheet($$this.closePanelVisible, this.closePanel(), {
+        height: 560,
+        dragBar: false,
+        backgroundColor: AppTheme.color.surface
+      })
     }
   }
 
