@@ -482,8 +482,10 @@ export struct DashboardView {
               })
 
               PlanHomeCard({ pathStack: this.pathStack })
+                .id('home_section_plan')
 
               ReviewPromptPanel({ period: ReviewPeriod.WEEK })
+                .id('home_section_review_prompt')
 
               ModuleGridCard({
                 moduleItems: this.moduleItems,
@@ -492,6 +494,7 @@ export struct DashboardView {
                   this.openModule(route);
                 }
               })
+                .id('home_section_modules')
 
               RecentNotesCard({
                 notes: this.recentNotes,
@@ -503,6 +506,7 @@ export struct DashboardView {
                   this.openNoteList();
                 }
               })
+                .id('home_section_recent_notes')
 
               // Pending predictions
               Column({ space: 10 }) {
