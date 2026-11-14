@@ -724,11 +724,11 @@ test('预测统计按结算月份分组并过滤待结算', () => {
   assert.strictEqual(limited.settled, 4);
 });
 
-test('已结算但缺命中结果不进二值统计', () => {
+test('已结算但缺命中结果只进总数，不进二值统计', () => {
   const stats = buildPredictionStats([
     prediction({ id: 'a', status: 'settled', hit: null, settlementDate: '2026-10-25' })
   ]);
-  assert.strictEqual(stats.settled, 0);
+  assert.strictEqual(stats.settled, 1);
   assert.strictEqual(stats.hits, 0);
   assert.strictEqual(stats.misses, 0);
   assert.strictEqual(stats.hitRate, 0);
@@ -822,7 +822,8 @@ test('样本下限统一为十，五档结果分别计数', () => {
   ]);
   assert.strictEqual(stats.outcomes.hold, 1);
   assert.strictEqual(stats.outcomes.fail, 0);
-  assert.strictEqual(stats.settled, 1);
+  assert.strictEqual(stats.settled, 2);
+  assert.strictEqual(stats.hits, 1);
 });
 
 test('五档结果：旧命中映射为成立与未成立，其余单列', () => {

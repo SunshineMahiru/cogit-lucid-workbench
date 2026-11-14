@@ -144,9 +144,13 @@ export class PredictionDao {
 
   private mapRow(resultSet: relationalStore.ResultSet): Prediction {
     const hitIndex = resultSet.getColumnIndex(PREDICTION_COLS.HIT);
-    const hitValue = resultSet.isColumnNull(hitIndex) ? null : resultSet.getLong(hitIndex) === 1;
+    const storedHit = resultSet.isColumnNull(hitIndex) ? null : resultSet.getLong(hitIndex) === 1;
     const confidenceIndex = resultSet.getColumnIndex(PREDICTION_COLS.CONFIDENCE);
     const storedOutcome = PredictionDao.readText(resultSet, PREDICTION_COLS.OUTCOME);
+    // The outcome column is authoritative once written: the three non-binary results must read as
+    // no hit at all, even though the numeric column may hold a leftover zero.
+    const outcome = storedOutcome.length > 0 ? storedOutcome as PredictionOutcome : outcomeFromLegacy(storedHit);
+    const hitValue: boolean | null = outcome === 'hold' ? true : (outcome === 'fail' ? false : null);
     return {
       id: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.ID)),
       target: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.TARGET)),
@@ -160,7 +164,7 @@ export class PredictionDao {
       version: resultSet.getLong(resultSet.getColumnIndex(PREDICTION_COLS.VERSION)),
       rootId: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.ROOT_ID)),
       level: resultSet.getString(resultSet.getColumnIndex(PREDICTION_COLS.LEVEL)) as SecurityLevel,
-      outcome: storedOutcome.length > 0 ? storedOutcome as PredictionOutcome : outcomeFromLegacy(hitValue),
+      outcome: outcome,
       scope: PredictionDao.readText(resultSet, PREDICTION_COLS.SCOPE),
       falsification: PredictionDao.readText(resultSet, PREDICTION_COLS.FALSIFICATION),
       unknowns: PredictionDao.readText(resultSet, PREDICTION_COLS.UNKNOWNS),

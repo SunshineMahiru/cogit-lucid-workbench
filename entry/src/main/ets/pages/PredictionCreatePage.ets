@@ -302,7 +302,6 @@ export struct PredictionCreatePage {
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
                 Row({ space: 6 }) {
-                  this.deadlineChip('昨天', -1)
                   this.deadlineChip('今天', 0)
                   this.deadlineChip('7 天后', 7)
                   this.deadlineChip('14 天后', 14)
@@ -421,7 +420,7 @@ export struct PredictionCreatePage {
               }
             }
 
-            Text('提交后不可修改；日期可直接输入，补录过去日期后可在同日结算。')
+            Text('提交后不可修改；结算日不能早于今天，当天到期的预测当天即可结算。')
               .fontSize(AppTheme.font.caption)
               .lineHeight(17)
               .fontColor(AppTheme.color.textMuted)

@@ -44,10 +44,12 @@ export interface OutcomeCounts {
 export function buildPredictionStats(predictions: Prediction[], monthLimit: number = 6): PredictionStats {
   const samples: SettledSample[] = [];
   const outcomes: OutcomeCounts = { hold: 0, fail: 0, partial: 0, insufficient: 0, undecidable: 0 };
+  let settledTotal = 0;
   for (const prediction of predictions) {
     if (prediction.status !== PredictionStatus.SETTLED || prediction.level === SecurityLevel.SEALED) {
       continue;
     }
+    settledTotal += 1;
     const outcome = (prediction.outcome ?? '').length > 0 ?
       prediction.outcome : outcomeFromLegacy(prediction.hit);
     if (outcome === 'hold' || outcome === 'fail' || outcome === 'partial' ||
@@ -76,7 +78,7 @@ export function buildPredictionStats(predictions: Prediction[], monthLimit: numb
   }
 
   return {
-    settled: metrics.settled,
+    settled: settledTotal,
     hits: metrics.hits,
     misses: metrics.misses,
     hitRate: metrics.hitRate,
