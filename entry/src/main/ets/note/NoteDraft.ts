@@ -15,7 +15,7 @@ export interface NoteMaterialDraft {
   text: string;
   /** Where the material comes from; empty reads as a direct experience */
   source?: MaterialSource;
-  /** Optional genre marker; empty reads as a first-person scene */
+  /** Optional genre marker; empty reads as unlabelled */
   form?: MaterialForm;
   /** Per-material level; absent means the material follows the note level */
   level?: SecurityLevel;

@@ -117,6 +117,22 @@ export struct NoteDetailPage {
     });
   }
 
+  /** Materials to render; a lone unclassified copy of the body is left out. */
+  private visibleMaterials(): ExperienceMaterial[] {
+    const detail = this.detail;
+    if (detail === null || detail.materials === undefined) {
+      return [];
+    }
+    const materials = detail.materials;
+    if (materials.length === 1) {
+      const only = materials[0];
+      if (only.kind === 'unclassified' && only.text.trim() === detail.content.trim()) {
+        return [];
+      }
+    }
+    return materials;
+  }
+
   @Builder
   editMenu() {
     Row({ space: 4 }) {
@@ -259,13 +275,13 @@ export struct NoteDetailPage {
               .fontColor(AppTheme.color.text)
               .width('100%')
 
-            if (this.detail.materials !== undefined && this.detail.materials.length > 0) {
+            if (this.visibleMaterials().length > 0) {
               Column({ space: 6 }) {
                 Text('材料')
                   .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
-                ForEach(this.detail.materials, (material: ExperienceMaterial) => {
+                ForEach(this.visibleMaterials(), (material: ExperienceMaterial) => {
                   Column({ space: 4 }) {
                     Text(`${materialKindText(material.kind)} · ${materialSourceText(material.source)} · ` +
                       `${materialFormText(material.form)} · ${securityLevelText(material.level)}`)

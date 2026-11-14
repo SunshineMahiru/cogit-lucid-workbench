@@ -50,28 +50,36 @@ export class ExperienceMaterialDao {
   }
 
   /**
-   * Applies a new record level to the materials that were inheriting the old one. Materials whose
-   * level differs from the previous record level were set on purpose and stay as they are.
+   * Pulls every material of one event down to the given record level. Materials already at or
+   * below that level stay as they are; this method never widens a material.
    */
-  async updateInheritedLevelByEvent(eventId: string, previousLevel: SecurityLevel,
-    nextLevel: SecurityLevel): Promise<number> {
-    if (previousLevel === nextLevel) {
+  async clampLevelsByEvent(eventId: string, level: SecurityLevel): Promise<number> {
+    if (level === SecurityLevel.ANALYZABLE) {
       return 0;
     }
+    const allowed: SecurityLevel[] = level === SecurityLevel.SEALED ?
+      [SecurityLevel.SEALED] : [SecurityLevel.LOCAL_ONLY, SecurityLevel.SEALED];
     const materials = await this.queryByEvent(eventId);
     let changed = 0;
     for (const material of materials) {
-      if (material.level !== previousLevel) {
+      if (allowed.includes(material.level)) {
         continue;
       }
       const values: relationalStore.ValuesBucket = {
-        [MATERIAL_COLS.LEVEL]: nextLevel
+        [MATERIAL_COLS.LEVEL]: level
       };
       const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
       predicates.equalTo(MATERIAL_COLS.ID, material.id);
       changed += await this.store.update(values, predicates);
     }
     return changed;
+  }
+
+  /** Removes every material of one event, used when an edit rewrites them from the draft. */
+  async deleteByEvent(eventId: string): Promise<number> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
+    predicates.equalTo(MATERIAL_COLS.EVENT_ID, eventId);
+    return this.store.delete(predicates);
   }
 
   /** Marks a material deleted; the row stays so history can say "source deleted". */

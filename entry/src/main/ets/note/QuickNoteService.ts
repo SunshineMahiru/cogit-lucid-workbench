@@ -119,7 +119,7 @@ export class QuickNoteService {
         observedAt: observedAt,
         source: item.source ?? 'direct',
         sourceStance: '',
-        level: item.level ?? level,
+        level: clampMaterialLevel(item.level, level),
         revisionOf: '',
         deleted: false,
         createdAt: Date.now()
@@ -186,18 +186,23 @@ export class QuickNoteService {
     if (event === null) {
       throw new Error('note not found');
     }
-    const previousLevel = event.level;
     applyDraft(event, draft);
     this.store.beginTransaction();
     try {
       await this.eventDao.update(event);
-      await this.materialDao.updateInheritedLevelByEvent(event.id, previousLevel, event.level);
+      await this.materialDao.deleteByEvent(event.id);
+      await this.saveMaterials(draft, event.id, event.timestamp, event.level);
+      // Defensive only: saveMaterials already narrows every level it writes. This keeps rows
+      // that were stored under an earlier record level in line with the new one.
+      await this.materialDao.clampLevelsByEvent(event.id, event.level);
       this.store.commit();
     } catch (error) {
       this.store.rollBack();
       throw error;
     }
-    return toNoteDetail(event);
+    const detail = toNoteDetail(event);
+    detail.materials = await this.materialDao.queryByEvent(event.id);
+    return detail;
   }
 
   /** Marks one note and its materials deleted; the rows stay for history references. */
@@ -233,6 +238,18 @@ function applyDraft(event: Event, draft: NoteDraft): void {
   event.tags = normalizeTags(draft.tags);
   event.relatedRelationIds = (draft.relatedRelationIds ?? []).slice();
   event.level = draft.level;
+}
+
+/** Keeps a material at or below the record level; stricter choices win. */
+function clampMaterialLevel(materialLevel: SecurityLevel | undefined, recordLevel: SecurityLevel): SecurityLevel {
+  const wanted = materialLevel === undefined ? recordLevel : materialLevel;
+  if (recordLevel === SecurityLevel.SEALED) {
+    return SecurityLevel.SEALED;
+  }
+  if (recordLevel === SecurityLevel.LOCAL_ONLY && wanted === SecurityLevel.ANALYZABLE) {
+    return SecurityLevel.LOCAL_ONLY;
+  }
+  return wanted;
 }
 
 function normalizeTags(tags: string[]): string[] {

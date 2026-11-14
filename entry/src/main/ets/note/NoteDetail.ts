@@ -15,7 +15,7 @@ export interface NoteDetail {
   /** Relations linked to the note, used when editing */
   relatedRelationIds: string[];
   timeLabel: string;
-  /** Typed materials kept with this note; absent for preview data and old notes */
+  /** Typed materials kept with this note; empty when none were stored */
   materials?: ExperienceMaterial[];
 }
 
@@ -102,5 +102,5 @@ export function materialFormText(form: string): string {
   if (form === 'public_claim') {
     return '公开说法';
   }
-  return '第一人称';
+  return '未标注';
 }

@@ -17,7 +17,7 @@ import {
   validateNoteDraft
 } from '../note';
 import { SecurityLevel } from '../model/SecurityLevel';
-import { MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
+import { ExperienceMaterial, MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
 import { NoteEditParams } from '../navigation/RouteParams';
 import { SettingsStore } from '../settings';
 import { NoteFieldEditor } from '../components/NoteFieldEditor';
@@ -229,7 +229,7 @@ export struct NoteEditPage {
         return meta;
       }
     }
-    return { kind: kind, source: 'direct', form: 'first_person', level: null };
+    return { kind: kind, source: 'direct', form: '', level: null };
   }
 
   private setSource(kind: string, source: MaterialSource): void {
@@ -267,7 +267,41 @@ export struct NoteEditPage {
 
   private setLevel(level: SecurityLevel): void {
     this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags, level);
+    this.metas = this.clampMetas(this.metas, level);
     this.isDirty = true;
+  }
+
+  /** Drops any per-material level wider than the new record level, so it follows the record. */
+  private clampMetas(metas: MaterialMeta[], recordLevel: SecurityLevel): MaterialMeta[] {
+    const next: MaterialMeta[] = [];
+    for (const meta of metas) {
+      const kept: SecurityLevel | null = meta.level !== null &&
+        this.levelRank(meta.level) >= this.levelRank(recordLevel) ? meta.level : null;
+      next.push({ kind: meta.kind, source: meta.source, form: meta.form, level: kept });
+    }
+    return next;
+  }
+
+  /** Larger rank means a stricter level: sealed over local-only over analyzable. */
+  private levelRank(level: SecurityLevel): number {
+    if (level === SecurityLevel.SEALED) {
+      return 2;
+    }
+    if (level === SecurityLevel.LOCAL_ONLY) {
+      return 1;
+    }
+    return 0;
+  }
+
+  /** Level chips allowed for one material under the current record level. */
+  private materialLevelOptions(): LevelOption[] {
+    const options: LevelOption[] = [];
+    for (const option of LEVEL_OPTIONS) {
+      if (option.level === null || this.levelRank(option.level) >= this.levelRank(this.draft.level)) {
+        options.push(option);
+      }
+    }
+    return options;
   }
 
   /** Says what the chosen level changes about this note leaving the device. */
@@ -285,10 +319,11 @@ export struct NoteEditPage {
   levelChip(level: SecurityLevel) {
     Text(securityLevelText(level))
       .fontSize(AppTheme.font.bodyStrong)
-      .fontColor(this.draft.level === level ? Color.White : AppTheme.color.text)
+      .fontColor(this.draft.level === level ? AppTheme.color.primaryDeep : AppTheme.color.text)
       .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-      .backgroundColor(this.draft.level === level ? AppTheme.color.primary : AppTheme.color.chip)
+      .backgroundColor(this.draft.level === level ? AppTheme.color.tint : AppTheme.color.chip)
       .borderRadius(AppTheme.radius.lg)
+      .id(recordLevelChipId(level))
       .onClick(() => {
         this.setLevel(level);
       })
@@ -320,10 +355,11 @@ export struct NoteEditPage {
           ForEach(SOURCE_OPTIONS, (option: MetaOption) => {
             Text(option.label)
               .fontSize(AppTheme.font.caption)
-              .fontColor(this.metaFor(kind).source === option.value ? Color.White : AppTheme.color.textSecondary)
+              .fontColor(this.metaFor(kind).source === option.value ?
+                AppTheme.color.primaryDeep : AppTheme.color.text)
               .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: 2, bottom: 2 })
               .backgroundColor(this.metaFor(kind).source === option.value ?
-                AppTheme.color.primary : AppTheme.color.chip)
+                AppTheme.color.tint : AppTheme.color.chip)
               .borderRadius(AppTheme.radius.sm)
               .margin({ right: AppTheme.spacing.s4, bottom: AppTheme.spacing.s2 })
               .id(`material_source_${kind}_${option.value}`)
@@ -338,36 +374,37 @@ export struct NoteEditPage {
           ForEach(FORM_OPTIONS, (option: MetaOption) => {
             Text(option.label)
               .fontSize(AppTheme.font.caption)
-              .fontColor(this.metaFor(kind).form === option.value ? Color.White : AppTheme.color.textSecondary)
+              .fontColor(this.metaFor(kind).form === option.value ?
+                AppTheme.color.primaryDeep : AppTheme.color.text)
               .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: 2, bottom: 2 })
               .backgroundColor(this.metaFor(kind).form === option.value ?
-                AppTheme.color.primary : AppTheme.color.chip)
+                AppTheme.color.tint : AppTheme.color.chip)
               .borderRadius(AppTheme.radius.sm)
               .margin({ right: AppTheme.spacing.s4, bottom: AppTheme.spacing.s2 })
-              .id(`material_form_${kind}_${option.value}`)
+              .id(`material_form_${kind}_${formKey(option.value)}`)
               .onClick(() => {
                 this.setForm(kind, option.value as MaterialForm);
               })
-          }, (option: MetaOption) => option.value)
+          }, (option: MetaOption) => formKey(option.value))
         }
         .width('100%')
 
         Flex({ wrap: FlexWrap.Wrap }) {
-          ForEach(LEVEL_OPTIONS, (option: MetaOption) => {
+          ForEach(this.materialLevelOptions(), (option: LevelOption) => {
             Text(option.label)
               .fontSize(AppTheme.font.caption)
-              .fontColor(this.levelPicked(kind, option.value) ? Color.White : AppTheme.color.textSecondary)
+              .fontColor(this.levelPicked(kind, option.level) ?
+                AppTheme.color.primaryDeep : AppTheme.color.text)
               .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: 2, bottom: 2 })
-              .backgroundColor(this.levelPicked(kind, option.value) ?
-                AppTheme.color.primaryDeep : AppTheme.color.chip)
+              .backgroundColor(this.levelPicked(kind, option.level) ?
+                AppTheme.color.tint : AppTheme.color.chip)
               .borderRadius(AppTheme.radius.sm)
               .margin({ right: AppTheme.spacing.s4, bottom: AppTheme.spacing.s2 })
-              .id(`material_level_${kind}_${option.value}`)
+              .id(`material_level_${kind}_${levelKey(option.level)}`)
               .onClick(() => {
-                const picked: SecurityLevel | null = option.value === 'inherit' ? null : option.value as SecurityLevel;
-                this.setMaterialLevel(kind, picked);
+                this.setMaterialLevel(kind, option.level);
               })
-          }, (option: MetaOption) => option.value)
+          }, (option: LevelOption) => levelKey(option.level))
         }
         .width('100%')
       }
@@ -377,12 +414,8 @@ export struct NoteEditPage {
   }
 
   /** True when this level option matches the material's own level (inherit matches none). */
-  private levelPicked(kind: string, value: string): boolean {
-    const current = this.metaFor(kind).level;
-    if (value === 'inherit') {
-      return current === null;
-    }
-    return current === value;
+  private levelPicked(kind: string, level: SecurityLevel | null): boolean {
+    return this.metaFor(kind).level === level;
   }
 
   private async save(): Promise<void> {
@@ -467,7 +500,40 @@ export struct NoteEditPage {
       level: detail.level,
       timestamp: detail.timestamp
     };
+    this.materialScene = '';
+    this.materialFeeling = '';
+    this.materialBody = '';
+    this.materialAction = '';
+    this.materialInterpretation = '';
+    this.showInterpretation = false;
+    this.metas = defaultMaterialMetas();
+    for (const material of detail.materials ?? []) {
+      this.restoreMaterial(material);
+    }
     this.isDirty = false;
+  }
+
+  /** Copies one stored material back into its kind row and chip meta. */
+  private restoreMaterial(material: ExperienceMaterial): void {
+    if (material.kind === 'scene') {
+      this.materialScene = material.text;
+    } else if (material.kind === 'feeling') {
+      this.materialFeeling = material.text;
+    } else if (material.kind === 'body') {
+      this.materialBody = material.text;
+    } else if (material.kind === 'existing_action') {
+      this.materialAction = material.text;
+    } else if (material.kind === 'interpretation') {
+      this.materialInterpretation = material.text;
+      this.showInterpretation = true;
+    } else {
+      return;
+    }
+    // Stored rows may predate the record being narrowed, so apply the same rule as clampMetas:
+    // a material wider than its record falls back to following the record.
+    this.metas = this.clampMetas(this.metas.map((meta: MaterialMeta) => meta.kind === material.kind ?
+      { kind: material.kind, source: material.source, form: material.form, level: material.level } : meta),
+      this.draft.level);
   }
 
   @Builder
@@ -622,9 +688,9 @@ export struct NoteEditPage {
                   ForEach(this.relations, (relation: RelationListItem) => {
                     Text(relation.name)
                       .fontSize(AppTheme.font.body)
-                      .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? Color.White : AppTheme.color.textSecondaryStrong)
+                      .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.primaryDeep : AppTheme.color.text)
                       .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-                      .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.primary : AppTheme.color.chip)
+                      .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.tint : AppTheme.color.chip)
                       .borderRadius(AppTheme.radius.md)
                       .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
                       .onClick(() => {
@@ -643,7 +709,7 @@ export struct NoteEditPage {
                 .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondaryStrong)
                 .width('100%')
-              Text('分开写现场、感受、身体和已经做过的事；不填也能保存，正文会作为未分类材料留档。')
+              Text('分开写现场、感受、身体、已经做过的事和当时的解释；不填也能保存，正文会作为未分类材料留档。')
                 .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textMuted)
                 .width('100%')
@@ -719,9 +785,15 @@ export struct NoteEditPage {
   }
 }
 
-/** One chip option shared by the source, form and level rows. */
+/** One chip option shared by the source and form rows. */
 interface MetaOption {
   value: string;
+  label: string;
+}
+
+/** One chip option of the per-material level row; a null level follows the record. */
+interface LevelOption {
+  level: SecurityLevel | null;
   label: string;
 }
 
@@ -743,6 +815,7 @@ const SOURCE_OPTIONS: MetaOption[] = [
 ];
 
 const FORM_OPTIONS: MetaOption[] = [
+  { value: '', label: '未标注' },
   { value: 'first_person', label: '第一人称' },
   { value: 'dialogue', label: '对话' },
   { value: 'third_person', label: '第三人称' },
@@ -751,19 +824,40 @@ const FORM_OPTIONS: MetaOption[] = [
   { value: 'public_claim', label: '公开说法' }
 ];
 
-const LEVEL_OPTIONS: MetaOption[] = [
-  { value: 'inherit', label: '跟随记录' },
-  { value: 'analyzable', label: '可分析' },
-  { value: 'local_only', label: '仅本地' },
-  { value: 'sealed', label: '已封存' }
+const LEVEL_OPTIONS: LevelOption[] = [
+  { level: null, label: '跟随记录' },
+  { level: SecurityLevel.ANALYZABLE, label: '可分析' },
+  { level: SecurityLevel.LOCAL_ONLY, label: '仅本地' },
+  { level: SecurityLevel.SEALED, label: '已封存' }
 ];
+
+/** Stable ForEach key for a form value; the unlabelled option has no value. */
+function formKey(value: string): string {
+  return value.length > 0 ? value : 'unlabelled';
+}
+
+/** Stable ForEach key and chip id for a material level; null means follow the record. */
+function levelKey(level: SecurityLevel | null): string {
+  return level === null ? 'inherit' : level;
+}
+
+/** Stable chip id for a record level, used by device checks. */
+function recordLevelChipId(level: SecurityLevel): string {
+  if (level === SecurityLevel.ANALYZABLE) {
+    return 'note_level_analyzable';
+  }
+  if (level === SecurityLevel.LOCAL_ONLY) {
+    return 'note_level_local';
+  }
+  return 'note_level_sealed';
+}
 
 /** Builds the default meta for every material kind supported by the editor. */
 function defaultMaterialMetas(): MaterialMeta[] {
   const kinds: string[] = ['scene', 'feeling', 'body', 'existing_action', 'interpretation'];
   const metas: MaterialMeta[] = [];
   for (const kind of kinds) {
-    metas.push({ kind: kind, source: 'direct', form: 'first_person', level: null });
+    metas.push({ kind: kind, source: 'direct', form: '', level: null });
   }
   return metas;
 }

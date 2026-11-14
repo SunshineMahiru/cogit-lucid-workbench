@@ -665,23 +665,29 @@ async function main() {
     assert.deepStrictEqual(notes.map((note) => note.id), ['ev_local']);
   });
 
-  await test('整条改密级只带动继承的行，单独指定的材料保持原级', async () => {
+  await test('整条改密级只收窄宽于记录的材料的级', async () => {
     reset();
     store.rows('experience_material').push(
       {
         id: 'mt_1', event_id: 'ev_1', kind: 'body', form: '', text: '胸闷', observed_at: 1,
-        source: 'direct', source_stance: '', level: 'local_only', revision_of: '', deleted: 0, created_at: 1
+        source: 'direct', source_stance: '', level: 'analyzable', revision_of: '', deleted: 0, created_at: 1
       },
       {
         id: 'mt_2', event_id: 'ev_1', kind: 'scene', form: '', text: '现场', observed_at: 2,
         source: 'direct', source_stance: '', level: 'sealed', revision_of: '', deleted: 0, created_at: 1
+      },
+      {
+        id: 'mt_3', event_id: 'ev_1', kind: 'feeling', form: '', text: '紧张', observed_at: 3,
+        source: 'direct', source_stance: '', level: 'local_only', revision_of: '', deleted: 0, created_at: 1
       }
     );
     const dao = new ExperienceMaterialDao(store);
-    await dao.updateInheritedLevelByEvent('ev_1', 'local_only', 'analyzable');
-    assert.deepStrictEqual(store.rows('experience_material').map((row) => row.level), ['analyzable', 'sealed']);
-    await dao.updateInheritedLevelByEvent('ev_1', 'analyzable', 'local_only');
-    assert.deepStrictEqual(store.rows('experience_material').map((row) => row.level), ['local_only', 'sealed']);
+    await dao.clampLevelsByEvent('ev_1', 'local_only');
+    assert.deepStrictEqual(store.rows('experience_material').map((row) => row.level),
+      ['local_only', 'sealed', 'local_only']);
+    await dao.clampLevelsByEvent('ev_1', 'sealed');
+    assert.deepStrictEqual(store.rows('experience_material').map((row) => row.level),
+      ['sealed', 'sealed', 'sealed']);
   });
 
   await test('同日更正保留原读数并记住观察规则', async () => {    reset();
@@ -971,6 +977,72 @@ async function main() {
     assert.ok(!JSON.stringify(blocked).includes('MARKER_BODY_4a1'), '拦下后仍带出了正文');
   });
 
+  await test('编辑速记按草稿重写材料并回传材料', async () => {
+    reset();
+    const draft = createFreeformNoteDraft();
+    draft.content = '正文';
+    draft.tags = ['原标签'];
+    draft.relatedRelationIds = ['rl_1'];
+    draft.materials = [
+      { kind: 'scene', text: '原来的现场', source: 'direct', form: '' },
+      { kind: 'feeling', text: '紧张', source: 'direct', form: '' }
+    ];
+    const saved = await service.save(draft);
+
+    const edited = createFreeformNoteDraft();
+    edited.content = '正文';
+    edited.tags = ['原标签'];
+    edited.relatedRelationIds = ['rl_1'];
+    edited.materials = [
+      { kind: 'scene', text: '改过的现场', source: 'reading', form: 'dialogue' },
+      { kind: 'body', text: '胸口发紧', source: 'direct', form: '' }
+    ];
+    const detail = await service.updateNote(saved.eventId, edited);
+
+    const rows = store.rows('experience_material');
+    assert.deepStrictEqual(rows.map((row) => row.kind), ['scene', 'body']);
+    assert.strictEqual(rows[0].text, '改过的现场');
+    assert.strictEqual(rows[0].source, 'reading');
+    assert.strictEqual(rows[0].form, 'dialogue');
+    assert.strictEqual(rows[1].text, '胸口发紧');
+    assert.deepStrictEqual(detail.materials.map((material) => material.kind), ['scene', 'body']);
+    assert.deepStrictEqual(JSON.parse(lastRow('event').tags), ['原标签']);
+    assert.deepStrictEqual(JSON.parse(lastRow('event').related_relation_ids), ['rl_1']);
+  });
+
+  await test('材料密级保存时不宽于记录级', async () => {
+    reset();
+    const local = createFreeformNoteDraft();
+    local.content = '仅本地正文';
+    local.level = SecurityLevel.LOCAL_ONLY;
+    local.materials = [
+      { kind: 'scene', text: '想标成可分析', level: SecurityLevel.ANALYZABLE },
+      { kind: 'body', text: '保持封存', level: SecurityLevel.SEALED }
+    ];
+    await service.save(local);
+    assert.deepStrictEqual(store.rows('experience_material').map((row) => row.level),
+      [SecurityLevel.LOCAL_ONLY, SecurityLevel.SEALED]);
+
+    const sealed = createFreeformNoteDraft();
+    sealed.content = '封存正文';
+    sealed.level = SecurityLevel.SEALED;
+    sealed.materials = [
+      { kind: 'scene', text: '另一条想标成可分析', level: SecurityLevel.ANALYZABLE },
+      { kind: 'body', text: '另一条仅本地', level: SecurityLevel.LOCAL_ONLY }
+    ];
+    await service.save(sealed);
+    assert.deepStrictEqual(store.rows('experience_material').slice(-2).map((row) => row.level),
+      [SecurityLevel.SEALED, SecurityLevel.SEALED]);
+
+    const analyzable = createFreeformNoteDraft();
+    analyzable.content = '可分析正文';
+    analyzable.level = SecurityLevel.ANALYZABLE;
+    analyzable.materials = [{ kind: 'scene', text: '自己选封存', level: SecurityLevel.SEALED }];
+    await service.save(analyzable);
+    assert.strictEqual(store.rows('experience_material')[store.rows('experience_material').length - 1].level,
+      SecurityLevel.SEALED);
+  });
+
   await test('改密级时材料写失败，记录密级一并回滚', async () => {
     reset();
     const draft = createFreeformNoteDraft();
@@ -980,14 +1052,14 @@ async function main() {
     const edited = createFreeformNoteDraft();
     edited.content = '回滚正文';
     edited.level = SecurityLevel.SEALED;
-    store.failUpdateTable = 'experience_material';
+    store.failTable = 'experience_material';
     let failed = false;
     try {
       await service.updateNote(saved.eventId, edited);
     } catch (error) {
       failed = true;
     }
-    store.failUpdateTable = null;
+    store.failTable = null;
     assert.strictEqual(failed, true);
     assert.strictEqual(store.rows('event')[0].level, SecurityLevel.LOCAL_ONLY);
     assert.strictEqual(store.rows('experience_material')[0].level, SecurityLevel.LOCAL_ONLY);
