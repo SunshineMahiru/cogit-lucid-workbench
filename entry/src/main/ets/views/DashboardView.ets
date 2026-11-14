@@ -33,6 +33,9 @@ export struct DashboardView {
   @Require @Param pathStack: NavPathStack;
   /** Set to false when the host page renders its own header above this content. */
   @Param showTitleBar: boolean = true;
+  /** Owner-scoped scroller so the host can jump to a section. */
+  @Param scroller: Scroller = new Scroller();
+  @Event onModuleOffset: (offsetY: number) => void = () => {};
   @Local today: string = todayLabel();
   @Local readings: BodyReading[] = [];
   @Local predictions: PredictionItem[] = [];
@@ -364,7 +367,7 @@ export struct DashboardView {
         this.loadingView()
       } else {
         Column() {
-          Scroll() {
+          Scroll(this.scroller) {
             Column({ space: 16 }) {
               if (this.showWelcome) {
                 WelcomeCard({
@@ -487,14 +490,40 @@ export struct DashboardView {
               ReviewPromptPanel({ period: ReviewPeriod.WEEK })
                 .id('home_section_review_prompt')
 
-              ModuleGridCard({
-                moduleItems: this.moduleItems,
-                dataVersion: this.dataVersion,
-                onOpen: (route: string) => {
-                  this.openModule(route);
+              Column() {
+                ModuleGridCard({
+                  moduleItems: this.moduleItems,
+                  dataVersion: this.dataVersion,
+                  onOpen: (route: string) => {
+                    this.openModule(route);
+                  }
+                })
+              }
+              .id('home_section_modules')
+              .width('100%')
+              .onAreaChange((oldValue: Area, newValue: Area) => {
+                const offset = newValue.position.y;
+                if (typeof offset === 'number') {
+                  this.onModuleOffset(offset);
                 }
               })
-                .id('home_section_modules')
+
+              Row() {
+                Text('示例数据看板（远端合成） ›')
+                  .id('home_dashboard_entry')
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.primary)
+                  .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .borderRadius(AppTheme.radius.lg)
+                  .onClick(() => {
+                    this.guardedPush(ROUTES.ANALYTICS, null, () => {
+                    });
+                  })
+              }
+              .width('100%')
+              .justifyContent(FlexAlign.End)
+              .padding({ top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
 
               RecentNotesCard({
                 notes: this.recentNotes,

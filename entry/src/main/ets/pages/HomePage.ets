@@ -13,8 +13,9 @@ import { DbHelper } from '../db/DbHelper';
 import { DebugFaults } from '../app/DebugFaults';
 import { previewStore } from '../preview/PreviewStore';
 import { ROUTES } from '../navigation/Routes';
+import { NoteEditParams, PredictionListParams } from '../navigation/RouteParams';
 
-/** Launch page: identity band and four live counters above the existing dashboard content. */
+/** Launch page: identity band, four quick entries and the dashboard content. */
 @ComponentV2
 export struct HomePage {
   @Require @Param pathStack: NavPathStack;
@@ -29,6 +30,8 @@ export struct HomePage {
   @Local encryptionNotice: string = '';
   @Local dbBlocked: boolean = false;
   @Local dbMessage: string = '';
+  @Local moduleOffset: number = 0;
+  private scroller: Scroller = new Scroller();
   private service: HomeDataService | null = null;
   private loadToken: number = 0;
   private listener: (() => void) | null = null;
@@ -121,6 +124,53 @@ export struct HomePage {
     }
   }
 
+  private openRecordNow(): void {
+    const params: NoteEditParams = { templateId: null };
+    this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params, () => {
+      this.load();
+    });
+  }
+
+  private openTodo(): void {
+    const params: PredictionListParams = { status: null };
+    this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, params, () => {
+      this.load();
+    });
+  }
+
+  private openPlan(): void {
+    this.pathStack.pushPathByName(ROUTES.PLAN, null, () => {
+      this.load();
+    });
+  }
+
+  /** Scrolls the dashboard scroll area down to the module grid. */
+  private scrollToModules(): void {
+    this.scroller.scrollTo({
+      xOffset: 0,
+      yOffset: this.moduleOffset,
+      animation: { duration: 300, curve: Curve.EaseInOut }
+    });
+  }
+
+  @Builder
+  quickEntry(label: string, entryId: string, onTap: () => void) {
+    Text(label)
+      .id(entryId)
+      .fontSize(AppTheme.font.body)
+      .fontColor(AppTheme.color.primary)
+      .textAlign(TextAlign.Center)
+      .maxLines(1)
+      .textOverflow({ overflow: TextOverflow.Ellipsis })
+      .layoutWeight(1)
+      .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+      .backgroundColor(AppTheme.color.surface)
+      .borderRadius(AppTheme.radius.md)
+      .onClick(() => {
+        onTap();
+      })
+  }
+
   build() {
     AppDestination({
       route: 'home',
@@ -180,83 +230,31 @@ export struct HomePage {
           .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
       }
       Row({ space: 8 }) {
-        Column({ space: 2 }) {
-          Text(`${this.summary.todayNotes} 条`)
-            .fontSize(AppTheme.font.bodyStrong)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(AppTheme.color.text)
-          Text('今日速记')
-            .fontSize(AppTheme.font.caption)
-            .fontColor(AppTheme.color.textMuted)
-        }
-        .layoutWeight(1)
-        .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-        .backgroundColor(AppTheme.color.surfaceAlt)
-        .borderRadius(AppTheme.radius.sm)
-
-        Column({ space: 2 }) {
-          Text(`${this.summary.pendingPredictions} 条`)
-            .fontSize(AppTheme.font.bodyStrong)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(AppTheme.color.text)
-          Text('待结算')
-            .fontSize(AppTheme.font.caption)
-            .fontColor(AppTheme.color.textMuted)
-        }
-        .layoutWeight(1)
-        .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-        .backgroundColor(AppTheme.color.surfaceAlt)
-        .borderRadius(AppTheme.radius.sm)
-
-        Column({ space: 2 }) {
-          Text(`${this.pulse.streakDays} 天`)
-            .fontSize(AppTheme.font.bodyStrong)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(AppTheme.color.text)
-          Text('连续记录')
-            .fontSize(AppTheme.font.caption)
-            .fontColor(AppTheme.color.textMuted)
-        }
-        .layoutWeight(1)
-        .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-        .backgroundColor(AppTheme.color.surfaceAlt)
-        .borderRadius(AppTheme.radius.sm)
-
-        Column({ space: 2 }) {
-          Text(this.pulse.lastReviewLabel)
-            .fontSize(AppTheme.font.bodyStrong)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(AppTheme.color.text)
-          Text('最近复盘')
-            .fontSize(AppTheme.font.caption)
-            .fontColor(AppTheme.color.textMuted)
-        }
-        .layoutWeight(1)
-        .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-        .backgroundColor(AppTheme.color.surfaceAlt)
-        .borderRadius(AppTheme.radius.sm)
+        this.quickEntry('记录此刻', 'home_record_now', () => {
+          this.openRecordNow();
+        })
+        this.quickEntry('待校正', 'home_todo', () => {
+          this.openTodo();
+        })
+        this.quickEntry('当前计划', 'home_plan_entry_top', () => {
+          this.openPlan();
+        })
+        this.quickEntry('全部模块', 'home_modules_all', () => {
+          this.scrollToModules();
+        })
       }
       .width('100%')
       .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s4 })
 
-      Row() {
-        Text('数据看板 ›')
-          .id('home_dashboard_entry')
-          .fontSize(AppTheme.font.body)
-          .fontColor(AppTheme.color.primary)
-          .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
-          .backgroundColor(AppTheme.color.surfaceAlt)
-          .borderRadius(AppTheme.radius.lg)
-          .onClick(() => {
-            this.pathStack.pushPathByName(ROUTES.ANALYTICS, null);
-          })
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.End)
-      .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s6 })
-
       Column() {
-        DashboardView({ pathStack: this.pathStack, showTitleBar: false })
+        DashboardView({
+          pathStack: this.pathStack,
+          showTitleBar: false,
+          scroller: this.scroller,
+          onModuleOffset: (offsetY: number) => {
+            this.moduleOffset = offsetY;
+          }
+        })
       }
       .width('100%')
       .layoutWeight(1)
