@@ -21,7 +21,8 @@ export struct HomePage {
   @Require @Param pathStack: NavPathStack;
   @Local summary: HomeSummary = {
     totalNotes: 0, todayNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0,
-    hitRate: 0, unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0
+    hitRate: 0, unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0,
+    duePredictions: 0, revisionPredictions: 0, closedNodeReviews: 0
   };
   @Local pulse: HomePulse = { streakDays: 0, lastReviewLabel: NO_RATE_TEXT };
   @Local loadFailed: boolean = false;
@@ -245,6 +246,13 @@ export struct HomePage {
       }
       .width('100%')
       .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s4 })
+
+      Text(`待校正：到期预测 ${this.summary.duePredictions ?? 0} · 待修订模型 ${this.summary.revisionPredictions ?? 0} · 已结束周节点 ${this.summary.closedNodeReviews ?? 0}`)
+        .id('home_todo_counts')
+        .fontSize(AppTheme.font.caption)
+        .fontColor(AppTheme.color.textMuted)
+        .width('100%')
+        .textAlign(TextAlign.Center)
 
       Column() {
         DashboardView({

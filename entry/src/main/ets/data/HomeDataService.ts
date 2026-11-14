@@ -8,6 +8,10 @@ import { PredictionDao } from '../db/dao/PredictionDao';
 import { RelationDao } from '../db/dao/RelationDao';
 import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
+import { PlanDao } from '../db/dao/PlanDao';
+import { Plan } from '../model/Plan';
+import { PlanNode } from '../model/PlanNode';
+import { PlanNodeStatus, PlanStatus } from '../model/PlanStatus';
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
@@ -26,6 +30,7 @@ export class HomeDataService {
   private anchorDao: AnchorDao;
   private statusRecordDao: StatusRecordDao;
   private reviewDao: ReviewResultDao;
+  private planDao: PlanDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.store = store;
@@ -36,6 +41,19 @@ export class HomeDataService {
     this.anchorDao = new AnchorDao(store);
     this.statusRecordDao = new StatusRecordDao(store);
     this.reviewDao = new ReviewResultDao(store);
+    this.planDao = new PlanDao(store);
+  }
+
+  /** Closed weeks of the primary plan that still have no review attached. */
+  private async countClosedNodeReviews(): Promise<number> {
+    const plans = await this.planDao.queryPlans();
+    const primary = plans.find((plan: Plan) => plan.isPrimary && plan.status === PlanStatus.ACTIVE);
+    if (primary === undefined) {
+      return 0;
+    }
+    const nodes = await this.planDao.queryNodes(primary.id);
+    return nodes.filter((node: PlanNode) => node.status === PlanNodeStatus.CLOSED &&
+      (node.reviewId ?? '').length === 0).length;
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -90,8 +108,13 @@ export class HomeDataService {
     const totalAnchors = await this.anchorDao.countVisible();
     const pending = allPredictions.filter(p => p.status === PredictionStatus.PENDING);
     const settled = allPredictions.filter(p => p.status === PredictionStatus.SETTLED);
-    const hits = settled.filter(p => p.hit === true);
-    const hitRate = settled.length > 0 ? Math.round(hits.length / settled.length * 100) : 0;
+    const duePredictions = pending.filter(p => p.settlementDate.length > 0 && p.settlementDate <= today).length;
+    const revisionPredictions = settled.filter(p => p.outcome === 'partial' ||
+      p.outcome === 'insufficient' || p.outcome === 'undecidable').length;
+    const binary = settled.filter(p => p.hit !== null);
+    const hits = binary.filter(p => p.hit === true);
+    const hitRate = binary.length > 0 ? Math.round(hits.length / binary.length * 100) : 0;
+    const closedNodeReviews = await this.countClosedNodeReviews();
     return {
       totalNotes: totalNotes,
       todayNotes: todayNotes,
@@ -101,7 +124,10 @@ export class HomeDataService {
       hitRate: hitRate,
       unreviewedDecisions: unreviewedDecisions,
       totalAnchors: totalAnchors,
-      totalRelations: totalRelations
+      totalRelations: totalRelations,
+      duePredictions: duePredictions,
+      revisionPredictions: revisionPredictions,
+      closedNodeReviews: closedNodeReviews
     };
   }
 

@@ -26,6 +26,12 @@ export interface HomeSummary {
   unreviewedDecisions: number;
   totalAnchors: number;
   totalRelations: number;
+  /** Pending predictions whose date has arrived */
+  duePredictions?: number;
+  /** Settled as partial, insufficient or undecidable: the model still needs a revision */
+  revisionPredictions?: number;
+  /** Closed weeks that have no review attached yet */
+  closedNodeReviews?: number;
 }
 
 /** A dashboard tile: the route it opens plus its live summary line. */
