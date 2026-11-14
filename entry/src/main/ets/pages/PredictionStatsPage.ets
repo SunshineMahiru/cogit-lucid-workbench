@@ -29,6 +29,12 @@ export struct PredictionStatsPage {
     this.load();
   }
 
+  /** Counts settled results that stay out of the binary hit rate. */
+  private nonBinaryCount(): number {
+    const outcomes = this.stats.outcomes;
+    return outcomes.partial + outcomes.insufficient + outcomes.undecidable;
+  }
+
   private async load(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
@@ -200,6 +206,11 @@ export struct PredictionStatsPage {
                     .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
+
+                  Text(`其中非二值 ${this.nonBinaryCount()} 条（部分成立、证据不足、无法判断），单列展示，不计入命中率`)
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
                 }
                 .width('100%')
               }
@@ -277,7 +288,12 @@ export struct PredictionStatsPage {
                     }
                     .width('100%')
                   }, (bucket: CalibrationBucket) => bucket.label)
-                  Text('Brier 越低越接近真实置信度；命中率高不等于校准好')
+                  Text('Brier 只使用成立、未成立且有数值置信度的样本；无法量化的置信度与三类非二值结果都不进入该指标')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(16)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  Text('Brier 越低越接近真实置信度；命中率高不等于校准好，它也不衡量人的能力')
                     .fontSize(AppTheme.font.caption)
                     .lineHeight(16)
                     .fontColor(AppTheme.color.textMuted)

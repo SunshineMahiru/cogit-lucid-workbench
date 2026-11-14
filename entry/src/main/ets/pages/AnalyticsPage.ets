@@ -371,13 +371,13 @@ export struct AnalyticsPage {
           ChartSection({ title: '期限分档命中率', hint: '期限越长，命中率是否下降' }) {
             SimpleBarChart({ points: this.horizonPoints(), color: LINE_COLOR, maxValue: 100, horizontal: true, chartHeight: 150 })
           }
-          ChartSection({ title: '读数趋势', hint: '最近 14 天的睡眠时长，用于对照判断状态' }) {
+          ChartSection({ title: '读数趋势', hint: '最近 14 天的睡眠时长；缺读数的日期留空，不补零' }) {
             SimpleLineChart({ series: [{ name: '睡眠', color: LINE_COLOR, points: this.sleepPoints() }], minValue: 4, maxValue: 9, showXLabels: false })
           }
-          ChartSection({ title: '睡眠分组命中率', hint: '睡眠不足与充足两组的命中率对比' }) {
+          ChartSection({ title: '睡眠分组命中率', hint: '睡眠不足与充足两组的命中率对比；并排展示不构成因果证明' }) {
             SimpleBarChart({ points: this.sleepBucketPoints(), color: HIT_COLOR, maxValue: 100, chartHeight: 140 })
           }
-          ChartSection({ title: '互动频率', hint: '近 90 天与各关系的记录次数，代号为脱敏别名' }) {
+          ChartSection({ title: '互动频率', hint: '近 90 天与各关系的记录次数，代号为脱敏别名；只表示记录次数，不表示关系质量或对方投入' }) {
             SimpleBarChart({ points: this.interactionPoints(), color: LINE_COLOR, horizontal: true, chartHeight: 150 })
           }
           ChartSection({ title: '读数覆盖率', hint: '每格代表一天，颜色越深表示已记录' }) {

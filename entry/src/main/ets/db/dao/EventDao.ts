@@ -98,6 +98,15 @@ export class EventDao {
     return this.queryWith(predicates);
   }
 
+  /** Returns live events that may appear outside their detail page; sealed rows stay out. */
+  async queryVisibleRecent(limit: number): Promise<Event[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.DELETED, 0);
+    predicates.notEqualTo(EVENT_COLS.LEVEL, SecurityLevel.SEALED);
+    predicates.orderByDesc(EVENT_COLS.TIMESTAMP).limitAs(limit);
+    return this.queryWith(predicates);
+  }
+
   /** Returns every live event inside the millisecond range, newest first. */
   async queryBetween(startMs: number, endMs: number): Promise<Event[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);

@@ -18,6 +18,11 @@ class FakePredicates {
     return this;
   }
 
+  notEqualTo(field, value) {
+    this.filters.push({ field: field, value: value, op: 'ne' });
+    return this;
+  }
+
   and() {
     return this;
   }
@@ -132,6 +137,8 @@ class FakeStore {
         rows = rows.filter((row) => Number(row[filter.field]) >= Number(filter.value));
       } else if (filter.op === 'lte') {
         rows = rows.filter((row) => Number(row[filter.field]) <= Number(filter.value));
+      } else if (filter.op === 'ne') {
+        rows = rows.filter((row) => row[filter.field] !== filter.value);
       } else {
         rows = rows.filter((row) => row[filter.field] === filter.value);
       }
@@ -292,6 +299,7 @@ const { NoteTemplateId } = require('./out2/note/NoteTemplateId');
 const { AnchorService } = require('./out2/anchor/AnchorService');
 const { RelationService } = require('./out2/relation/RelationService');
 const { StatusService } = require('./out2/status/StatusService');
+const { HomeDataService } = require('./out2/data/HomeDataService');
 const { PredictionService } = require('./out2/prediction/PredictionService');
 const { ReviewService } = require('./out2/review/ReviewService');
 const { rangeFor } = require('./out2/review/ReviewRange');
@@ -639,8 +647,24 @@ async function main() {
     assert.strictEqual((await statusService.history()).length, 7);
   });
 
-  await test('同日更正保留原读数并记住观察规则', async () => {
+  await test('首页最近速记跳过封存记录', async () => {
     reset();
+    store.rows('event').push(
+      {
+        id: 'ev_local', title: '本机速记', content: '正文', type: '自由', timestamp: 2000,
+        tags: '[]', level: 'local_only', related_decision_ids: '[]', related_relation_ids: '[]', deleted: 0
+      },
+      {
+        id: 'ev_sealed', title: '封存速记', content: '不该出现', type: '自由', timestamp: 3000,
+        tags: '[]', level: 'sealed', related_decision_ids: '[]', related_relation_ids: '[]', deleted: 0
+      }
+    );
+    const home = await HomeDataService.open({});
+    const notes = await home.loadRecentNotes(5);
+    assert.deepStrictEqual(notes.map((note) => note.id), ['ev_local']);
+  });
+
+  await test('同日更正保留原读数并记住观察规则', async () => {    reset();
     const statusService = await StatusService.open({});
     await statusService.save({
       date: '2026-10-28',

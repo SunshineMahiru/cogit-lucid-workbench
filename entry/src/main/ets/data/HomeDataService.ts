@@ -93,7 +93,7 @@ export class HomeDataService {
 
   /** Returns the most recent notes for the home list. */
   async loadRecentNotes(limit: number = 5): Promise<NoteListItem[]> {
-    const events = await this.eventDao.queryRecent(limit);
+    const events = await this.eventDao.queryVisibleRecent(limit);
     return toNoteListItems(events);
   }
 
