@@ -817,9 +817,9 @@ test('备份的封存过滤覆盖所有带密级的表', () => {
   for (const table of LEVELED_TABLES) {
     assert.ok(declared.indexOf(table) >= 0, `未知表 \${table}`);
   }
-  // 九张表带 level 列；新增带密级的表时必须同步进来，否则封存内容会漏进备份。
-  assert.strictEqual(LEVELED_TABLES.length, 9);
-  assert.strictEqual(new Set(LEVELED_TABLES).size, 9);
+  // 十一张表带 level 列；新增带密级的表时必须同步进来，否则封存内容会漏进备份。
+  assert.strictEqual(LEVELED_TABLES.length, 11);
+  assert.strictEqual(new Set(LEVELED_TABLES).size, 11);
 });
 
 test('清空数据覆盖全部表', () => {

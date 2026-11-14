@@ -141,5 +141,37 @@ export const TABLE_CREATE_SQLS: string[] = [
     confirmed INTEGER NOT NULL,
     fell_back INTEGER NOT NULL,
     created_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.EXPERIENCE_MATERIAL} (
+    id TEXT PRIMARY KEY,
+    event_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    form TEXT NOT NULL DEFAULT '',
+    text TEXT NOT NULL,
+    observed_at INTEGER NOT NULL,
+    source TEXT NOT NULL DEFAULT 'direct',
+    source_stance TEXT NOT NULL DEFAULT '',
+    level TEXT NOT NULL DEFAULT 'local_only',
+    revision_of TEXT NOT NULL DEFAULT '',
+    deleted INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.EVIDENCE_ITEM} (
+    id TEXT PRIMARY KEY,
+    target_type TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    note TEXT NOT NULL,
+    effect TEXT NOT NULL,
+    level TEXT NOT NULL DEFAULT 'local_only',
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.COST_NOTE} (
+    id TEXT PRIMARY KEY,
+    review_id TEXT NOT NULL,
+    dimension TEXT NOT NULL,
+    text TEXT NOT NULL,
+    bearable INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
   )`
 ];

@@ -3,6 +3,7 @@ import { common } from '@kit.AbilityKit';
 import { fileIo } from '@kit.CoreFileKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { DB_CONFIG, DB_VERSION, PLAIN_DB_CONFIG } from './DbConfig';
+import { DB_TABLES } from './DbConstants';
 import { TABLE_CREATE_SQLS } from './schemas';
 import {
   LegacyPredictionRow,
@@ -88,6 +89,37 @@ export class DbHelper {
     try {
       const file = fileIo.openSync(path, fileIo.OpenMode.CREATE | fileIo.OpenMode.WRITE_ONLY);
       fileIo.closeSync(file);
+    } catch (error) {
+    }
+  }
+
+
+  /**
+   * Turns every pre-existing note into one unclassified material so the review flow can cite
+   * material kinds. The NOT IN guard makes it safe to run on every launch; old text is copied
+   * verbatim and never re-classified by code.
+   */
+  private static async backfillMaterials(store: relationalStore.RdbStore): Promise<void> {
+    const sql = `INSERT INTO ${DB_TABLES.EXPERIENCE_MATERIAL}
+      (id, event_id, kind, form, text, observed_at, source, source_stance, level, revision_of, deleted, created_at)
+      SELECT 'mt-' || id, id, 'unclassified', '', content, timestamp, 'direct', '',
+        level, '', 0, timestamp
+      FROM ${DB_TABLES.EVENT}
+      WHERE id NOT IN (SELECT event_id FROM ${DB_TABLES.EXPERIENCE_MATERIAL})`;
+    try {
+      await store.executeSql(sql);
+    } catch (error) {
+      hilog.warn(DOMAIN, TAG, 'material backfill skipped: %{public}s', (error as Error).message);
+    }
+    try {
+      const countSet = await store.querySql(`SELECT COUNT(*) AS total FROM ${DB_TABLES.EXPERIENCE_MATERIAL}`);
+      try {
+        if (countSet.goToFirstRow()) {
+          hilog.info(DOMAIN, TAG, 'materials ready: %{public}d', countSet.getLong(countSet.getColumnIndex('total')));
+        }
+      } finally {
+        countSet.close();
+      }
     } catch (error) {
     }
   }
@@ -210,6 +242,7 @@ export class DbHelper {
     } catch (error) {
     }
     await DbHelper.mergeLegacyPredictionRoots(store);
+    await DbHelper.backfillMaterials(store);
     // Soft-delete flags follow the same idempotent pattern as the columns above.
     const deleteMigrations: string[] = [
       `ALTER TABLE relation ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0`,

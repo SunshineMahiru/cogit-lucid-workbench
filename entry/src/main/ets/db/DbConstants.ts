@@ -12,7 +12,10 @@ export const DB_TABLES = {
   PLAN_NODE: 'plan_node',
   PLAN_ITEM: 'plan_item',
   PLAN_LINK: 'plan_link',
-  REQUEST_AUDIT: 'request_audit'
+  REQUEST_AUDIT: 'request_audit',
+  EXPERIENCE_MATERIAL: 'experience_material',
+  EVIDENCE_ITEM: 'evidence_item',
+  COST_NOTE: 'cost_note'
 } as const;
 
 /**
@@ -25,6 +28,8 @@ export const DB_TABLES = {
  */
 export const LEVELED_TABLES: string[] = [
   DB_TABLES.EVENT,
+  DB_TABLES.EXPERIENCE_MATERIAL,
+  DB_TABLES.EVIDENCE_ITEM,
   DB_TABLES.DECISION,
   DB_TABLES.RELATION,
   DB_TABLES.PREDICTION,
@@ -36,6 +41,9 @@ export const LEVELED_TABLES: string[] = [
 ];
 
 export const DB_TABLES_CHILD_FIRST: string[] = [
+  DB_TABLES.EXPERIENCE_MATERIAL,
+  DB_TABLES.EVIDENCE_ITEM,
+  DB_TABLES.COST_NOTE,
   DB_TABLES.REQUEST_AUDIT,
   DB_TABLES.PLAN_LINK,
   DB_TABLES.PLAN_ITEM,
@@ -214,5 +222,44 @@ export const PLAN_LINK_COLS = {
   MODULE: 'module',
   TARGET_ID: 'target_id',
   LABEL: 'label',
+  CREATED_AT: 'created_at'
+} as const;
+
+
+/** Column names for the experience material table. */
+export const MATERIAL_COLS = {
+  ID: 'id',
+  EVENT_ID: 'event_id',
+  KIND: 'kind',
+  FORM: 'form',
+  TEXT: 'text',
+  OBSERVED_AT: 'observed_at',
+  SOURCE: 'source',
+  SOURCE_STANCE: 'source_stance',
+  LEVEL: 'level',
+  REVISION_OF: 'revision_of',
+  DELETED: 'deleted',
+  CREATED_AT: 'created_at'
+} as const;
+
+/** Column names for the evidence table. */
+export const EVIDENCE_COLS = {
+  ID: 'id',
+  TARGET_TYPE: 'target_type',
+  TARGET_ID: 'target_id',
+  SOURCE_TYPE: 'source_type',
+  NOTE: 'note',
+  EFFECT: 'effect',
+  LEVEL: 'level',
+  CREATED_AT: 'created_at'
+} as const;
+
+/** Column names for the cost table. */
+export const COST_COLS = {
+  ID: 'id',
+  REVIEW_ID: 'review_id',
+  DIMENSION: 'dimension',
+  TEXT: 'text',
+  BEARABLE: 'bearable',
   CREATED_AT: 'created_at'
 } as const;
