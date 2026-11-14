@@ -1,4 +1,5 @@
 import { Anchor } from '../model/Anchor';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { AppTheme } from '../theme/AppTheme';
 import { ContradictionCandidate } from '../analysis/contradiction/ContradictionAnalyzer';
 import { AgentOutcome, ReviewAgent } from '../review';
@@ -9,12 +10,16 @@ export struct ReviewAgentPanel {
   @Param facts: string = '';
   @Param interpretation: string = '';
   @Param anchors: Anchor[] = [];
+  @Param factsLevel: SecurityLevel = SecurityLevel.LOCAL_ONLY;
+  @Param interpretationLevel: SecurityLevel = SecurityLevel.LOCAL_ONLY;
+  @Param relationForbidsAnalysis: boolean = false;
   @Event onInsert: (text: string) => void = () => {};
   @Local candidates: ContradictionCandidate[] = [];
   @Local isLoading: boolean = false;
   @Local message: string = '';
   @Local errorText: string = '';
   @Local requested: boolean = false;
+  @Local droppedCount: number = 0;
 
   private async generate(): Promise<void> {
     if (this.isLoading) {
@@ -37,9 +42,13 @@ export struct ReviewAgentPanel {
       const outcome: AgentOutcome = await agent.analyze({
         facts: this.facts,
         interpretation: this.interpretation,
-        anchors: this.anchors
+        anchors: this.anchors,
+        factsLevel: this.factsLevel,
+        interpretationLevel: this.interpretationLevel,
+        relationForbidsAnalysis: this.relationForbidsAnalysis
       });
       this.candidates = outcome.candidates;
+      this.droppedCount = outcome.dropped.length;
       this.message = outcome.fellBack ? `${outcome.message}（${outcome.provider}）` : outcome.message;
     } catch (error) {
       this.errorText = '生成失败，请检查设置或改用模板';
@@ -79,6 +88,12 @@ export struct ReviewAgentPanel {
           })
       }
       .width('100%')
+
+      if (this.droppedCount > 0) {
+        Text(`已排除 ${this.droppedCount} 项不可发送内容`)
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+      }
 
       if (this.isLoading) {
         Row({ space: 6 }) {

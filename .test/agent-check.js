@@ -83,7 +83,10 @@ async function test(name, fn) {
   const agentInput = () => ({
     facts: '这周有 3 天睡不到 7 小时',
     interpretation: '我总是状态差',
-    anchors: [{ id: 'a1', text: '先记录睡眠，再解释', source: '', order: 1 }]
+    anchors: [{ id: 'a1', text: '先记录睡眠，再解释', source: '', order: 1, level: 'analyzable' }],
+    factsLevel: 'analyzable',
+    interpretationLevel: 'analyzable',
+    relationForbidsAnalysis: false
   });
 
   const settingsWith = (patch) => Object.assign(defaultAppSettings(), patch);
@@ -103,6 +106,18 @@ async function test(name, fn) {
     assert.strictEqual(outcome.provider, 'template');
     assert.strictEqual(outcome.fellBack, true);
     assert.ok(outcome.message.includes('回退'));
+  });
+
+  await test('缺少密级字段时按不可分析处理并回退模板', async () => {
+    const agent = new ReviewAgent(settingsWith({ llmProvider: 'model', llmMonthlyBudget: 20 }), null);
+    const outcome = await agent.analyze({
+      facts: '现场',
+      interpretation: '解释',
+      anchors: [{ id: 'a1', text: '锚点', source: '', order: 1 }]
+    }, 1700000000000);
+    assert.strictEqual(outcome.provider, 'template');
+    assert.strictEqual(outcome.fellBack, true);
+    assert.strictEqual(outcome.dropped.length, 3);
   });
 
   await test('模型模式缺少预算存储时回退模板', async () => {

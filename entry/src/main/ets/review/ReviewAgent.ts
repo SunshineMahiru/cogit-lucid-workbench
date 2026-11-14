@@ -11,6 +11,7 @@ import {
 } from '../analysis/contradiction/TemplateContradictionAnalyzer';
 import { LocalMockLlmClient } from '../network/LocalMockLlmClient';
 import { OpenAiCompatibleClient } from '../network/OpenAiCompatibleClient';
+import { buildAnalysisInput, DroppedItem } from '../security/RequestBuilder';
 import { AppSettings, LlmProvider, defaultAppSettings } from '../settings/AppSettings';
 import { estimateCostYuan } from '../settings/LlmBudget';
 import { LlmSpendStore } from '../settings/LlmSpendStore';
@@ -22,6 +23,7 @@ export interface AgentOutcome {
   provider: LlmProvider;
   fellBack: boolean;
   message: string;
+  dropped: DroppedItem[];
 }
 
 /** Chooses template, local mock or OpenAI-compatible client from settings. */
@@ -53,12 +55,26 @@ export class ReviewAgent {
   }
 
   async analyze(input: ContradictionInput, now: number = Date.now()): Promise<AgentOutcome> {
+    const built = buildAnalysisInput(input, this.settings.llmProvider);
+    const safeInput = built.input;
+    const dropped = built.dropped;
     if (this.settings.llmProvider === 'template') {
       return {
         candidates: await this.template.analyze(input, { now: now }),
         provider: 'template',
         fellBack: false,
-        message: '离线模板'
+        message: '离线模板',
+        dropped: dropped
+      };
+    }
+
+    if (safeInput.facts === '' && safeInput.interpretation === '') {
+      return {
+        candidates: await this.template.analyze(input, { now: now }),
+        provider: 'template',
+        fellBack: true,
+        message: '没有可发送的内容，已改用模板',
+        dropped: dropped
       };
     }
 
@@ -81,7 +97,7 @@ export class ReviewAgent {
         new LocalMockLlmClient() :
         new OpenAiCompatibleClient(this.settings.llmBaseUrl, this.settings.llmApiKey);
       const analyzer = new LlmContradictionAnalyzer(client, this.settings.llmModel);
-      const candidates = await analyzer.analyze(input, { now: now });
+      const candidates = await analyzer.analyze(safeInput, { now: now });
       if (candidates.length === 0) {
         throw new Error('empty candidates');
       }
@@ -94,14 +110,16 @@ export class ReviewAgent {
         candidates: candidates,
         provider: this.settings.llmProvider,
         fellBack: false,
-        message: this.settings.llmProvider === 'mock' ? '本地模拟 LLM' : '模型端点'
+        message: this.settings.llmProvider === 'mock' ? '本地模拟 LLM' : '模型端点',
+        dropped: dropped
       };
       } catch (error) {
         return {
           candidates: await this.template.analyze(input, { now: now }),
           provider: 'template',
           fellBack: true,
-          message: '模型或预算不可用，已回退模板'
+          message: '模型或预算不可用，已回退模板',
+          dropped: dropped
         };
       }
     });

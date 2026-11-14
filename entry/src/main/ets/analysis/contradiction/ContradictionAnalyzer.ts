@@ -1,4 +1,5 @@
 import { Anchor } from '../../model/Anchor';
+import { SecurityLevel } from '../../model/SecurityLevel';
 import { AnalysisContext } from '../types';
 
 /** Inputs for the four-step contradiction review. */
@@ -7,6 +8,9 @@ export interface ContradictionInput {
   interpretation: string;
   /** Anchors shown as the reference frame for the third step */
   anchors: Anchor[];
+  factsLevel: SecurityLevel;
+  interpretationLevel: SecurityLevel;
+  relationForbidsAnalysis: boolean;
 }
 
 /** One place where the interpretation departs from the recorded facts. */
