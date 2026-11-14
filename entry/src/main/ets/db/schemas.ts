@@ -130,5 +130,16 @@ export const TABLE_CREATE_SQLS: string[] = [
     target_id TEXT NOT NULL,
     label TEXT NOT NULL,
     created_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.REQUEST_AUDIT} (
+    id TEXT PRIMARY KEY,
+    provider TEXT NOT NULL,
+    host TEXT NOT NULL,
+    material_ids TEXT NOT NULL,
+    levels TEXT NOT NULL,
+    chars INTEGER NOT NULL,
+    confirmed INTEGER NOT NULL,
+    fell_back INTEGER NOT NULL,
+    created_at INTEGER NOT NULL
   )`
 ];

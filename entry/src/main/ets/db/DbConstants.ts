@@ -11,7 +11,8 @@ export const DB_TABLES = {
   PLAN_PROJECT: 'plan_project',
   PLAN_NODE: 'plan_node',
   PLAN_ITEM: 'plan_item',
-  PLAN_LINK: 'plan_link'
+  PLAN_LINK: 'plan_link',
+  REQUEST_AUDIT: 'request_audit'
 } as const;
 
 /**
@@ -19,6 +20,7 @@ export const DB_TABLES = {
  * Keep this list in sync with DB_TABLES; the fixture in `.test/check.js` asserts it.
  */
 export const DB_TABLES_CHILD_FIRST: string[] = [
+  DB_TABLES.REQUEST_AUDIT,
   DB_TABLES.PLAN_LINK,
   DB_TABLES.PLAN_ITEM,
   DB_TABLES.PLAN_NODE,
@@ -173,6 +175,19 @@ export const PLAN_ITEM_COLS = {
   CARRIED_FROM: 'carried_from',
   SORT_ORDER: 'sort_order',
   LEVEL: 'level'
+} as const;
+
+/** Column names for the request audit table. */
+export const REQUEST_AUDIT_COLS = {
+  ID: 'id',
+  PROVIDER: 'provider',
+  HOST: 'host',
+  MATERIAL_IDS: 'material_ids',
+  LEVELS: 'levels',
+  CHARS: 'chars',
+  CONFIRMED: 'confirmed',
+  FELL_BACK: 'fell_back',
+  CREATED_AT: 'created_at'
 } as const;
 
 /** Column names for the record link table. */

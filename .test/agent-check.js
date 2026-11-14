@@ -20,6 +20,16 @@ Module._load = function (request, parent, isMain) {
       }
     };
   }
+  if (request === '@kit.ArkData') {
+    return {
+      relationalStore: {
+        SecurityLevel: { S1: 1, S2: 2, S3: 3, S4: 4 },
+        RdbPredicates: class {
+        },
+        getRdbStore: async () => ({})
+      }
+    };
+  }
   if (request.indexOf('@kit.') === 0) {
     return {};
   }
@@ -93,16 +103,24 @@ async function test(name, fn) {
 
   await test('模板模式下不进入预算与网络分支', async () => {
     const agent = new ReviewAgent(settingsWith({ llmProvider: 'template' }), null);
-    const outcome = await agent.analyze(agentInput(), 1700000000000);
+    const outcome = await agent.analyze(agentInput(), 1700000000000, true);
     assert.strictEqual(outcome.provider, 'template');
     assert.strictEqual(outcome.fellBack, false);
     assert.strictEqual(outcome.message, '离线模板');
     assert.ok(outcome.candidates.length >= 2);
   });
 
+  await test('未确认发送范围时只能走模板', async () => {
+    const agent = new ReviewAgent(settingsWith({ llmProvider: 'model', llmMonthlyBudget: 20 }), null);
+    const outcome = await agent.analyze(agentInput(), 1700000000000);
+    assert.strictEqual(outcome.provider, 'template');
+    assert.strictEqual(outcome.fellBack, true);
+    assert.ok(outcome.message.includes('确认'));
+  });
+
   await test('预算为零时回退模板并标记 fellBack', async () => {
     const agent = new ReviewAgent(settingsWith({ llmProvider: 'model', llmMonthlyBudget: 0 }), null);
-    const outcome = await agent.analyze(agentInput(), 1700000000000);
+    const outcome = await agent.analyze(agentInput(), 1700000000000, true);
     assert.strictEqual(outcome.provider, 'template');
     assert.strictEqual(outcome.fellBack, true);
     assert.ok(outcome.message.includes('回退'));
@@ -122,7 +140,7 @@ async function test(name, fn) {
 
   await test('模型模式缺少预算存储时回退模板', async () => {
     const agent = new ReviewAgent(settingsWith({ llmProvider: 'model', llmMonthlyBudget: 20 }), null);
-    const outcome = await agent.analyze(agentInput(), 1700000000000);
+    const outcome = await agent.analyze(agentInput(), 1700000000000, true);
     assert.strictEqual(outcome.provider, 'template');
     assert.strictEqual(outcome.fellBack, true);
     assert.ok(outcome.candidates.length >= 2);
@@ -135,7 +153,7 @@ async function test(name, fn) {
       }
     };
     const agent = new ReviewAgent(settingsWith({ llmProvider: 'model', llmMonthlyBudget: 20 }), store);
-    const outcome = await agent.analyze(agentInput(), 1700000000000);
+    const outcome = await agent.analyze(agentInput(), 1700000000000, true);
     assert.strictEqual(outcome.provider, 'template');
     assert.strictEqual(outcome.fellBack, true);
   });
