@@ -116,6 +116,17 @@ export const TABLE_CREATE_SQLS: string[] = [
     payload TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.REVIEW_MATERIAL} (
+    review_id TEXT NOT NULL,
+    material_id TEXT NOT NULL,
+    text_snapshot TEXT NOT NULL DEFAULT '',
+    source_snapshot TEXT NOT NULL DEFAULT '',
+    level_snapshot TEXT NOT NULL DEFAULT 'local_only',
+    zone INTEGER NOT NULL DEFAULT 0,
+    cited_at INTEGER NOT NULL DEFAULT 0,
+    snapshot_missing INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (review_id, material_id)
+  )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN} (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -202,6 +213,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     note TEXT NOT NULL,
     effect TEXT NOT NULL,
     level TEXT NOT NULL DEFAULT 'local_only',
+    zone INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.COST_NOTE} (

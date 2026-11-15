@@ -177,7 +177,22 @@ class FakeStore {
     return changed;
   }
 
-  async executeSql() {
+  async executeSql(sql, args) {
+    const insert = /INSERT OR IGNORE INTO\s+([a-z_]+)\s*\(([^)]*)\)\s*VALUES\s*\(([^)]*)\)/i.exec(sql);
+    if (insert === null) {
+      return;
+    }
+    const table = insert[1];
+    const columns = insert[2].split(',').map((column) => column.trim());
+    const row = {};
+    for (let index = 0; index < columns.length; index += 1) {
+      row[columns[index]] = args[index];
+    }
+    const exists = this.rows(table).some((existing) => existing.review_id === row.review_id &&
+      existing.material_id === row.material_id);
+    if (!exists) {
+      this.rows(table).push(row);
+    }
   }
 
   async delete(predicates) {
@@ -1030,6 +1045,105 @@ async function main() {
     assert.strictEqual(detail.anchors.length, 1);
     assert.strictEqual(detail.anchors[0].id, anchors[1].id);
     assert.strictEqual(await reviewService.find('missing'), null);
+  });
+
+  await test('复盘保存时按引用材料写下快照', async () => {
+    reset();
+    const noteDraft = createFreeformNoteDraft();
+    noteDraft.content = 'MARKER_SNAPSHOT_TEXT';
+    noteDraft.materials = [
+      { kind: 'scene', text: 'MARKER_SNAPSHOT_TEXT', source: 'reading', form: 'dialogue' }
+    ];
+    await service.save(noteDraft);
+    const materialId = store.rows('experience_material')[0].id;
+
+    const reviewService = await ReviewService.open({});
+    const reviewId = await reviewService.save('week', {
+      facts: '本周有三天晚睡',
+      interpretation: '',
+      contradiction: '',
+      action: '',
+      materialIds: [materialId],
+      anchorIds: []
+    }, '11-09 ~ 11-15');
+
+    const rows = store.rows('review_material');
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].review_id, reviewId);
+    assert.strictEqual(rows[0].material_id, materialId);
+    assert.strictEqual(rows[0].text_snapshot, 'MARKER_SNAPSHOT_TEXT');
+    assert.strictEqual(rows[0].source_snapshot, 'reading');
+    assert.strictEqual(rows[0].snapshot_missing, 0);
+
+    const snapshots = await reviewService.materials(reviewId);
+    assert.strictEqual(snapshots.length, 1);
+    assert.strictEqual(snapshots[0].textSnapshot, 'MARKER_SNAPSHOT_TEXT');
+    assert.strictEqual(snapshots[0].sourceSnapshot, 'reading');
+  });
+
+  await test('删除被引用的速记后快照清空正文并标记缺失', async () => {
+    reset();
+    const noteDraft = createFreeformNoteDraft();
+    noteDraft.content = 'MARKER_SNAPSHOT_GONE';
+    const saved = await service.save(noteDraft);
+    const materialId = store.rows('experience_material')[0].id;
+
+    const reviewService = await ReviewService.open({});
+    const reviewId = await reviewService.save('week', {
+      facts: '本周有三天晚睡',
+      interpretation: '',
+      contradiction: '',
+      action: '',
+      materialIds: [materialId],
+      anchorIds: []
+    }, '11-09 ~ 11-15');
+    assert.strictEqual(store.rows('review_material')[0].text_snapshot, 'MARKER_SNAPSHOT_GONE');
+
+    await service.delete(saved.eventId);
+
+    const row = store.rows('review_material')[0];
+    assert.strictEqual(row.text_snapshot, '');
+    assert.strictEqual(row.source_snapshot, '');
+    assert.strictEqual(row.snapshot_missing, 1);
+    const snapshots = await reviewService.materials(reviewId);
+    assert.strictEqual(snapshots.length, 1);
+    assert.strictEqual(snapshots[0].textSnapshot, '');
+    assert.strictEqual(snapshots[0].snapshotMissing, true);
+  });
+
+  await test('记录密级降为仅本地后快照跟着收窄', async () => {
+    reset();
+    const noteDraft = createFreeformNoteDraft();
+    noteDraft.content = 'MARKER_SNAPSHOT_LEVEL';
+    noteDraft.level = SecurityLevel.ANALYZABLE;
+    noteDraft.materials = [
+      { kind: 'scene', text: 'MARKER_SNAPSHOT_LEVEL', level: SecurityLevel.ANALYZABLE }
+    ];
+    const saved = await service.save(noteDraft);
+    const materialId = store.rows('experience_material')[0].id;
+
+    const reviewService = await ReviewService.open({});
+    const reviewId = await reviewService.save('week', {
+      facts: '本周有三天晚睡',
+      interpretation: '',
+      contradiction: '',
+      action: '',
+      materialIds: [materialId],
+      anchorIds: []
+    }, '11-09 ~ 11-15');
+    assert.strictEqual(store.rows('review_material')[0].level_snapshot, SecurityLevel.ANALYZABLE);
+
+    const lowered = createFreeformNoteDraft();
+    lowered.content = 'MARKER_SNAPSHOT_LEVEL';
+    lowered.level = SecurityLevel.LOCAL_ONLY;
+    lowered.materials = [{ kind: 'scene', text: 'MARKER_SNAPSHOT_LEVEL' }];
+    await service.updateNote(saved.eventId, lowered);
+
+    const row = store.rows('review_material')[0];
+    assert.strictEqual(row.level_snapshot, SecurityLevel.LOCAL_ONLY);
+    assert.strictEqual(row.text_snapshot, 'MARKER_SNAPSHOT_LEVEL');
+    const snapshots = await reviewService.materials(reviewId);
+    assert.strictEqual(snapshots[0].levelSnapshot, SecurityLevel.LOCAL_ONLY);
   });
 
   await test('六区有内容时旧四列按六区回填，草稿里的旧行动不进入记录', async () => {

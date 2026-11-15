@@ -50,6 +50,22 @@ export class ExperienceMaterialDao {
     }
   }
 
+  /** Returns one material by id, including deleted rows, or null when it never existed. */
+  async queryById(id: string): Promise<ExperienceMaterial | null> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
+    predicates.equalTo(MATERIAL_COLS.ID, id).limitAs(1);
+    const resultSet = await this.store.query(predicates);
+    try {
+      let result: ExperienceMaterial | null = null;
+      if (resultSet.goToNextRow()) {
+        result = this.mapRow(resultSet);
+      }
+      return result;
+    } finally {
+      resultSet.close();
+    }
+  }
+
   /**
    * Pulls every material of one event down to the given record level. Materials already at or
    * below that level stay as they are; this method never widens a material.

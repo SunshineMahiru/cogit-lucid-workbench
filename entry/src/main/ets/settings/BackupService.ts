@@ -20,7 +20,7 @@ import { notifyPageBackgroundChanged } from './PageBackgroundBus';
 import { notifyProfileRefresh } from '../app/ProfileRefreshBus';
 import { profileCache } from '../profile/ProfileCache';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
-import { isSealedRow, isDeletedRow, deleteSqlFor } from './BackupRows';
+import { isExportableRow, deleteSqlFor } from './BackupRows';
 
 const BUNDLE_VERSION = 2;
 const LEGACY_BUNDLE_VERSION = 1;
@@ -132,7 +132,7 @@ export class BackupService {
             const column: string = columns[index];
             row[column] = set.isColumnNull(index) ? null : set.getString(index);
           }
-          if (!isSealedRow(row) && !isDeletedRow(row)) {
+          if (isExportableRow(row)) {
             rows.push(row);
           }
         }

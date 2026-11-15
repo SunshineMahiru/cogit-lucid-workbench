@@ -9,6 +9,7 @@ import {
   LegacyPredictionRow,
   planLegacyPredictionMerges
 } from '../prediction/PredictionLegacyMigration';
+import { backfillReviewMaterials } from '../review/ReviewMaterialBackfill';
 
 const META_ENCRYPTED = '/.db-encrypted';
 const META_ATTEMPTED = '/.db-encryption-attempted';
@@ -410,6 +411,23 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Evidence gained a review zone; older rows read back as unassigned.
+    const evidenceZoneMigrations: string[] = [
+      `ALTER TABLE evidence_item ADD COLUMN zone INTEGER NOT NULL DEFAULT 0`
+    ];
+    for (const sql of evidenceZoneMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
+    // Reviews saved before the snapshot table keep their cited ids only in the payload; the
+    // backfill copies them once, and a failure leaves the read path to resolve live materials.
+    try {
+      await backfillReviewMaterials(store);
+    } catch (error) {
+      hilog.warn(DOMAIN, TAG, 'review material backfill skipped: %{public}s', (error as Error).message);
+    }
     const indexSqls: string[] = [
       `CREATE INDEX IF NOT EXISTS idx_event_timestamp ON event(timestamp)`,
       `CREATE INDEX IF NOT EXISTS idx_prediction_status_date ON prediction(status, settlement_date)`,
@@ -418,7 +436,8 @@ export class DbHelper {
       `CREATE INDEX IF NOT EXISTS idx_plan_status ON plan(status, is_primary)`,
       `CREATE INDEX IF NOT EXISTS idx_plan_node_plan ON plan_node(plan_id, week_index)`,
       `CREATE INDEX IF NOT EXISTS idx_plan_item_node ON plan_item(node_id, sort_order)`,
-      `CREATE INDEX IF NOT EXISTS idx_plan_link_node ON plan_link(node_id, module)`
+      `CREATE INDEX IF NOT EXISTS idx_plan_link_node ON plan_link(node_id, module)`,
+      `CREATE INDEX IF NOT EXISTS idx_review_material_material ON review_material(material_id)`
     ];
     for (const sql of indexSqls) {
       try {

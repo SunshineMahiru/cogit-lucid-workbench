@@ -10,13 +10,14 @@ import { PlanItem } from '../model/PlanItem';
 import { PlanLink } from '../model/PlanLink';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { visibleInExport } from '../relation/InteractionSource';
+import * as DeletionPolicy from '../policy/DeletionPolicy';
 import { ExportBundle } from './ExportBundle';
 import { ExportOptions } from './ExportOptions';
 import { PlanExport } from './PlanExport';
 
 /** Sealed records never leave the device, so exports drop them. */
 export function isExportable(level: SecurityLevel): boolean {
-  return level !== SecurityLevel.SEALED;
+  return DeletionPolicy.isExportable({ deleted: false, level: level });
 }
 
 /** Options kept for callers that export every level except sealed records. */
@@ -46,8 +47,8 @@ export function prepareExportBundle(bundle: ExportBundle,
 }
 
 /** Reports whether a record at this level is written under the chosen options. */
-function keepLevel(level: SecurityLevel, options: ExportOptions): boolean {
-  if (!isExportable(level)) {
+function keepLevel(level: SecurityLevel, options: ExportOptions, deleted: boolean = false): boolean {
+  if (!DeletionPolicy.isExportable({ deleted: deleted, level: level })) {
     return false;
   }
   if (level === SecurityLevel.LOCAL_ONLY) {
@@ -103,7 +104,7 @@ function collectSealedKeys(bundle: ExportBundle): string[] {
 function prepareEvents(events: Event[], options: ExportOptions): Event[] {
   const items: Event[] = [];
   for (const event of events) {
-    if (keepLevel(event.level, options) && keepRecord(event.id, options)) {
+    if (keepLevel(event.level, options, event.deleted ?? false) && keepRecord(event.id, options)) {
       items.push(event);
     }
   }
@@ -125,7 +126,7 @@ function prepareDecisions(decisions: Decision[], options: ExportOptions): Decisi
 function prepareRelations(relations: Relation[], options: ExportOptions): Relation[] {
   const items: Relation[] = [];
   for (const relation of relations) {
-    if (keepLevel(relation.level, options) && keepRecord(relation.id, options)) {
+    if (keepLevel(relation.level, options, relation.deleted ?? false) && keepRecord(relation.id, options)) {
       const logs: InteractionLog[] = [];
       for (const log of relation.interactionLog) {
         if (options.includeOtherStatements && visibleInExport(log)) {
@@ -185,7 +186,7 @@ function prepareStatusRecords(records: StatusRecord[], options: ExportOptions): 
   const items: StatusRecord[] = [];
   for (const record of records) {
     const level = record.level ?? SecurityLevel.LOCAL_ONLY;
-    if (keepLevel(level, options) && keepRecord(record.id, options)) {
+    if (keepLevel(level, options, record.deleted ?? false) && keepRecord(record.id, options)) {
       items.push(record);
     }
   }

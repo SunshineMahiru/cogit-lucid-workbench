@@ -8,6 +8,7 @@ import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
 import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
 import { PlanDao } from '../db/dao/PlanDao';
+import { ReviewMaterialDao } from '../db/dao/ReviewMaterialDao';
 import { DbHelper } from '../db/DbHelper';
 import { DB_TABLES, MATERIAL_COLS } from '../db/DbConstants';
 import { PlanLinkModule } from '../model/PlanLinkModule';
@@ -46,6 +47,7 @@ export class QuickNoteService {
   private eventDao: EventDao;
   private decisionDao: DecisionDao;
   private materialDao: ExperienceMaterialDao;
+  private reviewMaterialDao: ReviewMaterialDao;
   private planDao: PlanDao;
 
   private constructor(store: relationalStore.RdbStore) {
@@ -53,6 +55,7 @@ export class QuickNoteService {
     this.eventDao = new EventDao(store);
     this.decisionDao = new DecisionDao(store);
     this.materialDao = new ExperienceMaterialDao(store);
+    this.reviewMaterialDao = new ReviewMaterialDao(store);
     this.planDao = new PlanDao(store);
   }
 
@@ -252,6 +255,9 @@ export class QuickNoteService {
       throw new Error('note not found');
     }
     applyDraft(event, draft);
+    // Snapshot rows cite the old ids, which a rewrite may reuse, so capture them before the wipe.
+    const oldMaterialIds = (await this.materialDao.queryByEvent(event.id)).map(
+      (material: ExperienceMaterial) => material.id);
     this.store.beginTransaction();
     try {
       await this.eventDao.update(event);
@@ -260,6 +266,8 @@ export class QuickNoteService {
       // Defensive only: saveMaterials already narrows every level it writes. This keeps rows
       // that were stored under an earlier record level in line with the new one.
       await this.materialDao.clampLevelsByEvent(event.id, event.level);
+      // Citing reviews must not keep text or a wider level than the record now allows.
+      await this.reviewMaterialDao.clampLevels(oldMaterialIds, event.level);
       this.store.commit();
     } catch (error) {
       this.store.rollBack();
@@ -286,6 +294,15 @@ export class QuickNoteService {
     this.store.beginTransaction();
     try {
       const chain = await this.chainRows(rootId);
+      const materialIds: string[] = [];
+      for (const row of chain) {
+        const live = await this.materialDao.queryByEvent(row.id);
+        for (const material of live) {
+          materialIds.push(material.id);
+        }
+      }
+      // Citing reviews lose the copied text before the rows it came from are blanked.
+      await this.reviewMaterialDao.clearSnapshots(materialIds);
       for (const row of chain) {
         // The title becomes a tombstone so the row reads correctly wherever it is looked up by id.
         row.title = DELETED_NOTE_TITLE;

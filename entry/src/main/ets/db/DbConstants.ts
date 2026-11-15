@@ -7,6 +7,7 @@ export const DB_TABLES = {
   ANCHOR: 'anchor',
   STATUS_RECORD: 'status_record',
   REVIEW_RESULT: 'review_result',
+  REVIEW_MATERIAL: 'review_material',
   PLAN: 'plan',
   PLAN_PROJECT: 'plan_project',
   PLAN_NODE: 'plan_node',
@@ -40,7 +41,9 @@ export const LEVELED_TABLES: string[] = [
   DB_TABLES.EVIDENCE_ITEM
 ];
 
-export const DB_TABLES_CHILD_FIRST: string[] = [  DB_TABLES.EXPERIENCE_MATERIAL,
+export const DB_TABLES_CHILD_FIRST: string[] = [
+  DB_TABLES.REVIEW_MATERIAL,
+  DB_TABLES.EXPERIENCE_MATERIAL,
   DB_TABLES.EVIDENCE_ITEM,
   DB_TABLES.COST_NOTE,
   DB_TABLES.REQUEST_AUDIT,
@@ -288,7 +291,20 @@ export const EVIDENCE_COLS = {
   NOTE: 'note',
   EFFECT: 'effect',
   LEVEL: 'level',
+  ZONE: 'zone',
   CREATED_AT: 'created_at'
+} as const;
+
+/** Column names for the material snapshots a review cited. */
+export const REVIEW_MATERIAL_COLS = {
+  REVIEW_ID: 'review_id',
+  MATERIAL_ID: 'material_id',
+  TEXT_SNAPSHOT: 'text_snapshot',
+  SOURCE_SNAPSHOT: 'source_snapshot',
+  LEVEL_SNAPSHOT: 'level_snapshot',
+  ZONE: 'zone',
+  CITED_AT: 'cited_at',
+  SNAPSHOT_MISSING: 'snapshot_missing'
 } as const;
 
 /** Column names for the cost table. */

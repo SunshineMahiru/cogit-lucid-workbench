@@ -20,6 +20,11 @@ const { budgetAllows, estimateCostYuan, monthKey } = require('./out2/settings/Ll
 const { defaultAppSettings, sanitizeAppSettings } = require('./out2/settings/AppSettings');
 const { consumeJsonIssues, parseInteractionLog, parseStringArray } = require('./out2/db/SafeJson');
 const {
+  parseMaterialIds,
+  buildRows,
+  mergeExisting
+} = require('./out2/review/ReviewMaterialSnapshot');
+const {
   addDaysToDate,
   formatClock,
   formatDate,
@@ -1205,6 +1210,57 @@ test('互动记录只保留字段齐全的条目', () => {
   const mixed = parseInteractionLog('[{"timestamp":1,"content":"x"},{"timestamp":2},{"content":"y"}]');
   assert.strictEqual(mixed.length, 1);
   assert.strictEqual(consumeJsonIssues(), 2);
+});
+
+test('复盘快照复制可引用材料的正文与来源', () => {
+  const rows = buildRows('rv_1', 1000, ['mt_1'], (id) => (id === 'mt_1' ? {
+    id: 'mt_1',
+    text: '原文',
+    source: 'direct',
+    level: 'analyzable',
+    deleted: false
+  } : null));
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].reviewId, 'rv_1');
+  assert.strictEqual(rows[0].textSnapshot, '原文');
+  assert.strictEqual(rows[0].sourceSnapshot, 'direct');
+  assert.strictEqual(rows[0].levelSnapshot, 'analyzable');
+  assert.strictEqual(rows[0].snapshotMissing, false);
+  assert.strictEqual(rows[0].zone, 0);
+  assert.strictEqual(rows[0].citedAt, 1000);
+});
+
+test('已删除、封存与缺失材料只留空快照', () => {
+  const rows = buildRows('rv_1', 1000, ['mt_del', 'mt_seal', 'mt_gone'], (id) => {
+    if (id === 'mt_del') {
+      return { id: 'mt_del', text: '已删除正文', source: 'direct', level: 'local_only', deleted: true };
+    }
+    if (id === 'mt_seal') {
+      return { id: 'mt_seal', text: '封存正文', source: 'direct', level: 'sealed', deleted: false };
+    }
+    return null;
+  });
+  assert.strictEqual(rows.length, 3);
+  assert.strictEqual(rows[0].textSnapshot, '');
+  assert.strictEqual(rows[0].levelSnapshot, 'local_only');
+  assert.strictEqual(rows[0].snapshotMissing, true);
+  assert.strictEqual(rows[1].textSnapshot, '');
+  assert.strictEqual(rows[1].levelSnapshot, 'sealed');
+  assert.strictEqual(rows[1].snapshotMissing, true);
+  assert.strictEqual(rows[2].textSnapshot, '');
+  assert.strictEqual(rows[2].levelSnapshot, 'local_only');
+  assert.strictEqual(rows[2].snapshotMissing, true);
+});
+
+test('重复编号只生成一行并跳过已有快照', () => {
+  assert.deepStrictEqual(parseMaterialIds({ materialIds: ['mt_2', 'mt_1', 'mt_2', 3] }), ['mt_2', 'mt_1']);
+  assert.deepStrictEqual(parseMaterialIds(undefined), []);
+  assert.deepStrictEqual(parseMaterialIds({ materialIds: 'mt_1' }), []);
+  const rows = buildRows('rv_1', 1000, ['mt_1', 'mt_2', 'mt_1'], () => null);
+  assert.deepStrictEqual(rows.map((row) => row.materialId), ['mt_1', 'mt_2']);
+  const pending = mergeExisting(rows, ['mt_1']);
+  assert.strictEqual(pending.length, 1);
+  assert.strictEqual(pending[0].materialId, 'mt_2');
 });
 
 if (failures.length > 0) {

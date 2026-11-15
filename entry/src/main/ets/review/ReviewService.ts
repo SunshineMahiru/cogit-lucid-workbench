@@ -5,6 +5,7 @@ import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
 import { createReviewResult } from '../model/factories';
 import { Prediction } from '../model/Prediction';
+import { ReviewMaterial } from '../model/ReviewMaterial';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { emptyReviewPayload, hasAnyZone } from '../model/ReviewPayload';
 import { SecurityLevel } from '../model/SecurityLevel';
@@ -13,9 +14,12 @@ import { DbHelper } from '../db/DbHelper';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
+import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
+import { ReviewMaterialDao } from '../db/dao/ReviewMaterialDao';
 import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 import { ReviewDraft, ReviewStats } from './ReviewDraft';
+import { MaterialSourceRow, buildRows, parseMaterialIds } from './ReviewMaterialSnapshot';
 import { PeriodRange, rangeFor } from './ReviewRange';
 import {
   ReviewDetailView,
@@ -26,18 +30,24 @@ import {
 
 /** Loads review inputs and persists completed sessions. */
 export class ReviewService {
+  private store: relationalStore.RdbStore;
   private eventDao: EventDao;
   private decisionDao: DecisionDao;
   private predictionDao: PredictionDao;
   private anchorDao: AnchorDao;
   private reviewDao: ReviewResultDao;
+  private reviewMaterialDao: ReviewMaterialDao;
+  private experienceMaterialDao: ExperienceMaterialDao;
 
   private constructor(store: relationalStore.RdbStore) {
+    this.store = store;
     this.eventDao = new EventDao(store);
     this.decisionDao = new DecisionDao(store);
     this.predictionDao = new PredictionDao(store);
     this.anchorDao = new AnchorDao(store);
     this.reviewDao = new ReviewResultDao(store);
+    this.reviewMaterialDao = new ReviewMaterialDao(store);
+    this.experienceMaterialDao = new ExperienceMaterialDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -96,8 +106,46 @@ export class ReviewService {
     if (planNodeId.length > 0) {
       result.planNodeId = planNodeId;
     }
-    await this.reviewDao.insert(result);
+    const citedIds = (draft.materialIds ?? []).slice();
+    this.store.beginTransaction();
+    try {
+      await this.reviewDao.insert(result);
+      const sources = await this.loadMaterialSources(citedIds);
+      const rows = buildRows(result.id, result.createdAt, citedIds,
+        (id: string) => sources.get(id) ?? null);
+      for (const row of rows) {
+        await this.reviewMaterialDao.insert(row);
+      }
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
     return result.id;
+  }
+
+  /**
+   * Returns the material snapshots one review cited, ordered by zone and citation time. A review
+   * saved before snapshots existed resolves its payload ids against the live materials, so history
+   * still shows what the session quoted without writing those rows.
+   */
+  async materials(reviewId: string): Promise<ReviewMaterial[]> {
+    const snapshots = await this.reviewMaterialDao.queryByReview(reviewId);
+    if (snapshots.length > 0) {
+      return snapshots;
+    }
+    const review = await this.reviewDao.queryById(reviewId);
+    if (review === null) {
+      return [];
+    }
+    const ids = parseMaterialIds(review.payload);
+    if (ids.length === 0) {
+      return [];
+    }
+    const sources = await this.loadMaterialSources(ids);
+    const rows = buildRows(reviewId, review.createdAt, ids,
+      (id: string) => sources.get(id) ?? null);
+    return orderSnapshots(rows);
   }
 
   /** Returns saved sessions, newest first. */
@@ -114,6 +162,43 @@ export class ReviewService {
     }
     return toReviewDetailView(result, await this.anchorDao.queryAll());
   }
+
+  /** Reads the cited materials into a lookup; a missing id stays absent so its row reads missing. */
+  private async loadMaterialSources(ids: string[]): Promise<Map<string, MaterialSourceRow>> {
+    const sources = new Map<string, MaterialSourceRow>();
+    for (const id of ids) {
+      const material = await this.experienceMaterialDao.queryById(id);
+      if (material === null) {
+        continue;
+      }
+      sources.set(id, {
+        id: material.id,
+        text: material.text,
+        source: material.source,
+        level: material.level,
+        deleted: material.deleted
+      });
+    }
+    return sources;
+  }
+}
+
+/** Orders snapshots the way the table reads them back: zone, citation time, material id. */
+function orderSnapshots(rows: ReviewMaterial[]): ReviewMaterial[] {
+  const ordered = rows.slice();
+  ordered.sort((left: ReviewMaterial, right: ReviewMaterial) => {
+    if (left.zone !== right.zone) {
+      return left.zone - right.zone;
+    }
+    if (left.citedAt !== right.citedAt) {
+      return left.citedAt - right.citedAt;
+    }
+    if (left.materialId === right.materialId) {
+      return 0;
+    }
+    return left.materialId < right.materialId ? -1 : 1;
+  });
+  return ordered;
 }
 
 function summarize(events: Event[], decisions: Decision[], predictions: Prediction[],
