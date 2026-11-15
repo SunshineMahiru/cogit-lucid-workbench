@@ -262,7 +262,7 @@ export struct PlanDetailPage {
         note: `${point.carried}/${point.total} 项延续`
       });
     }
-    return [{ name: '延续率', color: 0xFF185FA5, points: points }];
+    return [{ name: '清单处理', color: 0xFF185FA5, points: points }];
   }
 
   private linkChartPoints(): ChartPoint[] {
@@ -806,7 +806,7 @@ export struct PlanDetailPage {
           SectionCard() {
             Column({ space: 8 }) {
               Row() {
-                Text('延续率')
+                Text('清单处理')
                   .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondary)
                 Blank()
@@ -816,10 +816,16 @@ export struct PlanDetailPage {
               }
               .width('100%')
 
+              Text('延续项占当期清单项的比例；完成、暂停、舍弃的明细待计划汇总补充字段后再加入')
+                .id('plan_disposition_note')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+
               if (this.carryPoints.length >= 3) {
                 SimpleLineChart({ series: this.carryChartSeries(), minValue: 0, maxValue: 100, chartHeight: 150 })
               } else {
-                Text('至少三周有清单后，才画出延续率走势。')
+                Text('至少三周有清单后，才画出清单处理走势。')
                   .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
