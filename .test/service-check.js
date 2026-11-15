@@ -626,9 +626,10 @@ async function main() {
     assert.strictEqual(rows.length, 2);
     for (const row of rows) {
       assert.strictEqual(row.deleted, 1);
-      assert.strictEqual(row.content, '');
-      assert.strictEqual(row.title, DELETED_NOTE_TITLE);
+      assert.ok(row.content.length > 0);
+      assert.notStrictEqual(row.title, DELETED_NOTE_TITLE);
     }
+    await service.purgeNow(revision.eventId);
   });
 
   await test('连续两次修订版本号递增且不重复', async () => {
@@ -1174,6 +1175,7 @@ async function main() {
     assert.strictEqual(store.rows('review_material')[0].text_snapshot, 'MARKER_SNAPSHOT_GONE');
 
     await service.delete(saved.eventId);
+    await service.purgeNow(saved.eventId);
 
     const row = store.rows('review_material')[0];
     assert.strictEqual(row.text_snapshot, '');
@@ -1468,6 +1470,7 @@ async function main() {
     });
 
     await service.delete(saved.eventId);
+    await service.purgeNow(saved.eventId);
 
     const eventRow = store.rows('event')[0];
     assert.strictEqual(eventRow.deleted, 1);
@@ -1507,6 +1510,79 @@ async function main() {
     assert.strictEqual(markdown.includes('MARKER_DECISION_BG'), false, '导出仍带出被删正文');
     assert.strictEqual(markdown.includes('MARKER_CHOICE'), false, '导出仍带出被删决策');
     assert.strictEqual(markdown.includes('MARKER_MATERIAL_9f2'), false, '导出仍带出被删材料');
+  });
+
+  await test('删除只标记，正文与材料留到撤销窗口结束', async () => {
+    reset();
+    const draft = createFreeformNoteDraft();
+    draft.content = 'MARKER_DELETE_KEEP';
+    draft.materials = [{ kind: 'scene', text: 'MARKER_DELETE_MATERIAL' }];
+    const saved = await service.save(draft);
+
+    await service.delete(saved.eventId);
+
+    const row = store.rows('event')[0];
+    assert.strictEqual(row.deleted, 1);
+    assert.strictEqual(row.content, 'MARKER_DELETE_KEEP');
+    assert.strictEqual(store.rows('experience_material')[0].text, 'MARKER_DELETE_MATERIAL');
+    assert.strictEqual((await service.listRecent()).length, 0);
+
+    await service.purgeNow(saved.eventId);
+  });
+
+  await test('撤销删除后恢复可见且正文不变', async () => {
+    reset();
+    const draft = createFreeformNoteDraft();
+    draft.content = 'MARKER_UNDO_BODY';
+    const saved = await service.save(draft);
+
+    await service.delete(saved.eventId);
+    assert.strictEqual(await service.undoDelete(saved.eventId), true);
+
+    const row = store.rows('event')[0];
+    assert.strictEqual(row.deleted, 0);
+    assert.strictEqual(row.content, 'MARKER_UNDO_BODY');
+    const items = await service.listRecent();
+    assert.strictEqual(items.length, 1);
+    assert.strictEqual(items[0].id, saved.eventId);
+    assert.strictEqual(await service.undoDelete(saved.eventId), false);
+  });
+
+  await test('立即清理清空正文与材料', async () => {
+    reset();
+    const draft = createFreeformNoteDraft();
+    draft.content = 'MARKER_PURGE_BODY';
+    draft.materials = [{ kind: 'scene', text: 'MARKER_PURGE_MATERIAL' }];
+    const saved = await service.save(draft);
+
+    await service.delete(saved.eventId);
+    await service.purgeNow(saved.eventId);
+
+    const row = store.rows('event')[0];
+    assert.strictEqual(row.deleted, 1);
+    assert.strictEqual(row.content, '');
+    assert.strictEqual(row.title, DELETED_NOTE_TITLE);
+    const materials = store.rows('experience_material');
+    assert.strictEqual(materials.length, 1);
+    assert.strictEqual(materials[0].text, '');
+    assert.strictEqual(materials[0].deleted, 1);
+  });
+
+  await test('启动清理扫掉遗留的已删正文', async () => {
+    reset();
+    const draft = createFreeformNoteDraft();
+    draft.content = 'MARKER_LEFTOVER';
+    const saved = await service.save(draft);
+    store.rows('event')[0].deleted = 1;
+
+    assert.strictEqual(await service.purgeLeftovers(), 1);
+
+    const row = store.rows('event')[0];
+    assert.strictEqual(row.deleted, 1);
+    assert.strictEqual(row.content, '');
+    assert.strictEqual(row.title, DELETED_NOTE_TITLE);
+    assert.strictEqual(await service.purgeLeftovers(), 0);
+    assert.strictEqual(row.id, saved.eventId);
   });
 
   await test('修订预测递增版本并继承 rootId', async () => {

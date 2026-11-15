@@ -28,6 +28,12 @@ export const FREE_NOTE_TYPE = '速记';
 /** Default page size for the note list. */
 export const DEFAULT_NOTE_LIST_LIMIT = 50;
 
+/** Window during which a deleted note keeps its text and can still be restored. */
+export const DELETE_UNDO_WINDOW_MS = 5000;
+
+/** Purge timers shared by every service instance, keyed by the root id of the deleted note. */
+const purgeTimers: Map<string, number> = new Map();
+
 /** Result of persisting one quick note. */
 export interface SavedNote {
   eventId: string;
@@ -59,10 +65,12 @@ export class QuickNoteService {
     this.planDao = new PlanDao(store);
   }
 
-  /** Opens the database and returns a service bound to it. */
+  /** Opens the database, wipes leftovers from interrupted deletes, and returns the service. */
   static async open(context: common.Context): Promise<QuickNoteService> {
     const store = await DbHelper.init(context);
-    return new QuickNoteService(store);
+    const service = new QuickNoteService(store);
+    await service.purgeLeftovers();
+    return service;
   }
 
   /** Validates and persists a draft; throws with the first validation message when invalid. */
@@ -284,16 +292,92 @@ export class QuickNoteService {
     return event !== null && event.deleted === true;
   }
 
-  /** Wipes the text of every revision in the chain, then marks the whole chain deleted. */
+  /**
+   * Hides the whole chain and returns at once. The text stays until the undo window closes, so a
+   * restore inside that window only has to clear the flag.
+   */
   async delete(noteId: string): Promise<void> {
     const target = await this.eventDao.queryById(noteId);
     if (target === null) {
       return;
     }
     const rootId = noteRootId(target);
+    const chain = await this.chainRows(rootId);
     this.store.beginTransaction();
     try {
-      const chain = await this.chainRows(rootId);
+      for (const row of chain) {
+        await this.eventDao.markDeleted(row.id);
+      }
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
+    this.schedulePurge(rootId);
+  }
+
+  /** Restores a note deleted inside the undo window; false when the note is already gone. */
+  async undoDelete(noteId: string): Promise<boolean> {
+    const target = await this.eventDao.queryById(noteId);
+    if (target === null || target.deleted !== true) {
+      return false;
+    }
+    const rootId = noteRootId(target);
+    this.cancelPurge(rootId);
+    const chain = await this.chainRows(rootId);
+    this.store.beginTransaction();
+    try {
+      for (const row of chain) {
+        await this.eventDao.restore(row.id);
+      }
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
+    return true;
+  }
+
+  /** Wipes a deleted note without waiting for the timer; used by the tests and the sweep. */
+  async purgeNow(noteId: string): Promise<void> {
+    const target = await this.eventDao.queryById(noteId);
+    if (target === null) {
+      return;
+    }
+    const rootId = noteRootId(target);
+    this.cancelPurge(rootId);
+    await this.purge(rootId);
+  }
+
+  /** Wipes every deleted row whose text is still present; returns how many chains it purged. */
+  async purgeLeftovers(): Promise<number> {
+    const rows = await this.eventDao.queryAllIncludingDeleted();
+    const done: Set<string> = new Set();
+    let purged = 0;
+    for (const row of rows) {
+      if (row.deleted !== true || row.content.trim().length === 0) {
+        continue;
+      }
+      const rootId = noteRootId(row);
+      // A live timer means the user may still undo, so the sweep leaves that chain alone.
+      if (done.has(rootId) || purgeTimers.has(rootId)) {
+        continue;
+      }
+      done.add(rootId);
+      await this.purge(rootId);
+      purged += 1;
+    }
+    return purged;
+  }
+
+  /** Wipes the text of one note chain; the rows themselves stay as tombstones. */
+  private async purge(rootId: string): Promise<void> {
+    const chain = await this.chainRows(rootId);
+    if (chain.length === 0) {
+      return;
+    }
+    this.store.beginTransaction();
+    try {
       const materialIds: string[] = [];
       for (const row of chain) {
         const live = await this.materialDao.queryByEvent(row.id);
@@ -320,6 +404,25 @@ export class QuickNoteService {
     } catch (error) {
       this.store.rollBack();
       throw error;
+    }
+  }
+
+  private schedulePurge(rootId: string): void {
+    this.cancelPurge(rootId);
+    const timer = setTimeout(() => {
+      purgeTimers.delete(rootId);
+      this.purge(rootId).catch(() => {
+        // The text survives; the next open() sweeps it again.
+      });
+    }, DELETE_UNDO_WINDOW_MS);
+    purgeTimers.set(rootId, timer);
+  }
+
+  private cancelPurge(rootId: string): void {
+    const timer = purgeTimers.get(rootId);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      purgeTimers.delete(rootId);
     }
   }
 

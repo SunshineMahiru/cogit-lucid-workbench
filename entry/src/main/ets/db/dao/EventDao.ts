@@ -61,6 +61,16 @@ export class EventDao {
     return this.store.update(values, predicates);
   }
 
+  /** Clears the deleted flag so the row shows up again. */
+  async restore(id: string): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [EVENT_COLS.DELETED]: 0
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.ID, id);
+    return this.store.update(values, predicates);
+  }
+
   /** Returns all live events. */
   async queryAll(): Promise<Event[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
