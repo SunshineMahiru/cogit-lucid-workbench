@@ -14,6 +14,7 @@ import { emptyReviewPayload, hasAnyZone } from '../model/ReviewPayload';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { countReviewWindow, ReviewWindowCounts } from '../analysis/metrics/ReviewMetrics';
 import { DbHelper } from '../db/DbHelper';
+import { uniqueStrings } from '../db/SafeJson';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { CostNoteDao } from '../db/dao/CostNoteDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
@@ -21,6 +22,7 @@ import { EventDao } from '../db/dao/EventDao';
 import { EvidenceItemDao } from '../db/dao/EvidenceItemDao';
 import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
+import { ReviewDecisionDao } from '../db/dao/ReviewDecisionDao';
 import { ReviewMaterialDao } from '../db/dao/ReviewMaterialDao';
 import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 import { ReviewDraft, ReviewStats } from './ReviewDraft';
@@ -42,6 +44,7 @@ export class ReviewService {
   private anchorDao: AnchorDao;
   private reviewDao: ReviewResultDao;
   private reviewMaterialDao: ReviewMaterialDao;
+  private reviewDecisionDao: ReviewDecisionDao;
   private experienceMaterialDao: ExperienceMaterialDao;
   private evidenceItemDao: EvidenceItemDao;
   private costNoteDao: CostNoteDao;
@@ -54,6 +57,7 @@ export class ReviewService {
     this.anchorDao = new AnchorDao(store);
     this.reviewDao = new ReviewResultDao(store);
     this.reviewMaterialDao = new ReviewMaterialDao(store);
+    this.reviewDecisionDao = new ReviewDecisionDao(store);
     this.experienceMaterialDao = new ExperienceMaterialDao(store);
     this.evidenceItemDao = new EvidenceItemDao(store);
     this.costNoteDao = new CostNoteDao(store);
@@ -100,6 +104,8 @@ export class ReviewService {
     result.payload = draft.payload ?? emptyReviewPayload();
     // Quoted materials ride with the payload so history and export can resolve them later.
     result.payload.materialIds = (draft.materialIds ?? []).slice();
+    const decisionIds = uniqueStrings(result.payload.decisionIds ?? []);
+    result.payload.decisionIds = decisionIds;
     if (hasAnyZone(result.payload)) {
       // Zone content is the source of truth for new sessions; the four legacy columns mirror it
       // so history rows and Markdown export keep reading something meaningful.
@@ -128,7 +134,11 @@ export class ReviewService {
     try {
       await this.evidenceItemDao.deleteByTarget('review', result.id);
       await this.costNoteDao.deleteByReview(result.id);
+      await this.reviewDecisionDao.deleteByReview(result.id);
       await this.reviewDao.insert(result);
+      for (const decisionId of decisionIds) {
+        await this.reviewDecisionDao.insert(result.id, decisionId);
+      }
       const sources = await this.loadMaterialSources(citedIds);
       const rows = ReviewService.withSceneZone(buildRows(result.id, result.createdAt, citedIds,
         (id: string) => sources.get(id) ?? null));
@@ -178,6 +188,11 @@ export class ReviewService {
   /** Returns the costs one review charged, oldest first. */
   async costs(reviewId: string): Promise<CostNote[]> {
     return this.costNoteDao.queryByReview(reviewId);
+  }
+
+  /** Returns the decisions one review cited, in citation order. */
+  async decisions(reviewId: string): Promise<string[]> {
+    return this.reviewDecisionDao.queryByReview(reviewId);
   }
 
   /** Returns saved sessions, newest first. */

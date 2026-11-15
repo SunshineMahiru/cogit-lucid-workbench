@@ -17,6 +17,8 @@ export interface ReviewPayload {
   revision: string;
   /** Material ids this session quotes, in the order they were cited */
   materialIds?: string[];
+  /** Decision ids this session cites, in the order they were cited */
+  decisionIds?: string[];
   /** Evidence the session recorded, in the order it was written */
   evidenceDrafts?: EvidenceDraft[];
   /** Costs the session charged, in the order it was written */
@@ -33,6 +35,7 @@ export function emptyReviewPayload(): ReviewPayload {
     cost: '',
     revision: '',
     materialIds: [],
+    decisionIds: [],
     evidenceDrafts: [],
     costDrafts: []
   };

@@ -106,6 +106,19 @@ function readStringFieldList(value: Object | undefined): string[] {
   return result;
 }
 
+/** Drops repeated ids, keeping each id at its first position. */
+export function uniqueStrings(items: string[]): string[] {
+  const seen: Set<string> = new Set<string>();
+  const result: string[] = [];
+  for (const item of items) {
+    if (!seen.has(item)) {
+      seen.add(item);
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 /** Reads the evidence drafts of a payload; a malformed entry is skipped and counted. */
 function readEvidenceDrafts(value: Object | undefined): EvidenceDraft[] {
   if (!Array.isArray(value)) {
@@ -187,6 +200,7 @@ export function parseReviewPayload(raw: string): ReviewPayload | undefined {
     cost: readZone('cost'),
     revision: readZone('revision'),
     materialIds: readStringFieldList(entry.materialIds),
+    decisionIds: uniqueStrings(readStringFieldList(entry.decisionIds)),
     evidenceDrafts: readEvidenceDrafts(entry.evidenceDrafts),
     costDrafts: readCostDrafts(entry.costDrafts)
   };

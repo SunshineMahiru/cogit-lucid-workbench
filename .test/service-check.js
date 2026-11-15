@@ -1156,6 +1156,35 @@ async function main() {
     assert.deepStrictEqual(notes.map((note) => note.bearable), [true, false]);
   });
 
+  await test('复盘保存时按决定引用写入关联行且重复 id 只写一条', async () => {
+    reset();
+    const reviewService = await ReviewService.open({});
+    const reviewId = await reviewService.save('week', {
+      facts: '',
+      interpretation: '',
+      contradiction: '',
+      action: '',
+      payload: {
+        scene: '只写了现场',
+        model: '',
+        relation: '',
+        evidence: '',
+        cost: '',
+        revision: '',
+        decisionIds: ['dc_1', 'dc_2', 'dc_1']
+      },
+      anchorIds: []
+    }, '11-09 ~ 11-15');
+
+    const stored = store.rows('review_decision');
+    assert.strictEqual(stored.length, 2);
+    assert.strictEqual(stored[0].review_id, reviewId);
+    assert.deepStrictEqual(stored.map((row) => row.decision_id), ['dc_1', 'dc_2']);
+
+    const ids = await reviewService.decisions(reviewId);
+    assert.deepStrictEqual(ids, ['dc_1', 'dc_2']);
+  });
+
   await test('删除被引用的速记后快照清空正文并标记缺失', async () => {
     reset();
     const noteDraft = createFreeformNoteDraft();
