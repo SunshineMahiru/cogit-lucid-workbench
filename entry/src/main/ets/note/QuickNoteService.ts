@@ -182,7 +182,7 @@ export class QuickNoteService {
         text: item.text,
         observedAt: observedAt,
         source: item.source ?? 'direct',
-        sourceStance: '',
+        sourceStance: item.stance ?? '',
         level: clampMaterialLevel(item.level, level),
         revisionOf: '',
         deleted: false,

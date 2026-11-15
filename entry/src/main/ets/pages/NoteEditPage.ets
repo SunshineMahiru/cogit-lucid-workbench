@@ -21,7 +21,7 @@ import {
 import { NoteEditorDraft, NoteEditorMeta, NoteEditorStore } from '../note/NoteEditorStore';
 import { DELETED_NOTE_TITLE } from '../note/NoteListMapper';
 import { SecurityLevel } from '../model/SecurityLevel';
-import { ExperienceMaterial, MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
+import { ExperienceMaterial, MaterialForm, MaterialSource, MaterialStance } from '../model/ExperienceMaterial';
 import { NoteEditParams, PredictionCreateParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { SettingsStore } from '../settings';
@@ -324,6 +324,9 @@ export struct NoteEditPage {
     if (meta.level !== null) {
       item.level = meta.level;
     }
+    if (meta.source === 'reading' && meta.stance.length > 0) {
+      item.stance = meta.stance;
+    }
     items.push(item);
   }
 
@@ -334,26 +337,33 @@ export struct NoteEditPage {
         return meta;
       }
     }
-    return { kind: kind, source: 'direct', form: '', level: null };
+    return { kind: kind, source: 'direct', form: '', level: null, stance: '' };
   }
 
   private setSource(kind: string, source: MaterialSource): void {
     this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
-      { kind: kind, source: source, form: meta.form, level: meta.level } : meta);
+      { kind: kind, source: source, form: meta.form, level: meta.level, stance: meta.stance } : meta);
     this.isDirty = true;
     this.scheduleDraftSave();
   }
 
   private setForm(kind: string, form: MaterialForm): void {
     this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
-      { kind: kind, source: meta.source, form: form, level: meta.level } : meta);
+      { kind: kind, source: meta.source, form: form, level: meta.level, stance: meta.stance } : meta);
     this.isDirty = true;
     this.scheduleDraftSave();
   }
 
   private setMaterialLevel(kind: string, level: SecurityLevel | null): void {
     this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
-      { kind: kind, source: meta.source, form: meta.form, level: level } : meta);
+      { kind: kind, source: meta.source, form: meta.form, level: level, stance: meta.stance } : meta);
+    this.isDirty = true;
+    this.scheduleDraftSave();
+  }
+
+  private setStance(kind: string, stance: MaterialStance): void {
+    this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
+      { kind: kind, source: meta.source, form: meta.form, level: meta.level, stance: stance } : meta);
     this.isDirty = true;
     this.scheduleDraftSave();
   }
@@ -396,7 +406,7 @@ export struct NoteEditPage {
     for (const meta of metas) {
       const kept: SecurityLevel | null = meta.level !== null &&
         this.levelRank(meta.level) >= this.levelRank(recordLevel) ? meta.level : null;
-      next.push({ kind: meta.kind, source: meta.source, form: meta.form, level: kept });
+      next.push({ kind: meta.kind, source: meta.source, form: meta.form, level: kept, stance: meta.stance });
     }
     return next;
   }
@@ -517,6 +527,27 @@ export struct NoteEditPage {
           }, (option: MetaOption) => option.value)
         }
         .width('100%')
+
+        if (this.metaFor(kind).source === 'reading') {
+          Flex({ wrap: FlexWrap.Wrap }) {
+            ForEach(STANCE_OPTIONS, (option: MetaOption) => {
+              Text(option.label)
+                .fontSize(AppTheme.font.caption)
+                .fontColor(this.metaFor(kind).stance === option.value ?
+                  AppTheme.color.primaryDeep : AppTheme.color.text)
+                .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: 2, bottom: 2 })
+                .backgroundColor(this.metaFor(kind).stance === option.value ?
+                  AppTheme.color.tint : AppTheme.color.chip)
+                .borderRadius(AppTheme.radius.sm)
+                .margin({ right: AppTheme.spacing.s4, bottom: AppTheme.spacing.s2 })
+                .id(`material_stance_${kind}_${option.value}`)
+                .onClick(() => {
+                  this.setStance(kind, option.value as MaterialStance);
+                })
+            }, (option: MetaOption) => option.value)
+          }
+          .width('100%')
+        }
 
         Flex({ wrap: FlexWrap.Wrap }) {
           ForEach(FORM_OPTIONS, (option: MetaOption) => {
@@ -742,7 +773,8 @@ export struct NoteEditPage {
     // Stored rows may predate the record being narrowed, so apply the same rule as clampMetas:
     // a material wider than its record falls back to following the record.
     this.metas = this.clampMetas(this.metas.map((meta: MaterialMeta) => meta.kind === material.kind ?
-      { kind: material.kind, source: material.source, form: material.form, level: material.level } : meta),
+      { kind: material.kind, source: material.source, form: material.form, level: material.level,
+        stance: material.sourceStance } : meta),
       this.draft.level);
   }
 
@@ -800,7 +832,7 @@ export struct NoteEditPage {
   private snapshotDraft(): NoteEditorDraft {
     const metas: NoteEditorMeta[] = [];
     for (const meta of this.metas) {
-      metas.push({ kind: meta.kind, source: meta.source, form: meta.form, level: meta.level });
+      metas.push({ kind: meta.kind, source: meta.source, form: meta.form, level: meta.level, stance: meta.stance });
     }
     return {
       content: this.draft.content,
@@ -863,7 +895,7 @@ export struct NoteEditPage {
   private metasFromSnapshot(metas: NoteEditorMeta[]): MaterialMeta[] {
     const items: MaterialMeta[] = [];
     for (const meta of metas) {
-      items.push({ kind: meta.kind, source: meta.source, form: meta.form, level: meta.level });
+      items.push({ kind: meta.kind, source: meta.source, form: meta.form, level: meta.level, stance: meta.stance });
     }
     return items;
   }
@@ -1309,12 +1341,13 @@ interface LevelOption {
   label: string;
 }
 
-/** Source, form and level kept for one material kind. */
+/** Source, form, level and reading stance kept for one material kind. */
 interface MaterialMeta {
   kind: string;
   source: MaterialSource;
   form: MaterialForm;
   level: SecurityLevel | null;
+  stance: MaterialStance;
 }
 
 const SOURCE_OPTIONS: MetaOption[] = [
@@ -1324,6 +1357,12 @@ const SOURCE_OPTIONS: MetaOption[] = [
   { value: 'interaction', label: '互动' },
   { value: 'reflection', label: '反思' },
   { value: 'external', label: '外部资料' }
+];
+
+const STANCE_OPTIONS: MetaOption[] = [
+  { value: 'support', label: '支持当前立场' },
+  { value: 'challenge', label: '挑战当前立场' },
+  { value: 'undecided', label: '尚未判断' }
 ];
 
 const FORM_OPTIONS: MetaOption[] = [
@@ -1369,7 +1408,7 @@ function defaultMaterialMetas(): MaterialMeta[] {
   const kinds: string[] = ['scene', 'feeling', 'body', 'existing_action', 'interpretation'];
   const metas: MaterialMeta[] = [];
   for (const kind of kinds) {
-    metas.push({ kind: kind, source: 'direct', form: '', level: null });
+    metas.push({ kind: kind, source: 'direct', form: '', level: null, stance: '' });
   }
   return metas;
 }

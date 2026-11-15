@@ -1,6 +1,6 @@
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
-import { MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
+import { MaterialForm, MaterialSource, MaterialStance } from '../model/ExperienceMaterial';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { NoteDepth, NoteEntry } from './NoteDraft';
 import { NoteFieldKey } from './NoteFieldKey';
@@ -21,12 +21,14 @@ export interface NoteEditorMaterialTexts {
   interpretation: string;
 }
 
-/** Source, form and level chosen for one material kind. */
+/** Source, form, level and reading stance chosen for one material kind. */
 export interface NoteEditorMeta {
   kind: string;
   source: MaterialSource;
   form: MaterialForm;
   level: SecurityLevel | null;
+  /** Stance toward the current position; empty for non-reading materials */
+  stance: MaterialStance;
 }
 
 /** Everything the editor can put back after it was left without saving. */
@@ -202,6 +204,17 @@ function readForm(value: Object | undefined): MaterialForm {
   return '';
 }
 
+function readStance(value: Object | undefined): MaterialStance {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  const raw = value as string;
+  if (raw === 'support' || raw === 'challenge' || raw === 'undecided') {
+    return raw as MaterialStance;
+  }
+  return '';
+}
+
 function readMaterialTexts(value: Object | undefined): NoteEditorMaterialTexts {
   if (value === undefined || value === null || typeof value !== 'object') {
     return { scene: '', feeling: '', body: '', existingAction: '', interpretation: '' };
@@ -285,7 +298,8 @@ function readMetas(value: Object | undefined): NoteEditorMeta[] {
       kind: kind,
       source: readSource(entry.source),
       form: readForm(entry.form),
-      level: readLevel(entry.level)
+      level: readLevel(entry.level),
+      stance: readStance(entry.stance)
     });
   }
   return metas;
