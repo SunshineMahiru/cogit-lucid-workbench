@@ -35,6 +35,13 @@ import {
   toReviewHistoryItem
 } from './ReviewHistory';
 
+/** Decision summary offered when a session picks what it cites. */
+export interface RecentDecisionItem {
+  id: string;
+  title: string;
+  choice: string;
+}
+
 /** Loads review inputs and persists completed sessions. */
 export class ReviewService {
   private store: relationalStore.RdbStore;
@@ -93,6 +100,22 @@ export class ReviewService {
   /** Returns the newest materials a session may quote; sealed and deleted ones stay out. */
   async recentMaterials(limit: number = 50): Promise<ExperienceMaterial[]> {
     return this.experienceMaterialDao.queryRecentVisible(limit);
+  }
+
+  /** Returns the newest decisions a session may cite, capped at limit. */
+  async recentDecisions(limit: number = 20): Promise<RecentDecisionItem[]> {
+    const decisions = await this.decisionDao.queryAll();
+    const ordered = decisions.slice();
+    ordered.sort((left: Decision, right: Decision) => right.timestamp - left.timestamp);
+    const capped = limit > 0 ? ordered.slice(0, limit) : [];
+    return capped.map((decision: Decision) => {
+      const item: RecentDecisionItem = {
+        id: decision.id,
+        title: decision.title,
+        choice: decision.choice
+      };
+      return item;
+    });
   }
 
   /** Persists a completed session and returns its id. */
@@ -199,6 +222,19 @@ export class ReviewService {
   async history(limit: number = 20): Promise<ReviewHistoryItem[]> {
     const results = await this.reviewDao.queryRecent(limit);
     return results.map((result) => toReviewHistoryItem(result));
+  }
+
+  /** Returns the saved sessions that cited one decision, newest first. */
+  async historyByDecision(decisionId: string): Promise<ReviewHistoryItem[]> {
+    if (decisionId.length === 0) {
+      return [];
+    }
+    const citedIds = await this.reviewDecisionDao.queryByDecision(decisionId);
+    if (citedIds.length === 0) {
+      return [];
+    }
+    const items = await this.history();
+    return items.filter((item: ReviewHistoryItem) => citedIds.indexOf(item.id) >= 0);
   }
 
   /** Returns one saved session with its anchors resolved, or null when missing. */

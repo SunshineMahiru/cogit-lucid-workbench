@@ -1185,6 +1185,63 @@ async function main() {
     assert.deepStrictEqual(ids, ['dc_1', 'dc_2']);
   });
 
+  await test('最近决定按时间倒序并截断', async () => {
+    reset();
+    store.rows('decision').push(
+      { id: 'dc_old', title: '旧决定', choice: '旧选择', timestamp: 1000, level: 'local_only' },
+      { id: 'dc_new', title: '新决定', choice: '新选择', timestamp: 3000, level: 'local_only' },
+      { id: 'dc_mid', title: '中决定', choice: '中选择', timestamp: 2000, level: 'local_only' }
+    );
+    const reviewService = await ReviewService.open({});
+    const recent = await reviewService.recentDecisions(2);
+    assert.deepStrictEqual(recent.map((item) => item.id), ['dc_new', 'dc_mid']);
+    assert.deepStrictEqual(recent.map((item) => item.title), ['新决定', '中决定']);
+    assert.deepStrictEqual(recent.map((item) => item.choice), ['新选择', '中选择']);
+  });
+
+  await test('按决定筛选只返回引用过它的复盘', async () => {
+    reset();
+    const reviewService = await ReviewService.open({});
+    const cited = (decisionIds, rangeLabel) => reviewService.save('week', {
+      facts: '',
+      interpretation: '',
+      contradiction: '',
+      action: '',
+      payload: {
+        scene: '现场',
+        model: '',
+        relation: '',
+        evidence: '',
+        cost: '',
+        revision: '',
+        decisionIds: decisionIds
+      },
+      anchorIds: []
+    }, rangeLabel);
+
+    const firstId = await cited(['dc_1'], '11-02 ~ 11-08');
+    const secondId = await cited(['dc_1'], '11-09 ~ 11-15');
+    const otherId = await cited(['dc_2'], '11-16 ~ 11-22');
+    for (const row of store.rows('review_result')) {
+      if (row.id === firstId) {
+        row.created_at = 1000;
+      }
+      if (row.id === secondId) {
+        row.created_at = 2000;
+      }
+      if (row.id === otherId) {
+        row.created_at = 3000;
+      }
+    }
+
+    const matched = await reviewService.historyByDecision('dc_1');
+    assert.deepStrictEqual(matched.map((item) => item.id), [secondId, firstId]);
+    assert.strictEqual(matched.some((item) => item.id === otherId), false);
+    assert.deepStrictEqual((await reviewService.historyByDecision('dc_2')).map((item) => item.id), [otherId]);
+    assert.deepStrictEqual(await reviewService.historyByDecision(''), []);
+    assert.deepStrictEqual(await reviewService.historyByDecision('dc_missing'), []);
+  });
+
   await test('删除被引用的速记后快照清空正文并标记缺失', async () => {
     reset();
     const noteDraft = createFreeformNoteDraft();
