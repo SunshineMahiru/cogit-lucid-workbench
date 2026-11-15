@@ -177,13 +177,20 @@ export struct ReviewHistoryPage {
           .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page })
         } else {
           Column() {
+            Text(`共 ${this.filtered().length} 条 · 只含已保存的复盘，草稿与未完成的复盘不计入`)
+              .id('history_scope_note')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+              .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.page })
+
             Row({ space: 8 }) {
               this.rangeChip('all', '全部', 'history_range_all')
               this.rangeChip('7d', '近七天', 'history_range_7d')
               this.rangeChip('30d', '近三十天', 'history_range_30d')
             }
             .width('100%')
-            .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.page })
+            .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8 })
 
             Scroll() {
               Row({ space: 6 }) {
