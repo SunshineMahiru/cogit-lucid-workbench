@@ -1,4 +1,5 @@
 import { CitationScope, InteractionLog, InteractionSource } from '../model/Relation';
+import { EvidenceDraft, EvidenceEffect, EvidenceSource } from '../model/EvidenceItem';
 import { ReviewPayload } from '../model/ReviewPayload';
 
 /** 整个进程累计的字段解析异常次数，供首页提示使用。 */
@@ -104,6 +105,35 @@ function readStringFieldList(value: Object | undefined): string[] {
   return result;
 }
 
+/** Reads the evidence drafts of a payload; a malformed entry is skipped and counted. */
+function readEvidenceDrafts(value: Object | undefined): EvidenceDraft[] {
+  if (!Array.isArray(value)) {
+    if (value !== undefined) {
+      issueCount += 1;
+    }
+    return [];
+  }
+  const items: Object[] = value as Object[];
+  const result: EvidenceDraft[] = [];
+  for (const item of items) {
+    const entry = item as Record<string, Object>;
+    const sourceType = entry.sourceType;
+    const note = entry.note;
+    const effect = entry.effect;
+    if (typeof sourceType === 'string' && typeof note === 'string' && typeof effect === 'string') {
+      const draft: EvidenceDraft = {
+        sourceType: sourceType as EvidenceSource,
+        note: note,
+        effect: effect as EvidenceEffect
+      };
+      result.push(draft);
+    } else {
+      issueCount += 1;
+    }
+  }
+  return result;
+}
+
 /** Reads the six-zone payload; returns undefined for old records without one. */
 export function parseReviewPayload(raw: string): ReviewPayload | undefined {
   const value = readJson(raw);
@@ -122,6 +152,7 @@ export function parseReviewPayload(raw: string): ReviewPayload | undefined {
     evidence: readZone('evidence'),
     cost: readZone('cost'),
     revision: readZone('revision'),
-    materialIds: readStringFieldList(entry.materialIds)
+    materialIds: readStringFieldList(entry.materialIds),
+    evidenceDrafts: readEvidenceDrafts(entry.evidenceDrafts)
   };
 }

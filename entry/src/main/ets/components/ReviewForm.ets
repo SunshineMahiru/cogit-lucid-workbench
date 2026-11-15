@@ -1,4 +1,5 @@
 import { Anchor } from '../model/Anchor';
+import { EvidenceDraft, EvidenceEffect, EvidenceSource } from '../model/EvidenceItem';
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { AppTheme } from '../theme/AppTheme';
@@ -55,6 +56,8 @@ export struct ReviewForm {
   @Local anchors: Anchor[] = [];
   @Local materials: ExperienceMaterial[] = [];
   @Local selectedMaterialIds: string[] = [];
+  @Local evidenceDrafts: EvidenceDraft[] = [];
+  @Local evidenceRevision: number = 0;
   @Local step: number = 0;
   @Local facts: string = '';
   @Local interpretation: string = '';
@@ -108,6 +111,7 @@ export struct ReviewForm {
           this.zoneEvidence = draft.payload.evidence;
           this.zoneCost = draft.payload.cost;
           this.zoneRevision = draft.payload.revision;
+          this.evidenceDrafts = (draft.payload.evidenceDrafts ?? []).slice();
         }
         if (draft.anchorIds.length > 0) {
           this.selectedAnchorIds = draft.anchorIds.slice();
@@ -130,7 +134,8 @@ export struct ReviewForm {
       relation: this.zoneRelation,
       evidence: this.zoneEvidence,
       cost: this.zoneCost,
-      revision: this.zoneRevision
+      revision: this.zoneRevision,
+      evidenceDrafts: this.evidenceDrafts.slice()
     };
   }
 
@@ -239,6 +244,56 @@ export struct ReviewForm {
     this.persistDraft();
   }
 
+  private replaceEvidence(index: number, draft: EvidenceDraft): void {
+    const next: EvidenceDraft[] = this.evidenceDrafts.slice();
+    next[index] = draft;
+    this.evidenceDrafts = next;
+    this.persistDraft();
+  }
+
+  private updateEvidenceSource(index: number, sourceType: EvidenceSource): void {
+    const current: EvidenceDraft = this.evidenceDrafts[index];
+    const updated: EvidenceDraft = {
+      sourceType: sourceType,
+      note: current.note,
+      effect: current.effect
+    };
+    this.replaceEvidence(index, updated);
+  }
+
+  private updateEvidenceNote(index: number, note: string): void {
+    const current: EvidenceDraft = this.evidenceDrafts[index];
+    const updated: EvidenceDraft = {
+      sourceType: current.sourceType,
+      note: note,
+      effect: current.effect
+    };
+    this.replaceEvidence(index, updated);
+  }
+
+  private updateEvidenceEffect(index: number, effect: EvidenceEffect): void {
+    const current: EvidenceDraft = this.evidenceDrafts[index];
+    const updated: EvidenceDraft = {
+      sourceType: current.sourceType,
+      note: current.note,
+      effect: effect
+    };
+    this.replaceEvidence(index, updated);
+  }
+
+  private addEvidence(): void {
+    const blank: EvidenceDraft = { sourceType: 'practice', note: '', effect: 'unclear' };
+    this.evidenceDrafts = this.evidenceDrafts.concat([blank]);
+    this.evidenceRevision += 1;
+    this.persistDraft();
+  }
+
+  private removeEvidence(index: number): void {
+    this.evidenceDrafts = this.evidenceDrafts.filter((draft: EvidenceDraft, itemIndex: number) => itemIndex !== index);
+    this.evidenceRevision += 1;
+    this.persistDraft();
+  }
+
   private async complete(): Promise<void> {
     if (this.isSaving) {
       return;
@@ -287,6 +342,8 @@ export struct ReviewForm {
     this.zoneEvidence = '';
     this.zoneCost = '';
     this.zoneRevision = '';
+    this.evidenceDrafts = [];
+    this.evidenceRevision += 1;
     this.saved = false;
     if (this.draftStore !== null) {
       this.draftStore.clearFor(this.period, this.planNodeId).catch(() => {
@@ -342,6 +399,123 @@ export struct ReviewForm {
       }, (label: string) => label)
     }
     .width('100%')
+  }
+
+  @Builder
+  evidenceSourceChip(index: number, value: EvidenceSource, label: string) {
+    Text(label)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.evidenceDrafts[index].sourceType === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.evidenceDrafts[index].sourceType === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .id(`evidence_source_${index}_${value}`)
+      .onClick(() => {
+        this.updateEvidenceSource(index, value);
+      })
+  }
+
+  @Builder
+  evidenceEffectChip(index: number, value: EvidenceEffect, label: string) {
+    Text(label)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.evidenceDrafts[index].effect === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.evidenceDrafts[index].effect === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .id(`evidence_effect_${index}_${value}`)
+      .onClick(() => {
+        this.updateEvidenceEffect(index, value);
+      })
+  }
+
+  @Builder
+  evidenceEditor() {
+    Column({ space: 8 }) {
+      Column({ space: 2 }) {
+        Text('证据')
+          .fontSize(AppTheme.font.bodyStrong)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(AppTheme.color.text)
+          .width('100%')
+        Text('把这一区的说法拆成一条条来源和它支持或挑战什么。')
+          .fontSize(AppTheme.font.caption)
+          .lineHeight(17)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+
+      if (this.evidenceDrafts.length === 0) {
+        Text('还没有证据，点下方「添加一条证据」。')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+          .width('100%')
+      }
+
+      ForEach(this.evidenceDrafts, (draft: EvidenceDraft, index: number) => {
+        Column({ space: 6 }) {
+          Flex({ wrap: FlexWrap.Wrap }) {
+            this.evidenceSourceChip(index, 'practice', '实践')
+            this.evidenceSourceChip(index, 'other_person', '他人')
+            this.evidenceSourceChip(index, 'body', '身体')
+            this.evidenceSourceChip(index, 'time', '时间')
+            this.evidenceSourceChip(index, 'book', '书本')
+            this.evidenceSourceChip(index, 'public', '公开资料')
+          }
+          .width('100%')
+
+          TextInput({ text: draft.note, placeholder: '这条证据具体是什么' })
+            .fontSize(AppTheme.font.bodyStrong)
+            .padding(AppTheme.spacing.s10)
+            .backgroundColor(AppTheme.color.surface)
+            .borderRadius(AppTheme.radius.sm)
+            .border({ width: 0.5, color: AppTheme.color.border })
+            .onChange((value: string) => {
+              this.updateEvidenceNote(index, value);
+            })
+
+          Row({ space: 6 }) {
+            Flex({ wrap: FlexWrap.Wrap }) {
+              this.evidenceEffectChip(index, 'supports', '支持')
+              this.evidenceEffectChip(index, 'challenges', '挑战')
+              this.evidenceEffectChip(index, 'unclear', '不清楚')
+            }
+            .layoutWeight(1)
+
+            Text('删除')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.danger)
+              .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+              .id(`evidence_remove_${index}`)
+              .onClick(() => {
+                this.removeEvidence(index);
+              })
+          }
+          .width('100%')
+        }
+        .width('100%')
+        .padding(AppTheme.spacing.s10)
+        .backgroundColor(AppTheme.color.surfaceAlt)
+        .borderRadius(AppTheme.radius.md)
+      }, (draft: EvidenceDraft, index: number) => `${this.evidenceRevision}_${index}_${draft.sourceType}_${draft.effect}`)
+
+      Text('添加一条证据')
+        .fontSize(AppTheme.font.bodyStrong)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+        .backgroundColor(AppTheme.color.tint)
+        .borderRadius(AppTheme.radius.lg)
+        .id('evidence_add')
+        .onClick(() => {
+          this.addEvidence();
+        })
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
   }
 
   build() {
@@ -517,6 +691,10 @@ export struct ReviewForm {
               .onChange((value: string) => {
                 this.updateCurrent(value);
               })
+
+            if (this.step === 3) {
+              this.evidenceEditor()
+            }
 
             if (this.step === 0) {
               MaterialPicker({

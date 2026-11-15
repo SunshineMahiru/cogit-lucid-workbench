@@ -26,3 +26,5 @@ export { ReviewResultDao } from './dao/ReviewResultDao';
 export { RequestAuditDao } from './dao/RequestAuditDao';
 export { PlanDao } from './dao/PlanDao';
 export { ExperienceMaterialDao } from './dao/ExperienceMaterialDao';
+export { EvidenceItemDao } from './dao/EvidenceItemDao';
+export type { EvidenceEffect, EvidenceItem, EvidenceSource, EvidenceTargetType } from '../model/EvidenceItem';

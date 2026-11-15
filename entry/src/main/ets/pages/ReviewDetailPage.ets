@@ -5,6 +5,7 @@ import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewDetailView, ReviewService } from '../review';
 import { Anchor } from '../model/Anchor';
+import { EvidenceEffect, EvidenceItem, EvidenceSource } from '../model/EvidenceItem';
 import { ReviewMaterial } from '../model/ReviewMaterial';
 import { ReviewPayload } from '../model/ReviewPayload';
 import { ReviewPeriod } from '../model/ReviewPeriod';
@@ -14,6 +15,7 @@ import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
 import { previewStore } from '../preview/PreviewStore';
 import { DbHelper } from '../db/DbHelper';
+import { EvidenceItemDao } from '../db/dao/EvidenceItemDao';
 import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 
 /** Read-only review: six zones when the record carries them, otherwise the four legacy steps. */
@@ -34,6 +36,7 @@ export struct ReviewDetailPage {
   };
   @Local payload: ReviewPayload | null = null;
   @Local cited: ReviewMaterial[] = [];
+  @Local evidence: EvidenceItem[] = [];
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   private navStack: NavPathStack | null = null;
@@ -53,6 +56,7 @@ export struct ReviewDetailPage {
         this.detail = detail;
         this.payload = await this.loadPayload(reviewId, hostContext);
         this.cited = await this.loadCited(reviewId, service);
+        this.evidence = await this.loadEvidence(reviewId, hostContext);
       }
     } catch (error) {
       this.loadPreview(reviewId);
@@ -81,6 +85,16 @@ export struct ReviewDetailPage {
       return result.payload;
     } catch (error) {
       return null;
+    }
+  }
+
+  /** Reads the evidence rows of one review; a failed read leaves the section hidden. */
+  private async loadEvidence(reviewId: string, hostContext: common.Context): Promise<EvidenceItem[]> {
+    try {
+      const store = await DbHelper.init(hostContext);
+      return await new EvidenceItemDao(store).queryByTarget('review', reviewId);
+    } catch (error) {
+      return [];
     }
   }
 
@@ -184,6 +198,38 @@ export struct ReviewDetailPage {
           .backgroundColor(AppTheme.color.surfaceAlt)
           .borderRadius(AppTheme.radius.sm)
         }, (row: ReviewMaterial) => row.materialId)
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
+  @Builder
+  evidenceSection() {
+    SectionCard() {
+      Column({ space: 8 }) {
+        Text(`证据 · ${this.evidence.length} 条`)
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        ForEach(this.evidence, (item: EvidenceItem) => {
+          Column({ space: 4 }) {
+            Row({ space: 4 }) {
+              this.miniTag(evidenceSourceLabel(item.sourceType))
+              this.miniTag(evidenceEffectLabel(item.effect))
+            }
+            .width('100%')
+            Text(item.note.length > 0 ? item.note : '（未填写说明）')
+              .fontSize(AppTheme.font.bodyStrong)
+              .lineHeight(19)
+              .fontColor(item.note.length > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
+              .width('100%')
+          }
+          .width('100%')
+          .padding(AppTheme.spacing.s10)
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .borderRadius(AppTheme.radius.sm)
+        }, (item: EvidenceItem) => item.id)
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
@@ -318,6 +364,9 @@ export struct ReviewDetailPage {
               this.zoneSection('2. 当前模型', this.payload.model)
               this.zoneSection('3. 关系与主要矛盾', this.payload.relation)
               this.zoneSection('4. 多源校正', this.payload.evidence)
+              if (this.evidence.length > 0) {
+                this.evidenceSection()
+              }
               this.zoneSection('5. 成本与动机', this.payload.cost)
               this.zoneSection('6. 调节与修订', this.payload.revision)
             } else {
@@ -449,4 +498,33 @@ function levelLabel(level: SecurityLevel | undefined): string {
     return '已封存';
   }
   return '';
+}
+
+function evidenceSourceLabel(source: EvidenceSource): string {
+  if (source === 'practice') {
+    return '实践';
+  }
+  if (source === 'other_person') {
+    return '他人';
+  }
+  if (source === 'body') {
+    return '身体';
+  }
+  if (source === 'time') {
+    return '时间';
+  }
+  if (source === 'book') {
+    return '书本';
+  }
+  return '公开资料';
+}
+
+function evidenceEffectLabel(effect: EvidenceEffect): string {
+  if (effect === 'supports') {
+    return '支持';
+  }
+  if (effect === 'challenges') {
+    return '挑战';
+  }
+  return '不清楚';
 }

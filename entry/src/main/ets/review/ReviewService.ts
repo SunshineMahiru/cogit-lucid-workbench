@@ -3,6 +3,7 @@ import { common } from '@kit.AbilityKit';
 import { Anchor } from '../model/Anchor';
 import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
+import { EvidenceDraft, EvidenceItem } from '../model/EvidenceItem';
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { createReviewResult } from '../model/factories';
 import { Prediction } from '../model/Prediction';
@@ -15,6 +16,7 @@ import { DbHelper } from '../db/DbHelper';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
+import { EvidenceItemDao } from '../db/dao/EvidenceItemDao';
 import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
 import { ReviewMaterialDao } from '../db/dao/ReviewMaterialDao';
@@ -39,6 +41,7 @@ export class ReviewService {
   private reviewDao: ReviewResultDao;
   private reviewMaterialDao: ReviewMaterialDao;
   private experienceMaterialDao: ExperienceMaterialDao;
+  private evidenceItemDao: EvidenceItemDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.store = store;
@@ -49,6 +52,7 @@ export class ReviewService {
     this.reviewDao = new ReviewResultDao(store);
     this.reviewMaterialDao = new ReviewMaterialDao(store);
     this.experienceMaterialDao = new ExperienceMaterialDao(store);
+    this.evidenceItemDao = new EvidenceItemDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -113,14 +117,21 @@ export class ReviewService {
       result.planNodeId = planNodeId;
     }
     const citedIds = (draft.materialIds ?? []).slice();
+    const evidenceDrafts = result.payload.evidenceDrafts ?? [];
+    const evidenceLevel: SecurityLevel = result.level ?? SecurityLevel.LOCAL_ONLY;
     this.store.beginTransaction();
     try {
+      await this.evidenceItemDao.deleteByTarget('review', result.id);
       await this.reviewDao.insert(result);
       const sources = await this.loadMaterialSources(citedIds);
       const rows = ReviewService.withSceneZone(buildRows(result.id, result.createdAt, citedIds,
         (id: string) => sources.get(id) ?? null));
       for (const row of rows) {
         await this.reviewMaterialDao.insert(row);
+      }
+      for (let index = 0; index < evidenceDrafts.length; index += 1) {
+        await this.evidenceItemDao.insert(ReviewService.evidenceRow(result.id, result.createdAt, index,
+          evidenceDrafts[index], evidenceLevel));
       }
       this.store.commit();
     } catch (error) {
@@ -195,6 +206,22 @@ export class ReviewService {
       row.zone = REVIEW_ZONE.SCENE;
     }
     return rows;
+  }
+
+  /** Builds one evidence row for a review; index keeps the session order readable. */
+  private static evidenceRow(reviewId: string, createdAt: number, index: number,
+    draft: EvidenceDraft, level: SecurityLevel): EvidenceItem {
+    return {
+      id: `${reviewId}_evidence_${index}`,
+      targetType: 'review',
+      targetId: reviewId,
+      sourceType: draft.sourceType,
+      note: draft.note,
+      effect: draft.effect,
+      level: level,
+      zone: REVIEW_ZONE.EVIDENCE,
+      createdAt: createdAt + index
+    };
   }
 }
 

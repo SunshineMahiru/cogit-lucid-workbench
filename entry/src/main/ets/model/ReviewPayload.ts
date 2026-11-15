@@ -1,3 +1,5 @@
+import { EvidenceDraft } from './EvidenceItem';
+
 /** The six working zones of one review session; every field is optional by design. */
 export interface ReviewPayload {
   /** 1. Scene and what was already done */
@@ -14,6 +16,8 @@ export interface ReviewPayload {
   revision: string;
   /** Material ids this session quotes, in the order they were cited */
   materialIds?: string[];
+  /** Evidence the session recorded, in the order it was written */
+  evidenceDrafts?: EvidenceDraft[];
 }
 
 /** Empty payload: a review may be saved with only the scene filled in. */
@@ -25,7 +29,8 @@ export function emptyReviewPayload(): ReviewPayload {
     evidence: '',
     cost: '',
     revision: '',
-    materialIds: []
+    materialIds: [],
+    evidenceDrafts: []
   };
 }
 

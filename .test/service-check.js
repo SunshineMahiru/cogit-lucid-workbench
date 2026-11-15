@@ -318,6 +318,7 @@ const { RelationService } = require('./out2/relation/RelationService');
 const { StatusService } = require('./out2/status/StatusService');
 const { HomeDataService } = require('./out2/data/HomeDataService');
 const { ExperienceMaterialDao } = require('./out2/db/dao/ExperienceMaterialDao');
+const { EvidenceItemDao } = require('./out2/db/dao/EvidenceItemDao');
 const { EventDao } = require('./out2/db/dao/EventDao');
 const { DecisionDao } = require('./out2/db/dao/DecisionDao');
 const { prepareExportBundle, allExportOptions } = require('./out2/export/ExportFilter');
@@ -1079,6 +1080,44 @@ async function main() {
     assert.strictEqual(snapshots.length, 1);
     assert.strictEqual(snapshots[0].textSnapshot, 'MARKER_SNAPSHOT_TEXT');
     assert.strictEqual(snapshots[0].sourceSnapshot, 'reading');
+  });
+
+  await test('复盘保存时按证据草稿写入证据行', async () => {
+    reset();
+    const reviewService = await ReviewService.open({});
+    const reviewId = await reviewService.save('week', {
+      facts: '',
+      interpretation: '',
+      contradiction: '',
+      action: '',
+      payload: {
+        scene: '只写了现场',
+        model: '',
+        relation: '',
+        evidence: '',
+        cost: '',
+        revision: '',
+        evidenceDrafts: [
+          { sourceType: 'practice', note: 'MARKER_EVIDENCE_ONE', effect: 'supports' },
+          { sourceType: 'book', note: 'MARKER_EVIDENCE_TWO', effect: 'challenges' }
+        ]
+      },
+      anchorIds: []
+    }, '11-09 ~ 11-15');
+
+    const stored = store.rows('evidence_item');
+    assert.strictEqual(stored.length, 2);
+    assert.strictEqual(stored[0].target_type, 'review');
+    assert.strictEqual(stored[0].target_id, reviewId);
+    assert.strictEqual(stored[0].zone, 4);
+    assert.strictEqual(stored[0].level, SecurityLevel.LOCAL_ONLY);
+
+    const dao = new EvidenceItemDao(store);
+    const items = await dao.queryByTarget('review', reviewId);
+    assert.strictEqual(items.length, 2);
+    assert.deepStrictEqual(items.map((item) => item.note),
+      ['MARKER_EVIDENCE_ONE', 'MARKER_EVIDENCE_TWO']);
+    assert.deepStrictEqual(items.map((item) => item.zone), [4, 4]);
   });
 
   await test('删除被引用的速记后快照清空正文并标记缺失', async () => {
