@@ -1294,9 +1294,9 @@ test('建表语句包含迁移新增的列', () => {
   }
 });
 
-test('数据库版本为 17', () => {
+test('数据库版本为 18', () => {
   const source = fs.readFileSync(DB_CONFIG_FILE, 'utf8');
-  assert.ok(/export const DB_VERSION\s*=\s*17;/.test(source), 'DB_VERSION 不是 17');
+  assert.ok(/export const DB_VERSION\s*=\s*18;/.test(source), 'DB_VERSION 不是 18');
 });
 
 if (failures.length > 0) {

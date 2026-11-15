@@ -12,6 +12,8 @@ export interface Event {
   tags: string[];
   /** Security level, defaults to LOCAL_ONLY */
   level: SecurityLevel;
+  /** Depth marker, defaults to normal */
+  depth?: string;
   relatedDecisionIds: string[];
   relatedRelationIds: string[];
   /** Id of the event this row revises; empty for an original note */

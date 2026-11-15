@@ -70,6 +70,7 @@ export const EVENT_COLS = {
   TIMESTAMP: 'timestamp',
   TAGS: 'tags',
   LEVEL: 'level',
+  DEPTH: 'depth',
   RELATED_DECISION_IDS: 'related_decision_ids',
   RELATED_RELATION_IDS: 'related_relation_ids',
   REVISION_OF: 'revision_of',

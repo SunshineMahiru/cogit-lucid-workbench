@@ -409,6 +409,11 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Note depth arrived later; rows written before read back as normal.
+    try {
+      await store.executeSql(`ALTER TABLE event ADD COLUMN depth TEXT NOT NULL DEFAULT 'normal'`);
+    } catch (error) {
+    }
     // Decision follow-up fields arrived later; older rows read back as empty text.
     const decisionTextMigrations: string[] = [
       `ALTER TABLE decision ADD COLUMN done TEXT NOT NULL DEFAULT ''`,

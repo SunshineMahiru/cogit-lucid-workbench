@@ -23,6 +23,7 @@ export class EventDao {
       [EVENT_COLS.TIMESTAMP]: event.timestamp,
       [EVENT_COLS.TAGS]: JSON.stringify(event.tags),
       [EVENT_COLS.LEVEL]: event.level,
+      [EVENT_COLS.DEPTH]: event.depth ?? 'normal',
       [EVENT_COLS.RELATED_DECISION_IDS]: JSON.stringify(event.relatedDecisionIds),
       [EVENT_COLS.RELATED_RELATION_IDS]: JSON.stringify(event.relatedRelationIds),
       [EVENT_COLS.REVISION_OF]: event.revisionOf ?? '',
@@ -41,6 +42,7 @@ export class EventDao {
       [EVENT_COLS.TIMESTAMP]: event.timestamp,
       [EVENT_COLS.TAGS]: JSON.stringify(event.tags),
       [EVENT_COLS.LEVEL]: event.level,
+      [EVENT_COLS.DEPTH]: event.depth ?? 'normal',
       [EVENT_COLS.RELATED_DECISION_IDS]: JSON.stringify(event.relatedDecisionIds),
       [EVENT_COLS.RELATED_RELATION_IDS]: JSON.stringify(event.relatedRelationIds),
       [EVENT_COLS.REVISION_OF]: event.revisionOf ?? '',
@@ -187,6 +189,7 @@ export class EventDao {
     // Rows written before the revision columns existed read back as an original version.
     const revisionIndex = resultSet.getColumnIndex(EVENT_COLS.REVISION_OF);
     const versionIndex = resultSet.getColumnIndex(EVENT_COLS.VERSION);
+    const depthIndex = resultSet.getColumnIndex(EVENT_COLS.DEPTH);
     return {
       id: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.ID)),
       title: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.TITLE)),
@@ -195,6 +198,7 @@ export class EventDao {
       timestamp: resultSet.getLong(resultSet.getColumnIndex(EVENT_COLS.TIMESTAMP)),
       tags: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.TAGS))),
       level: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.LEVEL)) as SecurityLevel,
+      depth: depthIndex < 0 ? 'normal' : resultSet.getString(depthIndex),
       relatedDecisionIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_DECISION_IDS))),
       relatedRelationIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_RELATION_IDS))),
       revisionOf: revisionIndex < 0 ? '' : resultSet.getString(revisionIndex),

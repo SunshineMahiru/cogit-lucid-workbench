@@ -10,6 +10,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     timestamp INTEGER NOT NULL,
     tags TEXT NOT NULL,
     level TEXT NOT NULL,
+    depth TEXT NOT NULL DEFAULT 'normal',
     related_decision_ids TEXT NOT NULL,
     related_relation_ids TEXT NOT NULL,
     revision_of TEXT NOT NULL DEFAULT '',
