@@ -25,6 +25,8 @@ export class EventDao {
       [EVENT_COLS.LEVEL]: event.level,
       [EVENT_COLS.RELATED_DECISION_IDS]: JSON.stringify(event.relatedDecisionIds),
       [EVENT_COLS.RELATED_RELATION_IDS]: JSON.stringify(event.relatedRelationIds),
+      [EVENT_COLS.REVISION_OF]: event.revisionOf ?? '',
+      [EVENT_COLS.VERSION]: event.version ?? 1,
       [EVENT_COLS.DELETED]: 0
     };
     return this.store.insert(DB_TABLES.EVENT, values);
@@ -40,7 +42,9 @@ export class EventDao {
       [EVENT_COLS.TAGS]: JSON.stringify(event.tags),
       [EVENT_COLS.LEVEL]: event.level,
       [EVENT_COLS.RELATED_DECISION_IDS]: JSON.stringify(event.relatedDecisionIds),
-      [EVENT_COLS.RELATED_RELATION_IDS]: JSON.stringify(event.relatedRelationIds)
+      [EVENT_COLS.RELATED_RELATION_IDS]: JSON.stringify(event.relatedRelationIds),
+      [EVENT_COLS.REVISION_OF]: event.revisionOf ?? '',
+      [EVENT_COLS.VERSION]: event.version ?? 1
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
     predicates.equalTo(EVENT_COLS.ID, event.id);
@@ -61,6 +65,39 @@ export class EventDao {
   async queryAll(): Promise<Event[]> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
     predicates.equalTo(EVENT_COLS.DELETED, 0);
+    return this.queryWith(predicates);
+  }
+
+  /** Returns every live event, newest first, without a page limit. */
+  async queryAllLive(): Promise<Event[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.DELETED, 0);
+    predicates.orderByDesc(EVENT_COLS.TIMESTAMP);
+    return this.queryWith(predicates);
+  }
+
+  /** Returns every live event of one type, newest first, without a page limit. */
+  async queryLiveByType(type: string): Promise<Event[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.DELETED, 0);
+    predicates.equalTo(EVENT_COLS.TYPE, type);
+    predicates.orderByDesc(EVENT_COLS.TIMESTAMP);
+    return this.queryWith(predicates);
+  }
+
+  /** Returns every visible event, sealed rows excluded, newest first, without a page limit. */
+  async queryAllVisible(): Promise<Event[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.equalTo(EVENT_COLS.DELETED, 0);
+    predicates.notEqualTo(EVENT_COLS.LEVEL, SecurityLevel.SEALED);
+    predicates.orderByDesc(EVENT_COLS.TIMESTAMP);
+    return this.queryWith(predicates);
+  }
+
+  /** Returns every event row, deleted rows included, newest first. */
+  async queryAllIncludingDeleted(): Promise<Event[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVENT);
+    predicates.orderByDesc(EVENT_COLS.TIMESTAMP);
     return this.queryWith(predicates);
   }
 
@@ -147,6 +184,8 @@ export class EventDao {
       level: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.LEVEL)) as SecurityLevel,
       relatedDecisionIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_DECISION_IDS))),
       relatedRelationIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_RELATION_IDS))),
+      revisionOf: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.REVISION_OF)),
+      version: resultSet.getLong(resultSet.getColumnIndex(EVENT_COLS.VERSION)),
       deleted: resultSet.getLong(resultSet.getColumnIndex(EVENT_COLS.DELETED)) === 1
     };
   }

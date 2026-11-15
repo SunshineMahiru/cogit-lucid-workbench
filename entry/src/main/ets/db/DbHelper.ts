@@ -352,6 +352,17 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Event revisions arrived later; rows written before keep an empty origin and version 1.
+    const eventRevisionMigrations: string[] = [
+      `ALTER TABLE event ADD COLUMN revision_of TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE event ADD COLUMN version INTEGER NOT NULL DEFAULT 1`
+    ];
+    for (const sql of eventRevisionMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     // Body evidence columns arrived with the status rework; older rows keep empty values.
     const statusEvidenceMigrations: string[] = [
       `ALTER TABLE status_record ADD COLUMN body_signals TEXT NOT NULL DEFAULT ''`,

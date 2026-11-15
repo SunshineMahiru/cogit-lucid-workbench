@@ -14,6 +14,10 @@ export interface Event {
   level: SecurityLevel;
   relatedDecisionIds: string[];
   relatedRelationIds: string[];
+  /** Id of the event this row revises; empty for an original note */
+  revisionOf?: string;
+  /** Revision number, 1 for an original note */
+  version?: number;
   /** True once the note is deleted; the row stays so history can point at it */
   deleted?: boolean;
 }

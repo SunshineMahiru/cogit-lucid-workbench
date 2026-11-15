@@ -20,6 +20,7 @@ export function toNoteListItem(event: Event, now: number = Date.now()): NoteList
     relatedRelationIds: event.relatedRelationIds.slice(),
     level: event.level,
     timestamp: event.timestamp,
+    version: event.version ?? 1,
     timeLabel: formatNoteTime(event.timestamp, now)
   };
 }

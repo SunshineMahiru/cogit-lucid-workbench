@@ -493,6 +493,153 @@ async function main() {
     assert.strictEqual(await service.findNote('missing'), null);
   });
 
+  await test('修订写入新版本，列表只显示最新版', async () => {
+    reset();
+    const first = createFreeformNoteDraft();
+    first.content = '原始正文';
+    first.timestamp = 1000;
+    const saved = await service.save(first);
+    const originalRow = lastRow('event');
+    assert.strictEqual(originalRow.version, 1);
+    assert.strictEqual(originalRow.revision_of, '');
+
+    const draft = createFreeformNoteDraft();
+    draft.content = '修订正文';
+    draft.timestamp = 2000;
+    const revision = await service.saveRevision(saved.eventId, draft);
+    assert.strictEqual(revision.version, 2);
+    assert.notStrictEqual(revision.eventId, saved.eventId);
+
+    const rows = store.rows('event');
+    assert.strictEqual(rows.length, 2);
+    const revisionRow = rows.find((row) => row.id === revision.eventId);
+    assert.strictEqual(revisionRow.revision_of, saved.eventId);
+    assert.strictEqual(revisionRow.version, 2);
+    assert.strictEqual(revisionRow.content, '修订正文');
+    const keptRow = rows.find((row) => row.id === saved.eventId);
+    assert.strictEqual(keptRow.content, '原始正文');
+    assert.strictEqual(keptRow.version, 1);
+    assert.strictEqual(keptRow.revision_of, '');
+
+    const items = await service.listRecent();
+    assert.strictEqual(items.length, 1);
+    assert.strictEqual(items[0].id, revision.eventId);
+    assert.strictEqual(items[0].version, 2);
+
+    const second = createFreeformNoteDraft();
+    second.content = '再次修订';
+    second.timestamp = 3000;
+    const third = await service.saveRevision(revision.eventId, second);
+    assert.strictEqual(third.version, 3);
+    assert.strictEqual(store.rows('event').find((row) => row.id === third.eventId).revision_of, saved.eventId);
+    const latest = await service.listRecent();
+    assert.strictEqual(latest.length, 1);
+    assert.strictEqual(latest[0].id, third.eventId);
+  });
+
+  await test('按类型筛选与首页近期都只显示最新版', async () => {
+    reset();
+    const first = createFreeformNoteDraft();
+    first.content = '初稿';
+    first.timestamp = 1000;
+    const saved = await service.save(first);
+
+    const draft = createFreeformNoteDraft();
+    draft.content = '改稿';
+    draft.timestamp = 2000;
+    const revision = await service.saveRevision(saved.eventId, draft);
+
+    const typed = await service.listByTypePage(FREE_NOTE_TYPE, 10, 0);
+    assert.strictEqual(typed.length, 1);
+    assert.strictEqual(typed[0].id, revision.eventId);
+
+    const home = await HomeDataService.open({});
+    const recent = await home.loadRecentNotes(5);
+    assert.strictEqual(recent.length, 1);
+    assert.strictEqual(recent[0].id, revision.eventId);
+  });
+
+  await test('分页按去重后的根切片，第二页不含重复根', async () => {
+    reset();
+    const expectedIds = [];
+    for (let index = 0; index < 3; index += 1) {
+      const draft = createFreeformNoteDraft();
+      draft.content = `根 ${index}`;
+      draft.timestamp = 1000 + index * 10;
+      const saved = await service.save(draft);
+      expectedIds.push(saved.eventId);
+      if (index < 2) {
+        const revision = createFreeformNoteDraft();
+        revision.content = `根 ${index} 修订`;
+        revision.timestamp = 1005 + index * 10;
+        const savedRevision = await service.saveRevision(saved.eventId, revision);
+        expectedIds[expectedIds.length - 1] = savedRevision.eventId;
+      }
+    }
+    const pageOne = await service.listRecentPage(2, 0);
+    const pageTwo = await service.listRecentPage(2, 2);
+    assert.strictEqual(pageOne.length, 2);
+    assert.strictEqual(pageTwo.length, 1);
+    const ids = pageOne.concat(pageTwo).map((item) => item.id);
+    assert.strictEqual(new Set(ids).size, 3);
+    for (const id of ids) {
+      assert.ok(expectedIds.includes(id));
+    }
+  });
+
+  await test('删除最新版后整条链不再出现在列表', async () => {
+    reset();
+    const first = createFreeformNoteDraft();
+    first.content = '待删初稿';
+    first.timestamp = 1000;
+    const saved = await service.save(first);
+
+    const draft = createFreeformNoteDraft();
+    draft.content = '待删改稿';
+    draft.timestamp = 2000;
+    const revision = await service.saveRevision(saved.eventId, draft);
+
+    await service.delete(revision.eventId);
+
+    assert.strictEqual((await service.listRecent()).length, 0);
+    assert.strictEqual((await service.listByTypePage(FREE_NOTE_TYPE, 10, 0)).length, 0);
+    const home = await HomeDataService.open({});
+    assert.strictEqual((await home.loadRecentNotes(5)).length, 0);
+    const rows = store.rows('event');
+    assert.strictEqual(rows.length, 2);
+    for (const row of rows) {
+      assert.strictEqual(row.deleted, 1);
+      assert.strictEqual(row.content, '');
+      assert.strictEqual(row.title, DELETED_NOTE_TITLE);
+    }
+  });
+
+  await test('连续两次修订版本号递增且不重复', async () => {
+    reset();
+    const first = createFreeformNoteDraft();
+    first.content = 'v1';
+    first.timestamp = 1000;
+    const saved = await service.save(first);
+
+    const second = createFreeformNoteDraft();
+    second.content = 'v2';
+    second.timestamp = 2000;
+    const v2 = await service.saveRevision(saved.eventId, second);
+
+    const third = createFreeformNoteDraft();
+    third.content = 'v3';
+    third.timestamp = 3000;
+    const v3 = await service.saveRevision(v2.eventId, third);
+
+    assert.strictEqual(v2.version, 2);
+    assert.strictEqual(v3.version, 3);
+    const versions = store.rows('event').map((row) => row.version).sort((left, right) => left - right);
+    assert.deepStrictEqual(versions, [1, 2, 3]);
+    const items = await service.listRecent();
+    assert.strictEqual(items.length, 1);
+    assert.strictEqual(items[0].version, 3);
+  });
+
   await test('锚点示例数据只载入一次', async () => {
     reset();
     const anchorService = await AnchorService.open({});
@@ -671,11 +818,13 @@ async function main() {
     store.rows('event').push(
       {
         id: 'ev_local', title: '本机速记', content: '正文', type: '自由', timestamp: 2000,
-        tags: '[]', level: 'local_only', related_decision_ids: '[]', related_relation_ids: '[]', deleted: 0
+        tags: '[]', level: 'local_only', related_decision_ids: '[]', related_relation_ids: '[]',
+        revision_of: '', version: 1, deleted: 0
       },
       {
         id: 'ev_sealed', title: '封存速记', content: '不该出现', type: '自由', timestamp: 3000,
-        tags: '[]', level: 'sealed', related_decision_ids: '[]', related_relation_ids: '[]', deleted: 0
+        tags: '[]', level: 'sealed', related_decision_ids: '[]', related_relation_ids: '[]',
+        revision_of: '', version: 1, deleted: 0
       }
     );
     const home = await HomeDataService.open({});

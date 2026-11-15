@@ -69,6 +69,8 @@ export const EVENT_COLS = {
   LEVEL: 'level',
   RELATED_DECISION_IDS: 'related_decision_ids',
   RELATED_RELATION_IDS: 'related_relation_ids',
+  REVISION_OF: 'revision_of',
+  VERSION: 'version',
   DELETED: 'deleted'
 } as const;
 

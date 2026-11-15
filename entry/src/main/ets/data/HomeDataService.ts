@@ -19,6 +19,7 @@ import { StatusRecord } from '../model/StatusRecord';
 import { BodyReading, PredictionItem, HomePulse, HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
 import { NoteListItem } from '../note/NoteListItem';
 import { toNoteListItems } from '../note/NoteListMapper';
+import { latestPerRoot } from '../note/QuickNoteService';
 
 /** Loads home page data from the database, replacing mock data. */
 export class HomeDataService {
@@ -91,10 +92,12 @@ export class HomeDataService {
     }));
   }
 
-  /** Returns the most recent notes for the home list. */
+  /** Returns the most recent notes for the home list, one row per revision chain. */
   async loadRecentNotes(limit: number = 5): Promise<NoteListItem[]> {
-    const events = await this.eventDao.queryVisibleRecent(limit);
-    return toNoteListItems(events);
+    const wanted = limit > 0 ? limit : 1;
+    // Sealed rows never occupy the window, so the newest revision of a chain is never cut off.
+    const events = await this.eventDao.queryAllVisible();
+    return toNoteListItems(latestPerRoot(events).slice(0, wanted));
   }
 
   /** Returns summary statistics for the dashboard. */

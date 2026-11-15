@@ -34,6 +34,12 @@ export interface SavedNote {
   decisionId: string | null;
 }
 
+/** Result of appending one revision to an existing note. */
+export interface SavedRevision {
+  eventId: string;
+  version: number;
+}
+
 /** Saves and lists quick notes on top of the event and decision tables. */
 export class QuickNoteService {
   private store: relationalStore.RdbStore;
@@ -82,6 +88,49 @@ export class QuickNoteService {
     }
 
     return { eventId: event.id, decisionId: decision === null ? null : decision.id };
+  }
+
+  /**
+   * Appends a revision of an existing note as a new event row. The original row keeps its text and
+   * version; the new row points at the root note and carries the next version number.
+   */
+  async saveRevision(originalId: string, draft: NoteDraft): Promise<SavedRevision> {
+    const validation = validateNoteDraft(draft);
+    if (!validation.valid) {
+      throw new Error(validation.errors[0].message);
+    }
+    const original = await this.eventDao.queryById(originalId);
+    if (original === null) {
+      throw new Error('note not found');
+    }
+    const rootId = noteRootId(original);
+    const event = buildEvent(draft);
+    event.revisionOf = rootId;
+
+    this.store.beginTransaction();
+    try {
+      // Deleted revisions stay in the chain, so a removed v2 still reserves version 2.
+      const chain = await this.chainRows(rootId);
+      const version = highestVersion(chain) + 1;
+      if (chain.some((row: Event) => (row.version ?? 1) === version)) {
+        throw new Error('revision version already exists');
+      }
+      event.version = version;
+      await this.eventDao.insert(event);
+      await this.saveMaterials(draft, event.id, event.timestamp, event.level);
+      this.store.commit();
+    } catch (error) {
+      this.store.rollBack();
+      throw error;
+    }
+
+    return { eventId: event.id, version: event.version ?? 1 };
+  }
+
+  /** Returns every row of one revision chain, deleted rows included. */
+  private async chainRows(rootId: string): Promise<Event[]> {
+    const rows = await this.eventDao.queryAllIncludingDeleted();
+    return rows.filter((row: Event) => noteRootId(row) === rootId);
   }
 
 
@@ -137,10 +186,10 @@ export class QuickNoteService {
     return this.listRecentPage(limit, 0);
   }
 
-  /** Returns one page of the newest notes. */
+  /** Returns one page of the newest notes; only the latest revision of each note shows up. */
   async listRecentPage(limit: number, offset: number): Promise<NoteListItem[]> {
-    const events = await this.eventDao.queryRecentPage(normalizeLimit(limit), Math.max(0, offset));
-    return toNoteListItems(events);
+    const roots = latestPerRoot(await this.eventDao.queryAllLive());
+    return toNoteListItems(pageOf(roots, limit, offset));
   }
 
   /** Returns the timestamps of notes in one range; sealed notes are left out. */
@@ -160,14 +209,14 @@ export class QuickNoteService {
     return this.listByTypePage(type, limit, 0);
   }
 
-  /** Returns one page of notes of one type. */
+  /** Returns one page of notes of one type; only the latest revision of each note shows up. */
   async listByTypePage(type: string, limit: number, offset: number): Promise<NoteListItem[]> {
     const value = type.trim();
     if (value.length === 0) {
       return this.listRecentPage(limit, offset);
     }
-    const events = await this.eventDao.queryByTypePage(value, normalizeLimit(limit), Math.max(0, offset));
-    return toNoteListItems(events);
+    const roots = latestPerRoot(await this.eventDao.queryLiveByType(value));
+    return toNoteListItems(pageOf(roots, limit, offset));
   }
 
   /** Returns one note for the detail page, or null when it no longer exists. */
@@ -216,23 +265,29 @@ export class QuickNoteService {
     return event !== null && event.deleted === true;
   }
 
-  /** Wipes the body, materials and linked texts of one note, then marks the rows deleted. */
+  /** Wipes the text of every revision in the chain, then marks the whole chain deleted. */
   async delete(noteId: string): Promise<void> {
-    const event = await this.eventDao.queryById(noteId);
-    if (event === null) {
+    const target = await this.eventDao.queryById(noteId);
+    if (target === null) {
       return;
     }
-    // The title becomes a tombstone so the row reads correctly wherever it is looked up by id.
-    event.title = DELETED_NOTE_TITLE;
-    event.content = '';
+    const rootId = noteRootId(target);
     this.store.beginTransaction();
     try {
-      await this.eventDao.update(event);
-      await this.clearMaterialText(noteId);
-      await this.materialDao.markDeletedByEvent(noteId);
-      await this.eventDao.markDeleted(noteId);
-      await this.clearDecisionText(noteId);
-      await this.planDao.updateLinkLabelsByTarget(PlanLinkModule.NOTE, noteId, DELETED_NOTE_TITLE);
+      const chain = await this.chainRows(rootId);
+      for (const row of chain) {
+        // The title becomes a tombstone so the row reads correctly wherever it is looked up by id.
+        row.title = DELETED_NOTE_TITLE;
+        row.content = '';
+        await this.eventDao.update(row);
+        await this.clearMaterialText(row.id);
+        await this.materialDao.markDeletedByEvent(row.id);
+        await this.clearDecisionText(row.id);
+        await this.planDao.updateLinkLabelsByTarget(PlanLinkModule.NOTE, row.id, DELETED_NOTE_TITLE);
+      }
+      for (const row of chain) {
+        await this.eventDao.markDeleted(row.id);
+      }
       this.store.commit();
     } catch (error) {
       this.store.rollBack();
@@ -264,13 +319,65 @@ function normalizeLimit(limit: number): number {
   return limit > 0 ? Math.floor(limit) : DEFAULT_NOTE_LIST_LIMIT;
 }
 
+/** Applies a page window to rows that are already deduplicated. */
+function pageOf(events: Event[], limit: number, offset: number): Event[] {
+  const start = Math.max(0, offset);
+  return events.slice(start, start + normalizeLimit(limit));
+}
+
 function buildEvent(draft: NoteDraft): Event {
   const event = createEvent();
   event.type = draft.templateId === null || draft.depth === NoteDepth.QUICK ?
     FREE_NOTE_TYPE : findNoteTemplate(draft.templateId).label;
   event.timestamp = draft.timestamp > 0 ? draft.timestamp : Date.now();
+  event.revisionOf = '';
+  event.version = 1;
   applyDraft(event, draft);
   return event;
+}
+
+/** Root id of a note revision; an original note is its own root. */
+function noteRootId(event: Event): string {
+  const root = event.revisionOf ?? '';
+  return root.length > 0 ? root : event.id;
+}
+
+/** Highest version present in a chain; 0 when the chain is empty. */
+function highestVersion(events: Event[]): number {
+  let max = 0;
+  for (const event of events) {
+    const version = event.version ?? 1;
+    if (version > max) {
+      max = version;
+    }
+  }
+  return max;
+}
+
+/** Keeps the highest revision of every note, in the order the query returned them. */
+export function latestPerRoot(events: Event[]): Event[] {
+  const best: Map<string, number> = new Map();
+  for (const event of events) {
+    const root = noteRootId(event);
+    const version = event.version ?? 1;
+    const current: number = best.get(root) ?? 0;
+    if (version > current) {
+      best.set(root, version);
+    }
+  }
+  const kept: Event[] = [];
+  const seen: string[] = [];
+  for (const event of events) {
+    const root = noteRootId(event);
+    if (seen.includes(root)) {
+      continue;
+    }
+    if ((event.version ?? 1) === (best.get(root) ?? 1)) {
+      seen.push(root);
+      kept.push(event);
+    }
+  }
+  return kept;
 }
 
 function applyDraft(event: Event, draft: NoteDraft): void {

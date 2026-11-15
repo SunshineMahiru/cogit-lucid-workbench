@@ -66,7 +66,7 @@ export struct NoteListPage {
         await this.service.listRecentPage(PAGE_SIZE, 0) :
         await this.service.listByTypePage(this.filter, PAGE_SIZE, 0);
       this.listVersion += 1;
-      this.hasMore = this.items.length >= PAGE_SIZE;
+      this.hasMore = this.items.length === PAGE_SIZE;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '加载失败，请重试' });
     } finally {
@@ -85,7 +85,7 @@ export struct NoteListPage {
         await this.service.listByTypePage(this.filter, PAGE_SIZE, this.items.length);
       this.items = this.items.concat(next);
       this.listVersion += 1;
-      this.hasMore = next.length >= PAGE_SIZE;
+      this.hasMore = next.length === PAGE_SIZE;
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '加载更多失败，请重试' });
     } finally {

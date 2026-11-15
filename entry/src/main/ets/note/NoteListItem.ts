@@ -13,6 +13,8 @@ export interface NoteListItem {
   relatedRelationIds?: string[];
   level: SecurityLevel;
   timestamp: number;
+  /** Revision number of the note, 1 for an original */
+  version?: number;
   /** Short display time: HH:mm for today, MM-DD HH:mm otherwise */
   timeLabel: string;
 }
