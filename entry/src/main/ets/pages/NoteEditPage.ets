@@ -13,11 +13,13 @@ import {
   QuickNoteService,
   createFreeformNoteDraft,
   findNoteTemplate,
+  formatNoteTime,
   mergeDraftEntries,
   securityLevelText,
   validateNoteDraft
 } from '../note';
 import { NoteEditorDraft, NoteEditorMeta, NoteEditorStore } from '../note/NoteEditorStore';
+import { DELETED_NOTE_TITLE } from '../note/NoteListMapper';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { ExperienceMaterial, MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
 import { NoteEditParams, PredictionCreateParams } from '../navigation/RouteParams';
@@ -47,6 +49,9 @@ export struct NoteEditPage {
   @Local isPreview: boolean = false;
   @Local noteId: string | null = null;
   @Local isEditing: boolean = false;
+  /** Set when the opened record has been deleted; the page then shows only its tombstone. */
+  @Local isDeleted: boolean = false;
+  @Local deletedAt: number = 0;
   /** Level from settings; the draft keeps its own level once the user picks one. */
   @Local defaultLevel: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Local materialScene: string = '';
@@ -634,7 +639,12 @@ export struct NoteEditPage {
       }
       const detail = await this.service.findNote(noteId);
       if (detail !== null) {
-        this.applyNoteDetail(detail);
+        this.isDeleted = await this.service.isDeleted(noteId);
+        if (this.isDeleted) {
+          this.deletedAt = detail.timestamp;
+        } else {
+          this.applyNoteDetail(detail);
+        }
       }
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '速记读取失败' });
@@ -864,12 +874,12 @@ export struct NoteEditPage {
   build() {
     AppDestination({
       route: 'note_edit',
-      title: this.isEditing ? '编辑速记' : '速记',
+      title: this.isDeleted ? '速记详情' : (this.isEditing ? '编辑速记' : '速记'),
       content: () => {
         this.noteEditBody();
       },
       menus: () => {
-        if (!this.isDraftPending()) {
+        if (!this.isDeleted && !this.isDraftPending()) {
           this.saveMenu();
         }
       },
@@ -885,6 +895,9 @@ export struct NoteEditPage {
         }
       },
       onDestinationBackPressed: () => {
+        if (this.isDeleted) {
+          return false;
+        }
         // The stored draft waits for the author's choice; leaving it alone keeps that choice open.
         if (this.isDraftPending()) {
           return false;
@@ -925,7 +938,23 @@ export struct NoteEditPage {
   @Builder
   noteEditBody() {
       Column() {
-        if (this.isDraftPending() && this.pendingDraft !== null) {
+        if (this.isDeleted) {
+          Column({ space: 12 }) {
+            Text(DELETED_NOTE_TITLE)
+              .fontSize(AppTheme.font.headline)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(AppTheme.color.text)
+              .width('100%')
+            Text(formatNoteTime(this.deletedAt))
+              .fontSize(AppTheme.font.body)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+          }
+          .width('100%')
+          .height('100%')
+          .padding(AppTheme.spacing.s20)
+          .alignItems(HorizontalAlign.Start)
+        } else if (this.isDraftPending() && this.pendingDraft !== null) {
           this.draftResumePanel();
         } else {
         Scroll() {

@@ -293,6 +293,7 @@ Module._load = function (request, parent, isMain) {
 };
 
 const { QuickNoteService, FREE_NOTE_TYPE } = require('./out2/note/QuickNoteService');
+const { DELETED_NOTE_TITLE } = require('./out2/note/NoteListMapper');
 const { createNoteDraft, createFreeformNoteDraft } = require('./out2/note/NoteDraftFactory');
 const { NoteFieldKey } = require('./out2/note/NoteFieldKey');
 const { NoteTemplateId } = require('./out2/note/NoteTemplateId');
@@ -302,6 +303,10 @@ const { RelationService } = require('./out2/relation/RelationService');
 const { StatusService } = require('./out2/status/StatusService');
 const { HomeDataService } = require('./out2/data/HomeDataService');
 const { ExperienceMaterialDao } = require('./out2/db/dao/ExperienceMaterialDao');
+const { EventDao } = require('./out2/db/dao/EventDao');
+const { DecisionDao } = require('./out2/db/dao/DecisionDao');
+const { prepareExportBundle } = require('./out2/export/ExportFilter');
+const { renderExportDocument } = require('./out2/export/render');
 const { PredictionService } = require('./out2/prediction/PredictionService');
 const { ReviewService } = require('./out2/review/ReviewService');
 const { rangeFor } = require('./out2/review/ReviewRange');
@@ -1078,19 +1083,62 @@ async function main() {
     assert.strictEqual(store.rows('experience_material')[0].level, SecurityLevel.LOCAL_ONLY);
   });
 
-  await test('删除记录只做标记，正文与材料仍留在库里', async () => {
+  await test('删除清空正文、材料与关联文本，导出不再带出', async () => {
     reset();
-    const draft = createFreeformNoteDraft();
-    draft.content = 'MARKER_DEL_9f2';
+    const draft = createNoteDraft(NoteTemplateId.DECISION);
+    fill(draft, NoteFieldKey.BACKGROUND, 'MARKER_DECISION_BG');
+    fill(draft, NoteFieldKey.OPTIONS, '甲、乙');
+    fill(draft, NoteFieldKey.CHOICE, 'MARKER_CHOICE');
+    fill(draft, NoteFieldKey.EXPECTED_OUTCOME, 'MARKER_EXPECT');
+    draft.timestamp = 1000;
+    draft.level = SecurityLevel.ANALYZABLE;
+    draft.materials = [{ kind: 'scene', text: 'MARKER_MATERIAL_9f2' }];
     const saved = await service.save(draft);
+    store.rows('plan_link').push({
+      id: 'lk_1', plan_id: 'pl_1', node_id: 'pn_1', module: 'note',
+      target_id: saved.eventId, label: 'MARKER_LINK_LABEL', created_at: 1000
+    });
 
     await service.delete(saved.eventId);
 
-    assert.strictEqual(store.rows('event')[0].deleted, 1);
-    assert.strictEqual(store.rows('event')[0].content, 'MARKER_DEL_9f2');
-    assert.strictEqual(store.rows('experience_material')[0].deleted, 1);
-    const listed = await service.listRecent(50);
-    assert.ok(!listed.some((row) => row.id === saved.eventId), '删除后仍出现在列表里');
+    const eventRow = store.rows('event')[0];
+    assert.strictEqual(eventRow.deleted, 1);
+    assert.strictEqual(eventRow.content, '');
+    assert.strictEqual(eventRow.title, DELETED_NOTE_TITLE);
+    assert.strictEqual(eventRow.id, saved.eventId);
+    assert.strictEqual(eventRow.timestamp, 1000);
+    assert.strictEqual(eventRow.level, SecurityLevel.ANALYZABLE);
+
+    const decisionRow = store.rows('decision')[0];
+    assert.strictEqual(decisionRow.title, '');
+    assert.strictEqual(decisionRow.background, '');
+    assert.strictEqual(decisionRow.options, '[]');
+    assert.strictEqual(decisionRow.choice, '');
+    assert.strictEqual(decisionRow.expected_outcome, '');
+    assert.strictEqual(decisionRow.id, saved.decisionId);
+
+    const materialRow = store.rows('experience_material')[0];
+    assert.strictEqual(materialRow.deleted, 1);
+    assert.strictEqual(materialRow.text, '');
+
+    assert.strictEqual(store.rows('plan_link')[0].label, DELETED_NOTE_TITLE);
+
+    const eventDao = new EventDao(store);
+    const decisionDao = new DecisionDao(store);
+    const markdown = renderExportDocument(prepareExportBundle({
+      events: await eventDao.queryAll(),
+      decisions: await decisionDao.queryAll(),
+      relations: [],
+      predictions: [],
+      anchors: [],
+      statusRecords: [],
+      reviews: [],
+      plans: [],
+      exportedAt: 1000
+    }));
+    assert.strictEqual(markdown.includes('MARKER_DECISION_BG'), false, '导出仍带出被删正文');
+    assert.strictEqual(markdown.includes('MARKER_CHOICE'), false, '导出仍带出被删决策');
+    assert.strictEqual(markdown.includes('MARKER_MATERIAL_9f2'), false, '导出仍带出被删材料');
   });
 
   await test('修订预测递增版本并继承 rootId', async () => {

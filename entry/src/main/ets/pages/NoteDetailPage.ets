@@ -9,6 +9,7 @@ import {
   securityLevelText
 } from '../note';
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
+import { DELETED_NOTE_TITLE } from '../note/NoteListMapper';
 import { NoteDetailParams, NoteEditParams, PlanAttachParams } from '../navigation/RouteParams';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
@@ -22,6 +23,7 @@ export struct NoteDetailPage {
   @Local detail: NoteDetail | null = null;
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
+  @Local isDeleted: boolean = false;
   @Local isPreview: boolean = false;
   private navStack: NavPathStack | null = null;
 
@@ -34,6 +36,11 @@ export struct NoteDetailPage {
     try {
       const service = await QuickNoteService.open(hostContext);
       this.detail = await service.findNote(noteId);
+      if (this.detail === null) {
+        this.isDeleted = false;
+      } else {
+        this.isDeleted = await service.isDeleted(noteId);
+      }
       this.missing = this.detail === null;
     } catch (error) {
       this.loadPreview(noteId);
@@ -45,6 +52,7 @@ export struct NoteDetailPage {
   private loadPreview(noteId: string): void {
     this.isPreview = true;
     this.detail = previewStore.findNote(noteId);
+    this.isDeleted = false;
     this.missing = this.detail === null;
     this.isLoading = false;
   }
@@ -106,7 +114,7 @@ export struct NoteDetailPage {
   }
 
   private openEdit(): void {
-    if (this.detail === null || this.navStack === null) {
+    if (this.detail === null || this.navStack === null || this.isDeleted) {
       return;
     }
     const params: NoteEditParams = { templateId: null, noteId: this.detail.id };
@@ -186,7 +194,9 @@ export struct NoteDetailPage {
         this.noteDetailBody();
       },
       menus: () => {
-        this.editMenu();
+        if (!this.isLoading && !this.missing && !this.isDeleted && this.detail !== null) {
+          this.editMenu();
+        }
       },
       onDestinationReady: (context: NavDestinationContext) => {
         this.navStack = context.pathStack;
@@ -230,6 +240,23 @@ export struct NoteDetailPage {
         .width('100%')
         .height('100%')
         .justifyContent(FlexAlign.Center)
+        .backgroundColor(Color.Transparent)
+      } else if (this.isDeleted) {
+        Column({ space: 12 }) {
+          Text(DELETED_NOTE_TITLE)
+            .fontSize(AppTheme.font.headline)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(AppTheme.color.text)
+            .width('100%')
+          Text(this.detail.timeLabel)
+            .fontSize(AppTheme.font.body)
+            .fontColor(AppTheme.color.textMuted)
+            .width('100%')
+        }
+        .width('100%')
+        .height('100%')
+        .padding(AppTheme.spacing.s20)
+        .alignItems(HorizontalAlign.Start)
         .backgroundColor(Color.Transparent)
       } else {
         Scroll() {

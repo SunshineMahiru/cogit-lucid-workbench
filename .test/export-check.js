@@ -725,6 +725,11 @@ async function main() {
         id: 'ev_sealed', title: '封存事件', content: '不导出', type: '情绪',
         timestamp: EARLIER, tags: '[]', level: 'sealed',
         related_decision_ids: '[]', related_relation_ids: '[]', deleted: 0
+      },
+      {
+        id: 'ev_deleted', title: '已删除记录', content: 'MARKER_DELETED_BODY_7c1', type: '速记',
+        timestamp: NOW, tags: '[]', level: 'local_only',
+        related_decision_ids: '[]', related_relation_ids: '[]', deleted: 1
       }
     );
     store.rows('decision').push({
@@ -766,6 +771,7 @@ async function main() {
     const options = { includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: true };
     const markdown = await service.buildMarkdown(NOW, options);
     assert.strictEqual(markdown.includes('封存事件'), false);
+    assert.strictEqual(markdown.includes('MARKER_DELETED_BODY_7c1'), false, '被删正文');
     assert.ok(markdown.includes('## 事件'));
     assert.ok(markdown.includes('- 记录总数：9'));
     assert.ok(markdown.indexOf('1. 第一条') < markdown.indexOf('2. 第二条'));

@@ -56,6 +56,32 @@ export class DecisionDao {
     }
   }
 
+  /** Returns the decisions that cite one event. */
+  async queryByEvent(eventId: string): Promise<Decision[]> {
+    const decisions = await this.queryAll();
+    const matched: Decision[] = [];
+    for (const decision of decisions) {
+      if (decision.relatedEventIds.includes(eventId)) {
+        matched.push(decision);
+      }
+    }
+    return matched;
+  }
+
+  /** Clears the text fields of one decision while keeping its id, time and level. */
+  async clearText(id: string): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [DECISION_COLS.TITLE]: '',
+      [DECISION_COLS.BACKGROUND]: '',
+      [DECISION_COLS.OPTIONS]: JSON.stringify([]),
+      [DECISION_COLS.CHOICE]: '',
+      [DECISION_COLS.EXPECTED_OUTCOME]: ''
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.DECISION);
+    predicates.equalTo(DECISION_COLS.ID, id);
+    return this.store.update(values, predicates);
+  }
+
   async countVisible(): Promise<number> {
     return queryCount(this.store, `SELECT COUNT(*) AS total FROM ${DB_TABLES.DECISION} WHERE level <> 'sealed'`);
   }

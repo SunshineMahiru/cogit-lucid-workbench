@@ -7,13 +7,16 @@ import { createEvent } from '../model/factories';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
 import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
+import { PlanDao } from '../db/dao/PlanDao';
 import { DbHelper } from '../db/DbHelper';
+import { DB_TABLES, MATERIAL_COLS } from '../db/DbConstants';
+import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { NoteDepth, NoteDraft, NoteMaterialDraft } from './NoteDraft';
 import { composeNoteContent, deriveNoteTitle } from './NoteContentComposer';
 import { buildDecisionFromNote } from './NoteDecisionComposer';
 import { NoteListItem } from './NoteListItem';
-import { toNoteListItems } from './NoteListMapper';
+import { DELETED_NOTE_TITLE, toNoteListItems } from './NoteListMapper';
 import { NoteDetail, toNoteDetail } from './NoteDetail';
 import { findNoteTemplate } from './templates';
 import { validateNoteDraft } from './NoteValidation';
@@ -37,12 +40,14 @@ export class QuickNoteService {
   private eventDao: EventDao;
   private decisionDao: DecisionDao;
   private materialDao: ExperienceMaterialDao;
+  private planDao: PlanDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.store = store;
     this.eventDao = new EventDao(store);
     this.decisionDao = new DecisionDao(store);
     this.materialDao = new ExperienceMaterialDao(store);
+    this.planDao = new PlanDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -205,17 +210,52 @@ export class QuickNoteService {
     return detail;
   }
 
-  /** Marks one note and its materials deleted; the rows stay for history references. */
+  /** True when the note is marked deleted; such a note only shows its deletion state. */
+  async isDeleted(noteId: string): Promise<boolean> {
+    const event = await this.eventDao.queryById(noteId);
+    return event !== null && event.deleted === true;
+  }
+
+  /** Wipes the body, materials and linked texts of one note, then marks the rows deleted. */
   async delete(noteId: string): Promise<void> {
+    const event = await this.eventDao.queryById(noteId);
+    if (event === null) {
+      return;
+    }
+    // The title becomes a tombstone so the row reads correctly wherever it is looked up by id.
+    event.title = DELETED_NOTE_TITLE;
+    event.content = '';
     this.store.beginTransaction();
     try {
-      await this.eventDao.markDeleted(noteId);
+      await this.eventDao.update(event);
+      await this.clearMaterialText(noteId);
       await this.materialDao.markDeletedByEvent(noteId);
+      await this.eventDao.markDeleted(noteId);
+      await this.clearDecisionText(noteId);
+      await this.planDao.updateLinkLabelsByTarget(PlanLinkModule.NOTE, noteId, DELETED_NOTE_TITLE);
       this.store.commit();
     } catch (error) {
       this.store.rollBack();
       throw error;
     }
+  }
+
+  /** Blanks the text fields of every decision that cites this note. */
+  private async clearDecisionText(eventId: string): Promise<void> {
+    const decisions = await this.decisionDao.queryByEvent(eventId);
+    for (const decision of decisions) {
+      await this.decisionDao.clearText(decision.id);
+    }
+  }
+
+  /** Blank text in every material of one event before the rows are marked deleted. */
+  private async clearMaterialText(eventId: string): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [MATERIAL_COLS.TEXT]: ''
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
+    predicates.equalTo(MATERIAL_COLS.EVENT_ID, eventId);
+    return this.store.update(values, predicates);
   }
 }
 

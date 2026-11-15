@@ -5,12 +5,16 @@ import { NoteListItem } from './NoteListItem';
 /** Maximum length of the list summary. */
 export const NOTE_SUMMARY_MAX_LENGTH = 48;
 
+/** Title shown for a note whose source row has been deleted. */
+export const DELETED_NOTE_TITLE = '来源已删除';
+
 /** Projects a stored event into a list row. */
 export function toNoteListItem(event: Event, now: number = Date.now()): NoteListItem {
+  const deleted = event.deleted === true;
   return {
     id: event.id,
-    title: event.title,
-    summary: summarize(event.content),
+    title: deleted ? DELETED_NOTE_TITLE : event.title,
+    summary: deleted ? '' : summarize(event.content),
     type: event.type,
     tags: event.tags.slice(),
     relatedRelationIds: event.relatedRelationIds.slice(),

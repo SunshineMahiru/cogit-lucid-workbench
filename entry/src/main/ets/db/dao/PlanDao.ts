@@ -303,6 +303,17 @@ export class PlanDao {
       (resultSet: relationalStore.ResultSet) => this.mapLink(resultSet));
   }
 
+  /** Rewrites the label of every link that points at one record, used when that record is deleted. */
+  async updateLinkLabelsByTarget(module: string, targetId: string, label: string): Promise<number> {
+    const values: relationalStore.ValuesBucket = {
+      [PLAN_LINK_COLS.LABEL]: label
+    };
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN_LINK);
+    predicates.equalTo(PLAN_LINK_COLS.MODULE, module);
+    predicates.equalTo(PLAN_LINK_COLS.TARGET_ID, targetId);
+    return this.store.update(values, predicates);
+  }
+
   /** Replaces every link that points at one record inside a transaction, so retries cannot duplicate rows. */
   async replaceLinksByTarget(module: string, targetId: string, links: PlanLink[]): Promise<void> {
     this.store.beginTransaction();
