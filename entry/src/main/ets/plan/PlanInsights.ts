@@ -15,6 +15,8 @@ export interface NodeProgress {
   done: number;
   openCarried: number;
   openNew: number;
+  paused: number;
+  discarded: number;
   total: number;
 }
 
@@ -75,13 +77,15 @@ export interface LinkCount {
   count: number;
 }
 
-/** Splits every node's checklist into done, open-carried and open-new. */
+/** Splits every node's checklist into done, open-carried, open-new, paused and discarded. */
 export function buildNodeProgress(nodes: PlanNode[], items: PlanItem[]): NodeProgress[] {
   const rows: NodeProgress[] = [];
   for (const node of nodes) {
     let done = 0;
     let openCarried = 0;
     let openNew = 0;
+    let paused = 0;
+    let discarded = 0;
     let total = 0;
     for (const item of items) {
       if (item.nodeId !== node.id) {
@@ -90,6 +94,10 @@ export function buildNodeProgress(nodes: PlanNode[], items: PlanItem[]): NodePro
       total += 1;
       if (item.done) {
         done += 1;
+      } else if (item.disposition === 'paused') {
+        paused += 1;
+      } else if (item.disposition === 'discarded') {
+        discarded += 1;
       } else if (item.carriedFrom !== undefined && item.carriedFrom.length > 0) {
         openCarried += 1;
       } else {
@@ -105,6 +113,8 @@ export function buildNodeProgress(nodes: PlanNode[], items: PlanItem[]): NodePro
       done: done,
       openCarried: openCarried,
       openNew: openNew,
+      paused: paused,
+      discarded: discarded,
       total: total
     });
   }
@@ -112,12 +122,16 @@ export function buildNodeProgress(nodes: PlanNode[], items: PlanItem[]): NodePro
   return rows;
 }
 
-/** Carry-over share of one week; zero when the week has no checklist. */
+/**
+ * Carry-over share of one week's still-open items; paused and discarded items leave the base,
+ * so zero means no item is left to carry.
+ */
 export function carryRatePercent(row: NodeProgress): number {
-  if (row.total === 0) {
+  const active = row.total - row.paused - row.discarded;
+  if (active <= 0) {
     return 0;
   }
-  return Math.round(row.openCarried / row.total * 100);
+  return Math.round(row.openCarried / active * 100);
 }
 
 /** Carry-over series for the line chart; weeks without items are skipped. */
