@@ -3,9 +3,12 @@ import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewHistoryItem, ReviewService } from '../review';
+import { RecentDecisionItem } from '../review/ReviewService';
 import { ReviewDetailParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { previewStore } from '../preview/PreviewStore';
+
+const DECISION_LABEL_LIMIT: number = 12;
 
 /** Saved review sessions, newest first; taps open the read-only detail. */
 @ComponentV2
@@ -13,6 +16,8 @@ export struct ReviewHistoryPage {
   @Local items: ReviewHistoryItem[] = [];
   @Local isLoading: boolean = true;
   @Local range: string = 'all';
+  @Local decisionFilter: string = '';
+  @Local decisions: RecentDecisionItem[] = [];
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -30,6 +35,14 @@ export struct ReviewHistoryPage {
     try {
       const service = await ReviewService.open(hostContext);
       this.items = await service.history();
+      try {
+        this.decisions = await service.recentDecisions(20);
+      } catch (error) {
+        this.decisions = [];
+      }
+      if (this.decisionFilter.length > 0) {
+        this.items = await service.historyByDecision(this.decisionFilter);
+      }
       this.isLoading = false;
     } catch (error) {
       this.items = previewStore.reviewHistory();
@@ -52,6 +65,33 @@ export struct ReviewHistoryPage {
       }
     }
     return rows;
+  }
+
+  /** Narrow Chip label for one decision; long titles are cut to 12 characters. */
+  private decisionLabel(title: string): string {
+    const trimmed = title.trim();
+    if (trimmed.length === 0) {
+      return '未填写标题';
+    }
+    return trimmed.length > DECISION_LABEL_LIMIT ? trimmed.substring(0, DECISION_LABEL_LIMIT) : trimmed;
+  }
+
+  /** Replaces the rows with those citing the chosen decision; an empty id restores the full list. */
+  private async selectDecision(id: string): Promise<void> {
+    if (this.decisionFilter === id) {
+      return;
+    }
+    this.decisionFilter = id;
+    const hostContext = this.getUIContext().getHostContext();
+    if (hostContext === undefined) {
+      return;
+    }
+    try {
+      const service = await ReviewService.open(hostContext);
+      this.items = id.length === 0 ? await service.history() : await service.historyByDecision(id);
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '按决定筛选失败，请重试' });
+    }
   }
 
   private openDetail(reviewId: string): void {
@@ -97,6 +137,20 @@ export struct ReviewHistoryPage {
   }
 
   @Builder
+  decisionChip(value: string, label: string, chipId: string) {
+    Text(label)
+      .id(chipId)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.decisionFilter === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.decisionFilter === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.selectDecision(value);
+      })
+  }
+
+  @Builder
   reviewHistoryBody() {
       Column() {
         if (this.isLoading) {
@@ -109,7 +163,7 @@ export struct ReviewHistoryPage {
           .width('100%')
           .layoutWeight(1)
           .justifyContent(FlexAlign.Center)
-        } else if (this.items.length === 0) {
+        } else if (this.items.length === 0 && this.decisionFilter.length === 0) {
           Column() {
             NoteEmptyState({
               title: '还没有复盘记录',
@@ -131,9 +185,22 @@ export struct ReviewHistoryPage {
             .width('100%')
             .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.page })
 
+            Scroll() {
+              Row({ space: 6 }) {
+                this.decisionChip('', '全部决定', 'history_decision_all')
+                ForEach(this.decisions, (decision: RecentDecisionItem) => {
+                  this.decisionChip(decision.id, this.decisionLabel(decision.title), `history_decision_${decision.id}`)
+                }, (decision: RecentDecisionItem) => decision.id)
+              }
+            }
+            .width('100%')
+            .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8 })
+            .scrollable(ScrollDirection.Horizontal)
+            .scrollBar(BarState.Off)
+
             if (this.filtered().length === 0) {
               Column() {
-                Text('这段时间没有复盘')
+                Text('当前条件下没有复盘')
                   .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textMuted)
               }
