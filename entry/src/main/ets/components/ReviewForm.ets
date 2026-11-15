@@ -18,6 +18,7 @@ import {
 import { PREVIEW_ANCHORS, PREVIEW_REVIEW_STATS } from '../preview/PreviewData';
 import { previewStore } from '../preview/PreviewStore';
 import { ReviewDraftStore } from '../review/ReviewDraftStore';
+import { RecentDecisionItem } from '../review/ReviewService';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 const ZONE_LABELS: string[] = [
@@ -76,6 +77,8 @@ export struct ReviewForm {
   @Local isSaving: boolean = false;
   @Local saved: boolean = false;
   @Local selectedAnchorIds: string[] = [];
+  @Local decisionIds: string[] = [];
+  @Local decisions: RecentDecisionItem[] = [];
   @Local isPreview: boolean = false;
   private service: ReviewService | null = null;
   private draftStore: ReviewDraftStore | null = null;
@@ -101,6 +104,11 @@ export struct ReviewForm {
       this.anchors = await this.service.loadAnchors(3);
       this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
       this.materials = await this.service.recentMaterials(50);
+      try {
+        this.decisions = await this.service.recentDecisions(20);
+      } catch (error) {
+        this.decisions = [];
+      }
       const draft = await this.draftStore.loadFor(this.period, this.planNodeId);
       if (draft !== null) {
         this.facts = draft.facts;
@@ -116,6 +124,7 @@ export struct ReviewForm {
           this.zoneRevision = draft.payload.revision;
           this.evidenceDrafts = (draft.payload.evidenceDrafts ?? []).slice();
           this.costDrafts = (draft.payload.costDrafts ?? []).slice();
+          this.decisionIds = (draft.payload.decisionIds ?? []).slice();
         }
         if (draft.anchorIds.length > 0) {
           this.selectedAnchorIds = draft.anchorIds.slice();
@@ -139,9 +148,21 @@ export struct ReviewForm {
       evidence: this.zoneEvidence,
       cost: this.zoneCost,
       revision: this.zoneRevision,
+      decisionIds: this.uniqueDecisionIds(),
       evidenceDrafts: this.evidenceDrafts.slice(),
       costDrafts: this.costDrafts.slice()
     };
+  }
+
+  /** Drops repeated decision ids while keeping the order they were picked in. */
+  private uniqueDecisionIds(): string[] {
+    const result: string[] = [];
+    for (const id of this.decisionIds) {
+      if (!result.includes(id)) {
+        result.push(id);
+      }
+    }
+    return result;
   }
 
   private buildDraft(): ReviewDraft {
@@ -245,6 +266,19 @@ export struct ReviewForm {
       this.selectedMaterialIds = this.selectedMaterialIds.filter((item: string) => item !== id);
     } else {
       this.selectedMaterialIds = this.selectedMaterialIds.concat([id]);
+    }
+    this.persistDraft();
+  }
+
+  private isDecisionSelected(id: string): boolean {
+    return this.decisionIds.includes(id);
+  }
+
+  private toggleDecision(id: string): void {
+    if (this.isDecisionSelected(id)) {
+      this.decisionIds = this.decisionIds.filter((item: string) => item !== id);
+    } else {
+      this.decisionIds = this.decisionIds.concat([id]);
     }
     this.persistDraft();
   }
@@ -401,6 +435,7 @@ export struct ReviewForm {
     this.evidenceRevision += 1;
     this.costDrafts = [];
     this.costRevision += 1;
+    this.decisionIds = [];
     this.saved = false;
     if (this.draftStore !== null) {
       this.draftStore.clearFor(this.period, this.planNodeId).catch(() => {
@@ -686,6 +721,50 @@ export struct ReviewForm {
     .alignItems(HorizontalAlign.Start)
   }
 
+  @Builder
+  decisionPicker() {
+    Column({ space: 8 }) {
+      Text('涉及的决定')
+        .fontSize(AppTheme.font.bodyStrong)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppTheme.color.text)
+        .width('100%')
+      if (this.decisions.length === 0) {
+        Text('还没有决策记录')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+          .width('100%')
+          .id('review_decision_empty')
+      }
+      ForEach(this.decisions, (decision: RecentDecisionItem) => {
+        Column({ space: 2 }) {
+          Text(decision.title)
+            .fontSize(AppTheme.font.bodyStrong)
+            .fontColor(this.isDecisionSelected(decision.id) ? AppTheme.color.primaryDeep : AppTheme.color.text)
+            .width('100%')
+          Text(decision.choice)
+            .fontSize(AppTheme.font.caption)
+            .fontColor(this.isDecisionSelected(decision.id) ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+            .width('100%')
+        }
+        .width('100%')
+        .padding(AppTheme.spacing.s10)
+        .backgroundColor(this.isDecisionSelected(decision.id) ? AppTheme.color.tint : AppTheme.color.surfaceAlt)
+        .borderRadius(AppTheme.radius.sm)
+        .border({
+          width: this.isDecisionSelected(decision.id) ? 1 : 0,
+          color: AppTheme.color.borderSelected
+        })
+        .id(`review_decision_${decision.id}`)
+        .onClick(() => {
+          this.toggleDecision(decision.id);
+        })
+      }, (decision: RecentDecisionItem) => `${decision.id}_${this.isDecisionSelected(decision.id) ? 1 : 0}`)
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
   build() {
     Column() {
       if (this.planNodeId.length > 0) {
@@ -866,6 +945,10 @@ export struct ReviewForm {
 
             if (this.step === 4) {
               this.costEditor()
+            }
+
+            if (this.step === LAST_ZONE) {
+              this.decisionPicker()
             }
 
             if (this.step === 0) {
