@@ -1,4 +1,5 @@
 import { Anchor } from '../model/Anchor';
+import { CostDimension, CostDraft } from '../model/CostNote';
 import { EvidenceDraft, EvidenceEffect, EvidenceSource } from '../model/EvidenceItem';
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { ReviewPeriod } from '../model/ReviewPeriod';
@@ -58,6 +59,8 @@ export struct ReviewForm {
   @Local selectedMaterialIds: string[] = [];
   @Local evidenceDrafts: EvidenceDraft[] = [];
   @Local evidenceRevision: number = 0;
+  @Local costDrafts: CostDraft[] = [];
+  @Local costRevision: number = 0;
   @Local step: number = 0;
   @Local facts: string = '';
   @Local interpretation: string = '';
@@ -112,6 +115,7 @@ export struct ReviewForm {
           this.zoneCost = draft.payload.cost;
           this.zoneRevision = draft.payload.revision;
           this.evidenceDrafts = (draft.payload.evidenceDrafts ?? []).slice();
+          this.costDrafts = (draft.payload.costDrafts ?? []).slice();
         }
         if (draft.anchorIds.length > 0) {
           this.selectedAnchorIds = draft.anchorIds.slice();
@@ -135,7 +139,8 @@ export struct ReviewForm {
       evidence: this.zoneEvidence,
       cost: this.zoneCost,
       revision: this.zoneRevision,
-      evidenceDrafts: this.evidenceDrafts.slice()
+      evidenceDrafts: this.evidenceDrafts.slice(),
+      costDrafts: this.costDrafts.slice()
     };
   }
 
@@ -294,6 +299,56 @@ export struct ReviewForm {
     this.persistDraft();
   }
 
+  private replaceCost(index: number, draft: CostDraft): void {
+    const next: CostDraft[] = this.costDrafts.slice();
+    next[index] = draft;
+    this.costDrafts = next;
+    this.persistDraft();
+  }
+
+  private updateCostDimension(index: number, dimension: CostDimension): void {
+    const current: CostDraft = this.costDrafts[index];
+    const updated: CostDraft = {
+      dimension: dimension,
+      text: current.text,
+      bearable: current.bearable
+    };
+    this.replaceCost(index, updated);
+  }
+
+  private updateCostText(index: number, text: string): void {
+    const current: CostDraft = this.costDrafts[index];
+    const updated: CostDraft = {
+      dimension: current.dimension,
+      text: text,
+      bearable: current.bearable
+    };
+    this.replaceCost(index, updated);
+  }
+
+  private updateCostBearable(index: number, bearable: boolean): void {
+    const current: CostDraft = this.costDrafts[index];
+    const updated: CostDraft = {
+      dimension: current.dimension,
+      text: current.text,
+      bearable: bearable
+    };
+    this.replaceCost(index, updated);
+  }
+
+  private addCost(): void {
+    const blank: CostDraft = { dimension: 'time', text: '', bearable: true };
+    this.costDrafts = this.costDrafts.concat([blank]);
+    this.costRevision += 1;
+    this.persistDraft();
+  }
+
+  private removeCost(index: number): void {
+    this.costDrafts = this.costDrafts.filter((draft: CostDraft, itemIndex: number) => itemIndex !== index);
+    this.costRevision += 1;
+    this.persistDraft();
+  }
+
   private async complete(): Promise<void> {
     if (this.isSaving) {
       return;
@@ -344,6 +399,8 @@ export struct ReviewForm {
     this.zoneRevision = '';
     this.evidenceDrafts = [];
     this.evidenceRevision += 1;
+    this.costDrafts = [];
+    this.costRevision += 1;
     this.saved = false;
     if (this.draftStore !== null) {
       this.draftStore.clearFor(this.period, this.planNodeId).catch(() => {
@@ -512,6 +569,117 @@ export struct ReviewForm {
         .id('evidence_add')
         .onClick(() => {
           this.addEvidence();
+        })
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  costDimensionChip(index: number, value: CostDimension, label: string) {
+    Text(label)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.costDrafts[index].dimension === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.costDrafts[index].dimension === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .id(`cost_dimension_${index}_${value}`)
+      .onClick(() => {
+        this.updateCostDimension(index, value);
+      })
+  }
+
+  @Builder
+  costEditor() {
+    Column({ space: 8 }) {
+      Column({ space: 2 }) {
+        Text('成本')
+          .fontSize(AppTheme.font.bodyStrong)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(AppTheme.color.text)
+          .width('100%')
+        Text('把这一区的代价分成一条条，并标出是否承受得住。')
+          .fontSize(AppTheme.font.caption)
+          .lineHeight(17)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+
+      if (this.costDrafts.length === 0) {
+        Text('还没有成本，点下方「添加一条成本」。')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+          .width('100%')
+      }
+
+      ForEach(this.costDrafts, (draft: CostDraft, index: number) => {
+        Column({ space: 6 }) {
+          Flex({ wrap: FlexWrap.Wrap }) {
+            this.costDimensionChip(index, 'time', '时间')
+            this.costDimensionChip(index, 'attention', '注意力')
+            this.costDimensionChip(index, 'body', '身体')
+            this.costDimensionChip(index, 'relationship', '关系')
+            this.costDimensionChip(index, 'money', '金钱')
+            this.costDimensionChip(index, 'other', '其他')
+          }
+          .width('100%')
+
+          Row({ space: 8 }) {
+            TextInput({ text: draft.text, placeholder: '这条成本具体是什么' })
+              .fontSize(AppTheme.font.bodyStrong)
+              .padding(AppTheme.spacing.s10)
+              .layoutWeight(1)
+              .backgroundColor(AppTheme.color.surface)
+              .borderRadius(AppTheme.radius.sm)
+              .border({ width: 0.5, color: AppTheme.color.border })
+              .onChange((value: string) => {
+                this.updateCostText(index, value);
+              })
+            Text('可承受')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.textSecondary)
+            Toggle({ type: ToggleType.Switch, isOn: draft.bearable })
+              .id(`cost_bearable_${index}`)
+              .onChange((isOn: boolean) => {
+                this.updateCostBearable(index, isOn);
+              })
+          }
+          .width('100%')
+
+          Row() {
+            Text(draft.bearable ? '可承受' : '不可承受')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(draft.bearable ? AppTheme.color.textSecondary : AppTheme.color.warning)
+            Blank()
+            Text('删除')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.danger)
+              .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+              .id(`cost_remove_${index}`)
+              .onClick(() => {
+                this.removeCost(index);
+              })
+          }
+          .width('100%')
+        }
+        .width('100%')
+        .padding(AppTheme.spacing.s10)
+        .backgroundColor(AppTheme.color.surfaceAlt)
+        .borderRadius(AppTheme.radius.md)
+      }, (draft: CostDraft, index: number) => `${this.costRevision}_${index}_${draft.dimension}_${draft.bearable ? 1 : 0}`)
+
+      Text('添加一条成本')
+        .fontSize(AppTheme.font.bodyStrong)
+        .fontColor(AppTheme.color.primary)
+        .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+        .backgroundColor(AppTheme.color.tint)
+        .borderRadius(AppTheme.radius.lg)
+        .id('cost_add')
+        .onClick(() => {
+          this.addCost();
         })
     }
     .width('100%')
@@ -694,6 +862,10 @@ export struct ReviewForm {
 
             if (this.step === 3) {
               this.evidenceEditor()
+            }
+
+            if (this.step === 4) {
+              this.costEditor()
             }
 
             if (this.step === 0) {

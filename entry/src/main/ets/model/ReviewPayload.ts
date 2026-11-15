@@ -1,3 +1,4 @@
+import { CostDraft } from './CostNote';
 import { EvidenceDraft } from './EvidenceItem';
 
 /** The six working zones of one review session; every field is optional by design. */
@@ -18,6 +19,8 @@ export interface ReviewPayload {
   materialIds?: string[];
   /** Evidence the session recorded, in the order it was written */
   evidenceDrafts?: EvidenceDraft[];
+  /** Costs the session charged, in the order it was written */
+  costDrafts?: CostDraft[];
 }
 
 /** Empty payload: a review may be saved with only the scene filled in. */
@@ -30,7 +33,8 @@ export function emptyReviewPayload(): ReviewPayload {
     cost: '',
     revision: '',
     materialIds: [],
-    evidenceDrafts: []
+    evidenceDrafts: [],
+    costDrafts: []
   };
 }
 

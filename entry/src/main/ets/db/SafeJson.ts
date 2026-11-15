@@ -1,3 +1,4 @@
+import { CostDimension, CostDraft } from '../model/CostNote';
 import { CitationScope, InteractionLog, InteractionSource } from '../model/Relation';
 import { EvidenceDraft, EvidenceEffect, EvidenceSource } from '../model/EvidenceItem';
 import { ReviewPayload } from '../model/ReviewPayload';
@@ -134,6 +135,39 @@ function readEvidenceDrafts(value: Object | undefined): EvidenceDraft[] {
   return result;
 }
 
+/** Dimensions a cost draft may name. */
+const COST_DIMENSIONS: string[] = ['time', 'attention', 'body', 'relationship', 'money', 'other'];
+
+/** Reads the cost drafts of a payload; a malformed entry is skipped and counted. */
+function readCostDrafts(value: Object | undefined): CostDraft[] {
+  if (!Array.isArray(value)) {
+    if (value !== undefined) {
+      issueCount += 1;
+    }
+    return [];
+  }
+  const items: Object[] = value as Object[];
+  const result: CostDraft[] = [];
+  for (const item of items) {
+    const entry = item as Record<string, Object>;
+    const dimension = entry.dimension;
+    const text = entry.text;
+    const bearable = entry.bearable;
+    if (typeof dimension === 'string' && COST_DIMENSIONS.indexOf(dimension) >= 0 &&
+      typeof text === 'string' && typeof bearable === 'boolean') {
+      const draft: CostDraft = {
+        dimension: dimension as CostDimension,
+        text: text,
+        bearable: bearable
+      };
+      result.push(draft);
+    } else {
+      issueCount += 1;
+    }
+  }
+  return result;
+}
+
 /** Reads the six-zone payload; returns undefined for old records without one. */
 export function parseReviewPayload(raw: string): ReviewPayload | undefined {
   const value = readJson(raw);
@@ -153,6 +187,7 @@ export function parseReviewPayload(raw: string): ReviewPayload | undefined {
     cost: readZone('cost'),
     revision: readZone('revision'),
     materialIds: readStringFieldList(entry.materialIds),
-    evidenceDrafts: readEvidenceDrafts(entry.evidenceDrafts)
+    evidenceDrafts: readEvidenceDrafts(entry.evidenceDrafts),
+    costDrafts: readCostDrafts(entry.costDrafts)
   };
 }

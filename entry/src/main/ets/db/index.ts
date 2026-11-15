@@ -11,7 +11,8 @@ export {
   PLAN_PROJECT_COLS,
   PLAN_NODE_COLS,
   PLAN_ITEM_COLS,
-  PLAN_LINK_COLS
+  PLAN_LINK_COLS,
+  COST_COLS
 } from './DbConstants';
 export { DB_CONFIG, DB_VERSION } from './DbConfig';
 export { DbHelper } from './DbHelper';
@@ -27,4 +28,6 @@ export { RequestAuditDao } from './dao/RequestAuditDao';
 export { PlanDao } from './dao/PlanDao';
 export { ExperienceMaterialDao } from './dao/ExperienceMaterialDao';
 export { EvidenceItemDao } from './dao/EvidenceItemDao';
+export { CostNoteDao } from './dao/CostNoteDao';
 export type { EvidenceEffect, EvidenceItem, EvidenceSource, EvidenceTargetType } from '../model/EvidenceItem';
+export type { CostDimension, CostDraft, CostNote } from '../model/CostNote';

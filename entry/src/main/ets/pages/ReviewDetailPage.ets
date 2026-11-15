@@ -5,6 +5,7 @@ import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewDetailView, ReviewService } from '../review';
 import { Anchor } from '../model/Anchor';
+import { CostDimension, CostNote } from '../model/CostNote';
 import { EvidenceEffect, EvidenceItem, EvidenceSource } from '../model/EvidenceItem';
 import { ReviewMaterial } from '../model/ReviewMaterial';
 import { ReviewPayload } from '../model/ReviewPayload';
@@ -37,6 +38,7 @@ export struct ReviewDetailPage {
   @Local payload: ReviewPayload | null = null;
   @Local cited: ReviewMaterial[] = [];
   @Local evidence: EvidenceItem[] = [];
+  @Local costs: CostNote[] = [];
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   private navStack: NavPathStack | null = null;
@@ -57,6 +59,7 @@ export struct ReviewDetailPage {
         this.payload = await this.loadPayload(reviewId, hostContext);
         this.cited = await this.loadCited(reviewId, service);
         this.evidence = await this.loadEvidence(reviewId, hostContext);
+        this.costs = await this.loadCosts(reviewId, service);
       }
     } catch (error) {
       this.loadPreview(reviewId);
@@ -93,6 +96,15 @@ export struct ReviewDetailPage {
     try {
       const store = await DbHelper.init(hostContext);
       return await new EvidenceItemDao(store).queryByTarget('review', reviewId);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /** Reads the cost rows of one review; a failed read leaves the section hidden. */
+  private async loadCosts(reviewId: string, service: ReviewService): Promise<CostNote[]> {
+    try {
+      return await service.costs(reviewId);
     } catch (error) {
       return [];
     }
@@ -236,6 +248,38 @@ export struct ReviewDetailPage {
     }
   }
 
+  @Builder
+  costSection() {
+    SectionCard() {
+      Column({ space: 8 }) {
+        Text(`成本 · ${this.costs.length} 条`)
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        ForEach(this.costs, (note: CostNote) => {
+          Column({ space: 4 }) {
+            Row({ space: 4 }) {
+              this.miniTag(costDimensionLabel(note.dimension))
+              this.miniTag(note.bearable ? '可承受' : '不可承受')
+            }
+            .width('100%')
+            Text(note.text.length > 0 ? note.text : '（未填写说明）')
+              .fontSize(AppTheme.font.bodyStrong)
+              .lineHeight(19)
+              .fontColor(note.text.length > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
+              .width('100%')
+          }
+          .width('100%')
+          .padding(AppTheme.spacing.s10)
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .borderRadius(AppTheme.radius.sm)
+        }, (note: CostNote) => note.id)
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
   private openAttach(): void {
     if (this.navStack === null || this.detail.id.length === 0) {
       return;
@@ -368,6 +412,9 @@ export struct ReviewDetailPage {
                 this.evidenceSection()
               }
               this.zoneSection('5. 成本与动机', this.payload.cost)
+              if (this.costs.length > 0) {
+                this.costSection()
+              }
               this.zoneSection('6. 调节与修订', this.payload.revision)
             } else {
               this.stepSection('1. 事实', this.detail.facts)
@@ -527,4 +574,23 @@ function evidenceEffectLabel(effect: EvidenceEffect): string {
     return '挑战';
   }
   return '不清楚';
+}
+
+function costDimensionLabel(dimension: CostDimension): string {
+  if (dimension === 'time') {
+    return '时间';
+  }
+  if (dimension === 'attention') {
+    return '注意力';
+  }
+  if (dimension === 'body') {
+    return '身体';
+  }
+  if (dimension === 'relationship') {
+    return '关系';
+  }
+  if (dimension === 'money') {
+    return '金钱';
+  }
+  return '其他';
 }

@@ -1,6 +1,7 @@
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { Anchor } from '../model/Anchor';
+import { CostDraft, CostNote } from '../model/CostNote';
 import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
 import { EvidenceDraft, EvidenceItem } from '../model/EvidenceItem';
@@ -14,6 +15,7 @@ import { SecurityLevel } from '../model/SecurityLevel';
 import { countReviewWindow, ReviewWindowCounts } from '../analysis/metrics/ReviewMetrics';
 import { DbHelper } from '../db/DbHelper';
 import { AnchorDao } from '../db/dao/AnchorDao';
+import { CostNoteDao } from '../db/dao/CostNoteDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
 import { EvidenceItemDao } from '../db/dao/EvidenceItemDao';
@@ -42,6 +44,7 @@ export class ReviewService {
   private reviewMaterialDao: ReviewMaterialDao;
   private experienceMaterialDao: ExperienceMaterialDao;
   private evidenceItemDao: EvidenceItemDao;
+  private costNoteDao: CostNoteDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.store = store;
@@ -53,6 +56,7 @@ export class ReviewService {
     this.reviewMaterialDao = new ReviewMaterialDao(store);
     this.experienceMaterialDao = new ExperienceMaterialDao(store);
     this.evidenceItemDao = new EvidenceItemDao(store);
+    this.costNoteDao = new CostNoteDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -118,10 +122,12 @@ export class ReviewService {
     }
     const citedIds = (draft.materialIds ?? []).slice();
     const evidenceDrafts = result.payload.evidenceDrafts ?? [];
+    const costDrafts = result.payload.costDrafts ?? [];
     const evidenceLevel: SecurityLevel = result.level ?? SecurityLevel.LOCAL_ONLY;
     this.store.beginTransaction();
     try {
       await this.evidenceItemDao.deleteByTarget('review', result.id);
+      await this.costNoteDao.deleteByReview(result.id);
       await this.reviewDao.insert(result);
       const sources = await this.loadMaterialSources(citedIds);
       const rows = ReviewService.withSceneZone(buildRows(result.id, result.createdAt, citedIds,
@@ -132,6 +138,10 @@ export class ReviewService {
       for (let index = 0; index < evidenceDrafts.length; index += 1) {
         await this.evidenceItemDao.insert(ReviewService.evidenceRow(result.id, result.createdAt, index,
           evidenceDrafts[index], evidenceLevel));
+      }
+      for (let index = 0; index < costDrafts.length; index += 1) {
+        await this.costNoteDao.insert(ReviewService.costRow(result.id, result.createdAt, index,
+          costDrafts[index]));
       }
       this.store.commit();
     } catch (error) {
@@ -163,6 +173,11 @@ export class ReviewService {
     const rows = ReviewService.withSceneZone(buildRows(reviewId, review.createdAt, ids,
       (id: string) => sources.get(id) ?? null));
     return orderSnapshots(rows);
+  }
+
+  /** Returns the costs one review charged, oldest first. */
+  async costs(reviewId: string): Promise<CostNote[]> {
+    return this.costNoteDao.queryByReview(reviewId);
   }
 
   /** Returns saved sessions, newest first. */
@@ -220,6 +235,18 @@ export class ReviewService {
       effect: draft.effect,
       level: level,
       zone: REVIEW_ZONE.EVIDENCE,
+      createdAt: createdAt + index
+    };
+  }
+
+  /** Builds one cost row for a review; index keeps the session order readable. */
+  private static costRow(reviewId: string, createdAt: number, index: number, draft: CostDraft): CostNote {
+    return {
+      id: `${reviewId}_cost_${index}`,
+      reviewId: reviewId,
+      dimension: draft.dimension,
+      text: draft.text,
+      bearable: draft.bearable,
       createdAt: createdAt + index
     };
   }

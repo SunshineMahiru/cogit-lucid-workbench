@@ -1120,6 +1120,41 @@ async function main() {
     assert.deepStrictEqual(items.map((item) => item.zone), [4, 4]);
   });
 
+  await test('复盘保存时按成本草稿写入成本行', async () => {
+    reset();
+    const reviewService = await ReviewService.open({});
+    const reviewId = await reviewService.save('week', {
+      facts: '',
+      interpretation: '',
+      contradiction: '',
+      action: '',
+      payload: {
+        scene: '只写了现场',
+        model: '',
+        relation: '',
+        evidence: '',
+        cost: '',
+        revision: '',
+        costDrafts: [
+          { dimension: 'time', text: 'MARKER_COST_TIME', bearable: true },
+          { dimension: 'body', text: 'MARKER_COST_BODY', bearable: false }
+        ]
+      },
+      anchorIds: []
+    }, '11-09 ~ 11-15');
+
+    const stored = store.rows('cost_note');
+    assert.strictEqual(stored.length, 2);
+    assert.strictEqual(stored[0].review_id, reviewId);
+    assert.strictEqual(stored[0].bearable, 1);
+    assert.strictEqual(stored[1].bearable, 0);
+
+    const notes = await reviewService.costs(reviewId);
+    assert.deepStrictEqual(notes.map((note) => note.dimension), ['time', 'body']);
+    assert.deepStrictEqual(notes.map((note) => note.text), ['MARKER_COST_TIME', 'MARKER_COST_BODY']);
+    assert.deepStrictEqual(notes.map((note) => note.bearable), [true, false]);
+  });
+
   await test('删除被引用的速记后快照清空正文并标记缺失', async () => {
     reset();
     const noteDraft = createFreeformNoteDraft();
