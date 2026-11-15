@@ -16,6 +16,51 @@ const META_ATTEMPTED = '/.db-encryption-attempted';
 const DOMAIN = 0x0000;
 const TAG = 'CogitLucidDb';
 
+/** Columns the read paths rely on; each entry is "table.column". */
+const REQUIRED_COLUMNS: string[] = [
+  'event.revision_of',
+  'event.version',
+  'decision.done',
+  'decision.known_conditions',
+  'experience_material.interaction_source',
+  'evidence_item.zone',
+  'review_material.kind_snapshot'
+];
+
+let schemaIssues: string[] = [];
+
+/** Columns that migrations failed to add, empty once the schema is complete. */
+export function getSchemaIssues(): string[] {
+  return schemaIssues.slice();
+}
+
+async function tableHasColumn(store: relationalStore.RdbStore, table: string,
+  column: string): Promise<boolean> {
+  try {
+    const resultSet = await store.querySql(`SELECT * FROM ${table} LIMIT 0`);
+    try {
+      return resultSet.getColumnIndex(column) >= 0;
+    } finally {
+      resultSet.close();
+    }
+  } catch (error) {
+    return false;
+  }
+}
+
+async function collectSchemaIssues(store: relationalStore.RdbStore): Promise<string[]> {
+  const missing: string[] = [];
+  for (const entry of REQUIRED_COLUMNS) {
+    const separator = entry.indexOf('.');
+    const table = entry.substring(0, separator);
+    const column = entry.substring(separator + 1);
+    if (!(await tableHasColumn(store, table, column))) {
+      missing.push(entry);
+    }
+  }
+  return missing;
+}
+
 /** Opens and caches the relational store instance. */
 export class DbHelper {
   private static store: relationalStore.RdbStore | null = null;
@@ -454,6 +499,10 @@ export class DbHelper {
         await store.executeSql(sql);
       } catch (error) {
       }
+    }
+    schemaIssues = await collectSchemaIssues(store);
+    if (schemaIssues.length > 0) {
+      hilog.warn(DOMAIN, TAG, 'schema not ready: %{public}s', schemaIssues.join(', '));
     }
     return store;
   }

@@ -24,7 +24,7 @@ import { BackupInventory } from '../settings/BackupInventory';
 import { ROUTES } from '../navigation/Routes';
 import { ExportService, totalExportRecords, ExportOptions, carriesLocalContent, describeExportOptions } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
-import { DbHelper } from '../db/DbHelper';
+import { DbHelper, getSchemaIssues } from '../db/DbHelper';
 import { DebugFaults } from '../app/DebugFaults';
 import BuildProfile from 'BuildProfile';
 import { DebugPanel } from '../components/settings/DebugPanel';
@@ -68,6 +68,7 @@ export struct SettingsPage {
   @Local exportStatements: boolean = false;
   @Local exportDemo: boolean = false;
   @Local exportHistory: boolean = false;
+  @Local schemaIssueCount: number = 0;
   @Local backupIncludeBackgrounds: boolean = false;
   @Local safetyCount: number = 0;
   @Local safetyLatest: string = '';
@@ -118,6 +119,7 @@ export struct SettingsPage {
         this.backupIncludeBackgrounds = false;
       }
       await this.loadSafetyCopies();
+      this.schemaIssueCount = getSchemaIssues().length;
       this.isLoading = false;
     } catch (error) {
       this.isLoading = false;
@@ -820,6 +822,21 @@ export struct SettingsPage {
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)
+              }
+
+              if (this.schemaIssueCount > 0) {
+                SectionCard() {
+                  Column() {
+                    Text(`数据结构未就绪：${this.schemaIssueCount} 项，请先备份再升级`)
+                      .id('settings_schema_issue')
+                      .fontSize(AppTheme.font.body)
+                      .lineHeight(17)
+                      .fontColor(AppTheme.color.danger)
+                      .width('100%')
+                  }
+                  .width('100%')
+                  .alignItems(HorizontalAlign.Start)
+                }
               }
 
               SectionCard() {
