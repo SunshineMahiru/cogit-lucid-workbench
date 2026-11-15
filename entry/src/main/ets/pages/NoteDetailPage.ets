@@ -17,6 +17,7 @@ import { ROUTES } from '../navigation/Routes';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { previewStore } from '../preview/PreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
+import { DELETE_UNDO_WINDOW_MS } from '../note/QuickNoteService';
 
 /** Read-only view of one stored note. */
 @ComponentV2
@@ -28,7 +29,15 @@ export struct NoteDetailPage {
   @Local isPreview: boolean = false;
   @Local revisions: NoteListItem[] = [];
   @Local showRevisions: boolean = false;
+  @Local pendingUndoId: string = '';
   private navStack: NavPathStack | null = null;
+  private undoTimer: number = -1;
+  private undoing: boolean = false;
+
+  aboutToDisappear(): void {
+    // Back navigation leaves the delete in place; only the pending pop must not fire later.
+    this.cancelUndoTimer();
+  }
 
   private async load(noteId: string): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
@@ -67,7 +76,7 @@ export struct NoteDetailPage {
     }
     this.getUIContext().showAlertDialog({
       title: '删除这条速记？',
-      message: '删除后无法从应用内恢复。',
+      message: '删除后 5 秒内可撤销。',
       primaryButton: {
         value: '继续保留',
         action: () => {
@@ -95,12 +104,62 @@ export struct NoteDetailPage {
       const service = await QuickNoteService.open(hostContext);
       await service.delete(this.detail.id);
       notifyHomeRefresh();
-      this.getUIContext().getPromptAction().showToast({ message: '速记已删除' });
+      this.isDeleted = true;
+      this.showRevisions = false;
+      this.pendingUndoId = this.detail.id;
+      this.startUndoTimer(this.detail.id);
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '删除失败，请重试' });
+    }
+  }
+
+  private startUndoTimer(noteId: string): void {
+    this.cancelUndoTimer();
+    this.undoTimer = setTimeout(() => {
+      this.undoTimer = -1;
+      if (this.pendingUndoId === noteId) {
+        this.pendingUndoId = '';
+      }
       if (this.navStack !== null) {
         this.navStack.pop(true);
       }
+    }, DELETE_UNDO_WINDOW_MS);
+  }
+
+  private cancelUndoTimer(): void {
+    if (this.undoTimer !== -1) {
+      clearTimeout(this.undoTimer);
+      this.undoTimer = -1;
+    }
+  }
+
+  private async undoPendingDelete(): Promise<void> {
+    const noteId = this.pendingUndoId;
+    if (noteId.length === 0 || this.undoing) {
+      return;
+    }
+    const hostContext = this.getUIContext().getHostContext();
+    if (hostContext === undefined) {
+      this.getUIContext().getPromptAction().showToast({ message: '恢复失败' });
+      return;
+    }
+    this.undoing = true;
+    try {
+      const service = await QuickNoteService.open(hostContext);
+      const restored = await service.undoDelete(noteId);
+      if (!restored) {
+        this.getUIContext().getPromptAction().showToast({ message: '恢复失败' });
+        return;
+      }
+      this.cancelUndoTimer();
+      this.pendingUndoId = '';
+      notifyHomeRefresh();
+      this.getUIContext().getPromptAction().showToast({ message: '已恢复' });
+      await this.load(noteId);
     } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: '删除失败，请重试' });
+      this.getUIContext().getPromptAction().showToast({ message: '恢复失败' });
+    } finally {
+      this.undoing = false;
     }
   }
 
@@ -236,12 +295,68 @@ export struct NoteDetailPage {
       })
   }
 
+  @Builder
+  noteDetailPageBody() {
+    Stack({ alignContent: Alignment.Bottom }) {
+      this.noteDetailBody();
+      if (this.pendingUndoId.length > 0) {
+        this.undoBar();
+      }
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  @Builder
+  undoBar() {
+    Column() {
+      Row({ space: AppTheme.spacing.s8 }) {
+        Text('已删除')
+          .fontSize(AppTheme.font.bodyStrong)
+          .fontColor(AppTheme.color.textSecondary)
+        Blank()
+        Text('撤销')
+          .fontSize(AppTheme.font.bodyStrong)
+          .fontColor(AppTheme.color.primary)
+          .padding({
+            left: AppTheme.spacing.s12,
+            right: AppTheme.spacing.s12,
+            top: AppTheme.spacing.s6,
+            bottom: AppTheme.spacing.s6
+          })
+          .accessibilityText('撤销删除速记')
+          .id('note_undo_action')
+          .onClick(() => {
+            this.undoPendingDelete();
+          })
+      }
+      .id('note_undo_bar')
+      .width('100%')
+      .padding({
+        left: AppTheme.spacing.s16,
+        right: AppTheme.spacing.s12,
+        top: AppTheme.spacing.s10,
+        bottom: AppTheme.spacing.s10
+      })
+      .backgroundColor(AppTheme.color.surface)
+      .borderRadius(AppTheme.radius.md)
+      .shadow({ radius: 12, color: '#22000000', offsetX: 0, offsetY: 2 })
+    }
+    .width('100%')
+    .padding({
+      left: AppTheme.spacing.s16,
+      right: AppTheme.spacing.s16,
+      bottom: AppTheme.spacing.s16
+    })
+    .alignItems(HorizontalAlign.Center)
+  }
+
   build() {
     AppDestination({
       route: 'note_detail',
       title: '速记详情',
       content: () => {
-        this.noteDetailBody();
+        this.noteDetailPageBody();
       },
       menus: () => {
         if (!this.isLoading && !this.missing && !this.isDeleted && this.detail !== null) {
