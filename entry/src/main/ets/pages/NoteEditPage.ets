@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 import { AppDestination } from '../components/AppDestination';
 import {
   NoteDepth,
@@ -36,6 +37,9 @@ import { notifyHomeRefresh } from '../app/HomeRefreshBus';
 
 /** Pause after the last edit before the unsaved draft is written. */
 const DRAFT_SAVE_DELAY_MS = 300;
+
+const DOMAIN = 0x0000;
+const TAG = 'CogitLucidNoteEdit';
 
 /** Quick capture editor: template picker, dynamic fields, tags and save. */
 @ComponentV2
@@ -736,6 +740,8 @@ export struct NoteEditPage {
         this.navStack.pop(true);
       }
     } catch (error) {
+      hilog.error(DOMAIN, TAG, 'save failed: noteId=%{public}s editing=%{public}s error=%{private}s',
+        this.noteId ?? 'new', this.isEditing ? 'true' : 'false', (error as Error).message);
       this.getUIContext().getPromptAction().showToast({ message: '保存失败，请稍后重试' });
     } finally {
       this.isSaving = false;
@@ -774,6 +780,8 @@ export struct NoteEditPage {
         this.navStack.pop(true);
       }
     } catch (error) {
+      hilog.error(DOMAIN, TAG, 'save revision failed: noteId=%{public}s editing=%{public}s error=%{private}s',
+        noteId, this.isEditing ? 'true' : 'false', (error as Error).message);
       this.getUIContext().getPromptAction().showToast({ message: '保存失败，请稍后重试' });
     } finally {
       this.isSaving = false;
