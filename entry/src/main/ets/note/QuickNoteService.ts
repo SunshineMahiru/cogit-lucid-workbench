@@ -9,7 +9,7 @@ import { EventDao } from '../db/dao/EventDao';
 import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
 import { DbHelper } from '../db/DbHelper';
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
-import { NoteDraft, NoteMaterialDraft } from './NoteDraft';
+import { NoteDepth, NoteDraft, NoteMaterialDraft } from './NoteDraft';
 import { composeNoteContent, deriveNoteTitle } from './NoteContentComposer';
 import { buildDecisionFromNote } from './NoteDecisionComposer';
 import { NoteListItem } from './NoteListItem';
@@ -226,7 +226,8 @@ function normalizeLimit(limit: number): number {
 
 function buildEvent(draft: NoteDraft): Event {
   const event = createEvent();
-  event.type = draft.templateId === null ? FREE_NOTE_TYPE : findNoteTemplate(draft.templateId).label;
+  event.type = draft.templateId === null || draft.depth === NoteDepth.QUICK ?
+    FREE_NOTE_TYPE : findNoteTemplate(draft.templateId).label;
   event.timestamp = draft.timestamp > 0 ? draft.timestamp : Date.now();
   applyDraft(event, draft);
   return event;

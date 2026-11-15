@@ -1,13 +1,13 @@
 import { Decision } from '../model/Decision';
 import { createDecision } from '../model/factories';
-import { NoteDraft, readNoteEntry } from './NoteDraft';
+import { NoteDepth, NoteDraft, readNoteEntry } from './NoteDraft';
 import { NoteFieldKey } from './NoteFieldKey';
 import { NoteTemplateId } from './NoteTemplateId';
 import { deriveNoteTitle } from './NoteContentComposer';
 
-/** Builds the linked decision for a decision note; null for every other template. */
+/** Builds the linked decision for a decision note; null for quick capture and every other template. */
 export function buildDecisionFromNote(draft: NoteDraft, eventId: string): Decision | null {
-  if (draft.templateId !== NoteTemplateId.DECISION) {
+  if (draft.depth === NoteDepth.QUICK || draft.templateId !== NoteTemplateId.DECISION) {
     return null;
   }
   const decision = createDecision();

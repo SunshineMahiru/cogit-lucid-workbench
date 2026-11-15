@@ -20,7 +20,8 @@ import {
 import { NoteEditorDraft, NoteEditorMeta, NoteEditorStore } from '../note/NoteEditorStore';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { ExperienceMaterial, MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
-import { NoteEditParams } from '../navigation/RouteParams';
+import { NoteEditParams, PredictionCreateParams } from '../navigation/RouteParams';
+import { ROUTES } from '../navigation/Routes';
 import { SettingsStore } from '../settings';
 import { NoteFieldEditor } from '../components/NoteFieldEditor';
 import { NoteSaveBar } from '../components/NoteSaveBar';
@@ -375,6 +376,15 @@ export struct NoteEditPage {
     this.scheduleDraftSave();
   }
 
+  /** Opens the prediction form on top of this note, so the two stay linked in the flow. */
+  private openPrediction(): void {
+    if (this.navStack === null) {
+      return;
+    }
+    const params: PredictionCreateParams = { sourcePredictionId: null };
+    this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, params);
+  }
+
   /** Drops any per-material level wider than the new record level, so it follows the record. */
   private clampMetas(metas: MaterialMeta[], recordLevel: SecurityLevel): MaterialMeta[] {
     const next: MaterialMeta[] = [];
@@ -591,7 +601,8 @@ export struct NoteEditPage {
         this.clearStoredDraft();
       }
       const message = this.noteId === null ?
-        (this.draft.templateId === NoteTemplateId.DECISION ? '已保存，并生成决策记录' : '已保存') :
+        (!this.isQuick() && this.draft.templateId === NoteTemplateId.DECISION ?
+          '已保存，并生成决策记录' : '已保存') :
         '修改已保存';
       this.getUIContext().getPromptAction().showToast({ message: message });
       if (this.navStack !== null) {
@@ -953,7 +964,7 @@ export struct NoteEditPage {
 
             Column({ space: 6 }) {
               Row({ space: 4 }) {
-                Text(this.draft.templateId === null ? '正文 *' : '正文（可选）')
+                Text(!this.isQuick() && this.draft.templateId !== null ? '正文（可选）' : '正文 *')
                   .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondaryStrong)
               }
@@ -1000,7 +1011,7 @@ if (this.isQuick()) {
               .alignItems(HorizontalAlign.Start)
             }
 
-            if (this.draft.templateId !== null) {
+            if (!this.isQuick() && this.draft.templateId !== null) {
               ForEach(this.draft.entries, (entry: NoteEntry) => {
                 NoteFieldEditor({
                   field: this.fieldFor(entry.key),
@@ -1062,6 +1073,17 @@ if (this.isQuick()) {
               .alignItems(HorizontalAlign.Start)
             }
 
+            if (this.isDeep()) {
+              Text('新建一条可检验预测')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.primary)
+                .width('100%')
+                .id('note_prediction_create')
+                .onClick(() => {
+                  this.openPrediction();
+                })
+            }
+
             if (!this.isQuick()) {
               Column({ space: 6 }) {
                 Text('分类补充（可选）')
@@ -1092,34 +1114,36 @@ if (this.isQuick()) {
               .alignItems(HorizontalAlign.Start)
             }
 
-            Column({ space: 8 }) {
-              Row() {
-                Text('密级')
-                  .fontSize(AppTheme.font.bodyStrong)
-                  .fontColor(AppTheme.color.textSecondary)
-                Blank()
-                Text(this.draft.level === this.defaultLevel ? '跟随设置' : '本条第独立指定')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textMuted)
-              }
-              .width('100%')
-
-              Flex({ wrap: FlexWrap.Wrap }) {
-                this.levelChip(SecurityLevel.ANALYZABLE)
-                this.levelChip(SecurityLevel.LOCAL_ONLY)
-                this.levelChip(SecurityLevel.SEALED)
-              }
-              .width('100%')
-
-              Text(this.levelImpact())
-                .fontSize(AppTheme.font.caption)
-                .lineHeight(15)
-                .fontColor(AppTheme.color.textMuted)
+            if (!this.isQuick()) {
+              Column({ space: 8 }) {
+                Row() {
+                  Text('密级')
+                    .fontSize(AppTheme.font.bodyStrong)
+                    .fontColor(AppTheme.color.textSecondary)
+                  Blank()
+                  Text(this.draft.level === this.defaultLevel ? '跟随设置' : '本条独立指定')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textMuted)
+                }
                 .width('100%')
+
+                Flex({ wrap: FlexWrap.Wrap }) {
+                  this.levelChip(SecurityLevel.ANALYZABLE)
+                  this.levelChip(SecurityLevel.LOCAL_ONLY)
+                  this.levelChip(SecurityLevel.SEALED)
+                }
+                .width('100%')
+
+                Text(this.levelImpact())
+                  .fontSize(AppTheme.font.caption)
+                  .lineHeight(15)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+              .padding({ top: AppTheme.spacing.s4 })
             }
-            .width('100%')
-            .alignItems(HorizontalAlign.Start)
-            .padding({ top: AppTheme.spacing.s4 })
           }
           .width('100%')
           .padding(AppTheme.spacing.s16)

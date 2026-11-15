@@ -296,6 +296,7 @@ const { QuickNoteService, FREE_NOTE_TYPE } = require('./out2/note/QuickNoteServi
 const { createNoteDraft, createFreeformNoteDraft } = require('./out2/note/NoteDraftFactory');
 const { NoteFieldKey } = require('./out2/note/NoteFieldKey');
 const { NoteTemplateId } = require('./out2/note/NoteTemplateId');
+const { NoteDepth } = require('./out2/note/NoteDraft');
 const { AnchorService } = require('./out2/anchor/AnchorService');
 const { RelationService } = require('./out2/relation/RelationService');
 const { StatusService } = require('./out2/status/StatusService');
@@ -646,6 +647,18 @@ async function main() {
     assert.strictEqual(overview.summary.averageSleep, 6.7);
     assert.strictEqual(await statusService.seedDemoRecords(), 0);
     assert.strictEqual((await statusService.history()).length, 7);
+  });
+
+  await test('快速档不生成决策记录且类型为速记', async () => {
+    reset();
+    const draft = createNoteDraft(NoteTemplateId.DECISION);
+    draft.depth = NoteDepth.QUICK;
+    draft.content = '一句现场';
+    const saved = await service.save(draft);
+    assert.strictEqual(saved.decisionId, null);
+    const row = store.rows('event').find((item) => item.id === saved.eventId);
+    assert.strictEqual(row.type, '速记');
+    assert.strictEqual(count('decision'), 0);
   });
 
   await test('首页最近速记跳过封存记录', async () => {

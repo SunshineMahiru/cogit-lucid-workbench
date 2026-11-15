@@ -88,7 +88,7 @@ const {
 } = require('./out2/status/StatusMapper');
 const { createNoteDraft, createFreeformNoteDraft } = require('./out2/note/NoteDraftFactory');
 const { mergeDraftEntries } = require('./out2/note/NoteDraftMerger');
-const { readNoteEntry } = require('./out2/note/NoteDraft');
+const { NoteDepth, readNoteEntry } = require('./out2/note/NoteDraft');
 const { validateNoteDraft } = require('./out2/note/NoteValidation');
 const { composeNoteContent, deriveNoteTitle, NOTE_TITLE_MAX_LENGTH } = require('./out2/note/NoteContentComposer');
 const { buildDecisionFromNote, splitDecisionOptions } = require('./out2/note/NoteDecisionComposer');
@@ -239,6 +239,15 @@ test('填了背景即可保存决策草稿', () => {
   const draft = createNoteDraft(NoteTemplateId.DECISION);
   fill(draft, NoteFieldKey.BACKGROUND, '最近精力不足');
   assert.deepStrictEqual(validateNoteDraft(draft), { valid: true, errors: [] });
+});
+
+test('快速档只校验正文，跳过模板必填', () => {
+  const draft = createNoteDraft(NoteTemplateId.DECISION);
+  draft.depth = NoteDepth.QUICK;
+  draft.content = '一句现场';
+  assert.deepStrictEqual(validateNoteDraft(draft), { valid: true, errors: [] });
+  draft.depth = NoteDepth.NORMAL;
+  assert.strictEqual(validateNoteDraft(draft).valid, false);
 });
 
 test('情绪草稿缺触发时报错，填了触发即可', () => {

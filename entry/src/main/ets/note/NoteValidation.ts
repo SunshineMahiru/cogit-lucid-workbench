@@ -1,4 +1,4 @@
-import { NoteDraft, NoteEntry, readNoteEntry } from './NoteDraft';
+import { NoteDepth, NoteDraft, NoteEntry, readNoteEntry } from './NoteDraft';
 import { NoteFieldKey } from './NoteFieldKey';
 import { findNoteTemplate } from './templates';
 
@@ -17,10 +17,18 @@ export interface NoteValidationResult {
 
 /**
  * Checks a draft before saving: required template fields must be filled and
- * a template note must carry at least one answer somewhere.
+ * a template note must carry at least one answer somewhere. Quick capture asks
+ * for the body alone, because it hides the template fields.
  */
 export function validateNoteDraft(draft: NoteDraft): NoteValidationResult {
   const errors: NoteValidationError[] = [];
+
+  if (draft.depth === NoteDepth.QUICK) {
+    if (draft.content.trim().length === 0) {
+      errors.push({ key: null, message: '内容不能为空' });
+    }
+    return { valid: errors.length === 0, errors: errors };
+  }
 
   if (draft.templateId === null) {
     if (draft.content.trim().length === 0) {
