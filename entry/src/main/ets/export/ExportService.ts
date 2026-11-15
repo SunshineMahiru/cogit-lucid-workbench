@@ -18,6 +18,7 @@ import { prepareExportBundle } from './ExportFilter';
 import { ExportOptions, defaultExportOptions } from './ExportOptions';
 import { buildExportFileName, writeExportFile } from './ExportFileWriter';
 import { renderExportDocument } from './render';
+import { latestPerRoot } from '../note/QuickNoteService';
 
 /** Outcome of one Markdown export. */
 export interface ExportResult {
@@ -121,7 +122,8 @@ export class ExportService {
       });
     }
     const bundle: ExportBundle = {
-      events: await this.eventDao.queryAll(),
+      // Superseded revisions stay in the database but never leave the device.
+      events: latestPerRoot(await this.eventDao.queryAll()),
       decisions: await this.decisionDao.queryAll(),
       relations: await this.relationDao.queryAll(),
       predictions: await this.predictionDao.queryAll(),

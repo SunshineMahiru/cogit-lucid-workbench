@@ -305,8 +305,9 @@ const { HomeDataService } = require('./out2/data/HomeDataService');
 const { ExperienceMaterialDao } = require('./out2/db/dao/ExperienceMaterialDao');
 const { EventDao } = require('./out2/db/dao/EventDao');
 const { DecisionDao } = require('./out2/db/dao/DecisionDao');
-const { prepareExportBundle } = require('./out2/export/ExportFilter');
+const { prepareExportBundle, allExportOptions } = require('./out2/export/ExportFilter');
 const { renderExportDocument } = require('./out2/export/render');
+const { ExportService } = require('./out2/export/ExportService');
 const { PredictionService } = require('./out2/prediction/PredictionService');
 const { ReviewService } = require('./out2/review/ReviewService');
 const { rangeFor } = require('./out2/review/ReviewRange');
@@ -638,6 +639,36 @@ async function main() {
     const items = await service.listRecent();
     assert.strictEqual(items.length, 1);
     assert.strictEqual(items[0].version, 3);
+  });
+
+  await test('历史版本按序号升序返回，导出只带最新版', async () => {
+    reset();
+    const first = createFreeformNoteDraft();
+    first.content = 'MARKER_V1';
+    first.timestamp = 1000;
+    first.level = SecurityLevel.ANALYZABLE;
+    const saved = await service.save(first);
+
+    const draft = createFreeformNoteDraft();
+    draft.content = 'MARKER_V2';
+    draft.timestamp = 2000;
+    draft.level = SecurityLevel.ANALYZABLE;
+    const revision = await service.saveRevision(saved.eventId, draft);
+
+    const versions = await service.listRevisions(revision.eventId);
+    assert.strictEqual(versions.length, 2);
+    assert.deepStrictEqual(versions.map((item) => item.version), [1, 2]);
+    assert.strictEqual(versions[0].id, saved.eventId);
+    assert.strictEqual(versions[1].id, revision.eventId);
+
+    const detail = await service.findNote(revision.eventId);
+    assert.strictEqual(detail.version, 2);
+    assert.strictEqual(detail.revisionOf, saved.eventId);
+
+    const exportService = await ExportService.open({});
+    const markdown = await exportService.buildMarkdown(3000, allExportOptions());
+    assert.strictEqual(markdown.includes('MARKER_V2'), true);
+    assert.strictEqual(markdown.includes('MARKER_V1'), false);
   });
 
   await test('锚点示例数据只载入一次', async () => {

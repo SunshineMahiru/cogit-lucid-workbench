@@ -574,11 +574,7 @@ export struct NoteEditPage {
       this.getUIContext().getPromptAction().showToast({ message: '数据库尚未就绪' });
       return;
     }
-    this.draft.materials = this.collectMaterials();
-    const validation = validateNoteDraft(this.draft);
-    this.errors = validation.errors;
-    if (!validation.valid) {
-      this.getUIContext().getPromptAction().showToast({ message: validation.errors[0].message });
+    if (!this.validateBeforeSave()) {
       return;
     }
     this.isSaving = true;
@@ -618,6 +614,56 @@ export struct NoteEditPage {
     } finally {
       this.isSaving = false;
     }
+  }
+
+  /** Stores the draft as a new revision of the open note, leaving the earlier rows untouched. */
+  private async saveAsNewVersion(): Promise<void> {
+    if (this.isSaving) {
+      return;
+    }
+    if (this.noteId === null) {
+      return;
+    }
+    const noteId = this.noteId;
+    if (this.isPreview) {
+      this.getUIContext().getPromptAction().showToast({ message: '演示模式下不能另存新版本' });
+      return;
+    }
+    if (this.service === null) {
+      this.getUIContext().getPromptAction().showToast({ message: '数据库尚未就绪' });
+      return;
+    }
+    if (!this.validateBeforeSave()) {
+      return;
+    }
+    this.isSaving = true;
+    try {
+      const saved = await this.service.saveRevision(noteId, this.draft);
+      notifyHomeRefresh();
+      this.isDirty = false;
+      this.rememberTags();
+      this.cancelDraftTimer();
+      this.getUIContext().getPromptAction().showToast({ message: `已保存为 v${saved.version}` });
+      if (this.navStack !== null) {
+        this.navStack.pop(true);
+      }
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '保存失败，请稍后重试' });
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  /** Collects materials and validates; false means the first error was already shown. */
+  private validateBeforeSave(): boolean {
+    this.draft.materials = this.collectMaterials();
+    const validation = validateNoteDraft(this.draft);
+    this.errors = validation.errors;
+    if (!validation.valid) {
+      this.getUIContext().getPromptAction().showToast({ message: validation.errors[0].message });
+      return false;
+    }
+    return true;
   }
 
   private async loadNote(noteId: string): Promise<void> {
@@ -856,16 +902,28 @@ export struct NoteEditPage {
 
   @Builder
   saveMenu() {
-    Row() {
-      Text(this.isSaving ? '保存中' : '保存')
+    Row({ space: 4 }) {
+      Text(this.isSaving ? '保存中' : (this.isEditing ? '保存更正' : '保存'))
         .fontSize(AppTheme.font.subtitle)
         .fontColor(this.isSaving ? AppTheme.color.textMuted : AppTheme.color.primary)
-        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s16 })
+        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8 })
         .onClick(() => {
           if (!this.isSaving) {
             this.save();
           }
         })
+      if (this.isEditing && this.noteId !== null) {
+        Text('另存新版本')
+          .fontSize(AppTheme.font.subtitle)
+          .fontColor(this.isSaving ? AppTheme.color.textMuted : AppTheme.color.primary)
+          .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s16 })
+          .accessibilityText('另存新版本')
+          .onClick(() => {
+            if (!this.isSaving) {
+              this.saveAsNewVersion();
+            }
+          })
+      }
     }
     .height(56)
     .alignItems(VerticalAlign.Center)

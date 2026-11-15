@@ -15,6 +15,10 @@ export interface NoteDetail {
   /** Relations linked to the note, used when editing */
   relatedRelationIds: string[];
   timeLabel: string;
+  /** Revision number, 1 for an original note */
+  version?: number;
+  /** Root note id when this row is a revision; empty for an original note */
+  revisionOf?: string;
   /** Typed materials kept with this note; empty when none were stored */
   materials?: ExperienceMaterial[];
 }
@@ -30,7 +34,9 @@ export function toNoteDetail(event: Event, now: number = Date.now()): NoteDetail
     level: event.level,
     timestamp: event.timestamp,
     relatedRelationIds: event.relatedRelationIds.slice(),
-    timeLabel: formatNoteTime(event.timestamp, now)
+    timeLabel: formatNoteTime(event.timestamp, now),
+    version: event.version ?? 1,
+    revisionOf: event.revisionOf ?? ''
   };
 }
 

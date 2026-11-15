@@ -133,6 +133,16 @@ export class QuickNoteService {
     return rows.filter((row: Event) => noteRootId(row) === rootId);
   }
 
+  /** Returns the live rows of one revision chain, oldest version first. */
+  async listRevisions(noteId: string): Promise<NoteListItem[]> {
+    const rows = await this.eventDao.queryAllIncludingDeleted();
+    const anchor = rows.find((row: Event) => row.id === noteId);
+    const rootId = anchor === undefined ? noteId : noteRootId(anchor);
+    const live = rows.filter((row: Event) => noteRootId(row) === rootId && row.deleted !== true);
+    live.sort((left: Event, right: Event) => (left.version ?? 1) - (right.version ?? 1));
+    return toNoteListItems(live);
+  }
+
 
   /**
    * Stores the typed materials captured with this note. When the user did not classify anything,

@@ -2,6 +2,7 @@ import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import {
   NoteDetail,
+  NoteListItem,
   QuickNoteService,
   materialFormText,
   materialKindText,
@@ -25,6 +26,8 @@ export struct NoteDetailPage {
   @Local missing: boolean = false;
   @Local isDeleted: boolean = false;
   @Local isPreview: boolean = false;
+  @Local revisions: NoteListItem[] = [];
+  @Local showRevisions: boolean = false;
   private navStack: NavPathStack | null = null;
 
   private async load(noteId: string): Promise<void> {
@@ -123,6 +126,53 @@ export struct NoteDetailPage {
         this.load(this.detail.id);
       }
     });
+  }
+
+  /** Revision number of the open row; an original note is v1. */
+  private currentVersion(): number {
+    return this.detail === null ? 1 : (this.detail.version ?? 1);
+  }
+
+  /** True when this row revises an earlier note. */
+  private isRevision(): boolean {
+    return this.detail !== null && (this.detail.revisionOf ?? '').length > 0;
+  }
+
+  /** Version this revision was written from. */
+  private baseVersion(): number {
+    const version = this.currentVersion();
+    return version > 1 ? version - 1 : 1;
+  }
+
+  /** Loads the chain once, then toggles the read-only history list. */
+  private async toggleRevisions(): Promise<void> {
+    if (this.showRevisions) {
+      this.showRevisions = false;
+      return;
+    }
+    const detail = this.detail;
+    if (detail === null || this.isPreview) {
+      return;
+    }
+    const hostContext = this.getUIContext().getHostContext();
+    if (hostContext === undefined) {
+      return;
+    }
+    try {
+      const service = await QuickNoteService.open(hostContext);
+      this.revisions = await service.listRevisions(detail.id);
+      this.showRevisions = true;
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '历史版本加载失败' });
+    }
+  }
+
+  private openRevision(noteId: string): void {
+    if (this.navStack === null || this.detail === null || noteId === this.detail.id) {
+      return;
+    }
+    const params: NoteDetailParams = { noteId: noteId };
+    this.navStack.pushPathByName(ROUTES.NOTE_DETAIL, params);
   }
 
   /** Materials kept with the note; a copy of the body is shown as its kind only. */
@@ -278,11 +328,30 @@ export struct NoteDetailPage {
             }
             .width('100%')
 
-            Text(this.detail.title)
-              .fontSize(AppTheme.font.headline)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(AppTheme.color.text)
-              .width('100%')
+            Row({ space: 8 }) {
+              Text(this.detail.title)
+                .fontSize(AppTheme.font.headline)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(AppTheme.color.text)
+                .layoutWeight(1)
+              if (this.currentVersion() > 1) {
+                Text(`v${this.currentVersion()}`)
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.primaryDeep)
+                  .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                  .backgroundColor(AppTheme.color.tint)
+                  .borderRadius(AppTheme.radius.sm)
+              }
+            }
+            .width('100%')
+            .alignItems(VerticalAlign.Center)
+
+            if (this.isRevision()) {
+              Text(`本版基于 v${this.baseVersion()} 修订`)
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+            }
 
             if (this.detail.tags.length > 0) {
               Flex({ wrap: FlexWrap.Wrap }) {
@@ -304,6 +373,46 @@ export struct NoteDetailPage {
               .lineHeight(24)
               .fontColor(AppTheme.color.text)
               .width('100%')
+
+            if (!this.isPreview && (this.isRevision() || this.currentVersion() > 1)) {
+              Column({ space: 6 }) {
+                Text(this.showRevisions ? '收起历史版本' : '历史版本')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.primaryDeep)
+                  .padding({ top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+                  .id('note_revision_toggle')
+                  .onClick(() => {
+                    this.toggleRevisions();
+                  })
+                if (this.showRevisions) {
+                  ForEach(this.revisions, (item: NoteListItem) => {
+                    Column({ space: 2 }) {
+                      Text(`v${item.version ?? 1} · ${item.timeLabel}`)
+                        .fontSize(AppTheme.font.caption)
+                        .fontColor(AppTheme.color.textMuted)
+                        .width('100%')
+                      Text(item.summary)
+                        .fontSize(AppTheme.font.body)
+                        .fontColor(AppTheme.color.text)
+                        .maxLines(2)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                        .width('100%')
+                    }
+                    .width('100%')
+                    .padding(AppTheme.spacing.s10)
+                    .backgroundColor(AppTheme.color.surfaceTint)
+                    .borderRadius(AppTheme.radius.md)
+                    .alignItems(HorizontalAlign.Start)
+                    .id(`note_revision_${item.id}`)
+                    .onClick(() => {
+                      this.openRevision(item.id);
+                    })
+                  }, (item: NoteListItem) => `${item.id}_${item.version ?? 1}`)
+                }
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
 
             if (this.noteMaterials().length > 0) {
               Column({ space: 6 }) {

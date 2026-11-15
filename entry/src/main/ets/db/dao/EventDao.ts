@@ -174,6 +174,9 @@ export class EventDao {
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): Event {
+    // Rows written before the revision columns existed read back as an original version.
+    const revisionIndex = resultSet.getColumnIndex(EVENT_COLS.REVISION_OF);
+    const versionIndex = resultSet.getColumnIndex(EVENT_COLS.VERSION);
     return {
       id: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.ID)),
       title: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.TITLE)),
@@ -184,8 +187,8 @@ export class EventDao {
       level: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.LEVEL)) as SecurityLevel,
       relatedDecisionIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_DECISION_IDS))),
       relatedRelationIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.RELATED_RELATION_IDS))),
-      revisionOf: resultSet.getString(resultSet.getColumnIndex(EVENT_COLS.REVISION_OF)),
-      version: resultSet.getLong(resultSet.getColumnIndex(EVENT_COLS.VERSION)),
+      revisionOf: revisionIndex < 0 ? '' : resultSet.getString(revisionIndex),
+      version: versionIndex < 0 ? 1 : resultSet.getLong(versionIndex),
       deleted: resultSet.getLong(resultSet.getColumnIndex(EVENT_COLS.DELETED)) === 1
     };
   }
