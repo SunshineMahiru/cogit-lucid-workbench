@@ -74,6 +74,8 @@ export class ReviewService {
     result.period = period;
     result.rangeLabel = rangeLabel;
     result.payload = draft.payload ?? emptyReviewPayload();
+    // Quoted materials ride with the payload so history and export can resolve them later.
+    result.payload.materialIds = (draft.materialIds ?? []).slice();
     if (hasAnyZone(result.payload)) {
       // Zone content is the source of truth for new sessions; the four legacy columns mirror it
       // so history rows and Markdown export keep reading something meaningful.

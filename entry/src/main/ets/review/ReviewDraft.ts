@@ -32,6 +32,8 @@ export interface ReviewDraft {
   action: string;
   /** Six-zone content; absent while a draft still uses the four steps */
   payload?: ReviewPayload;
+  /** Material ids cited by this session, saved inside the payload */
+  materialIds?: string[];
   anchorIds: string[];
   /** Plan context when the draft belongs to one plan node */
   planId?: string;

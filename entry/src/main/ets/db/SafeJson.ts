@@ -84,6 +84,26 @@ export function parseInteractionLog(raw: string): InteractionLog[] {
   return result;
 }
 
+/** Reads an optional string array field; a non-array or any non-string element falls back to []. */
+function readStringFieldList(value: Object | undefined): string[] {
+  if (!Array.isArray(value)) {
+    if (value !== undefined) {
+      issueCount += 1;
+    }
+    return [];
+  }
+  const items: Object[] = value as Object[];
+  const result: string[] = [];
+  for (const item of items) {
+    if (typeof item !== 'string') {
+      issueCount += 1;
+      return [];
+    }
+    result.push(item as string);
+  }
+  return result;
+}
+
 /** Reads the six-zone payload; returns undefined for old records without one. */
 export function parseReviewPayload(raw: string): ReviewPayload | undefined {
   const value = readJson(raw);
@@ -101,6 +121,7 @@ export function parseReviewPayload(raw: string): ReviewPayload | undefined {
     relation: readZone('relation'),
     evidence: readZone('evidence'),
     cost: readZone('cost'),
-    revision: readZone('revision')
+    revision: readZone('revision'),
+    materialIds: readStringFieldList(entry.materialIds)
   };
 }

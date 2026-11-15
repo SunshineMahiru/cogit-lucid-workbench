@@ -12,6 +12,8 @@ export interface ReviewPayload {
   cost: string;
   /** 6. Revision and the decision that follows */
   revision: string;
+  /** Material ids this session quotes, in the order they were cited */
+  materialIds?: string[];
 }
 
 /** Empty payload: a review may be saved with only the scene filled in. */
@@ -22,7 +24,8 @@ export function emptyReviewPayload(): ReviewPayload {
     relation: '',
     evidence: '',
     cost: '',
-    revision: ''
+    revision: '',
+    materialIds: []
   };
 }
 

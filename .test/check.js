@@ -1058,6 +1058,20 @@ test('复盘六区：空内容合法，旧记录读不到 payload', () => {
   assert.strictEqual(consumeJsonIssues(), 1);
 });
 
+test('复盘材料编号随 payload 保存并按原顺序读回', () => {
+  const { emptyReviewPayload } = require('./out2/model/ReviewPayload');
+  const { parseReviewPayload } = require('./out2/db/SafeJson');
+  const payload = emptyReviewPayload();
+  payload.materialIds = ['mt_2', 'mt_1'];
+  const readBack = parseReviewPayload(JSON.stringify(payload));
+  assert.deepStrictEqual(readBack.materialIds, ['mt_2', 'mt_1']);
+  assert.deepStrictEqual(emptyReviewPayload().materialIds, []);
+  const legacy = parseReviewPayload('{"scene":"现场","model":"","relation":"","evidence":"","cost":"","revision":""}');
+  assert.deepStrictEqual(legacy.materialIds, []);
+  const broken = parseReviewPayload('{"materialIds":[1,"mt_1"]}');
+  assert.deepStrictEqual(broken.materialIds, []);
+});
+
 test('备份按行导出时排除封存与已删除行，恢复时保住本机封存', () => {
   const { isSealedRow, isDeletedRow, deleteSqlFor } = require('./out2/settings/BackupRows');
   assert.strictEqual(isSealedRow({ id: 'ev_1', level: 'sealed' }), true);
