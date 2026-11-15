@@ -3,6 +3,16 @@ import { MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
 import { NoteFieldKey } from './NoteFieldKey';
 import { NoteTemplateId } from './NoteTemplateId';
 
+/** How much of the editor the author wants during capture. */
+export enum NoteDepth {
+  /** Body plus one kind chip */
+  QUICK = 'quick',
+  /** Classification rows, tags and level; no relations */
+  NORMAL = 'normal',
+  /** Normal plus the interpretation row and relations */
+  DEEP = 'deep'
+}
+
 /** A single template answer held by a draft. */
 export interface NoteEntry {
   key: NoteFieldKey;
@@ -38,6 +48,8 @@ export interface NoteDraft {
   level: SecurityLevel;
   /** Optional typed materials; an empty list means the body is the only material */
   materials?: NoteMaterialDraft[];
+  /** Capture depth chosen in the editor; absent reads as NORMAL */
+  depth?: NoteDepth;
   /** Capture time in milliseconds */
   timestamp: number;
 }

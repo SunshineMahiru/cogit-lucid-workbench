@@ -1,6 +1,7 @@
 import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import {
+  NoteDepth,
   NoteDraft,
   NoteMaterialDraft,
   NoteDetail,
@@ -16,6 +17,7 @@ import {
   securityLevelText,
   validateNoteDraft
 } from '../note';
+import { NoteEditorDraft, NoteEditorMeta, NoteEditorStore } from '../note/NoteEditorStore';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { ExperienceMaterial, MaterialForm, MaterialSource } from '../model/ExperienceMaterial';
 import { NoteEditParams } from '../navigation/RouteParams';
@@ -28,6 +30,9 @@ import { RelationListItem, RelationService } from '../relation';
 import { PREVIEW_RELATION_ITEMS } from '../preview/PreviewData';
 import { previewStore } from '../preview/PreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
+
+/** Pause after the last edit before the unsaved draft is written. */
+const DRAFT_SAVE_DELAY_MS = 300;
 
 /** Quick capture editor: template picker, dynamic fields, tags and save. */
 @ComponentV2
@@ -51,7 +56,17 @@ export struct NoteEditPage {
   @Local showInterpretation: boolean = false;
   /** Source, form and level chosen per material kind */
   @Local metas: MaterialMeta[] = defaultMaterialMetas();
+  /** Kind chosen by the single quick chip; empty means unclassified */
+  @Local quickKind: string = '';
+  /** Unsaved state found on entry; shown as a resume prompt until handled */
+  @Local pendingDraft: NoteEditorDraft | null = null;
+  @Local recentTags: string[] = [];
   private navStack: NavPathStack | null = null;
+  private editorStore: NoteEditorStore | null = null;
+  /** False once the author abandoned this note, so nothing is written back */
+  private keepDraft: boolean = true;
+  /** Pending throttled draft write; -1 means nothing is scheduled */
+  private draftTimer: number = -1;
 
   async aboutToAppear(): Promise<void> {
     const hostContext = this.getUIContext().getHostContext();
@@ -64,10 +79,11 @@ export struct NoteEditPage {
       const settings = await SettingsStore.open(hostContext);
       const values = await settings.load();
       this.defaultLevel = values.defaultLevel;
-      // A note opened for editing keeps the level stored with it, so the default must not overwrite it.
-      if (!this.isEditing) {
-        this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags, values.defaultLevel);
-      }
+      const editorStore = await NoteEditorStore.open(hostContext);
+      this.editorStore = editorStore;
+      this.recentTags = await editorStore.loadRecentTags();
+      const storedDepth = await editorStore.loadDepth();
+      await this.applyStoredEditorState(editorStore, values.defaultLevel, storedDepth);
       this.service = await QuickNoteService.open(hostContext);
       const relationService = await RelationService.open(hostContext);
       this.relations = await relationService.list(null);
@@ -76,7 +92,33 @@ export struct NoteEditPage {
     }
   }
 
-  private rebuild(content: string, entries: NoteEntry[], tags: string[], level: SecurityLevel): NoteDraft {
+  /**
+   * Restores the depth and the stored draft of a new note. A note opened for editing keeps the
+   * level stored with it, and a draft the author has not answered yet keeps its own level, so the
+   * settings default is applied only when there is nothing to restore.
+   */
+  private async applyStoredEditorState(store: NoteEditorStore, defaultLevel: SecurityLevel,
+    depth: NoteDepth): Promise<void> {
+    if (this.isEditing || this.noteId !== null) {
+      return;
+    }
+    const stored = await store.loadDraft();
+    // The note may have been opened for editing while the draft was being read.
+    if (this.isEditing || this.noteId !== null) {
+      return;
+    }
+    if (stored !== null) {
+      this.pendingDraft = stored;
+      this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags,
+        this.draft.level, depth);
+      return;
+    }
+    this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags,
+      defaultLevel, depth);
+  }
+
+  private rebuild(content: string, entries: NoteEntry[], tags: string[], level: SecurityLevel,
+    depth: NoteDepth): NoteDraft {
     return {
       templateId: this.draft.templateId,
       title: this.draft.title,
@@ -85,13 +127,46 @@ export struct NoteEditPage {
       tags: tags,
       relatedRelationIds: this.draft.relatedRelationIds.slice(),
       level: level,
+      depth: depth,
       timestamp: this.draft.timestamp
     };
   }
 
   private applyTemplate(templateId: NoteTemplateId | null): void {
+    const depth = this.currentDepth();
     this.draft = mergeDraftEntries(this.draft, templateId);
+    this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags,
+      this.draft.level, depth);
     this.errors = [];
+  }
+
+  /** Depth selected in the editor; an absent value reads as NORMAL. */
+  private currentDepth(): NoteDepth {
+    return this.draft.depth ?? NoteDepth.NORMAL;
+  }
+
+  private isQuick(): boolean {
+    return this.currentDepth() === NoteDepth.QUICK;
+  }
+
+  private isDeep(): boolean {
+    return this.currentDepth() === NoteDepth.DEEP;
+  }
+
+  private setDepth(depth: NoteDepth): void {
+    this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags,
+      this.draft.level, depth);
+    this.scheduleDraftSave();
+    if (this.editorStore !== null) {
+      this.editorStore.saveDepth(depth).catch(() => {
+      });
+    }
+  }
+
+  private setQuickKind(kind: string): void {
+    this.quickKind = kind;
+    this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
   private fieldFor(key: NoteFieldKey): NoteTemplateField {
@@ -130,9 +205,10 @@ export struct NoteEditPage {
   }
 
   private updateContent(value: string): void {
-    this.draft = this.rebuild(value, this.draft.entries, this.draft.tags, this.draft.level);
+    this.draft = this.rebuild(value, this.draft.entries, this.draft.tags, this.draft.level, this.currentDepth());
     this.isDirty = true;
     this.clearError(null);
+    this.scheduleDraftSave();
   }
 
   private updateEntry(key: NoteFieldKey, value: string): void {
@@ -140,9 +216,10 @@ export struct NoteEditPage {
     for (const entry of this.draft.entries) {
       entries.push({ key: entry.key, value: entry.key === key ? value : entry.value });
     }
-    this.draft = this.rebuild(this.draft.content, entries, this.draft.tags, this.draft.level);
+    this.draft = this.rebuild(this.draft.content, entries, this.draft.tags, this.draft.level, this.currentDepth());
     this.isDirty = true;
     this.clearError(key);
+    this.scheduleDraftSave();
   }
 
   private addTag(tag: string): void {
@@ -150,8 +227,9 @@ export struct NoteEditPage {
     if (!tags.includes(tag)) {
       tags.push(tag);
     }
-    this.draft = this.rebuild(this.draft.content, this.draft.entries, tags, this.draft.level);
+    this.draft = this.rebuild(this.draft.content, this.draft.entries, tags, this.draft.level, this.currentDepth());
     this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
   private removeTag(tag: string): void {
@@ -161,8 +239,9 @@ export struct NoteEditPage {
         tags.push(item);
       }
     }
-    this.draft = this.rebuild(this.draft.content, this.draft.entries, tags, this.draft.level);
+    this.draft = this.rebuild(this.draft.content, this.draft.entries, tags, this.draft.level, this.currentDepth());
     this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
   private toggleRelation(relationId: string): void {
@@ -187,13 +266,15 @@ export struct NoteEditPage {
       tags: this.draft.tags,
       relatedRelationIds: next,
       level: this.draft.level,
+      depth: this.currentDepth(),
       timestamp: this.draft.timestamp
     };
     this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
 
-  /** Collects the optional typed materials the user filled in. */
+  /** Collects the optional typed materials the user filled in; quick capture adds its kind row. */
   private collectMaterials(): NoteMaterialDraft[] {
     const items: NoteMaterialDraft[] = [];
     this.pushMaterial(items, 'scene', this.materialScene);
@@ -201,7 +282,25 @@ export struct NoteEditPage {
     this.pushMaterial(items, 'body', this.materialBody);
     this.pushMaterial(items, 'existing_action', this.materialAction);
     this.pushMaterial(items, 'interpretation', this.materialInterpretation);
+    if (this.isQuick()) {
+      this.pushQuickMaterial(items);
+    }
     return items;
+  }
+
+  /** Quick capture also writes the body once, under the kind picked on the single chip row. */
+  private pushQuickMaterial(items: NoteMaterialDraft[]): void {
+    const text = this.draft.content.trim();
+    if (text.length === 0 || this.quickKind.length === 0) {
+      return;
+    }
+    const item: NoteMaterialDraft = {
+      kind: this.quickKind,
+      text: text,
+      source: 'direct',
+      form: 'first_person'
+    };
+    items.push(item);
   }
 
   private pushMaterial(items: NoteMaterialDraft[], kind: string, value: string): void {
@@ -236,18 +335,21 @@ export struct NoteEditPage {
     this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
       { kind: kind, source: source, form: meta.form, level: meta.level } : meta);
     this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
   private setForm(kind: string, form: MaterialForm): void {
     this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
       { kind: kind, source: meta.source, form: form, level: meta.level } : meta);
     this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
   private setMaterialLevel(kind: string, level: SecurityLevel | null): void {
     this.metas = this.metas.map((meta: MaterialMeta) => meta.kind === kind ?
       { kind: kind, source: meta.source, form: meta.form, level: level } : meta);
     this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
   private setMaterial(kind: string, value: string): void {
@@ -263,12 +365,14 @@ export struct NoteEditPage {
       this.materialInterpretation = value;
     }
     this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
   private setLevel(level: SecurityLevel): void {
-    this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags, level);
+    this.draft = this.rebuild(this.draft.content, this.draft.entries, this.draft.tags, level, this.currentDepth());
     this.metas = this.clampMetas(this.metas, level);
     this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
   /** Drops any per-material level wider than the new record level, so it follows the record. */
@@ -326,6 +430,35 @@ export struct NoteEditPage {
       .id(recordLevelChipId(level))
       .onClick(() => {
         this.setLevel(level);
+      })
+  }
+
+  @Builder
+  depthChip(depth: NoteDepth, id: string, label: string) {
+    Text(label)
+      .fontSize(AppTheme.font.bodyStrong)
+      .fontColor(this.currentDepth() === depth ? AppTheme.color.primaryDeep : AppTheme.color.text)
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+      .backgroundColor(this.currentDepth() === depth ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.lg)
+      .id(id)
+      .onClick(() => {
+        this.setDepth(depth);
+      })
+  }
+
+  @Builder
+  quickKindChip(kind: string, label: string, id: string) {
+    Text(label)
+      .fontSize(AppTheme.font.body)
+      .fontColor(this.quickKind === kind ? AppTheme.color.primaryDeep : AppTheme.color.text)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+      .backgroundColor(this.quickKind === kind ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.md)
+      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+      .id(id)
+      .onClick(() => {
+        this.setQuickKind(kind);
       })
   }
 
@@ -450,6 +583,13 @@ export struct NoteEditPage {
       }
       notifyHomeRefresh();
       this.isDirty = false;
+      this.rememberTags();
+      // Only a new note consumes the stored draft; editing an existing note leaves it alone.
+      if (this.isEditing) {
+        this.cancelDraftTimer();
+      } else {
+        this.clearStoredDraft();
+      }
       const message = this.noteId === null ?
         (this.draft.templateId === NoteTemplateId.DECISION ? '已保存，并生成决策记录' : '已保存') :
         '修改已保存';
@@ -467,6 +607,7 @@ export struct NoteEditPage {
   private async loadNote(noteId: string): Promise<void> {
     this.noteId = noteId;
     this.isEditing = true;
+    this.pendingDraft = null;
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
       this.isPreview = true;
@@ -498,8 +639,10 @@ export struct NoteEditPage {
       tags: detail.tags.slice(),
       relatedRelationIds: detail.relatedRelationIds.slice(),
       level: detail.level,
+      depth: NoteDepth.NORMAL,
       timestamp: detail.timestamp
     };
+    this.quickKind = '';
     this.materialScene = '';
     this.materialFeeling = '';
     this.materialBody = '';
@@ -536,6 +679,160 @@ export struct NoteEditPage {
       this.draft.level);
   }
 
+  aboutToDisappear(): void {
+    this.cancelDraftTimer();
+    if (!this.isDirty || !this.canWriteDraft()) {
+      return;
+    }
+    this.writeDraftNow();
+  }
+
+  /** A new note owns the draft slot; editing or an unanswered draft leaves the stored one intact. */
+  private canWriteDraft(): boolean {
+    if (this.editorStore === null || !this.keepDraft) {
+      return false;
+    }
+    if (this.isEditing || this.noteId !== null || this.isDraftPending()) {
+      return false;
+    }
+    return true;
+  }
+
+  /** Writes the editor state after the author pauses, so a crash keeps the latest typing. */
+  private scheduleDraftSave(): void {
+    if (this.editorStore === null || !this.canWriteDraft()) {
+      return;
+    }
+    this.cancelDraftTimer();
+    this.draftTimer = setTimeout(() => {
+      this.draftTimer = -1;
+      this.writeDraftNow();
+    }, DRAFT_SAVE_DELAY_MS);
+  }
+
+  private cancelDraftTimer(): void {
+    if (this.draftTimer !== -1) {
+      clearTimeout(this.draftTimer);
+      this.draftTimer = -1;
+    }
+  }
+
+  private writeDraftNow(): void {
+    if (!this.canWriteDraft()) {
+      return;
+    }
+    const store = this.editorStore;
+    if (store === null) {
+      return;
+    }
+    store.saveDraft(this.snapshotDraft()).catch(() => {
+    });
+  }
+
+  /** Editor state as the store keeps it, used for the unsaved draft. */
+  private snapshotDraft(): NoteEditorDraft {
+    const metas: NoteEditorMeta[] = [];
+    for (const meta of this.metas) {
+      metas.push({ kind: meta.kind, source: meta.source, form: meta.form, level: meta.level });
+    }
+    return {
+      content: this.draft.content,
+      materials: {
+        scene: this.materialScene,
+        feeling: this.materialFeeling,
+        body: this.materialBody,
+        existingAction: this.materialAction,
+        interpretation: this.materialInterpretation
+      },
+      metas: metas,
+      tags: this.draft.tags.slice(),
+      relatedRelationIds: this.draft.relatedRelationIds.slice(),
+      level: this.draft.level,
+      depth: this.currentDepth(),
+      quickKind: this.quickKind,
+      templateId: this.draft.templateId,
+      entries: this.copyEntries(this.draft.entries),
+      timestamp: this.draft.timestamp
+    };
+  }
+
+  /** True while a stored draft of a new note waits for the author's choice. */
+  private isDraftPending(): boolean {
+    return this.pendingDraft !== null && !this.isEditing && this.noteId === null;
+  }
+
+  private copyEntries(entries: NoteEntry[]): NoteEntry[] {
+    const copied: NoteEntry[] = [];
+    for (const entry of entries) {
+      copied.push({ key: entry.key, value: entry.value });
+    }
+    return copied;
+  }
+
+  private resumeDraft(snapshot: NoteEditorDraft): void {
+    this.materialScene = snapshot.materials.scene;
+    this.materialFeeling = snapshot.materials.feeling;
+    this.materialBody = snapshot.materials.body;
+    this.materialAction = snapshot.materials.existingAction;
+    this.materialInterpretation = snapshot.materials.interpretation;
+    this.showInterpretation = snapshot.materials.interpretation.trim().length > 0;
+    this.metas = this.clampMetas(this.metasFromSnapshot(snapshot.metas), snapshot.level);
+    this.quickKind = snapshot.quickKind;
+    this.draft = {
+      templateId: snapshot.templateId,
+      title: this.draft.title,
+      content: snapshot.content,
+      entries: this.copyEntries(snapshot.entries),
+      tags: snapshot.tags.slice(),
+      relatedRelationIds: snapshot.relatedRelationIds.slice(),
+      level: snapshot.level,
+      depth: snapshot.depth,
+      timestamp: snapshot.timestamp
+    };
+    this.pendingDraft = null;
+    this.isDirty = true;
+  }
+
+  private metasFromSnapshot(metas: NoteEditorMeta[]): MaterialMeta[] {
+    const items: MaterialMeta[] = [];
+    for (const meta of metas) {
+      items.push({ kind: meta.kind, source: meta.source, form: meta.form, level: meta.level });
+    }
+    return items;
+  }
+
+  private discardDraft(): void {
+    this.pendingDraft = null;
+    this.keepDraft = true;
+    if (this.editorStore !== null) {
+      this.editorStore.clearDraft().catch(() => {
+      });
+    }
+  }
+
+  /** Adds this note's tags to the recent list; failures only skip the shortcut. */
+  private rememberTags(): void {
+    if (this.editorStore === null) {
+      return;
+    }
+    this.editorStore.mergeRecentTags(this.draft.tags)
+      .then((tags: string[]) => {
+        this.recentTags = tags;
+      })
+      .catch(() => {
+      });
+  }
+
+  private clearStoredDraft(): void {
+    this.cancelDraftTimer();
+    this.pendingDraft = null;
+    this.keepDraft = false;
+    if (this.editorStore !== null) {
+      this.editorStore.clearDraft().catch(() => {
+      });
+    }
+  }
+
   @Builder
   saveMenu() {
     Row() {
@@ -561,7 +858,9 @@ export struct NoteEditPage {
         this.noteEditBody();
       },
       menus: () => {
-        this.saveMenu();
+        if (!this.isDraftPending()) {
+          this.saveMenu();
+        }
       },
       onDestinationReady: (context: NavDestinationContext) => {
         this.navStack = context.pathStack;
@@ -575,6 +874,10 @@ export struct NoteEditPage {
         }
       },
       onDestinationBackPressed: () => {
+        // The stored draft waits for the author's choice; leaving it alone keeps that choice open.
+        if (this.isDraftPending()) {
+          return false;
+        }
         if (!this.isDirty) {
           return false;
         }
@@ -590,6 +893,13 @@ export struct NoteEditPage {
             value: '放弃',
             action: () => {
               this.isDirty = false;
+              this.keepDraft = false;
+              this.cancelDraftTimer();
+              // Only this round of typing goes away; a draft the author has not opened yet stays.
+              if (this.editorStore !== null && !this.isDraftPending()) {
+                this.editorStore.clearDraft().catch(() => {
+                });
+              }
               if (this.navStack !== null) {
                 this.navStack.pop();
               }
@@ -604,22 +914,42 @@ export struct NoteEditPage {
   @Builder
   noteEditBody() {
       Column() {
+        if (this.isDraftPending() && this.pendingDraft !== null) {
+          this.draftResumePanel();
+        } else {
         Scroll() {
           Column({ space: 16 }) {
-            Column({ space: 6 }) {
-              Text('类别')
+            Column({ space: 8 }) {
+              Text('记录深度')
                 .fontSize(AppTheme.font.bodyStrong)
                 .fontColor(AppTheme.color.textSecondary)
                 .width('100%')
-              NoteTemplatePicker({
-                selected: this.draft.templateId,
-                onSelect: (templateId: NoteTemplateId | null) => {
-                  this.applyTemplate(templateId);
-                }
-              })
+              Row({ space: AppTheme.spacing.s6 }) {
+                this.depthChip(NoteDepth.QUICK, 'note_depth_quick', '快速')
+                this.depthChip(NoteDepth.NORMAL, 'note_depth_normal', '普通')
+                this.depthChip(NoteDepth.DEEP, 'note_depth_deep', '深入')
+              }
+              .width('100%')
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)
+
+            if (!this.isQuick()) {
+              Column({ space: 6 }) {
+                Text('类别')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                NoteTemplatePicker({
+                  selected: this.draft.templateId,
+                  onSelect: (templateId: NoteTemplateId | null) => {
+                    this.applyTemplate(templateId);
+                  }
+                })
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
 
             Column({ space: 6 }) {
               Row({ space: 4 }) {
@@ -650,6 +980,26 @@ export struct NoteEditPage {
             .width('100%')
             .alignItems(HorizontalAlign.Start)
 
+if (this.isQuick()) {
+              Column({ space: 6 }) {
+                Text('这条主要是什么')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.textSecondaryStrong)
+                  .width('100%')
+                Flex({ wrap: FlexWrap.Wrap }) {
+                  this.quickKindChip('scene', '现场', 'quick_kind_scene')
+                  this.quickKindChip('feeling', '感受', 'quick_kind_feeling')
+                  this.quickKindChip('body', '身体', 'quick_kind_body')
+                  this.quickKindChip('existing_action', '已做', 'quick_kind_existing_action')
+                  this.quickKindChip('interpretation', '解释', 'quick_kind_interpretation')
+                  this.quickKindChip('', '暂不分类', 'quick_kind_none')
+                }
+                .width('100%')
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
+
             if (this.draft.templateId !== null) {
               ForEach(this.draft.entries, (entry: NoteEntry) => {
                 NoteFieldEditor({
@@ -663,74 +1013,84 @@ export struct NoteEditPage {
               }, (entry: NoteEntry) => entry.key)
             }
 
-            NoteTagEditor({
-              tags: this.draft.tags,
-              onAdd: (tag: string) => {
-                this.addTag(tag);
-              },
-              onRemove: (tag: string) => {
-                this.removeTag(tag);
-              }
-            })
+            if (!this.isQuick()) {
+              NoteTagEditor({
+                tags: this.draft.tags,
+                recentTags: this.recentTags,
+                onAdd: (tag: string) => {
+                  this.addTag(tag);
+                },
+                onRemove: (tag: string) => {
+                  this.removeTag(tag);
+                },
+                onPickRecent: (tag: string) => {
+                  this.addTag(tag);
+                }
+              })
+            }
 
-            Column({ space: 8 }) {
-              Text('关联关系（可选）')
-                .fontSize(AppTheme.font.bodyStrong)
-                .fontColor(AppTheme.color.textSecondary)
-                .width('100%')
-              if (this.relations.length === 0) {
-                Text('关系层还没有记录，可先去载入示例关系')
+            if (this.isDeep()) {
+              Column({ space: 8 }) {
+                Text('关联关系（可选）')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                if (this.relations.length === 0) {
+                  Text('关系层还没有记录，可先去载入示例关系')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                } else {
+                  Flex({ wrap: FlexWrap.Wrap }) {
+                    ForEach(this.relations, (relation: RelationListItem) => {
+                      Text(relation.name)
+                        .fontSize(AppTheme.font.body)
+                        .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.primaryDeep : AppTheme.color.text)
+                        .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+                        .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.tint : AppTheme.color.chip)
+                        .borderRadius(AppTheme.radius.md)
+                        .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+                        .onClick(() => {
+                          this.toggleRelation(relation.id);
+                        })
+                    }, (relation: RelationListItem) => relation.id)
+                  }
+                  .width('100%')
+                }
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
+
+            if (!this.isQuick()) {
+              Column({ space: 6 }) {
+                Text('分类补充（可选）')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.textSecondaryStrong)
+                  .width('100%')
+                Text('分开写现场、感受、身体、已经做过的事和当时的解释；不填也能保存，正文会作为未分类材料留档。')
                   .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
-              } else {
-                Flex({ wrap: FlexWrap.Wrap }) {
-                  ForEach(this.relations, (relation: RelationListItem) => {
-                    Text(relation.name)
-                      .fontSize(AppTheme.font.body)
-                      .fontColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.primaryDeep : AppTheme.color.text)
-                      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-                      .backgroundColor(this.draft.relatedRelationIds.includes(relation.id) ? AppTheme.color.tint : AppTheme.color.chip)
-                      .borderRadius(AppTheme.radius.md)
-                      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-                      .onClick(() => {
-                        this.toggleRelation(relation.id);
-                      })
-                  }, (relation: RelationListItem) => relation.id)
+                this.materialRow('现场', '看到、听到、发生了什么', this.materialScene, 'scene')
+                this.materialRow('感受', '当时的情绪', this.materialFeeling, 'feeling')
+                this.materialRow('身体', '睡眠、疼痛、疲劳等', this.materialBody, 'body')
+                this.materialRow('已做', '解释之前已经采取了什么行动', this.materialAction, 'existing_action')
+                if (this.isDeep() || this.showInterpretation) {
+                  this.materialRow('解释', '我当时的解释是什么？（可留空）', this.materialInterpretation, 'interpretation')
+                } else {
+                  Text('写解释（可留空）')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.primary)
+                    .id('material_interpretation_toggle')
+                    .onClick(() => {
+                      this.showInterpretation = true;
+                    })
                 }
-                .width('100%')
               }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
             }
-            .width('100%')
-            .alignItems(HorizontalAlign.Start)
-
-            Column({ space: 6 }) {
-              Text('分类补充（可选）')
-                .fontSize(AppTheme.font.bodyStrong)
-                .fontColor(AppTheme.color.textSecondaryStrong)
-                .width('100%')
-              Text('分开写现场、感受、身体、已经做过的事和当时的解释；不填也能保存，正文会作为未分类材料留档。')
-                .fontSize(AppTheme.font.caption)
-                .fontColor(AppTheme.color.textMuted)
-                .width('100%')
-              this.materialRow('现场', '看到、听到、发生了什么', this.materialScene, 'scene')
-              this.materialRow('感受', '当时的情绪', this.materialFeeling, 'feeling')
-              this.materialRow('身体', '睡眠、疼痛、疲劳等', this.materialBody, 'body')
-              this.materialRow('已做', '解释之前已经采取了什么行动', this.materialAction, 'existing_action')
-              if (this.showInterpretation) {
-                this.materialRow('解释', '我当时的解释是什么？（可留空）', this.materialInterpretation, 'interpretation')
-              } else {
-                Text('写解释（可留空）')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.primary)
-                  .id('material_interpretation_toggle')
-                  .onClick(() => {
-                    this.showInterpretation = true;
-                  })
-              }
-            }
-            .width('100%')
-            .alignItems(HorizontalAlign.Start)
 
             Column({ space: 8 }) {
               Row() {
@@ -778,10 +1138,51 @@ export struct NoteEditPage {
         }
         .width('100%')
         .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s24 })
+        }
       }
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Transparent)
+  }
+
+  /** The only thing a note with an unanswered stored draft shows until the author chooses. */
+  @Builder
+  draftResumePanel() {
+    Column({ space: 6 }) {
+      Text('上次没写完的草稿还在')
+        .fontSize(AppTheme.font.bodyStrong)
+        .fontColor(AppTheme.color.textSecondaryStrong)
+        .width('100%')
+      Row({ space: AppTheme.spacing.s8 }) {
+        Text('继续上次草稿')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.primaryDeep)
+          .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+          .backgroundColor(AppTheme.color.tint)
+          .borderRadius(AppTheme.radius.sm)
+          .id('note_draft_resume')
+          .onClick(() => {
+            const pending = this.pendingDraft;
+            if (pending !== null) {
+              this.resumeDraft(pending);
+            }
+          })
+        Text('重新开始')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.text)
+          .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+          .backgroundColor(AppTheme.color.chip)
+          .borderRadius(AppTheme.radius.sm)
+          .id('note_draft_discard')
+          .onClick(() => {
+            this.discardDraft();
+          })
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .padding(AppTheme.spacing.s16)
+    .alignItems(HorizontalAlign.Start)
   }
 }
 

@@ -496,7 +496,7 @@ export class BackupService {
     }
     const stores: string[] = [
       SETTINGS_STORE_NAME, 'cogit_profile', 'cogit_page_backgrounds',
-      'review_draft_store', 'cogit_llm_spend', 'cogit_onboarding'
+      'review_draft_store', 'cogit_llm_spend', 'cogit_onboarding', 'cogit_note_editor'
     ];
     for (const name of stores) {
       try {

@@ -4,8 +4,11 @@ import { AppTheme } from '../theme/AppTheme';
 @ComponentV2
 export struct NoteTagEditor {
   @Param tags: string[] = [];
+  /** Tags used on earlier notes; picking one appends it to the note. */
+  @Param recentTags: string[] = [];
   @Event onAdd: (tag: string) => void = () => {};
   @Event onRemove: (tag: string) => void = () => {};
+  @Event onPickRecent: (tag: string) => void = () => {};
   @Local draftTag: string = '';
 
   private submit(): void {
@@ -19,6 +22,17 @@ export struct NoteTagEditor {
 
   private canSubmit(): boolean {
     return this.draftTag.trim().length > 0;
+  }
+
+  /** Recent tags not already on this note. */
+  private pickableRecent(): string[] {
+    const items: string[] = [];
+    for (const tag of this.recentTags) {
+      if (!this.tags.includes(tag) && !items.includes(tag)) {
+        items.push(tag);
+      }
+    }
+    return items;
   }
 
   build() {
@@ -77,6 +91,33 @@ export struct NoteTagEditor {
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
+
+      if (this.pickableRecent().length > 0) {
+        Column({ space: 4 }) {
+          Text('最近用过')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textMuted)
+            .width('100%')
+          Flex({ wrap: FlexWrap.Wrap }) {
+            ForEach(this.pickableRecent(), (tag: string) => {
+              Text(tag)
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.primaryDeep)
+                .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+                .backgroundColor(AppTheme.color.tint)
+                .borderRadius(AppTheme.radius.sm)
+                .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+                .id(`tag_recent_${tag}`)
+                .onClick(() => {
+                  this.onPickRecent(tag);
+                })
+            }, (tag: string) => tag)
+          }
+          .width('100%')
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
+      }
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)

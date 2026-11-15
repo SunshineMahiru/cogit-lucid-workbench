@@ -10,7 +10,7 @@ export {
   findNoteTemplate
 } from './templates';
 export type { NoteEntry, NoteDraft, NoteMaterialDraft } from './NoteDraft';
-export { readNoteEntry } from './NoteDraft';
+export { NoteDepth, readNoteEntry } from './NoteDraft';
 export { createNoteDraft, createFreeformNoteDraft } from './NoteDraftFactory';
 export { mergeDraftEntries } from './NoteDraftMerger';
 export type { NoteValidationError, NoteValidationResult } from './NoteValidation';

@@ -117,20 +117,23 @@ export struct NoteDetailPage {
     });
   }
 
-  /** Materials to render; a lone unclassified copy of the body is left out. */
-  private visibleMaterials(): ExperienceMaterial[] {
+  /** Materials kept with the note; a copy of the body is shown as its kind only. */
+  private noteMaterials(): ExperienceMaterial[] {
     const detail = this.detail;
     if (detail === null || detail.materials === undefined) {
       return [];
     }
-    const materials = detail.materials;
-    if (materials.length === 1) {
-      const only = materials[0];
-      if (only.kind === 'unclassified' && only.text.trim() === detail.content.trim()) {
-        return [];
-      }
+    return detail.materials;
+  }
+
+  /** True when this material only repeats the body, so the card text would be duplication. */
+  private isBodyEcho(material: ExperienceMaterial): boolean {
+    const detail = this.detail;
+    if (detail === null) {
+      return false;
     }
-    return materials;
+    const body = detail.content.trim();
+    return body.length > 0 && material.text.trim() === body;
   }
 
   @Builder
@@ -275,30 +278,38 @@ export struct NoteDetailPage {
               .fontColor(AppTheme.color.text)
               .width('100%')
 
-            if (this.visibleMaterials().length > 0) {
+            if (this.noteMaterials().length > 0) {
               Column({ space: 6 }) {
                 Text('材料')
                   .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
-                ForEach(this.visibleMaterials(), (material: ExperienceMaterial) => {
-                  Column({ space: 4 }) {
-                    Text(`${materialKindText(material.kind)} · ${materialSourceText(material.source)} · ` +
-                      `${materialFormText(material.form)} · ${securityLevelText(material.level)}`)
-                      .fontSize(AppTheme.font.caption)
-                      .fontColor(AppTheme.color.textMuted)
-                      .width('100%')
-                    Text(material.text)
+                ForEach(this.noteMaterials(), (material: ExperienceMaterial) => {
+                  if (this.isBodyEcho(material)) {
+                    Text(`类型：${materialKindText(material.kind)}`)
                       .fontSize(AppTheme.font.body)
-                      .lineHeight(20)
-                      .fontColor(AppTheme.color.text)
+                      .fontColor(AppTheme.color.textSecondary)
                       .width('100%')
+                      .id(`note_material_kind_${material.id}`)
+                  } else {
+                    Column({ space: 4 }) {
+                      Text(`${materialKindText(material.kind)} · ${materialSourceText(material.source)} · ` +
+                        `${materialFormText(material.form)} · ${securityLevelText(material.level)}`)
+                        .fontSize(AppTheme.font.caption)
+                        .fontColor(AppTheme.color.textMuted)
+                        .width('100%')
+                      Text(material.text)
+                        .fontSize(AppTheme.font.body)
+                        .lineHeight(20)
+                        .fontColor(AppTheme.color.text)
+                        .width('100%')
+                    }
+                    .width('100%')
+                    .padding(AppTheme.spacing.s10)
+                    .backgroundColor(AppTheme.color.surfaceTint)
+                    .borderRadius(AppTheme.radius.md)
+                    .alignItems(HorizontalAlign.Start)
                   }
-                  .width('100%')
-                  .padding(AppTheme.spacing.s10)
-                  .backgroundColor(AppTheme.color.surfaceTint)
-                  .borderRadius(AppTheme.radius.md)
-                  .alignItems(HorizontalAlign.Start)
                 }, (material: ExperienceMaterial) => material.id)
               }
               .width('100%')
