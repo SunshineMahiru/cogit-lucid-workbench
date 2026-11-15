@@ -11,6 +11,8 @@ export interface NoteDetail {
   content: string;
   tags: string[];
   level: SecurityLevel;
+  /** Capture depth stored with the note; defaults to normal */
+  depth?: string;
   timestamp: number;
   /** Relations linked to the note, used when editing */
   relatedRelationIds: string[];
@@ -32,6 +34,7 @@ export function toNoteDetail(event: Event, now: number = Date.now()): NoteDetail
     content: event.content,
     tags: event.tags.slice(),
     level: event.level,
+    depth: event.depth ?? 'normal',
     timestamp: event.timestamp,
     relatedRelationIds: event.relatedRelationIds.slice(),
     timeLabel: formatNoteTime(event.timestamp, now),

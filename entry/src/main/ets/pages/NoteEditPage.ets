@@ -163,6 +163,17 @@ export struct NoteEditPage {
     return this.draft.depth ?? NoteDepth.NORMAL;
   }
 
+  /** Stored depth text mapped back to the editor scale; absent or unknown reads as NORMAL. */
+  private depthFromText(text: string | undefined): NoteDepth {
+    if (text === NoteDepth.QUICK) {
+      return NoteDepth.QUICK;
+    }
+    if (text === NoteDepth.DEEP) {
+      return NoteDepth.DEEP;
+    }
+    return NoteDepth.NORMAL;
+  }
+
   private isQuick(): boolean {
     return this.currentDepth() === NoteDepth.QUICK;
   }
@@ -840,7 +851,7 @@ export struct NoteEditPage {
       tags: detail.tags.slice(),
       relatedRelationIds: detail.relatedRelationIds.slice(),
       level: detail.level,
-      depth: NoteDepth.NORMAL,
+      depth: this.depthFromText(detail.depth),
       timestamp: detail.timestamp
     };
     this.quickKind = '';

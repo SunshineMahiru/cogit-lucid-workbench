@@ -517,6 +517,7 @@ function applyDraft(event: Event, draft: NoteDraft): void {
   event.tags = normalizeTags(draft.tags);
   event.relatedRelationIds = (draft.relatedRelationIds ?? []).slice();
   event.level = draft.level;
+  event.depth = draft.depth ?? NoteDepth.NORMAL;
 }
 
 /** Keeps a material at or below the record level; stricter choices win. */
