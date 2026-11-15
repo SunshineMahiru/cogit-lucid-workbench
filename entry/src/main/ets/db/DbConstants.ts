@@ -299,6 +299,7 @@ export const EVIDENCE_COLS = {
 export const REVIEW_MATERIAL_COLS = {
   REVIEW_ID: 'review_id',
   MATERIAL_ID: 'material_id',
+  KIND_SNAPSHOT: 'kind_snapshot',
   TEXT_SNAPSHOT: 'text_snapshot',
   SOURCE_SNAPSHOT: 'source_snapshot',
   LEVEL_SNAPSHOT: 'level_snapshot',

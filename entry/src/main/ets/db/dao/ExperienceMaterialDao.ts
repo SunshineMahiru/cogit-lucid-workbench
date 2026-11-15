@@ -50,6 +50,26 @@ export class ExperienceMaterialDao {
     }
   }
 
+  /** Returns the live, unsealed materials newest first, capped at limit. */
+  async queryRecentVisible(limit: number): Promise<ExperienceMaterial[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);
+    predicates.equalTo(MATERIAL_COLS.DELETED, 0)
+      .and()
+      .notEqualTo(MATERIAL_COLS.LEVEL, SecurityLevel.SEALED)
+      .orderByDesc(MATERIAL_COLS.OBSERVED_AT)
+      .limitAs(limit);
+    const resultSet = await this.store.query(predicates);
+    try {
+      const results: ExperienceMaterial[] = [];
+      while (resultSet.goToNextRow()) {
+        results.push(this.mapRow(resultSet));
+      }
+      return results;
+    } finally {
+      resultSet.close();
+    }
+  }
+
   /** Returns one material by id, including deleted rows, or null when it never existed. */
   async queryById(id: string): Promise<ExperienceMaterial | null> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EXPERIENCE_MATERIAL);

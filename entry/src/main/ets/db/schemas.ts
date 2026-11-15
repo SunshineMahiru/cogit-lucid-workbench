@@ -119,6 +119,7 @@ export const TABLE_CREATE_SQLS: string[] = [
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.REVIEW_MATERIAL} (
     review_id TEXT NOT NULL,
     material_id TEXT NOT NULL,
+    kind_snapshot TEXT NOT NULL DEFAULT '',
     text_snapshot TEXT NOT NULL DEFAULT '',
     source_snapshot TEXT NOT NULL DEFAULT '',
     level_snapshot TEXT NOT NULL DEFAULT 'local_only',

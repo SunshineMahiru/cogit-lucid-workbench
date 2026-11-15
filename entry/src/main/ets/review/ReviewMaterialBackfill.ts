@@ -3,7 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { DB_TABLES, REVIEW_COLS } from '../db/DbConstants';
 import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
 import { ReviewMaterialDao } from '../db/dao/ReviewMaterialDao';
-import { ReviewMaterial } from '../model/ReviewMaterial';
+import { ReviewMaterial, REVIEW_ZONE } from '../model/ReviewMaterial';
 import {
   MaterialSourceRow,
   buildRows,
@@ -73,11 +73,16 @@ async function collectRows(store: relationalStore.RdbStore, snapshotDao: ReviewM
           text: material.text,
           source: material.source,
           level: material.level,
-          deleted: material.deleted
+          deleted: material.deleted,
+          kind: material.kind
         });
       }
     }
     const built = buildRows(review.id, review.createdAt, ids, (id: string) => sources.get(id) ?? null);
+    for (const row of built) {
+      // Legacy citations came from the first zone, the scene the old review flow recorded.
+      row.zone = REVIEW_ZONE.SCENE;
+    }
     for (const row of mergeExisting(built, existing)) {
       rows.push(row);
     }

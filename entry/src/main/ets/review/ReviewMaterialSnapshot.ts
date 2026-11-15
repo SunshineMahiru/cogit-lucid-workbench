@@ -8,6 +8,8 @@ export interface MaterialSourceRow {
   source: string;
   level: SecurityLevel;
   deleted: boolean;
+  /** Material kind; absent when the caller cannot classify it, and then the snapshot keeps ''. */
+  kind?: string;
 }
 
 /** Resolves a material id to its current row, or null when it never existed. */
@@ -83,6 +85,7 @@ function toSnapshotRow(reviewId: string, citedAt: number, materialId: string,
     return {
       reviewId: reviewId,
       materialId: materialId,
+      kindSnapshot: '',
       textSnapshot: '',
       sourceSnapshot: '',
       levelSnapshot: SecurityLevel.LOCAL_ONLY,
@@ -95,6 +98,7 @@ function toSnapshotRow(reviewId: string, citedAt: number, materialId: string,
   return {
     reviewId: reviewId,
     materialId: materialId,
+    kindSnapshot: citable ? (source.kind ?? '') : '',
     textSnapshot: citable ? source.text : '',
     sourceSnapshot: citable ? source.source : '',
     levelSnapshot: source.level,

@@ -4,6 +4,8 @@ import { SecurityLevel } from './SecurityLevel';
 export interface ReviewMaterial {
   reviewId: string;
   materialId: string;
+  /** Material kind copied at citation time; empty when no snapshot could be taken. */
+  kindSnapshot: string;
   /** Text copied at citation time; empty when the source was missing, deleted or sealed. */
   textSnapshot: string;
   /** Origin copied at citation time; empty when no snapshot could be taken. */

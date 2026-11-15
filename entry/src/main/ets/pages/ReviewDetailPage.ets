@@ -5,8 +5,10 @@ import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewDetailView, ReviewService } from '../review';
 import { Anchor } from '../model/Anchor';
+import { ReviewMaterial } from '../model/ReviewMaterial';
 import { ReviewPayload } from '../model/ReviewPayload';
 import { ReviewPeriod } from '../model/ReviewPeriod';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { ReviewDetailParams, PlanNodeParams, PlanAttachParams } from '../navigation/RouteParams';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
@@ -31,6 +33,7 @@ export struct ReviewDetailPage {
     anchors: []
   };
   @Local payload: ReviewPayload | null = null;
+  @Local cited: ReviewMaterial[] = [];
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
   private navStack: NavPathStack | null = null;
@@ -49,11 +52,21 @@ export struct ReviewDetailPage {
       } else {
         this.detail = detail;
         this.payload = await this.loadPayload(reviewId, hostContext);
+        this.cited = await this.loadCited(reviewId, service);
       }
     } catch (error) {
       this.loadPreview(reviewId);
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  /** Reads the cited material snapshots; a failed read leaves the section hidden. */
+  private async loadCited(reviewId: string, service: ReviewService): Promise<ReviewMaterial[]> {
+    try {
+      return await service.materials(reviewId);
+    } catch (error) {
+      return [];
     }
   }
 
@@ -69,6 +82,10 @@ export struct ReviewDetailPage {
     } catch (error) {
       return null;
     }
+  }
+
+  private kindLabelOf(row: ReviewMaterial): string {
+    return kindLabel(row.kindSnapshot);
   }
 
   private loadPreview(reviewId: string): void {
@@ -113,6 +130,60 @@ export struct ReviewDetailPage {
           .lineHeight(21)
           .fontColor(body.trim().length > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
           .width('100%')
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
+  @Builder
+  miniTag(label: string) {
+    Text(label)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+      .backgroundColor(AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+  }
+
+  @Builder
+  citedSection() {
+    SectionCard() {
+      Column({ space: 8 }) {
+        Text(`引用的材料 · ${this.cited.length} 条`)
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        ForEach(this.cited, (row: ReviewMaterial) => {
+          Column({ space: 4 }) {
+            Row({ space: 4 }) {
+              this.miniTag(this.kindLabelOf(row))
+              if (sourceLabel(row.sourceSnapshot).length > 0) {
+                this.miniTag(sourceLabel(row.sourceSnapshot))
+              }
+              if (levelLabel(row.levelSnapshot).length > 0) {
+                this.miniTag(levelLabel(row.levelSnapshot))
+              }
+            }
+            .width('100%')
+            if (row.snapshotMissing) {
+              Text('来源已删除')
+                .fontSize(AppTheme.font.bodyStrong)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+            } else {
+              Text(summaryOf(row.textSnapshot))
+                .fontSize(AppTheme.font.bodyStrong)
+                .lineHeight(19)
+                .fontColor(AppTheme.color.text)
+                .width('100%')
+            }
+          }
+          .width('100%')
+          .padding(AppTheme.spacing.s10)
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .borderRadius(AppTheme.radius.sm)
+        }, (row: ReviewMaterial) => row.materialId)
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
@@ -241,6 +312,9 @@ export struct ReviewDetailPage {
 
             if (this.payload !== null) {
               this.zoneSection('1. 现场与既有行动', this.payload.scene)
+              if (this.cited.length > 0) {
+                this.citedSection()
+              }
               this.zoneSection('2. 当前模型', this.payload.model)
               this.zoneSection('3. 关系与主要矛盾', this.payload.relation)
               this.zoneSection('4. 多源校正', this.payload.evidence)
@@ -248,6 +322,9 @@ export struct ReviewDetailPage {
               this.zoneSection('6. 调节与修订', this.payload.revision)
             } else {
               this.stepSection('1. 事实', this.detail.facts)
+              if (this.cited.length > 0) {
+                this.citedSection()
+              }
               this.stepSection('2. 解释', this.detail.interpretation)
               this.stepSection('3. 矛盾', this.detail.contradiction)
 
@@ -310,4 +387,66 @@ export struct ReviewDetailPage {
         .backgroundColor(Color.Transparent)
       }
   }
+}
+
+const CITED_SUMMARY_LIMIT: number = 50;
+
+/** Collapses line breaks and cuts a snapshot down to one summary line. */
+function summaryOf(text: string): string {
+  const flat = text.split('\n').join(' ').trim();
+  return flat.length > CITED_SUMMARY_LIMIT ? `${flat.substring(0, CITED_SUMMARY_LIMIT)}…` : flat;
+}
+
+function kindLabel(snapshot: string): string {
+  if (snapshot === 'scene') {
+    return '现场';
+  }
+  if (snapshot === 'feeling') {
+    return '感受';
+  }
+  if (snapshot === 'body') {
+    return '身体';
+  }
+  if (snapshot === 'existing_action') {
+    return '已做';
+  }
+  if (snapshot === 'interpretation') {
+    return '解释';
+  }
+  return '未分类';
+}
+
+function sourceLabel(raw: string): string {
+  if (raw === 'direct') {
+    return '直接经历';
+  }
+  if (raw === 'reading') {
+    return '阅读';
+  }
+  if (raw === 'exercise') {
+    return '练习';
+  }
+  if (raw === 'interaction') {
+    return '互动';
+  }
+  if (raw === 'reflection') {
+    return '反思';
+  }
+  if (raw === 'external') {
+    return '外部资料';
+  }
+  return '';
+}
+
+function levelLabel(level: SecurityLevel | undefined): string {
+  if (level === SecurityLevel.ANALYZABLE) {
+    return '可分析';
+  }
+  if (level === SecurityLevel.LOCAL_ONLY) {
+    return '仅本地';
+  }
+  if (level === SecurityLevel.SEALED) {
+    return '已封存';
+  }
+  return '';
 }

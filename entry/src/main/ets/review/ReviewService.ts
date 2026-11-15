@@ -3,9 +3,10 @@ import { common } from '@kit.AbilityKit';
 import { Anchor } from '../model/Anchor';
 import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
+import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { createReviewResult } from '../model/factories';
 import { Prediction } from '../model/Prediction';
-import { ReviewMaterial } from '../model/ReviewMaterial';
+import { ReviewMaterial, REVIEW_ZONE } from '../model/ReviewMaterial';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { emptyReviewPayload, hasAnyZone } from '../model/ReviewPayload';
 import { SecurityLevel } from '../model/SecurityLevel';
@@ -77,6 +78,11 @@ export class ReviewService {
     return anchors.slice(0, limit);
   }
 
+  /** Returns the newest materials a session may quote; sealed and deleted ones stay out. */
+  async recentMaterials(limit: number = 50): Promise<ExperienceMaterial[]> {
+    return this.experienceMaterialDao.queryRecentVisible(limit);
+  }
+
   /** Persists a completed session and returns its id. */
   async save(period: ReviewPeriod, draft: ReviewDraft, rangeLabel: string,
     planId: string = '', planNodeId: string = ''): Promise<string> {
@@ -111,8 +117,8 @@ export class ReviewService {
     try {
       await this.reviewDao.insert(result);
       const sources = await this.loadMaterialSources(citedIds);
-      const rows = buildRows(result.id, result.createdAt, citedIds,
-        (id: string) => sources.get(id) ?? null);
+      const rows = ReviewService.withSceneZone(buildRows(result.id, result.createdAt, citedIds,
+        (id: string) => sources.get(id) ?? null));
       for (const row of rows) {
         await this.reviewMaterialDao.insert(row);
       }
@@ -143,8 +149,8 @@ export class ReviewService {
       return [];
     }
     const sources = await this.loadMaterialSources(ids);
-    const rows = buildRows(reviewId, review.createdAt, ids,
-      (id: string) => sources.get(id) ?? null);
+    const rows = ReviewService.withSceneZone(buildRows(reviewId, review.createdAt, ids,
+      (id: string) => sources.get(id) ?? null));
     return orderSnapshots(rows);
   }
 
@@ -176,10 +182,19 @@ export class ReviewService {
         text: material.text,
         source: material.source,
         level: material.level,
-        deleted: material.deleted
+        deleted: material.deleted,
+        kind: material.kind
       });
     }
     return sources;
+  }
+
+  /** Cited materials belong to the review's scene zone; buildRows leaves the zone unassigned. */
+  private static withSceneZone(rows: ReviewMaterial[]): ReviewMaterial[] {
+    for (const row of rows) {
+      row.zone = REVIEW_ZONE.SCENE;
+    }
+    return rows;
   }
 }
 

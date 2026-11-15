@@ -1,7 +1,9 @@
 import { Anchor } from '../model/Anchor';
+import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { AppTheme } from '../theme/AppTheme';
 import { formatHitRate } from '../model/HomeModel';
+import { MaterialPicker } from './MaterialPicker';
 import { ReviewPromptPanel } from './ReviewPromptPanel';
 import { ReviewAgentPanel } from './ReviewAgentPanel';
 import { hasAnyZone, ReviewPayload } from '../model/ReviewPayload';
@@ -51,6 +53,8 @@ export struct ReviewForm {
   @Event onBackToPlan: () => void = () => {};
   @Local stats: ReviewStats = emptyReviewStats();
   @Local anchors: Anchor[] = [];
+  @Local materials: ExperienceMaterial[] = [];
+  @Local selectedMaterialIds: string[] = [];
   @Local step: number = 0;
   @Local facts: string = '';
   @Local interpretation: string = '';
@@ -90,6 +94,7 @@ export struct ReviewForm {
       this.stats = await this.service.loadStats(this.period);
       this.anchors = await this.service.loadAnchors(3);
       this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
+      this.materials = await this.service.recentMaterials(50);
       const draft = await this.draftStore.loadFor(this.period, this.planNodeId);
       if (draft !== null) {
         this.facts = draft.facts;
@@ -106,6 +111,9 @@ export struct ReviewForm {
         }
         if (draft.anchorIds.length > 0) {
           this.selectedAnchorIds = draft.anchorIds.slice();
+        }
+        if (draft.materialIds !== undefined && draft.materialIds.length > 0) {
+          this.selectedMaterialIds = draft.materialIds.slice();
         }
       }
       this.isLoading = false;
@@ -133,6 +141,7 @@ export struct ReviewForm {
       contradiction: this.contradiction,
       action: this.action,
       payload: this.currentPayload(),
+      materialIds: this.selectedMaterialIds.slice(),
       anchorIds: this.selectedAnchorIds.slice(),
       planId: this.planId,
       planNodeId: this.planNodeId
@@ -217,6 +226,15 @@ export struct ReviewForm {
       this.selectedAnchorIds = this.selectedAnchorIds.filter((item: string) => item !== id);
     } else {
       this.selectedAnchorIds = this.selectedAnchorIds.concat([id]);
+    }
+    this.persistDraft();
+  }
+
+  private toggleMaterial(id: string): void {
+    if (this.selectedMaterialIds.includes(id)) {
+      this.selectedMaterialIds = this.selectedMaterialIds.filter((item: string) => item !== id);
+    } else {
+      this.selectedMaterialIds = this.selectedMaterialIds.concat([id]);
     }
     this.persistDraft();
   }
@@ -499,6 +517,16 @@ export struct ReviewForm {
               .onChange((value: string) => {
                 this.updateCurrent(value);
               })
+
+            if (this.step === 0) {
+              MaterialPicker({
+                materials: this.materials,
+                selectedIds: this.selectedMaterialIds,
+                onToggle: (id: string) => {
+                  this.toggleMaterial(id);
+                }
+              })
+            }
           }
           .width('100%')
           .padding(AppTheme.spacing.s16)

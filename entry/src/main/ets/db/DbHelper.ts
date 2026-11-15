@@ -421,6 +421,16 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Cited materials gained a kind snapshot; rows written earlier read back as unclassified.
+    const reviewMaterialKindMigrations: string[] = [
+      `ALTER TABLE review_material ADD COLUMN kind_snapshot TEXT NOT NULL DEFAULT ''`
+    ];
+    for (const sql of reviewMaterialKindMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     // Reviews saved before the snapshot table keep their cited ids only in the payload; the
     // backfill copies them once, and a failure leaves the read path to resolve live materials.
     try {

@@ -15,13 +15,15 @@ export class ReviewMaterialDao {
   async insert(row: ReviewMaterial): Promise<void> {
     const sql = `INSERT OR IGNORE INTO ${DB_TABLES.REVIEW_MATERIAL}
       (${REVIEW_MATERIAL_COLS.REVIEW_ID}, ${REVIEW_MATERIAL_COLS.MATERIAL_ID},
+        ${REVIEW_MATERIAL_COLS.KIND_SNAPSHOT},
         ${REVIEW_MATERIAL_COLS.TEXT_SNAPSHOT}, ${REVIEW_MATERIAL_COLS.SOURCE_SNAPSHOT},
         ${REVIEW_MATERIAL_COLS.LEVEL_SNAPSHOT}, ${REVIEW_MATERIAL_COLS.ZONE},
         ${REVIEW_MATERIAL_COLS.CITED_AT}, ${REVIEW_MATERIAL_COLS.SNAPSHOT_MISSING})
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     await this.store.executeSql(sql, [
       row.reviewId,
       row.materialId,
+      row.kindSnapshot,
       row.textSnapshot,
       row.sourceSnapshot,
       row.levelSnapshot,
@@ -135,9 +137,12 @@ export class ReviewMaterialDao {
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): ReviewMaterial {
+    // Rows written before the kind snapshot column existed read back as empty text.
+    const kindIndex = resultSet.getColumnIndex(REVIEW_MATERIAL_COLS.KIND_SNAPSHOT);
     return {
       reviewId: resultSet.getString(resultSet.getColumnIndex(REVIEW_MATERIAL_COLS.REVIEW_ID)),
       materialId: resultSet.getString(resultSet.getColumnIndex(REVIEW_MATERIAL_COLS.MATERIAL_ID)),
+      kindSnapshot: kindIndex < 0 ? '' : resultSet.getString(kindIndex),
       textSnapshot: resultSet.getString(resultSet.getColumnIndex(REVIEW_MATERIAL_COLS.TEXT_SNAPSHOT)),
       sourceSnapshot: resultSet.getString(resultSet.getColumnIndex(REVIEW_MATERIAL_COLS.SOURCE_SNAPSHOT)),
       levelSnapshot: resultSet.getString(resultSet.getColumnIndex(REVIEW_MATERIAL_COLS.LEVEL_SNAPSHOT)) as SecurityLevel,
