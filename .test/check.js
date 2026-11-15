@@ -1,6 +1,8 @@
 'use strict';
 
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 
 const { NoteTemplateId } = require('./out2/note/NoteTemplateId');
 const { DbStatus, appHealth, isDatabaseUnsupported } = require('./out2/app/AppHealth');
@@ -1261,6 +1263,40 @@ test('重复编号只生成一行并跳过已有快照', () => {
   const pending = mergeExisting(rows, ['mt_1']);
   assert.strictEqual(pending.length, 1);
   assert.strictEqual(pending[0].materialId, 'mt_2');
+});
+
+const SCHEMA_FILE = path.resolve(__dirname, '../entry/src/main/ets/db/schemas.ts');
+const DB_CONFIG_FILE = path.resolve(__dirname, '../entry/src/main/ets/db/DbConfig.ts');
+
+function createTableBlock(source, tableConstant) {
+  const marker = 'CREATE TABLE IF NOT EXISTS ${DB_TABLES.' + tableConstant + '} (';
+  const start = source.indexOf(marker);
+  assert.ok(start >= 0, `缺少建表语句 ${tableConstant}`);
+  const end = source.indexOf(')`,', start);
+  assert.ok(end > start, `建表语句未闭合 ${tableConstant}`);
+  return source.substring(start, end);
+}
+
+test('建表语句包含迁移新增的列', () => {
+  const source = fs.readFileSync(SCHEMA_FILE, 'utf8');
+  const expectations = [
+    { table: 'EVENT', columns: ['revision_of', 'version'] },
+    { table: 'DECISION', columns: ['done', 'known_conditions'] },
+    { table: 'EXPERIENCE_MATERIAL', columns: ['interaction_source'] },
+    { table: 'EVIDENCE_ITEM', columns: ['zone'] },
+    { table: 'REVIEW_MATERIAL', columns: ['kind_snapshot'] }
+  ];
+  for (const expectation of expectations) {
+    const block = createTableBlock(source, expectation.table);
+    for (const column of expectation.columns) {
+      assert.ok(block.includes(column), `${expectation.table} 建表语句缺少列 ${column}`);
+    }
+  }
+});
+
+test('数据库版本为 17', () => {
+  const source = fs.readFileSync(DB_CONFIG_FILE, 'utf8');
+  assert.ok(/export const DB_VERSION\s*=\s*17;/.test(source), 'DB_VERSION 不是 17');
 });
 
 if (failures.length > 0) {

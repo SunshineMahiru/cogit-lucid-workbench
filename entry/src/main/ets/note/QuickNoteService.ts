@@ -394,14 +394,14 @@ export function latestPerRoot(events: Event[]): Event[] {
     }
   }
   const kept: Event[] = [];
-  const seen: string[] = [];
+  const seen: Set<string> = new Set();
   for (const event of events) {
     const root = noteRootId(event);
-    if (seen.includes(root)) {
+    if (seen.has(root)) {
       continue;
     }
     if ((event.version ?? 1) === (best.get(root) ?? 1)) {
-      seen.push(root);
+      seen.add(root);
       kept.push(event);
     }
   }
