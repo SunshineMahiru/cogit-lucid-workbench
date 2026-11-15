@@ -129,6 +129,12 @@ export const TABLE_CREATE_SQLS: string[] = [
     snapshot_missing INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (review_id, material_id)
   )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.REVIEW_DECISION} (
+    review_id TEXT NOT NULL,
+    decision_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (review_id, decision_id)
+  )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN} (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,

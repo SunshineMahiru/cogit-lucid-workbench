@@ -8,6 +8,7 @@ export const DB_TABLES = {
   STATUS_RECORD: 'status_record',
   REVIEW_RESULT: 'review_result',
   REVIEW_MATERIAL: 'review_material',
+  REVIEW_DECISION: 'review_decision',
   PLAN: 'plan',
   PLAN_PROJECT: 'plan_project',
   PLAN_NODE: 'plan_node',
@@ -58,6 +59,7 @@ export const DB_TABLES_CHILD_FIRST: string[] = [
   DB_TABLES.PREDICTION,
   DB_TABLES.ANCHOR,
   DB_TABLES.STATUS_RECORD,
+  DB_TABLES.REVIEW_DECISION,
   DB_TABLES.REVIEW_RESULT
 ];
 
@@ -307,6 +309,13 @@ export const REVIEW_MATERIAL_COLS = {
   ZONE: 'zone',
   CITED_AT: 'cited_at',
   SNAPSHOT_MISSING: 'snapshot_missing'
+} as const;
+
+/** Column names for the decisions a review cited. */
+export const REVIEW_DECISION_COLS = {
+  REVIEW_ID: 'review_id',
+  DECISION_ID: 'decision_id',
+  CREATED_AT: 'created_at'
 } as const;
 
 /** Column names for the cost table. */
