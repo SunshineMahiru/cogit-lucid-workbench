@@ -167,7 +167,17 @@ export struct PredictionDetailPage {
   }
 
   private confidenceText(item: PredictionDetail): string {
-    return item.confidence === null ? '未量化' : `${item.confidence}%`;
+    return item.confidence === null ? '无法量化' : `${item.confidence}%`;
+  }
+
+  /** True when at least one model-card field carries text. */
+  private hasModelCard(): boolean {
+    return this.isFilled(this.detail.scope) || this.isFilled(this.detail.falsification) ||
+      this.isFilled(this.detail.unknowns) || this.isFilled(this.detail.evidenceLevel);
+  }
+
+  private isFilled(value: string | undefined): boolean {
+    return value !== undefined && value.length > 0;
   }
 
   private tagBackground(): string {
@@ -205,6 +215,25 @@ export struct PredictionDetailPage {
         }
       }
     })
+  }
+
+  @Builder
+  modelCardRow(label: string, value: string | undefined) {
+    if (value !== undefined && value.length > 0) {
+      Column({ space: 2 }) {
+        Text(label)
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+          .width('100%')
+        Text(value)
+          .fontSize(AppTheme.font.bodyStrong)
+          .lineHeight(20)
+          .fontColor(AppTheme.color.text)
+          .width('100%')
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
   }
 
   @Builder
@@ -247,7 +276,7 @@ export struct PredictionDetailPage {
                 .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
                 .backgroundColor(this.tagBackground())
                 .borderRadius(AppTheme.radius.sm)
-              Text(`${this.detail.confidence}%`)
+              Text(this.confidenceText(this.detail))
                 .fontSize(AppTheme.font.subtitle)
                 .fontColor(AppTheme.color.primary)
               Blank()
@@ -268,6 +297,24 @@ export struct PredictionDetailPage {
               .lineHeight(24)
               .fontColor(AppTheme.color.text)
               .width('100%')
+
+            if (this.hasModelCard()) {
+              Column({ space: 8 }) {
+                Text('模型卡')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                this.modelCardRow('适用范围', this.detail.scope)
+                this.modelCardRow('失效条件', this.detail.falsification)
+                this.modelCardRow('未知项', this.detail.unknowns)
+                this.modelCardRow('证据来源', this.detail.evidenceLevel)
+              }
+              .width('100%')
+              .padding(AppTheme.spacing.s16)
+              .backgroundColor(AppTheme.color.surface)
+              .borderRadius(AppTheme.radius.md)
+              .alignItems(HorizontalAlign.Start)
+            }
 
             Column() {
               PredictionInfoRow({ label: '结算日', value: this.detail.settlementDate })
