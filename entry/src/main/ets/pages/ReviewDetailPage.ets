@@ -4,6 +4,7 @@ import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
 import { ReviewDetailView, ReviewService } from '../review';
+import { ReviewDecisionItem } from '../review/ReviewService';
 import { Anchor } from '../model/Anchor';
 import { CostDimension, CostNote } from '../model/CostNote';
 import { EvidenceEffect, EvidenceItem, EvidenceSource } from '../model/EvidenceItem';
@@ -37,6 +38,7 @@ export struct ReviewDetailPage {
   };
   @Local payload: ReviewPayload | null = null;
   @Local cited: ReviewMaterial[] = [];
+  @Local citedDecisions: ReviewDecisionItem[] = [];
   @Local evidence: EvidenceItem[] = [];
   @Local costs: CostNote[] = [];
   @Local isLoading: boolean = true;
@@ -58,6 +60,7 @@ export struct ReviewDetailPage {
         this.detail = detail;
         this.payload = await this.loadPayload(reviewId, hostContext);
         this.cited = await this.loadCited(reviewId, service);
+        this.citedDecisions = await this.loadCitedDecisions(reviewId, service);
         this.evidence = await this.loadEvidence(reviewId, hostContext);
         this.costs = await this.loadCosts(reviewId, service);
       }
@@ -72,6 +75,15 @@ export struct ReviewDetailPage {
   private async loadCited(reviewId: string, service: ReviewService): Promise<ReviewMaterial[]> {
     try {
       return await service.materials(reviewId);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /** Reads the decisions this review cited; a failed read leaves the section hidden. */
+  private async loadCitedDecisions(reviewId: string, service: ReviewService): Promise<ReviewDecisionItem[]> {
+    try {
+      return await service.reviewDecisions(reviewId);
     } catch (error) {
       return [];
     }
@@ -280,6 +292,40 @@ export struct ReviewDetailPage {
     }
   }
 
+  @Builder
+  decisionSection() {
+    SectionCard() {
+      Column({ space: 8 }) {
+        Text(`涉及的决定 · ${this.citedDecisions.length} 条`)
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        ForEach(this.citedDecisions, (item: ReviewDecisionItem) => {
+          Column({ space: 2 }) {
+            Text(item.missing ? '来源已删除' : (item.title.length > 0 ? item.title : '（未填写标题）'))
+              .fontSize(AppTheme.font.bodyStrong)
+              .lineHeight(19)
+              .fontColor(item.missing ? AppTheme.color.textMuted : AppTheme.color.text)
+              .width('100%')
+            if (!item.missing) {
+              Text(item.choice.length > 0 ? item.choice : '（未记录选择）')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textSecondary)
+                .width('100%')
+            }
+          }
+          .width('100%')
+          .padding(AppTheme.spacing.s10)
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .borderRadius(AppTheme.radius.sm)
+          .id(`review_decision_row_${item.id}`)
+        }, (item: ReviewDecisionItem) => `${item.id}_${item.missing ? 1 : 0}`)
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
   private openAttach(): void {
     if (this.navStack === null || this.detail.id.length === 0) {
       return;
@@ -416,6 +462,9 @@ export struct ReviewDetailPage {
                 this.costSection()
               }
               this.zoneSection('6. 调节与修订', this.payload.revision)
+              if (this.citedDecisions.length > 0) {
+                this.decisionSection()
+              }
             } else {
               this.stepSection('1. 事实', this.detail.facts)
               if (this.cited.length > 0) {
