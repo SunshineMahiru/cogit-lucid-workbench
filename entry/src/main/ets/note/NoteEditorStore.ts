@@ -1,6 +1,6 @@
 import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
-import { MaterialForm, MaterialSource, MaterialStance } from '../model/ExperienceMaterial';
+import { InteractionSource, MaterialForm, MaterialSource, MaterialStance } from '../model/ExperienceMaterial';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { NoteDepth, NoteEntry } from './NoteDraft';
 import { NoteFieldKey } from './NoteFieldKey';
@@ -42,6 +42,8 @@ export interface NoteEditorDraft {
   depth: NoteDepth;
   /** Kind picked by the quick chip; empty means unclassified */
   quickKind: string;
+  /** Interpersonal source chosen for this draft; empty means unmarked */
+  interactionSource: InteractionSource;
   /** Template the draft was written under; null records a free-form draft */
   templateId: NoteTemplateId | null;
   /** Template answers kept by the draft */
@@ -215,6 +217,17 @@ function readStance(value: Object | undefined): MaterialStance {
   return '';
 }
 
+function readInteractionSource(value: Object | undefined): InteractionSource {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  const raw = value as string;
+  if (raw === 'observed' || raw === 'stated' || raw === 'shared_activity' || raw === 'inferred') {
+    return raw as InteractionSource;
+  }
+  return '';
+}
+
 function readMaterialTexts(value: Object | undefined): NoteEditorMaterialTexts {
   if (value === undefined || value === null || typeof value !== 'object') {
     return { scene: '', feeling: '', body: '', existingAction: '', interpretation: '' };
@@ -330,6 +343,7 @@ function parseDraft(raw: string): NoteEditorDraft | null {
     level: level === null ? SecurityLevel.LOCAL_ONLY : level,
     depth: parseDepth(readText(entry.depth)),
     quickKind: readText(entry.quickKind),
+    interactionSource: readInteractionSource(entry.interactionSource),
     templateId: readTemplateId(entry.templateId),
     entries: readEntries(entry.entries),
     timestamp: typeof timestamp === 'number' ? timestamp as number : Date.now()

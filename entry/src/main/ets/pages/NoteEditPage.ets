@@ -21,7 +21,7 @@ import {
 import { NoteEditorDraft, NoteEditorMeta, NoteEditorStore } from '../note/NoteEditorStore';
 import { DELETED_NOTE_TITLE } from '../note/NoteListMapper';
 import { SecurityLevel } from '../model/SecurityLevel';
-import { ExperienceMaterial, MaterialForm, MaterialSource, MaterialStance } from '../model/ExperienceMaterial';
+import { ExperienceMaterial, InteractionSource, MaterialForm, MaterialSource, MaterialStance } from '../model/ExperienceMaterial';
 import { NoteEditParams, PredictionCreateParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { SettingsStore } from '../settings';
@@ -64,6 +64,8 @@ export struct NoteEditPage {
   @Local metas: MaterialMeta[] = defaultMaterialMetas();
   /** Kind chosen by the single quick chip; empty means unclassified */
   @Local quickKind: string = '';
+  /** Interpersonal source chosen for this draft; empty means unmarked */
+  @Local interactionSource: InteractionSource = '';
   /** Unsaved state found on entry; shown as a resume prompt until handled */
   @Local pendingDraft: NoteEditorDraft | null = null;
   @Local recentTags: string[] = [];
@@ -157,6 +159,17 @@ export struct NoteEditPage {
 
   private isDeep(): boolean {
     return this.currentDepth() === NoteDepth.DEEP;
+  }
+
+  /** True when this note records an interpersonal event, or already carries a restored source. */
+  private showsInteractionSource(): boolean {
+    return this.draft.templateId === NoteTemplateId.INTERPERSONAL || this.interactionSource.length > 0;
+  }
+
+  private setInteractionSource(source: InteractionSource): void {
+    this.interactionSource = source;
+    this.isDirty = true;
+    this.scheduleDraftSave();
   }
 
   private setDepth(depth: NoteDepth): void {
@@ -291,7 +304,32 @@ export struct NoteEditPage {
     if (this.isQuick()) {
       this.pushQuickMaterial(items);
     }
+    this.applyInteractionSource(items);
     return items;
+  }
+
+  /** Tags this session's interpersonal materials; a scene row stands in when none is marked. */
+  private applyInteractionSource(items: NoteMaterialDraft[]): void {
+    if (this.interactionSource.length === 0) {
+      return;
+    }
+    let tagged = false;
+    for (const item of items) {
+      if (item.source === 'interaction') {
+        item.interactionSource = this.interactionSource;
+        tagged = true;
+      }
+    }
+    if (tagged) {
+      return;
+    }
+    for (const item of items) {
+      if (item.kind === 'scene') {
+        item.source = 'interaction';
+        item.interactionSource = this.interactionSource;
+        return;
+      }
+    }
   }
 
   /** Quick capture also writes the body once, under the kind picked on the single chip row. */
@@ -747,6 +785,7 @@ export struct NoteEditPage {
     this.materialAction = '';
     this.materialInterpretation = '';
     this.showInterpretation = false;
+    this.interactionSource = '';
     this.metas = defaultMaterialMetas();
     for (const material of detail.materials ?? []) {
       this.restoreMaterial(material);
@@ -769,6 +808,10 @@ export struct NoteEditPage {
       this.showInterpretation = true;
     } else {
       return;
+    }
+    // The first material carrying a source fills the chip row when the note is reopened.
+    if (this.interactionSource.length === 0 && (material.interactionSource ?? '').length > 0) {
+      this.interactionSource = material.interactionSource ?? '';
     }
     // Stored rows may predate the record being narrowed, so apply the same rule as clampMetas:
     // a material wider than its record falls back to following the record.
@@ -849,6 +892,7 @@ export struct NoteEditPage {
       level: this.draft.level,
       depth: this.currentDepth(),
       quickKind: this.quickKind,
+      interactionSource: this.interactionSource,
       templateId: this.draft.templateId,
       entries: this.copyEntries(this.draft.entries),
       timestamp: this.draft.timestamp
@@ -877,6 +921,7 @@ export struct NoteEditPage {
     this.showInterpretation = snapshot.materials.interpretation.trim().length > 0;
     this.metas = this.clampMetas(this.metasFromSnapshot(snapshot.metas), snapshot.level);
     this.quickKind = snapshot.quickKind;
+    this.interactionSource = snapshot.interactionSource;
     this.draft = {
       templateId: snapshot.templateId,
       title: this.draft.title,
@@ -1143,6 +1188,35 @@ if (this.isQuick()) {
               }, (entry: NoteEntry) => entry.key)
             }
 
+            if (!this.isQuick() && this.showsInteractionSource()) {
+              Column({ space: 4 }) {
+                Text('互动来源（可选）')
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                Flex({ wrap: FlexWrap.Wrap }) {
+                  ForEach(INTERACTION_SOURCE_OPTIONS, (option: MetaOption) => {
+                    Text(option.label)
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(this.interactionSource === option.value ?
+                        AppTheme.color.primaryDeep : AppTheme.color.text)
+                      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+                      .backgroundColor(this.interactionSource === option.value ?
+                        AppTheme.color.tint : AppTheme.color.chip)
+                      .borderRadius(AppTheme.radius.md)
+                      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+                      .id(`interaction_source_${option.value}`)
+                      .onClick(() => {
+                        this.setInteractionSource(option.value as InteractionSource);
+                      })
+                  }, (option: MetaOption) => option.value)
+                }
+                .width('100%')
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
+
             if (!this.isQuick()) {
               NoteTagEditor({
                 tags: this.draft.tags,
@@ -1357,6 +1431,13 @@ const SOURCE_OPTIONS: MetaOption[] = [
   { value: 'interaction', label: '互动' },
   { value: 'reflection', label: '反思' },
   { value: 'external', label: '外部资料' }
+];
+
+const INTERACTION_SOURCE_OPTIONS: MetaOption[] = [
+  { value: 'observed', label: '我的观察' },
+  { value: 'stated', label: '对方明确说过' },
+  { value: 'shared_activity', label: '一起做过' },
+  { value: 'inferred', label: '我的推测' }
 ];
 
 const STANCE_OPTIONS: MetaOption[] = [

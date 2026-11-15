@@ -1,5 +1,5 @@
 import { SecurityLevel } from '../model/SecurityLevel';
-import { MaterialForm, MaterialSource, MaterialStance } from '../model/ExperienceMaterial';
+import { InteractionSource, MaterialForm, MaterialSource, MaterialStance } from '../model/ExperienceMaterial';
 import { NoteFieldKey } from './NoteFieldKey';
 import { NoteTemplateId } from './NoteTemplateId';
 
@@ -31,6 +31,8 @@ export interface NoteMaterialDraft {
   level?: SecurityLevel;
   /** Stance toward the position held in the note; meaningful for reading materials */
   stance?: MaterialStance;
+  /** How an interpersonal material reached the author; empty reads as unmarked */
+  interactionSource?: InteractionSource;
 }
 
 /** Editable state of one quick note before it is persisted. */
