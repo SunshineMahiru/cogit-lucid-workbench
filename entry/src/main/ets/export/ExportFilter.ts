@@ -1,6 +1,7 @@
 import { Anchor } from '../model/Anchor';
 import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
+import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { InteractionLog, Relation } from '../model/Relation';
 import { Prediction } from '../model/Prediction';
 import { ReviewResult } from '../model/ReviewResult';
@@ -25,7 +26,8 @@ export function allExportOptions(): ExportOptions {
   return {
     includeLocalOnly: true,
     includeOtherStatements: false,
-    includeDemoRecords: true
+    includeDemoRecords: true,
+    includeHistory: false
   };
 }
 
@@ -33,14 +35,16 @@ export function allExportOptions(): ExportOptions {
 export function prepareExportBundle(bundle: ExportBundle,
   options: ExportOptions = allExportOptions()): ExportBundle {
   const sealedKeys = collectSealedKeys(bundle);
+  const events = prepareEvents(bundle.events, options);
   return {
-    events: prepareEvents(bundle.events, options),
+    events: events,
     decisions: prepareDecisions(bundle.decisions, options),
     relations: prepareRelations(bundle.relations, options),
     predictions: preparePredictions(bundle.predictions, options),
     anchors: prepareAnchors(bundle.anchors, options),
     statusRecords: prepareStatusRecords(bundle.statusRecords, options),
     reviews: prepareReviews(bundle.reviews, options),
+    materials: prepareMaterials(bundle.materials ?? [], events, options),
     plans: preparePlans(bundle.plans ?? [], sealedKeys, options),
     exportedAt: bundle.exportedAt
   };
@@ -109,6 +113,26 @@ function prepareEvents(events: Event[], options: ExportOptions): Event[] {
     }
   }
   items.sort((left, right) => right.timestamp - left.timestamp);
+  return items;
+}
+
+/** Keeps the materials of events that survive the options; sealed and deleted rows stay out. */
+function prepareMaterials(materials: ExperienceMaterial[], events: Event[],
+  options: ExportOptions): ExperienceMaterial[] {
+  const eventIds: string[] = [];
+  for (const event of events) {
+    eventIds.push(event.id);
+  }
+  const items: ExperienceMaterial[] = [];
+  for (const material of materials) {
+    if (!eventIds.includes(material.eventId)) {
+      continue;
+    }
+    if (!keepLevel(material.level, options, material.deleted) || !keepRecord(material.id, options)) {
+      continue;
+    }
+    items.push(material);
+  }
   return items;
 }
 

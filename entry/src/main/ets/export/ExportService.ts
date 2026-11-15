@@ -5,12 +5,15 @@ import { copyBetween } from '../app/DocumentTransfer';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
+import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
 import { RelationDao } from '../db/dao/RelationDao';
 import { ReviewResultDao } from '../db/dao/ReviewResultDao';
 import { StatusRecordDao } from '../db/dao/StatusRecordDao';
 import { PlanDao } from '../db/dao/PlanDao';
 import { DbHelper } from '../db/DbHelper';
+import { Event } from '../model/Event';
+import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { PlanItem } from '../model/PlanItem';
 import { PlanExport } from './PlanExport';
 import { countExportBundle, ExportBundle, ExportCounts } from './ExportBundle';
@@ -32,6 +35,7 @@ export interface ExportResult {
 /** Collects records, renders Markdown and writes it into the app sandbox. */
 export class ExportService {
   private eventDao: EventDao;
+  private materialDao: ExperienceMaterialDao;
   private decisionDao: DecisionDao;
   private relationDao: RelationDao;
   private predictionDao: PredictionDao;
@@ -42,6 +46,7 @@ export class ExportService {
 
   private constructor(store: relationalStore.RdbStore) {
     this.eventDao = new EventDao(store);
+    this.materialDao = new ExperienceMaterialDao(store);
     this.decisionDao = new DecisionDao(store);
     this.relationDao = new RelationDao(store);
     this.predictionDao = new PredictionDao(store);
@@ -121,15 +126,24 @@ export class ExportService {
         links: await this.planDao.queryLinksByPlan(plan.id)
       });
     }
+    const liveEvents: Event[] = await this.eventDao.queryAllLive();
+    // Superseded revisions stay in the database unless the author asks for history.
+    const events: Event[] = options.includeHistory ? liveEvents : latestPerRoot(liveEvents);
+    const materials: ExperienceMaterial[] = [];
+    for (const event of events) {
+      for (const material of await this.materialDao.queryByEvent(event.id)) {
+        materials.push(material);
+      }
+    }
     const bundle: ExportBundle = {
-      // Superseded revisions stay in the database but never leave the device.
-      events: latestPerRoot(await this.eventDao.queryAll()),
+      events: events,
       decisions: await this.decisionDao.queryAll(),
       relations: await this.relationDao.queryAll(),
       predictions: await this.predictionDao.queryAll(),
       anchors: await this.anchorDao.queryAll(),
       statusRecords: await this.statusRecordDao.queryAll(),
       reviews: await this.reviewDao.queryRecent(1000),
+      materials: materials,
       plans: plans,
       exportedAt: exportedAt
     };

@@ -24,7 +24,7 @@ export {
 export function renderExportDocument(bundle: ExportBundle): string {
   const sections: string[] = [
     renderDocumentHeader(bundle),
-    renderEventSection(bundle.events),
+    renderEventSection(bundle.events, bundle.materials ?? []),
     renderDecisionSection(bundle.decisions),
     renderRelationSection(bundle.relations),
     renderPredictionSection(bundle.predictions),

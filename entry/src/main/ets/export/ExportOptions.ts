@@ -6,6 +6,8 @@ export interface ExportOptions {
   includeOtherStatements: boolean;
   /** Synthetic demo rows are left out by default */
   includeDemoRecords: boolean;
+  /** Superseded note revisions are exported only on request; absent reads as false */
+  includeHistory?: boolean;
 }
 
 /** Defaults: analyzable content only, statements masked, no demo rows. */
@@ -13,7 +15,8 @@ export function defaultExportOptions(): ExportOptions {
   return {
     includeLocalOnly: false,
     includeOtherStatements: false,
-    includeDemoRecords: false
+    includeDemoRecords: false,
+    includeHistory: false
   };
 }
 

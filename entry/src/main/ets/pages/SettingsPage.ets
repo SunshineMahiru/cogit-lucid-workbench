@@ -67,6 +67,7 @@ export struct SettingsPage {
   @Local exportLocalOnly: boolean = false;
   @Local exportStatements: boolean = false;
   @Local exportDemo: boolean = false;
+  @Local exportHistory: boolean = false;
   @Local backupIncludeBackgrounds: boolean = false;
   @Local safetyCount: number = 0;
   @Local safetyLatest: string = '';
@@ -420,7 +421,8 @@ export struct SettingsPage {
     return {
       includeLocalOnly: this.exportLocalOnly,
       includeOtherStatements: this.exportStatements,
-      includeDemoRecords: this.exportDemo
+      includeDemoRecords: this.exportDemo,
+      includeHistory: this.exportHistory
     };
   }
 
@@ -762,6 +764,25 @@ export struct SettingsPage {
                   .height(40)
                   .onClick(() => {
                     this.exportDemo = !this.exportDemo;
+                  })
+
+                  Row() {
+                    Text('包含历史版本')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.text)
+                    Blank()
+                    Text(this.exportHistory ? '纳入 · 已开启' : '不纳入')
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(this.exportHistory ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+                      .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                      .backgroundColor(this.exportHistory ? AppTheme.color.tint : AppTheme.color.chip)
+                      .borderRadius(AppTheme.radius.sm)
+                      .id('settings_export_history')
+                  }
+                  .width('100%')
+                  .height(40)
+                  .onClick(() => {
+                    this.exportHistory = !this.exportHistory;
                   })
 
                   Text(this.isExporting ? '导出中…' : '导出并另存为')

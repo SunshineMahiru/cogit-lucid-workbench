@@ -16,6 +16,10 @@ class FakePredicates {
     return this;
   }
 
+  and() {
+    return this;
+  }
+
   orderByAsc(field) {
     this.orderField = field;
     this.orderDesc = false;

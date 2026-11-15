@@ -1,6 +1,7 @@
 import { Anchor } from '../model/Anchor';
 import { Decision } from '../model/Decision';
 import { Event } from '../model/Event';
+import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { Prediction } from '../model/Prediction';
 import { Relation } from '../model/Relation';
 import { ReviewResult } from '../model/ReviewResult';
@@ -16,6 +17,8 @@ export interface ExportBundle {
   anchors: Anchor[];
   statusRecords: StatusRecord[];
   reviews: ReviewResult[];
+  /** Experience materials carried by the exported events; each keeps its eventId */
+  materials?: ExperienceMaterial[];
   /** Optional plan section; absent in older callers */
   plans?: PlanExport[];
   /** Export time in milliseconds */
@@ -37,7 +40,7 @@ export interface ExportCounts {
 /** Counts every section of the bundle. */
 export function countExportBundle(bundle: ExportBundle): ExportCounts {
   return {
-    events: bundle.events.length,
+    events: countEventRoots(bundle.events),
     decisions: bundle.decisions.length,
     relations: bundle.relations.length,
     predictions: bundle.predictions.length,
@@ -46,6 +49,18 @@ export function countExportBundle(bundle: ExportBundle): ExportCounts {
     reviews: bundle.reviews.length,
     plans: (bundle.plans ?? []).length
   };
+}
+
+/** Counts events by root note, so revision history adds no extra records. */
+function countEventRoots(events: Event[]): number {
+  const roots: string[] = [];
+  for (const event of events) {
+    const root = event.revisionOf !== undefined && event.revisionOf !== '' ? event.revisionOf : event.id;
+    if (!roots.includes(root)) {
+      roots.push(root);
+    }
+  }
+  return roots.length;
 }
 
 /** Sums the counts into the number shown as the record total. */
