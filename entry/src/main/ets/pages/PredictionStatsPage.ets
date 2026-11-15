@@ -207,6 +207,14 @@ export struct PredictionStatsPage {
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
 
+                  Text(`样本 ${this.stats.settled} 条 · 可判断 ${this.stats.hits + this.stats.misses} 条 · ` +
+                    `排除 部分成立 ${this.stats.outcomes.partial}、证据不足 ${this.stats.outcomes.insufficient}、` +
+                    `无法判断 ${this.stats.outcomes.undecidable} · 置信度未填不计入 Brier`)
+                    .id('stats_sample_breakdown')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+
                   Text(`其中非二值 ${this.nonBinaryCount()} 条（部分成立、证据不足、无法判断），单列展示，不计入命中率`)
                     .fontSize(AppTheme.font.caption)
                     .fontColor(AppTheme.color.textMuted)
