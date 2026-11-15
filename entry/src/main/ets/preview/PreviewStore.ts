@@ -104,9 +104,10 @@ class PreviewStore {
     const prediction = makePrediction();
     prediction.target = draft.target.trim();
     prediction.judgment = draft.judgment.trim();
-    prediction.confidence = Math.round(draft.confidence);
+    prediction.confidence = draft.confidence === null ? null : Math.round(draft.confidence);
     prediction.reason = draft.reason.trim();
     prediction.settlementDate = draft.settlementDate.trim();
+    fillPredictionModelCard(prediction, draft);
     this.predictions.unshift(prediction);
     return toPredictionDetail(prediction);
   }
@@ -124,9 +125,10 @@ class PreviewStore {
     const prediction = makePrediction();
     prediction.target = draft.target.trim();
     prediction.judgment = draft.judgment.trim();
-    prediction.confidence = Math.round(draft.confidence);
+    prediction.confidence = draft.confidence === null ? null : Math.round(draft.confidence);
     prediction.reason = draft.reason.trim();
     prediction.settlementDate = draft.settlementDate.trim();
+    fillPredictionModelCard(prediction, draft);
     prediction.version = source.version + 1;
     prediction.rootId = source.rootId !== undefined && source.rootId.length > 0 ? source.rootId : source.id;
     this.predictions.unshift(prediction);
@@ -265,6 +267,13 @@ function copyEvent(event: Event): Event {
     relatedDecisionIds: event.relatedDecisionIds.slice(),
     relatedRelationIds: event.relatedRelationIds.slice()
   };
+}
+
+function fillPredictionModelCard(prediction: Prediction, draft: PredictionDraft): void {
+  prediction.scope = (draft.scope ?? '').trim();
+  prediction.falsification = (draft.falsification ?? '').trim();
+  prediction.unknowns = (draft.unknowns ?? '').trim();
+  prediction.evidenceLevel = (draft.evidenceLevel ?? '').trim();
 }
 
 function copyPrediction(prediction: Prediction): Prediction {

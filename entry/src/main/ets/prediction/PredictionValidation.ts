@@ -4,10 +4,17 @@ import { addDaysToDate, formatDate } from '../analysis/time/DateTime';
 export interface PredictionDraft {
   target: string;
   judgment: string;
-  confidence: number;
+  /** 0-100; null when the author cannot quantify it */
+  confidence: number | null;
   reason: string;
   /** YYYY-MM-DD */
   settlementDate: string;
+  /** Model card: where the prediction applies and what would falsify it */
+  scope?: string;
+  falsification?: string;
+  unknowns?: string;
+  /** Evidence the model card rests on */
+  evidenceLevel?: string;
   /** Required when writing a new version: why it changed */
   revisionReason?: string;
   /** What the new version cancels, keeps and repositions */
@@ -52,8 +59,9 @@ export function validatePredictionDraft(draft: PredictionDraft, now: number = Da
     errors.judgment = `最多 ${MAX_JUDGMENT_LENGTH} 个字`;
   }
 
-  if (!Number.isFinite(draft.confidence) || draft.confidence < 1 || draft.confidence > 100) {
-    errors.confidence = '置信度需在 1–100 之间';
+  if (draft.confidence !== null &&
+    (!Number.isFinite(draft.confidence) || draft.confidence < 0 || draft.confidence > 100)) {
+    errors.confidence = '置信度需在 0–100 之间，或选择无法量化';
   }
 
   if (!isValidDate(settlementDate)) {

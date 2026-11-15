@@ -155,9 +155,13 @@ export class PredictionService {
 function fillFromDraft(prediction: Prediction, draft: PredictionDraft): void {
   prediction.target = draft.target.trim();
   prediction.judgment = draft.judgment.trim();
-  prediction.confidence = Math.round(draft.confidence);
+  prediction.confidence = draft.confidence === null ? null : Math.round(draft.confidence);
   prediction.reason = draft.reason.trim();
   prediction.settlementDate = draft.settlementDate.trim();
+  prediction.scope = (draft.scope ?? '').trim();
+  prediction.falsification = (draft.falsification ?? '').trim();
+  prediction.unknowns = (draft.unknowns ?? '').trim();
+  prediction.evidenceLevel = (draft.evidenceLevel ?? '').trim();
   prediction.revisionReason = (draft.revisionReason ?? '').trim();
   prediction.invalidated = (draft.invalidated ?? '').trim();
   prediction.preserved = (draft.preserved ?? '').trim();

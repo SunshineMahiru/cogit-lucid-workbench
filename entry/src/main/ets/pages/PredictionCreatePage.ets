@@ -24,6 +24,11 @@ export struct PredictionCreatePage {
   @Local judgment: string = '';
   @Local reason: string = '';
   @Local confidence: number = 70;
+  @Local confidenceUnknown: boolean = false;
+  @Local scope: string = '';
+  @Local falsification: string = '';
+  @Local unknowns: string = '';
+  @Local evidenceLevel: string = '';
   @Local settlementDate: string = '';
   @Local errors: PredictionDraftErrors = {
     target: '',
@@ -73,6 +78,11 @@ export struct PredictionCreatePage {
     if (detail.confidence !== null) {
       this.confidence = detail.confidence;
     }
+    this.confidenceUnknown = detail.confidence === null;
+    this.scope = detail.scope ?? '';
+    this.falsification = detail.falsification ?? '';
+    this.unknowns = detail.unknowns ?? '';
+    this.evidenceLevel = detail.evidenceLevel ?? '';
     this.reason = detail.reason;
     this.sourceVersion = detail.version;
   }
@@ -84,6 +94,12 @@ export struct PredictionCreatePage {
       confidence: this.errors.confidence, settlementDate: '' };
   }
 
+  /** Toggles the unquantified state; the numeric value stays so switching back restores it. */
+  private setConfidenceUnknown(unknown: boolean): void {
+    this.confidenceUnknown = unknown;
+    this.isDirty = true;
+  }
+
   private async save(): Promise<void> {
     if (this.isSaving) {
       return;
@@ -91,9 +107,13 @@ export struct PredictionCreatePage {
     const draft: PredictionDraft = {
       target: this.target,
       judgment: this.judgment,
-      confidence: this.confidence,
+      confidence: this.confidenceUnknown ? null : this.confidence,
       reason: this.reason,
-      settlementDate: this.settlementDate
+      settlementDate: this.settlementDate,
+      scope: this.scope,
+      falsification: this.falsification,
+      unknowns: this.unknowns,
+      evidenceLevel: this.evidenceLevel
     };
     if (this.sourceId !== null) {
       draft.revisionReason = this.revisionReason;
@@ -173,6 +193,20 @@ export struct PredictionCreatePage {
       .borderRadius(AppTheme.radius.md)
       .onClick(() => {
         this.useDeadline(days);
+      })
+  }
+
+  @Builder
+  confidenceChip(label: string, id: string) {
+    Text(label)
+      .id(id)
+      .fontSize(AppTheme.font.body)
+      .fontColor(this.confidenceUnknown ? AppTheme.color.primaryDeep : AppTheme.color.text)
+      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+      .backgroundColor(this.confidenceUnknown ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.lg)
+      .onClick(() => {
+        this.setConfidenceUnknown(!this.confidenceUnknown);
       })
   }
 
@@ -271,24 +305,92 @@ export struct PredictionCreatePage {
 
             SectionCard() {
               Column({ space: 6 }) {
+                Text('模型卡（可选）')
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                Text('适用范围')
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+                TextArea({ placeholder: '这条预测在什么时间、场景或人群内成立', text: this.scope })
+                  .id('prediction_scope')
+                  .height(56)
+                  .maxLength(MAX_REASON_LENGTH)
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .onChange((value: string) => {
+                    this.scope = value;
+                    this.isDirty = true;
+                  })
+                Text('失效条件')
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+                TextArea({ placeholder: '出现什么情况就说明这条预测不成立', text: this.falsification })
+                  .id('prediction_falsification')
+                  .height(56)
+                  .maxLength(MAX_REASON_LENGTH)
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .onChange((value: string) => {
+                    this.falsification = value;
+                    this.isDirty = true;
+                  })
+                Text('未知项')
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+                TextArea({ placeholder: '现在还拿不准、可能影响判断的因素', text: this.unknowns })
+                  .id('prediction_unknowns')
+                  .height(56)
+                  .maxLength(MAX_REASON_LENGTH)
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .onChange((value: string) => {
+                    this.unknowns = value;
+                    this.isDirty = true;
+                  })
+                Text('证据来源')
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+                TextArea({ placeholder: '这条判断依据什么材料或经验', text: this.evidenceLevel })
+                  .id('prediction_evidence_level')
+                  .height(56)
+                  .maxLength(MAX_REASON_LENGTH)
+                  .backgroundColor(AppTheme.color.surfaceAlt)
+                  .onChange((value: string) => {
+                    this.evidenceLevel = value;
+                    this.isDirty = true;
+                  })
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
+
+            SectionCard() {
+              Column({ space: 8 }) {
                 Row() {
                   Text('置信度')
                     .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                   Blank()
-                  Text(`${this.confidence}%`)
+                  Text(this.confidenceUnknown ? '无法量化' : `${this.confidence}%`)
                     .fontSize(AppTheme.font.bodyStrong)
                     .fontColor(AppTheme.color.primary)
                 }
                 .width('100%')
 
-                Slider({ value: this.confidence, min: 1, max: 100, step: 1 })
-                  .width('100%')
-                  .selectedColor(AppTheme.color.primary)
-                  .onChange((value: number) => {
-                    this.confidence = Math.round(value);
-                    this.isDirty = true;
-                  })
+                if (!this.confidenceUnknown) {
+                  Slider({ value: this.confidence, min: 0, max: 100, step: 1 })
+                    .width('100%')
+                    .selectedColor(AppTheme.color.primary)
+                    .onChange((value: number) => {
+                      this.confidence = Math.round(value);
+                      this.isDirty = true;
+                    })
+                }
+                Row({ space: 6 }) {
+                  this.confidenceChip('无法量化', 'confidence_unknown')
+                }
                 this.fieldError(this.errors.confidence)
               }
               .width('100%')

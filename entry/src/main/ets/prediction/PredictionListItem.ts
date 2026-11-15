@@ -42,6 +42,10 @@ export interface PredictionDetail {
   outcome?: string;
   /** Evidence source recorded beside the result */
   evidenceLevel?: string;
+  /** Model card: where the prediction applies and what would falsify it */
+  scope?: string;
+  falsification?: string;
+  unknowns?: string;
   /** Why this version was written, and what it cancels, keeps and repositions */
   revisionReason?: string;
   invalidated?: string;

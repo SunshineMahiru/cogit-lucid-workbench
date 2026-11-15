@@ -924,7 +924,7 @@ test('预测草稿校验覆盖必填、置信度与日期', () => {
   const invalid = validatePredictionDraft({
     target: '   ',
     judgment: '',
-    confidence: 0,
+    confidence: -1,
     reason: '',
     settlementDate: '2026-10-20'
   }, now);
