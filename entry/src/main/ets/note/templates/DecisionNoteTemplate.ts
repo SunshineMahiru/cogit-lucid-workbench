@@ -17,6 +17,20 @@ export const DECISION_NOTE_TEMPLATE: NoteTemplate = {
       multiline: true
     },
     {
+      key: NoteFieldKey.DONE_ALREADY,
+      label: '当时已经做了什么',
+      placeholder: '在形成这个判断之前，我已经采取过哪些行动',
+      required: false,
+      multiline: true
+    },
+    {
+      key: NoteFieldKey.KNOWN_CONDITIONS,
+      label: '当时知道哪些条件',
+      placeholder: '当时掌握哪些事实、限制与未知',
+      required: false,
+      multiline: true
+    },
+    {
       key: NoteFieldKey.OPTIONS,
       label: '选项',
       placeholder: '有哪些备选？每行一个',

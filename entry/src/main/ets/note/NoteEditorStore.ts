@@ -235,6 +235,7 @@ function readFieldKey(value: Object | undefined): NoteFieldKey | null {
   const raw = value as string;
   if (raw === NoteFieldKey.BACKGROUND || raw === NoteFieldKey.OPTIONS ||
     raw === NoteFieldKey.CHOICE || raw === NoteFieldKey.EXPECTED_OUTCOME ||
+    raw === NoteFieldKey.DONE_ALREADY || raw === NoteFieldKey.KNOWN_CONDITIONS ||
     raw === NoteFieldKey.PERSON || raw === NoteFieldKey.INTERACTION ||
     raw === NoteFieldKey.FEELING || raw === NoteFieldKey.TRIGGER ||
     raw === NoteFieldKey.EMOTION || raw === NoteFieldKey.INTENSITY ||

@@ -86,7 +86,9 @@ export const DECISION_COLS = {
   RELATED_EVENT_IDS: 'related_event_ids',
   RELATED_RELATION_IDS: 'related_relation_ids',
   LEVEL: 'level',
-  REVIEWED: 'reviewed'
+  REVIEWED: 'reviewed',
+  DONE: 'done',
+  KNOWN_CONDITIONS: 'known_conditions'
 } as const;
 
 /** Column names for the relation table. */

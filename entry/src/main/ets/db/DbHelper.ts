@@ -363,6 +363,17 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Decision follow-up fields arrived later; older rows read back as empty text.
+    const decisionTextMigrations: string[] = [
+      `ALTER TABLE decision ADD COLUMN done TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE decision ADD COLUMN known_conditions TEXT NOT NULL DEFAULT ''`
+    ];
+    for (const sql of decisionTextMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     // Body evidence columns arrived with the status rework; older rows keep empty values.
     const statusEvidenceMigrations: string[] = [
       `ALTER TABLE status_record ADD COLUMN body_signals TEXT NOT NULL DEFAULT ''`,

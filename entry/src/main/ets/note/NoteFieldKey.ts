@@ -4,6 +4,8 @@ export enum NoteFieldKey {
   OPTIONS = 'options',
   CHOICE = 'choice',
   EXPECTED_OUTCOME = 'expected_outcome',
+  DONE_ALREADY = 'done_already',
+  KNOWN_CONDITIONS = 'known_conditions',
   PERSON = 'person',
   INTERACTION = 'interaction',
   FEELING = 'feeling',

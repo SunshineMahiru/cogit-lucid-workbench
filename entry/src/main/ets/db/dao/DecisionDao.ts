@@ -26,7 +26,9 @@ export class DecisionDao {
       [DECISION_COLS.RELATED_EVENT_IDS]: JSON.stringify(decision.relatedEventIds),
       [DECISION_COLS.RELATED_RELATION_IDS]: JSON.stringify(decision.relatedRelationIds),
       [DECISION_COLS.LEVEL]: decision.level,
-      [DECISION_COLS.REVIEWED]: decision.reviewed ? 1 : 0
+      [DECISION_COLS.REVIEWED]: decision.reviewed ? 1 : 0,
+      [DECISION_COLS.DONE]: decision.done ?? '',
+      [DECISION_COLS.KNOWN_CONDITIONS]: decision.knownConditions ?? ''
     };
     return this.store.insert(DB_TABLES.DECISION, values);
   }
@@ -91,6 +93,9 @@ export class DecisionDao {
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): Decision {
+    // Rows written before the follow-up columns existed read back as empty text.
+    const doneIndex = resultSet.getColumnIndex(DECISION_COLS.DONE);
+    const conditionsIndex = resultSet.getColumnIndex(DECISION_COLS.KNOWN_CONDITIONS);
     return {
       id: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.ID)),
       title: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.TITLE)),
@@ -102,7 +107,9 @@ export class DecisionDao {
       relatedEventIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.RELATED_EVENT_IDS))),
       relatedRelationIds: parseStringArray(resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.RELATED_RELATION_IDS))),
       level: resultSet.getString(resultSet.getColumnIndex(DECISION_COLS.LEVEL)) as SecurityLevel,
-      reviewed: resultSet.getLong(resultSet.getColumnIndex(DECISION_COLS.REVIEWED)) === 1
+      reviewed: resultSet.getLong(resultSet.getColumnIndex(DECISION_COLS.REVIEWED)) === 1,
+      done: doneIndex < 0 ? '' : resultSet.getString(doneIndex),
+      knownConditions: conditionsIndex < 0 ? '' : resultSet.getString(conditionsIndex)
     };
   }
 }

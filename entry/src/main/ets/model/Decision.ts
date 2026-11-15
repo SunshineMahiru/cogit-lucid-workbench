@@ -20,4 +20,8 @@ export interface Decision {
   level: SecurityLevel;
   /** Whether the review is done */
   reviewed: boolean;
+  /** What has actually been carried out so far */
+  done?: string;
+  /** Conditions known when the decision was made */
+  knownConditions?: string;
 }

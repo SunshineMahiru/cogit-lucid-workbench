@@ -16,6 +16,8 @@ export function buildDecisionFromNote(draft: NoteDraft, eventId: string): Decisi
   decision.options = splitDecisionOptions(readNoteEntry(draft, NoteFieldKey.OPTIONS));
   decision.choice = readNoteEntry(draft, NoteFieldKey.CHOICE).trim();
   decision.expectedOutcome = readNoteEntry(draft, NoteFieldKey.EXPECTED_OUTCOME).trim();
+  decision.done = readNoteEntry(draft, NoteFieldKey.DONE_ALREADY).trim();
+  decision.knownConditions = readNoteEntry(draft, NoteFieldKey.KNOWN_CONDITIONS).trim();
   decision.timestamp = draft.timestamp;
   decision.relatedEventIds = [eventId];
   decision.relatedRelationIds = (draft.relatedRelationIds ?? []).slice();

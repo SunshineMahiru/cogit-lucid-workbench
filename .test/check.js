@@ -200,9 +200,11 @@ test('未知模板 id 直接抛错', () => {
 test('决策草稿按模板字段初始化', () => {
   const draft = createNoteDraft(NoteTemplateId.DECISION);
   assert.strictEqual(draft.templateId, NoteTemplateId.DECISION);
-  assert.strictEqual(draft.entries.length, 4);
+  assert.strictEqual(draft.entries.length, 6);
   assert.deepStrictEqual(draft.entries.map((entry) => entry.key), [
     NoteFieldKey.BACKGROUND,
+    NoteFieldKey.DONE_ALREADY,
+    NoteFieldKey.KNOWN_CONDITIONS,
     NoteFieldKey.OPTIONS,
     NoteFieldKey.CHOICE,
     NoteFieldKey.EXPECTED_OUTCOME
@@ -337,6 +339,22 @@ test('决策草稿生成关联的决策实体', () => {
   assert.strictEqual(decision.reviewed, false);
   assert.strictEqual(decision.timestamp, draft.timestamp);
   assert.ok(decision.id.length > 0);
+});
+
+test('决策草稿把已有行动与已知条件写入决策', () => {
+  const draft = createNoteDraft(NoteTemplateId.DECISION);
+  fill(draft, NoteFieldKey.BACKGROUND, '精力不足');
+  fill(draft, NoteFieldKey.DONE_ALREADY, '  提前睡了两晚  ');
+  fill(draft, NoteFieldKey.KNOWN_CONDITIONS, '  本周没有加班  ');
+  const decision = buildDecisionFromNote(draft, 'ev_1');
+  assert.ok(decision !== null);
+  assert.strictEqual(decision.done, '提前睡了两晚');
+  assert.strictEqual(decision.knownConditions, '本周没有加班');
+
+  const empty = buildDecisionFromNote(createNoteDraft(NoteTemplateId.DECISION), 'ev_2');
+  assert.ok(empty !== null);
+  assert.strictEqual(empty.done, '');
+  assert.strictEqual(empty.knownConditions, '');
 });
 
 test('非决策模板不生成决策实体', () => {
