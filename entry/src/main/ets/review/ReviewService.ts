@@ -42,6 +42,14 @@ export interface RecentDecisionItem {
   choice: string;
 }
 
+/** A decision one saved review cited; missing marks an id whose decision no longer exists. */
+export interface ReviewDecisionItem {
+  id: string;
+  title: string;
+  choice: string;
+  missing: boolean;
+}
+
 /** Loads review inputs and persists completed sessions. */
 export class ReviewService {
   private store: relationalStore.RdbStore;
@@ -216,6 +224,33 @@ export class ReviewService {
   /** Returns the decisions one review cited, in citation order. */
   async decisions(reviewId: string): Promise<string[]> {
     return this.reviewDecisionDao.queryByReview(reviewId);
+  }
+
+  /** Resolves the decisions one review cited; an id whose decision is gone reads back as missing. */
+  async reviewDecisions(reviewId: string): Promise<ReviewDecisionItem[]> {
+    const ids = await this.decisions(reviewId);
+    const decisions = await this.decisionDao.queryAll();
+    const byId = new Map<string, Decision>();
+    for (const decision of decisions) {
+      byId.set(decision.id, decision);
+    }
+    const result: ReviewDecisionItem[] = [];
+    for (const id of ids) {
+      const found = byId.get(id);
+      if (found === undefined) {
+        const gap: ReviewDecisionItem = { id: id, title: '', choice: '', missing: true };
+        result.push(gap);
+      } else {
+        const item: ReviewDecisionItem = {
+          id: id,
+          title: found.title,
+          choice: found.choice,
+          missing: false
+        };
+        result.push(item);
+      }
+    }
+    return result;
   }
 
   /** Returns saved sessions, newest first. */
