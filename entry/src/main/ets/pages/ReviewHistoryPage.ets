@@ -12,6 +12,7 @@ import { previewStore } from '../preview/PreviewStore';
 export struct ReviewHistoryPage {
   @Local items: ReviewHistoryItem[] = [];
   @Local isLoading: boolean = true;
+  @Local range: string = 'all';
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
 
@@ -35,6 +36,22 @@ export struct ReviewHistoryPage {
       this.isLoading = false;
       this.getUIContext().getPromptAction().showToast({ message: '复盘历史加载失败，已切换到演示数据' });
     }
+  }
+
+  /** Rows created inside the chosen range; all rows for 'all'. */
+  private filtered(): ReviewHistoryItem[] {
+    if (this.range === 'all') {
+      return this.items;
+    }
+    const days = this.range === '7d' ? 7 : 30;
+    const since = Date.now() - days * 24 * 60 * 60 * 1000;
+    const rows: ReviewHistoryItem[] = [];
+    for (const item of this.items) {
+      if ((item.createdAt ?? 0) >= since) {
+        rows.push(item);
+      }
+    }
+    return rows;
   }
 
   private openDetail(reviewId: string): void {
@@ -66,6 +83,20 @@ export struct ReviewHistoryPage {
   }
 
   @Builder
+  rangeChip(value: string, label: string, chipId: string) {
+    Text(label)
+      .id(chipId)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.range === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.range === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.range = value;
+      })
+  }
+
+  @Builder
   reviewHistoryBody() {
       Column() {
         if (this.isLoading) {
@@ -91,57 +122,80 @@ export struct ReviewHistoryPage {
           .justifyContent(FlexAlign.Center)
           .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page })
         } else {
-          Scroll() {
-            Column({ space: 8 }) {
-              ForEach(this.items, (item: ReviewHistoryItem) => {
-                SectionCard({ contentPadding: 0 }) {
-                  Column({ space: 5 }) {
-                    Row({ space: 6 }) {
-                      Text(item.periodLabel)
-                        .fontSize(AppTheme.font.caption)
-                        .fontColor(AppTheme.color.primaryDeep)
-                        .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
-                        .backgroundColor(AppTheme.color.tint)
-                        .borderRadius(AppTheme.radius.sm)
-                      Text(item.rangeLabel)
-                        .fontSize(AppTheme.font.body)
-                        .fontColor(AppTheme.color.textSecondary)
-                        .layoutWeight(1)
-                        .maxLines(1)
-                        .textOverflow({ overflow: TextOverflow.Ellipsis })
-                      Text(item.createdAtLabel)
-                        .fontSize(AppTheme.font.caption)
-                        .fontColor(AppTheme.color.textMuted)
-                    }
-                    .width('100%')
-
-                    Text(item.action.length > 0 ? item.action : '（未填写行动）')
-                      .fontSize(AppTheme.font.bodyStrong)
-                      .lineHeight(20)
-                      .fontColor(AppTheme.color.text)
-                      .width('100%')
-                      .maxLines(2)
-                      .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-                    Text(item.anchorCount > 0 ? `对照 ${item.anchorCount} 条锚点` : '未选择锚点')
-                      .fontSize(AppTheme.font.caption)
-                      .fontColor(AppTheme.color.textMuted)
-                      .width('100%')
-                  }
-                  .width('100%')
-                  .padding(AppTheme.spacing.s16)
-                  .onClick(() => {
-                    this.openDetail(item.id);
-                  })
-                }
-              }, (item: ReviewHistoryItem) => item.id)
+          Column() {
+            Row({ space: 8 }) {
+              this.rangeChip('all', '全部', 'history_range_all')
+              this.rangeChip('7d', '近七天', 'history_range_7d')
+              this.rangeChip('30d', '近三十天', 'history_range_30d')
             }
             .width('100%')
-            .padding(AppTheme.spacing.page)
+            .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.page })
+
+            if (this.filtered().length === 0) {
+              Column() {
+                Text('这段时间没有复盘')
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.textMuted)
+              }
+              .width('100%')
+              .layoutWeight(1)
+              .justifyContent(FlexAlign.Center)
+            } else {
+              Scroll() {
+                Column({ space: 8 }) {
+                  ForEach(this.filtered(), (item: ReviewHistoryItem) => {
+                    SectionCard({ contentPadding: 0 }) {
+                      Column({ space: 5 }) {
+                        Row({ space: 6 }) {
+                          Text(item.periodLabel)
+                            .fontSize(AppTheme.font.caption)
+                            .fontColor(AppTheme.color.primaryDeep)
+                            .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                            .backgroundColor(AppTheme.color.tint)
+                            .borderRadius(AppTheme.radius.sm)
+                          Text(item.rangeLabel)
+                            .fontSize(AppTheme.font.body)
+                            .fontColor(AppTheme.color.textSecondary)
+                            .layoutWeight(1)
+                            .maxLines(1)
+                            .textOverflow({ overflow: TextOverflow.Ellipsis })
+                          Text(item.createdAtLabel)
+                            .fontSize(AppTheme.font.caption)
+                            .fontColor(AppTheme.color.textMuted)
+                        }
+                        .width('100%')
+
+                        Text(item.action.length > 0 ? item.action : '（未填写行动）')
+                          .fontSize(AppTheme.font.bodyStrong)
+                          .lineHeight(20)
+                          .fontColor(AppTheme.color.text)
+                          .width('100%')
+                          .maxLines(2)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+                        Text(item.anchorCount > 0 ? `对照 ${item.anchorCount} 条锚点` : '未选择锚点')
+                          .fontSize(AppTheme.font.caption)
+                          .fontColor(AppTheme.color.textMuted)
+                          .width('100%')
+                      }
+                      .width('100%')
+                      .padding(AppTheme.spacing.s16)
+                      .onClick(() => {
+                        this.openDetail(item.id);
+                      })
+                    }
+                  }, (item: ReviewHistoryItem) => item.id)
+                }
+                .width('100%')
+                .padding(AppTheme.spacing.page)
+              }
+              .layoutWeight(1)
+              .scrollBar(BarState.Off)
+              .align(Alignment.Top)
+            }
           }
-          .layoutWeight(1)
-          .scrollBar(BarState.Off)
-          .align(Alignment.Top)
+          .width('100%')
+          .height('100%')
         }
       }
       .width('100%')
