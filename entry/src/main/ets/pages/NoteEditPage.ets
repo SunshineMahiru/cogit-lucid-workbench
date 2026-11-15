@@ -64,6 +64,12 @@ export struct NoteEditPage {
   @Local metas: MaterialMeta[] = defaultMaterialMetas();
   /** Kind chosen by the single quick chip; empty means unclassified */
   @Local quickKind: string = '';
+  /** Source and form of the quick material; folded away behind one summary row */
+  @Local quickSource: MaterialSource = 'direct';
+  @Local quickForm: MaterialForm = 'first_person';
+  @Local quickMetaOpen: boolean = false;
+  /** True once a reopened note filled the quick source and form from its material */
+  private quickMetaRestored: boolean = false;
   /** Interpersonal source chosen for this draft; empty means unmarked */
   @Local interactionSource: InteractionSource = '';
   /** Unsaved state found on entry; shown as a resume prompt until handled */
@@ -161,6 +167,11 @@ export struct NoteEditPage {
     return this.currentDepth() === NoteDepth.DEEP;
   }
 
+  /** True for the material kinds the quick row writes. */
+  private isQuickKind(kind: string): boolean {
+    return QUICK_KIND_VALUES.indexOf(kind) >= 0;
+  }
+
   /** True when this note records an interpersonal event, or already carries a restored source. */
   private showsInteractionSource(): boolean {
     return this.draft.templateId === NoteTemplateId.INTERPERSONAL || this.interactionSource.length > 0;
@@ -186,6 +197,22 @@ export struct NoteEditPage {
     this.quickKind = kind;
     this.isDirty = true;
     this.scheduleDraftSave();
+  }
+
+  private setQuickSource(source: MaterialSource): void {
+    this.quickSource = source;
+    this.isDirty = true;
+    this.scheduleDraftSave();
+  }
+
+  private setQuickForm(form: MaterialForm): void {
+    this.quickForm = form;
+    this.isDirty = true;
+    this.scheduleDraftSave();
+  }
+
+  private toggleQuickMeta(): void {
+    this.quickMetaOpen = !this.quickMetaOpen;
   }
 
   private fieldFor(key: NoteFieldKey): NoteTemplateField {
@@ -341,8 +368,8 @@ export struct NoteEditPage {
     const item: NoteMaterialDraft = {
       kind: this.quickKind,
       text: text,
-      source: 'direct',
-      form: 'first_person'
+      source: this.quickSource,
+      form: this.quickForm
     };
     items.push(item);
   }
@@ -522,6 +549,36 @@ export struct NoteEditPage {
       .id(id)
       .onClick(() => {
         this.setQuickKind(kind);
+      })
+  }
+
+  @Builder
+  quickSourceChip(option: MetaOption) {
+    Text(option.label)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.quickSource === option.value ? AppTheme.color.primaryDeep : AppTheme.color.text)
+      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: 2, bottom: 2 })
+      .backgroundColor(this.quickSource === option.value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .margin({ right: AppTheme.spacing.s4, bottom: AppTheme.spacing.s2 })
+      .id(`quick_source_${option.value}`)
+      .onClick(() => {
+        this.setQuickSource(option.value as MaterialSource);
+      })
+  }
+
+  @Builder
+  quickFormChip(option: MetaOption) {
+    Text(option.label)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.quickForm === option.value ? AppTheme.color.primaryDeep : AppTheme.color.text)
+      .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: 2, bottom: 2 })
+      .backgroundColor(this.quickForm === option.value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .margin({ right: AppTheme.spacing.s4, bottom: AppTheme.spacing.s2 })
+      .id(`quick_form_${formKey(option.value)}`)
+      .onClick(() => {
+        this.setQuickForm(option.value as MaterialForm);
       })
   }
 
@@ -779,6 +836,10 @@ export struct NoteEditPage {
       timestamp: detail.timestamp
     };
     this.quickKind = '';
+    this.quickSource = 'direct';
+    this.quickForm = 'first_person';
+    this.quickMetaOpen = false;
+    this.quickMetaRestored = false;
     this.materialScene = '';
     this.materialFeeling = '';
     this.materialBody = '';
@@ -812,6 +873,12 @@ export struct NoteEditPage {
     // The first material carrying a source fills the chip row when the note is reopened.
     if (this.interactionSource.length === 0 && (material.interactionSource ?? '').length > 0) {
       this.interactionSource = material.interactionSource ?? '';
+    }
+    // A material written by the quick row carries the source and form it was saved with.
+    if (!this.quickMetaRestored && this.isQuickKind(material.kind)) {
+      this.quickSource = material.source;
+      this.quickForm = material.form;
+      this.quickMetaRestored = true;
     }
     // Stored rows may predate the record being narrowed, so apply the same rule as clampMetas:
     // a material wider than its record falls back to following the record.
@@ -1175,6 +1242,43 @@ if (this.isQuick()) {
               .alignItems(HorizontalAlign.Start)
             }
 
+            if (this.isQuick()) {
+              Column({ space: 6 }) {
+                Text(`${quickSourceLabel(this.quickSource)} · ${quickFormLabel(this.quickForm)} · 改`)
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.primaryDeep)
+                  .width('100%')
+                  .id('quick_meta_summary')
+                  .onClick(() => {
+                    this.toggleQuickMeta();
+                  })
+                if (this.quickMetaOpen) {
+                  Text('来源')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Flex({ wrap: FlexWrap.Wrap }) {
+                    ForEach(QUICK_SOURCE_OPTIONS, (option: MetaOption) => {
+                      this.quickSourceChip(option)
+                    }, (option: MetaOption) => option.value)
+                  }
+                  .width('100%')
+                  Text('文体')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Flex({ wrap: FlexWrap.Wrap }) {
+                    ForEach(QUICK_FORM_OPTIONS, (option: MetaOption) => {
+                      this.quickFormChip(option)
+                    }, (option: MetaOption) => formKey(option.value))
+                  }
+                  .width('100%')
+                }
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+            }
+
             if (!this.isQuick() && this.draft.templateId !== null) {
               ForEach(this.draft.entries, (entry: NoteEntry) => {
                 NoteFieldEditor({
@@ -1432,6 +1536,47 @@ const SOURCE_OPTIONS: MetaOption[] = [
   { value: 'reflection', label: '反思' },
   { value: 'external', label: '外部资料' }
 ];
+
+/** Material kinds the quick row writes. */
+const QUICK_KIND_VALUES: string[] = ['scene', 'feeling', 'body', 'existing_action', 'interpretation'];
+
+const QUICK_SOURCE_OPTIONS: MetaOption[] = [
+  { value: 'direct', label: '亲身' },
+  { value: 'reading', label: '阅读' },
+  { value: 'exercise', label: '运动' },
+  { value: 'interaction', label: '互动' },
+  { value: 'reflection', label: '反思' },
+  { value: 'external', label: '外部资料' }
+];
+
+const QUICK_FORM_OPTIONS: MetaOption[] = [
+  { value: 'first_person', label: '第一人称现场' },
+  { value: 'dialogue', label: '对话' },
+  { value: 'third_person', label: '第三人称' },
+  { value: 'poem', label: '诗歌' },
+  { value: 'reading_note', label: '阅读笔记' },
+  { value: 'public_claim', label: '公共主张' }
+];
+
+/** Label of a quick source value; an unknown value shows as itself. */
+function quickSourceLabel(source: MaterialSource): string {
+  for (const option of QUICK_SOURCE_OPTIONS) {
+    if (option.value === source) {
+      return option.label;
+    }
+  }
+  return source;
+}
+
+/** Label of a quick form value; an unknown value shows as itself. */
+function quickFormLabel(form: MaterialForm): string {
+  for (const option of QUICK_FORM_OPTIONS) {
+    if (option.value === form) {
+      return option.label;
+    }
+  }
+  return form;
+}
 
 const INTERACTION_SOURCE_OPTIONS: MetaOption[] = [
   { value: 'observed', label: '我的观察' },
