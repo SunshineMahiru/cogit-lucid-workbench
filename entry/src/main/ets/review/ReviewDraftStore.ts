@@ -3,6 +3,8 @@ import { common } from '@kit.AbilityKit';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewDraft } from './ReviewDraft';
 import { mergeWeeklyDraft } from './ReviewDraftMerge';
+import { parseReviewPayload } from '../db/SafeJson';
+import { ReviewPayload } from '../model/ReviewPayload';
 
 const STORE_NAME = 'review_draft_store';
 const KEY_PREFIX = 'draft_';
@@ -50,6 +52,32 @@ export class ReviewDraftStore {
         action: typeof action === 'string' ? action : '',
         anchorIds: Array.isArray(anchorIds) ? anchorIds as string[] : []
       };
+      const payloadRaw = parsed['payload'];
+      let payload: ReviewPayload | undefined = undefined;
+      if (payloadRaw !== undefined && payloadRaw !== null && typeof payloadRaw === 'object') {
+        payload = parseReviewPayload(JSON.stringify(payloadRaw));
+        if (payload !== undefined) {
+          draft.payload = payload;
+        }
+      }
+      const materialIds = parsed['materialIds'];
+      let hasMaterialIds = false;
+      if (Array.isArray(materialIds)) {
+        const items: Object[] = materialIds as Object[];
+        const parsedMaterialIds: string[] = [];
+        for (const item of items) {
+          if (typeof item === 'string') {
+            parsedMaterialIds.push(item);
+          }
+        }
+        if (parsedMaterialIds.length === items.length) {
+          draft.materialIds = parsedMaterialIds;
+          hasMaterialIds = true;
+        }
+      }
+      if (!hasMaterialIds && payload !== undefined) {
+        draft.materialIds = payload.materialIds;
+      }
       if (typeof planId === 'string' && planId.length > 0) {
         draft.planId = planId;
       }
