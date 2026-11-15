@@ -18,6 +18,9 @@ export type MaterialSource = 'direct' | 'reading' | 'exercise' | 'interaction' |
 /** Stance a reading note takes toward the user's current position. */
 export type MaterialStance = 'support' | 'challenge' | 'undecided' | '';
 
+/** How a material that involves another person reached the author. */
+export type InteractionSource = 'observed' | 'stated' | 'shared_activity' | 'inferred' | '';
+
 /** One piece of experience kept inside an event; the unit the review flow cites. */
 export interface ExperienceMaterial {
   id: string;
@@ -28,6 +31,8 @@ export interface ExperienceMaterial {
   observedAt: number;
   source: MaterialSource;
   sourceStance: MaterialStance;
+  /** How an interpersonal material reached the author; absent reads as unmarked */
+  interactionSource?: InteractionSource;
   level: SecurityLevel;
   /** Points at the material this one revises; empty for originals. */
   revisionOf: string;

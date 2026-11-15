@@ -1,5 +1,5 @@
 import { relationalStore } from '@kit.ArkData';
-import { ExperienceMaterial } from '../../model/ExperienceMaterial';
+import { ExperienceMaterial, InteractionSource } from '../../model/ExperienceMaterial';
 import { SecurityLevel } from '../../model/SecurityLevel';
 import { DB_TABLES, MATERIAL_COLS } from '../DbConstants';
 
@@ -22,6 +22,7 @@ export class ExperienceMaterialDao {
       [MATERIAL_COLS.OBSERVED_AT]: material.observedAt,
       [MATERIAL_COLS.SOURCE]: material.source,
       [MATERIAL_COLS.SOURCE_STANCE]: material.sourceStance,
+      [MATERIAL_COLS.INTERACTION_SOURCE]: material.interactionSource ?? '',
       [MATERIAL_COLS.LEVEL]: material.level ?? SecurityLevel.LOCAL_ONLY,
       [MATERIAL_COLS.REVISION_OF]: material.revisionOf,
       [MATERIAL_COLS.DELETED]: material.deleted ? 1 : 0,
@@ -103,6 +104,8 @@ export class ExperienceMaterialDao {
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): ExperienceMaterial {
+    // Rows written before the column existed read back as unmarked.
+    const interactionIndex = resultSet.getColumnIndex(MATERIAL_COLS.INTERACTION_SOURCE);
     return {
       id: resultSet.getString(resultSet.getColumnIndex(MATERIAL_COLS.ID)),
       eventId: resultSet.getString(resultSet.getColumnIndex(MATERIAL_COLS.EVENT_ID)),
@@ -112,10 +115,19 @@ export class ExperienceMaterialDao {
       observedAt: resultSet.getLong(resultSet.getColumnIndex(MATERIAL_COLS.OBSERVED_AT)),
       source: resultSet.getString(resultSet.getColumnIndex(MATERIAL_COLS.SOURCE)) as ExperienceMaterial['source'],
       sourceStance: resultSet.getString(resultSet.getColumnIndex(MATERIAL_COLS.SOURCE_STANCE)) as ExperienceMaterial['sourceStance'],
+      interactionSource: interactionIndex < 0 ? '' : readInteractionSource(resultSet.getString(interactionIndex)),
       level: resultSet.getString(resultSet.getColumnIndex(MATERIAL_COLS.LEVEL)) as SecurityLevel,
       revisionOf: resultSet.getString(resultSet.getColumnIndex(MATERIAL_COLS.REVISION_OF)),
       deleted: resultSet.getLong(resultSet.getColumnIndex(MATERIAL_COLS.DELETED)) === 1,
       createdAt: resultSet.getLong(resultSet.getColumnIndex(MATERIAL_COLS.CREATED_AT))
     };
   }
+}
+
+/** Accepted interpersonal sources; anything else reads back as unmarked. */
+function readInteractionSource(raw: string): InteractionSource {
+  if (raw === 'observed' || raw === 'stated' || raw === 'shared_activity' || raw === 'inferred') {
+    return raw as InteractionSource;
+  }
+  return '';
 }

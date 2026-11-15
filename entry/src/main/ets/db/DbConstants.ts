@@ -272,6 +272,7 @@ export const MATERIAL_COLS = {
   OBSERVED_AT: 'observed_at',
   SOURCE: 'source',
   SOURCE_STANCE: 'source_stance',
+  INTERACTION_SOURCE: 'interaction_source',
   LEVEL: 'level',
   REVISION_OF: 'revision_of',
   DELETED: 'deleted',

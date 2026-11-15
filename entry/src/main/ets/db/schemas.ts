@@ -188,6 +188,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     observed_at INTEGER NOT NULL,
     source TEXT NOT NULL DEFAULT 'direct',
     source_stance TEXT NOT NULL DEFAULT '',
+    interaction_source TEXT NOT NULL DEFAULT '',
     level TEXT NOT NULL DEFAULT 'local_only',
     revision_of TEXT NOT NULL DEFAULT '',
     deleted INTEGER NOT NULL DEFAULT 0,

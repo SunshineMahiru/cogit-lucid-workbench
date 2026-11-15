@@ -374,6 +374,12 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Interpersonal material source arrived later; older rows read back as unmarked.
+    try {
+      await store.executeSql(
+        `ALTER TABLE experience_material ADD COLUMN interaction_source TEXT NOT NULL DEFAULT ''`);
+    } catch (error) {
+    }
     // Body evidence columns arrived with the status rework; older rows keep empty values.
     const statusEvidenceMigrations: string[] = [
       `ALTER TABLE status_record ADD COLUMN body_signals TEXT NOT NULL DEFAULT ''`,
