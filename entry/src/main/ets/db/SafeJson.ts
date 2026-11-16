@@ -1,6 +1,7 @@
 import { toCostDimension, CostDraft } from '../model/CostNote';
 import { DECISION_RECORD_TYPES, DecisionDraft, DecisionRecordType } from '../model/DecisionRecord';
 import { CitationScope, InteractionLog, InteractionSource } from '../model/Relation';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { EvidenceDraft, EvidenceEffect, EvidenceSource } from '../model/EvidenceItem';
 import { AnchorCitation, MotivationKind, MOTIVATION_KINDS, ReviewPayload } from '../model/ReviewPayload';
 import { WorkDepth } from '../model/WorkDepth';
@@ -79,6 +80,10 @@ export function parseInteractionLog(raw: string): InteractionLog[] {
       }
       if (typeof allowContext === 'boolean') {
         log.allowContext = allowContext;
+      }
+      const level = entry.level;
+      if (level === 'analyzable' || level === 'local_only' || level === 'sealed') {
+        log.level = level as SecurityLevel;
       }
       result.push(log);
     } else {

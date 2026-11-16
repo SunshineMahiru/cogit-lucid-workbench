@@ -8,5 +8,7 @@ export interface RequestAudit {
   chars: number;
   confirmed: boolean;
   fellBack: boolean;
+  /** Items the author removed from the confirmation sheet; text is never stored */
+  removedCount: number;
   createdAt: number;
 }

@@ -148,6 +148,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     outcome TEXT,
     review_at TEXT,
     level TEXT NOT NULL DEFAULT 'local_only',
+    depth TEXT,
+    time_budget INTEGER,
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN} (
@@ -215,6 +217,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     chars INTEGER NOT NULL,
     confirmed INTEGER NOT NULL,
     fell_back INTEGER NOT NULL,
+    removed_count INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.EXPERIENCE_MATERIAL} (

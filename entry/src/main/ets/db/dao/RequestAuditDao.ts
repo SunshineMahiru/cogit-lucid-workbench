@@ -22,6 +22,7 @@ export class RequestAuditDao {
       [REQUEST_AUDIT_COLS.CHARS]: audit.chars,
       [REQUEST_AUDIT_COLS.CONFIRMED]: audit.confirmed ? 1 : 0,
       [REQUEST_AUDIT_COLS.FELL_BACK]: audit.fellBack ? 1 : 0,
+      [REQUEST_AUDIT_COLS.REMOVED_COUNT]: audit.removedCount,
       [REQUEST_AUDIT_COLS.CREATED_AT]: audit.createdAt
     };
     return this.store.insert(DB_TABLES.REQUEST_AUDIT, values);
@@ -44,6 +45,7 @@ export class RequestAuditDao {
   }
 
   private mapRow(resultSet: relationalStore.ResultSet): RequestAudit {
+    const removedIndex = resultSet.getColumnIndex(REQUEST_AUDIT_COLS.REMOVED_COUNT);
     const audit: RequestAudit = {
       id: resultSet.getString(resultSet.getColumnIndex(REQUEST_AUDIT_COLS.ID)),
       provider: resultSet.getString(resultSet.getColumnIndex(REQUEST_AUDIT_COLS.PROVIDER)),
@@ -53,6 +55,7 @@ export class RequestAuditDao {
       chars: resultSet.getLong(resultSet.getColumnIndex(REQUEST_AUDIT_COLS.CHARS)),
       confirmed: resultSet.getLong(resultSet.getColumnIndex(REQUEST_AUDIT_COLS.CONFIRMED)) !== 0,
       fellBack: resultSet.getLong(resultSet.getColumnIndex(REQUEST_AUDIT_COLS.FELL_BACK)) !== 0,
+      removedCount: removedIndex < 0 || resultSet.isColumnNull(removedIndex) ? 0 : resultSet.getLong(removedIndex),
       createdAt: resultSet.getLong(resultSet.getColumnIndex(REQUEST_AUDIT_COLS.CREATED_AT))
     };
     return audit;

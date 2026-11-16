@@ -523,6 +523,26 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // DB 21: the audit keeps how many checked items were removed; decisions keep the session
+    // depth and time budget. Nullable decision columns let old rows fall back to the payload.
+    const db21Migrations: string[] = [
+      `ALTER TABLE request_audit ADD COLUMN removed_count INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE decision_record ADD COLUMN depth TEXT`,
+      `ALTER TABLE decision_record ADD COLUMN time_budget INTEGER`
+    ];
+    for (const sql of db21Migrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
+    // Existing sealed relations may predate snapshot clamping; clear their cited text once.
+    try {
+      await store.executeSql(
+        `UPDATE review_material SET level_snapshot = 'sealed', text_snapshot = '' ` +
+        `WHERE material_id IN (SELECT 'relation:' || id FROM relation WHERE level = 'sealed')`);
+    } catch (error) {
+    }
     // Reviews saved before the snapshot table keep their cited ids only in the payload; the
     // backfill copies them once, and a failure leaves the read path to resolve live materials.
     try {

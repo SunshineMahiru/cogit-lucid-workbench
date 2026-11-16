@@ -1,4 +1,5 @@
 import { SecurityLevel } from './SecurityLevel';
+import { WorkDepth } from './WorkDepth';
 
 /** The six choices one review decision may record. */
 export type DecisionRecordType = 'continue' | 'switch' | 'pause' | 'discard' | 'exit' | 'joint';
@@ -32,6 +33,10 @@ export interface DecisionRecord {
   outcome?: string;
   /** Local date in YYYY-MM-DD for a later look-back. */
   reviewAt?: string;
+  /** Session depth copied from the review payload; absent for old rows */
+  depth?: WorkDepth;
+  /** Session time budget in minutes; absent for old rows */
+  timeBudget?: number;
   level: SecurityLevel;
   createdAt: number;
 }

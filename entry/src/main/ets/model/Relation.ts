@@ -17,6 +17,8 @@ export interface InteractionLog {
   citation?: CitationScope;
   /** Whether the entry may enter a model request; absent values read as no */
   allowContext?: boolean;
+  /** Per-entry level; absent values follow the relation level */
+  level?: SecurityLevel;
 }
 
 /** Records a relationship: disclosure tier, interaction log and analysis flags. */

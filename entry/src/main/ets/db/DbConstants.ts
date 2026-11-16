@@ -261,6 +261,7 @@ export const REQUEST_AUDIT_COLS = {
   CHARS: 'chars',
   CONFIRMED: 'confirmed',
   FELL_BACK: 'fell_back',
+  REMOVED_COUNT: 'removed_count',
   CREATED_AT: 'created_at'
 } as const;
 
@@ -339,6 +340,8 @@ export const DECISION_RECORD_COLS = {
   OUTCOME: 'outcome',
   REVIEW_AT: 'review_at',
   LEVEL: 'level',
+  DEPTH: 'depth',
+  TIME_BUDGET: 'time_budget',
   CREATED_AT: 'created_at'
 } as const;
 

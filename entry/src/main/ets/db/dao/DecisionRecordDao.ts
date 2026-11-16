@@ -1,6 +1,7 @@
 import { relationalStore } from '@kit.ArkData';
 import { DecisionRecord, DecisionRecordType } from '../../model/DecisionRecord';
 import { SecurityLevel } from '../../model/SecurityLevel';
+import { WorkDepth } from '../../model/WorkDepth';
 import { DB_TABLES, DECISION_RECORD_COLS, REVIEW_COLS } from '../DbConstants';
 import { queryCount } from '../QuerySupport';
 
@@ -25,6 +26,8 @@ export class DecisionRecordDao {
       [DECISION_RECORD_COLS.PLAN_ITEM_ID]: record.planItemId ?? '',
       [DECISION_RECORD_COLS.OUTCOME]: record.outcome ?? '',
       [DECISION_RECORD_COLS.REVIEW_AT]: record.reviewAt ?? '',
+      [DECISION_RECORD_COLS.DEPTH]: record.depth ?? '',
+      [DECISION_RECORD_COLS.TIME_BUDGET]: record.timeBudget ?? 0,
       [DECISION_RECORD_COLS.LEVEL]: record.level,
       [DECISION_RECORD_COLS.CREATED_AT]: record.createdAt
     };
@@ -99,6 +102,8 @@ export class DecisionRecordDao {
       planItemId: readText(resultSet, DECISION_RECORD_COLS.PLAN_ITEM_ID),
       outcome: readText(resultSet, DECISION_RECORD_COLS.OUTCOME),
       reviewAt: readText(resultSet, DECISION_RECORD_COLS.REVIEW_AT),
+      depth: readDepth(resultSet, DECISION_RECORD_COLS.DEPTH),
+      timeBudget: readBudget(resultSet, DECISION_RECORD_COLS.TIME_BUDGET),
       level: resultSet.getString(resultSet.getColumnIndex(DECISION_RECORD_COLS.LEVEL)) as SecurityLevel,
       createdAt: resultSet.getLong(resultSet.getColumnIndex(DECISION_RECORD_COLS.CREATED_AT))
     };
@@ -109,4 +114,20 @@ export class DecisionRecordDao {
 function readText(resultSet: relationalStore.ResultSet, column: string): string {
   const index = resultSet.getColumnIndex(column);
   return index < 0 || resultSet.isColumnNull(index) ? '' : resultSet.getString(index);
+}
+
+/** Reads a nullable depth; unknown or absent values read as undefined for payload fallback. */
+function readDepth(resultSet: relationalStore.ResultSet, column: string): WorkDepth | undefined {
+  const text = readText(resultSet, column);
+  return text === 'quick' || text === 'normal' || text === 'deep' ? text : undefined;
+}
+
+/** Reads a nullable time budget; absent or 0 reads as undefined. */
+function readBudget(resultSet: relationalStore.ResultSet, column: string): number | undefined {
+  const index = resultSet.getColumnIndex(column);
+  if (index < 0 || resultSet.isColumnNull(index)) {
+    return undefined;
+  }
+  const value = resultSet.getLong(index);
+  return value > 0 ? value : undefined;
 }
