@@ -139,10 +139,32 @@ export struct HomePage {
     });
   }
 
+  private openReviewHistory(): void {
+    this.pathStack.pushPathByName(ROUTES.REVIEW_HISTORY, null, () => {
+      this.load();
+    });
+  }
+
   private openPlan(): void {
     this.pathStack.pushPathByName(ROUTES.PLAN, null, () => {
       this.load();
     });
+  }
+
+  private todoDue(): number {
+    return this.summary.duePredictions ?? 0;
+  }
+
+  private todoRevision(): number {
+    return this.summary.revisionPredictions ?? 0;
+  }
+
+  private todoClosed(): number {
+    return this.summary.closedNodeReviews ?? 0;
+  }
+
+  private todoTotal(): number {
+    return this.todoDue() + this.todoRevision() + this.todoClosed();
   }
 
   /** Scrolls the dashboard scroll area down to the module grid. */
@@ -170,6 +192,72 @@ export struct HomePage {
       .onClick(() => {
         onTap();
       })
+  }
+
+  @Builder
+  todoRow(entryId: string, label: string, count: number, note: string, divider: boolean, onTap: () => void) {
+    Column() {
+      Row() {
+        Text(`${label} ${count} 条`)
+          .fontSize(AppTheme.font.bodyStrong)
+          .fontColor(count > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
+          .layoutWeight(1)
+        if (note.length > 0) {
+          Text(note)
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textMuted)
+        }
+      }
+      .id(entryId)
+      .width('100%')
+      .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+      .enabled(count > 0)
+      .onClick(() => {
+        if (count > 0) {
+          onTap();
+        }
+      })
+      if (divider) {
+        Divider()
+          .strokeWidth(0.5)
+          .color(AppTheme.color.border)
+      }
+    }
+    .width('100%')
+  }
+
+  @Builder
+  todoCard() {
+    Column() {
+      Column() {
+        if (this.todoTotal() === 0) {
+          Text('此刻没有需要回看的项目')
+            .id('home_todo_empty')
+            .fontSize(AppTheme.font.body)
+            .fontColor(AppTheme.color.textMuted)
+            .width('100%')
+            .textAlign(TextAlign.Center)
+            .padding({ top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+        } else {
+          this.todoRow('home_todo_due', '到期预测', this.todoDue(), '', true, () => {
+            this.openTodo();
+          })
+          this.todoRow('home_todo_revision', '待修订模型', this.todoRevision(), '暂不区分', true, () => {
+            this.openTodo();
+          })
+          this.todoRow('home_todo_closed', '已结束周节点', this.todoClosed(), '', false, () => {
+            this.openReviewHistory();
+          })
+        }
+      }
+      .id('home_todo_card')
+      .width('100%')
+      .backgroundColor(AppTheme.color.surface)
+      .borderRadius(AppTheme.radius.md)
+      .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+    }
+    .width('100%')
+    .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20 })
   }
 
   build() {
@@ -247,12 +335,7 @@ export struct HomePage {
       .width('100%')
       .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s4 })
 
-      Text(`待校正：到期预测 ${this.summary.duePredictions ?? 0} · 待修订模型 ${this.summary.revisionPredictions ?? 0} · 已结束周节点 ${this.summary.closedNodeReviews ?? 0}`)
-        .id('home_todo_counts')
-        .fontSize(AppTheme.font.caption)
-        .fontColor(AppTheme.color.textMuted)
-        .width('100%')
-        .textAlign(TextAlign.Center)
+      this.todoCard()
 
       Column() {
         DashboardView({
