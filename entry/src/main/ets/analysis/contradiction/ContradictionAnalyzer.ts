@@ -13,6 +13,9 @@ export interface ContradictionInput {
   relationForbidsAnalysis: boolean;
 }
 
+/** How sure the analyzer is about one candidate. */
+export type CandidateUncertainty = 'low' | 'medium' | 'high' | '';
+
 /** One place where the interpretation departs from the recorded facts. */
 export interface ContradictionCandidate {
   /** Anchor used for this comparison; empty when no anchor applies */
@@ -21,6 +24,12 @@ export interface ContradictionCandidate {
   gap: string;
   /** Follow-up question for the next review step */
   prompt: string;
+  /** Which recorded material supports this candidate; empty when it is a generic prompt */
+  basis?: string;
+  /** What the analyzer could not check; empty when nothing is missing */
+  unknowns?: string;
+  /** Self-reported confidence; empty when the analyzer did not say */
+  uncertainty?: CandidateUncertainty;
 }
 
 /**

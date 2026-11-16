@@ -1,5 +1,5 @@
 import { relationalStore } from '@kit.ArkData';
-import { CostDimension, CostNote } from '../../model/CostNote';
+import { toCostDimension, CostNote } from '../../model/CostNote';
 import { COST_COLS, DB_TABLES } from '../DbConstants';
 
 /** Data access for the costs charged to a review. */
@@ -40,6 +40,22 @@ export class CostNoteDao {
     }
   }
 
+  /** Returns every cost row, oldest first; used by the export path. */
+  async queryAll(): Promise<CostNote[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.COST_NOTE);
+    predicates.orderByAsc(COST_COLS.CREATED_AT);
+    const resultSet = await this.store.query(predicates);
+    try {
+      const results: CostNote[] = [];
+      while (resultSet.goToNextRow()) {
+        results.push(this.mapRow(resultSet));
+      }
+      return results;
+    } finally {
+      resultSet.close();
+    }
+  }
+
   /** Removes every cost of one review, returns the deleted row count. */
   async deleteByReview(reviewId: string): Promise<number> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.COST_NOTE);
@@ -51,7 +67,7 @@ export class CostNoteDao {
     return {
       id: resultSet.getString(resultSet.getColumnIndex(COST_COLS.ID)),
       reviewId: resultSet.getString(resultSet.getColumnIndex(COST_COLS.REVIEW_ID)),
-      dimension: resultSet.getString(resultSet.getColumnIndex(COST_COLS.DIMENSION)) as CostDimension,
+      dimension: toCostDimension(resultSet.getString(resultSet.getColumnIndex(COST_COLS.DIMENSION))),
       text: resultSet.getString(resultSet.getColumnIndex(COST_COLS.TEXT)),
       bearable: resultSet.getLong(resultSet.getColumnIndex(COST_COLS.BEARABLE)) === 1,
       createdAt: resultSet.getLong(resultSet.getColumnIndex(COST_COLS.CREATED_AT))

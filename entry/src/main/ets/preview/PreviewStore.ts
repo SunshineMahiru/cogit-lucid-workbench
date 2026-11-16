@@ -1,10 +1,15 @@
 import { MOCK_EVENTS, MOCK_PREDICTIONS } from '../model/mockData';
+import { CostDraft } from '../model/CostNote';
+import { EvidenceDraft } from '../model/EvidenceItem';
 import { BodyReading, HomePulse, HomeSummary, NO_RATE_TEXT, PredictionItem } from '../model/HomeModel';
+import { DecisionDraft, DecisionRecord } from '../model/DecisionRecord';
 import { Event } from '../model/Event';
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
+import { emptyReviewPayload, ReviewPayload } from '../model/ReviewPayload';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewResult } from '../model/ReviewResult';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { createEvent, createPrediction as makePrediction, createReviewResult } from '../model/factories';
 import { NoteDetail, toNoteDetail } from '../note/NoteDetail';
 import { NoteDraft } from '../note/NoteDraft';
@@ -26,7 +31,7 @@ import { PredictionStats, buildPredictionStats } from '../prediction/PredictionS
 import { PredictionDraft } from '../prediction/PredictionValidation';
 import { ReviewDetailView, ReviewHistoryItem, toReviewDetailView, toReviewHistoryItem } from '../review/ReviewHistory';
 import { ReviewDraft, ReviewStats } from '../review/ReviewDraft';
-import { PREVIEW_ANCHORS, PREVIEW_REVIEW_RESULT } from './PreviewData';
+import { PREVIEW_ANCHORS, PREVIEW_DECISION_RECORDS, PREVIEW_REVIEW_RESULT } from './PreviewData';
 
 const FREE_NOTE_TYPE = '速记';
 
@@ -35,6 +40,7 @@ class PreviewStore {
   private notes: Event[] = MOCK_EVENTS.map((event) => copyEvent(event));
   private predictions: Prediction[] = MOCK_PREDICTIONS.map((prediction) => copyPrediction(prediction));
   private reviews: ReviewResult[] = [copyReview(PREVIEW_REVIEW_RESULT)];
+  private decisions: DecisionRecord[] = PREVIEW_DECISION_RECORDS.map((record: DecisionRecord) => copyDecision(record));
 
   listNotes(filter: string): NoteListItem[] {
     const selected = this.notes.filter((event: Event) => filter.length === 0 || event.type === filter);
@@ -157,6 +163,9 @@ class PreviewStore {
 
   homeSummary(): HomeSummary {
     const summary = this.predictionSummary();
+    const today = formatDay(new Date());
+    const pendingDecisions = this.decisions.filter((record: DecisionRecord) =>
+      record.reviewAt !== undefined && record.reviewAt.length > 0 && record.reviewAt <= today).length;
     return {
       totalNotes: this.notes.length,
       todayNotes: Math.min(2, this.notes.length),
@@ -166,7 +175,8 @@ class PreviewStore {
       hitRate: summary.hitRate,
       unreviewedDecisions: 1,
       totalAnchors: 2,
-      totalRelations: 3
+      totalRelations: 3,
+      pendingDecisions: pendingDecisions
     };
   }
 
@@ -241,6 +251,47 @@ class PreviewStore {
     return null;
   }
 
+  /** Returns the six-zone payload of one review, or null for a legacy record. */
+  findReviewPayload(id: string): ReviewPayload | null {
+    for (const review of this.reviews) {
+      if (review.id === id) {
+        return review.payload === undefined ? null : copyReviewPayload(review.payload);
+      }
+    }
+    return null;
+  }
+
+  /** Returns the main decision of one review, or null when it has none. */
+  findDecision(reviewId: string): DecisionRecord | null {
+    for (const record of this.decisions) {
+      if (record.reviewId === reviewId) {
+        return copyDecision(record);
+      }
+    }
+    return null;
+  }
+
+  /** Writes one preview decision and returns it. */
+  saveDecision(reviewId: string, draft: DecisionDraft,
+    level: SecurityLevel = SecurityLevel.LOCAL_ONLY): DecisionRecord {
+    const record: DecisionRecord = {
+      id: `dr_preview_${this.decisions.length + 1}`,
+      reviewId: reviewId,
+      type: draft.type,
+      reason: draft.reason.trim(),
+      action: (draft.action ?? '').trim(),
+      commitment: (draft.commitment ?? '').trim(),
+      relationId: draft.relationId ?? '',
+      planItemId: draft.planItemId ?? '',
+      outcome: (draft.outcome ?? '').trim(),
+      reviewAt: (draft.reviewAt ?? '').trim(),
+      level: level,
+      createdAt: Date.now()
+    };
+    this.decisions.push(record);
+    return copyDecision(record);
+  }
+
   saveReview(period: ReviewPeriod, draft: ReviewDraft, rangeLabel: string): string {
     const result = createReviewResult();
     result.period = period;
@@ -249,7 +300,19 @@ class PreviewStore {
     result.interpretation = draft.interpretation.trim();
     result.contradiction = draft.contradiction.trim();
     result.action = draft.action.trim();
+    const payload = copyReviewPayload(draft.payload ?? emptyReviewPayload());
+    payload.materialIds = (draft.materialIds ?? payload.materialIds ?? []).slice();
+    result.payload = payload;
     result.anchorIds = draft.anchorIds.slice();
+    if (draft.planId !== undefined) {
+      result.planId = draft.planId;
+    }
+    if (draft.planNodeId !== undefined) {
+      result.planNodeId = draft.planNodeId;
+    }
+    if (payload.decisionDraft !== undefined && payload.decisionDraft.reason.trim().length > 0) {
+      this.saveDecision(result.id, payload.decisionDraft, SecurityLevel.LOCAL_ONLY);
+    }
     this.reviews.unshift(result);
     return result.id;
   }
@@ -293,7 +356,7 @@ function copyPrediction(prediction: Prediction): Prediction {
 }
 
 function copyReview(review: ReviewResult): ReviewResult {
-  return {
+  const copied: ReviewResult = {
     id: review.id,
     period: review.period,
     rangeLabel: review.rangeLabel,
@@ -303,6 +366,82 @@ function copyReview(review: ReviewResult): ReviewResult {
     action: review.action,
     anchorIds: review.anchorIds.slice(),
     createdAt: review.createdAt
+  };
+  if (review.payload !== undefined) {
+    copied.payload = copyReviewPayload(review.payload);
+  }
+  if (review.level !== undefined) {
+    copied.level = review.level;
+  }
+  if (review.planId !== undefined) {
+    copied.planId = review.planId;
+  }
+  if (review.planNodeId !== undefined) {
+    copied.planNodeId = review.planNodeId;
+  }
+  return copied;
+}
+
+function copyReviewPayload(payload: ReviewPayload): ReviewPayload {
+  const copied: ReviewPayload = {
+    scene: payload.scene,
+    model: payload.model,
+    relation: payload.relation,
+    evidence: payload.evidence,
+    cost: payload.cost,
+    revision: payload.revision,
+    materialIds: (payload.materialIds ?? []).slice(),
+    decisionIds: (payload.decisionIds ?? []).slice(),
+    evidenceDrafts: (payload.evidenceDrafts ?? []).map((draft: EvidenceDraft) => {
+      const item: EvidenceDraft = {
+        sourceType: draft.sourceType,
+        note: draft.note,
+        effect: draft.effect
+      };
+      return item;
+    }),
+    costDrafts: (payload.costDrafts ?? []).map((draft: CostDraft) => {
+      const item: CostDraft = {
+        dimension: draft.dimension,
+        text: draft.text,
+        bearable: draft.bearable
+      };
+      return item;
+    })
+  };
+  if (payload.decisionDraft !== undefined) {
+    const draft: DecisionDraft = {
+      type: payload.decisionDraft.type,
+      reason: payload.decisionDraft.reason,
+      action: payload.decisionDraft.action ?? '',
+      commitment: payload.decisionDraft.commitment ?? '',
+      relationId: payload.decisionDraft.relationId ?? '',
+      planItemId: payload.decisionDraft.planItemId ?? '',
+      outcome: payload.decisionDraft.outcome ?? '',
+      reviewAt: payload.decisionDraft.reviewAt ?? ''
+    };
+    copied.decisionDraft = draft;
+  }
+  if (payload.motivation !== undefined) {
+    copied.motivation = payload.motivation;
+  }
+  return copied;
+}
+
+function copyDecision(record: DecisionRecord): DecisionRecord {
+  return {
+    id: record.id,
+    reviewId: record.reviewId,
+    type: record.type,
+    reason: record.reason,
+    action: record.action ?? '',
+    commitment: record.commitment ?? '',
+    relationId: record.relationId ?? '',
+    planItemId: record.planItemId ?? '',
+    outcome: record.outcome ?? '',
+    reviewAt: record.reviewAt ?? '',
+    level: record.level,
+    createdAt: record.createdAt
   };
 }
 

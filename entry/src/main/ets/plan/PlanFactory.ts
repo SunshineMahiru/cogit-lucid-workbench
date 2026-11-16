@@ -6,6 +6,7 @@ import { PlanLink } from '../model/PlanLink';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PlanNodeStatus, PlanProjectStatus, PlanStatus } from '../model/PlanStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
+import { WorkDepth } from '../model/WorkDepth';
 
 let seq = 0;
 
@@ -55,7 +56,8 @@ export function addPlanDays(value: string, days: number): string {
 }
 
 /** Creates a new goal, normalized to the Monday of its first week. */
-export function createPlan(title: string, startDate: string, targetDate: string = ''): Plan {
+export function createPlan(title: string, startDate: string, targetDate: string = '',
+  depth: WorkDepth = 'normal', timeBudget: number = 0): Plan {
   const plan: Plan = {
     id: newId('pl'),
     title: title.trim(),
@@ -64,6 +66,8 @@ export function createPlan(title: string, startDate: string, targetDate: string 
     status: PlanStatus.ACTIVE,
     isPrimary: false,
     level: SecurityLevel.LOCAL_ONLY,
+    depth: depth,
+    timeBudget: timeBudget,
     createdAt: Date.now()
   };
   if (targetDate.length > 0) {

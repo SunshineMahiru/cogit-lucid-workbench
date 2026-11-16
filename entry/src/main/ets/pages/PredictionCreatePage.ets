@@ -45,6 +45,7 @@ export struct PredictionCreatePage {
   @Local preserved: string = '';
   @Local repositioned: string = '';
   @Local revisionError: string = '';
+  @Local falsificationError: string = '';
   private navStack: NavPathStack | null = null;
 
   aboutToAppear(): void {
@@ -133,6 +134,25 @@ export struct PredictionCreatePage {
     if (this.sourceId !== null && this.revisionReason.trim().length === 0) {
       this.revisionError = '写一句这次修订的原因';
       return;
+    }
+    if (this.falsification.trim().length === 0) {
+      this.falsificationError = '请填写失效条件：出现什么情况就说明这条预测不成立';
+      return;
+    }
+    this.falsificationError = '';
+    if (this.sourceId !== null) {
+      if (this.invalidated.trim().length === 0) {
+        this.revisionError = '写清这一版不再成立的内容';
+        return;
+      }
+      if (this.preserved.trim().length === 0) {
+        this.revisionError = '写清仍然成立、要保留的内容';
+        return;
+      }
+      if (this.repositioned.trim().length === 0) {
+        this.revisionError = '写清这一版放在什么位置、针对什么范围';
+        return;
+      }
     }
     this.revisionError = '';
 
@@ -322,7 +342,7 @@ export struct PredictionCreatePage {
                     this.scope = value;
                     this.isDirty = true;
                   })
-                Text('失效条件')
+                Text('失效条件（必填）')
                   .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
@@ -333,8 +353,10 @@ export struct PredictionCreatePage {
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.falsification = value;
+                    this.falsificationError = '';
                     this.isDirty = true;
                   })
+                this.fieldError(this.falsificationError)
                 Text('未知项')
                   .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
@@ -399,7 +421,7 @@ export struct PredictionCreatePage {
 
             SectionCard() {
               Column({ space: 8 }) {
-                Text('结算日')
+                Text('结算日（可选）')
                   .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
@@ -409,13 +431,17 @@ export struct PredictionCreatePage {
                   this.deadlineChip('14 天后', 14)
                   this.deadlineChip('30 天后', 30)
                 }
-                TextInput({ placeholder: 'YYYY-MM-DD', text: this.settlementDate })
+                TextInput({ placeholder: 'YYYY-MM-DD（留空表示不设期限）', text: this.settlementDate })
                   .id('prediction_date')
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {
                     this.settlementDate = value;
                     this.isDirty = true;
                   })
+                Text('没有期限的预测可以随时结算；结算时把当天记为结算日。')
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
                 this.fieldError(this.errors.settlementDate)
               }
               .width('100%')
@@ -476,6 +502,7 @@ export struct PredictionCreatePage {
                     .backgroundColor(AppTheme.color.surfaceAlt)
                     .onChange((value: string) => {
                       this.invalidated = value;
+                      this.revisionError = '';
                       this.isDirty = true;
                     })
                 }
@@ -495,6 +522,7 @@ export struct PredictionCreatePage {
                     .backgroundColor(AppTheme.color.surfaceAlt)
                     .onChange((value: string) => {
                       this.preserved = value;
+                      this.revisionError = '';
                       this.isDirty = true;
                     })
                 }
@@ -514,6 +542,7 @@ export struct PredictionCreatePage {
                     .backgroundColor(AppTheme.color.surfaceAlt)
                     .onChange((value: string) => {
                       this.repositioned = value;
+                      this.revisionError = '';
                       this.isDirty = true;
                     })
                 }

@@ -7,6 +7,7 @@ import { PlanLink } from '../../model/PlanLink';
 import { PlanLinkModule } from '../../model/PlanLinkModule';
 import { PlanNodeStatus, PlanProjectStatus, PlanStatus } from '../../model/PlanStatus';
 import { SecurityLevel } from '../../model/SecurityLevel';
+import { toWorkDepth } from '../../model/WorkDepth';
 import {
   DB_TABLES,
   PLAN_COLS,
@@ -38,6 +39,10 @@ export class PlanDao {
       [PLAN_COLS.LEVEL]: plan.level ?? SecurityLevel.LOCAL_ONLY,
       [PLAN_COLS.PAUSE_REASON]: plan.pauseReason ?? '',
       [PLAN_COLS.RESUME_AT]: plan.resumeAt ?? '',
+      [PLAN_COLS.DEPTH]: plan.depth ?? 'normal',
+      [PLAN_COLS.TIME_BUDGET]: plan.timeBudget ?? 0,
+      [PLAN_COLS.DONE_STANDARD]: plan.doneStandard ?? '',
+      [PLAN_COLS.IMPACT]: plan.impact ?? '',
       [PLAN_COLS.CREATED_AT]: plan.createdAt
     };
     return this.store.insert(DB_TABLES.PLAN, values);
@@ -67,7 +72,11 @@ export class PlanDao {
       [PLAN_COLS.IS_PRIMARY]: plan.isPrimary ? 1 : 0,
       [PLAN_COLS.LEVEL]: plan.level ?? SecurityLevel.LOCAL_ONLY,
       [PLAN_COLS.PAUSE_REASON]: plan.pauseReason ?? '',
-      [PLAN_COLS.RESUME_AT]: plan.resumeAt ?? ''
+      [PLAN_COLS.RESUME_AT]: plan.resumeAt ?? '',
+      [PLAN_COLS.DEPTH]: plan.depth ?? 'normal',
+      [PLAN_COLS.TIME_BUDGET]: plan.timeBudget ?? 0,
+      [PLAN_COLS.DONE_STANDARD]: plan.doneStandard ?? '',
+      [PLAN_COLS.IMPACT]: plan.impact ?? ''
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN);
     predicates.equalTo(PLAN_COLS.ID, plan.id);
@@ -362,6 +371,10 @@ export class PlanDao {
       level: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.LEVEL)) as SecurityLevel,
       pauseReason: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.PAUSE_REASON)),
       resumeAt: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.RESUME_AT)),
+      depth: toWorkDepth(resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.DEPTH))),
+      timeBudget: resultSet.getLong(resultSet.getColumnIndex(PLAN_COLS.TIME_BUDGET)),
+      doneStandard: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.DONE_STANDARD)),
+      impact: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.IMPACT)),
       createdAt: resultSet.getLong(resultSet.getColumnIndex(PLAN_COLS.CREATED_AT))
     };
     if (projectId.length > 0) {

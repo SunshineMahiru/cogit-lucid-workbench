@@ -15,6 +15,19 @@ export interface BuildResult {
   dropped: DroppedItem[];
 }
 
+/** Keeps only the items the user left in the confirmation sheet. */
+export function filterConfirmedInput(raw: ContradictionInput, keepIds: string[]): ContradictionInput {
+  const anchors = raw.anchors.filter((anchor) => keepIds.includes(`anchor:${anchor.id}`));
+  return {
+    facts: keepIds.includes('facts') ? raw.facts : '',
+    interpretation: keepIds.includes('interpretation') ? raw.interpretation : '',
+    anchors: anchors,
+    factsLevel: raw.factsLevel,
+    interpretationLevel: raw.interpretationLevel,
+    relationForbidsAnalysis: raw.relationForbidsAnalysis
+  };
+}
+
 /** The single outbound model request path: decides which material may leave this device. */
 export function buildAnalysisInput(raw: ContradictionInput, provider: LlmProvider): BuildResult {
   const dropped: DroppedItem[] = [];

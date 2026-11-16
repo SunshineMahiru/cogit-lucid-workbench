@@ -1,5 +1,24 @@
 /** The dimension a cost entry is charged to. */
-export type CostDimension = 'time' | 'attention' | 'body' | 'relationship' | 'money' | 'other';
+export type CostDimension = 'meaning' | 'body' | 'relationship' | 'time' | 'public' | 'other';
+
+/** Every dimension in display order. */
+export const COST_DIMENSIONS: CostDimension[] = [
+  'meaning',
+  'body',
+  'relationship',
+  'time',
+  'public',
+  'other'
+];
+
+/** Narrows a stored value; values from older schemas read as other. */
+export function toCostDimension(value: string): CostDimension {
+  if (value === 'meaning' || value === 'body' || value === 'relationship' ||
+    value === 'time' || value === 'public' || value === 'other') {
+    return value;
+  }
+  return 'other';
+}
 
 /** The cost fields a review session fills in before it is saved. */
 export interface CostDraft {

@@ -23,4 +23,6 @@ export interface Anchor {
   revisionReason?: string;
   /** True for the built-in examples, so they never read as the owner's own words */
   synthetic?: boolean;
+  /** When this version was written, in epoch milliseconds; absent reads as unknown */
+  createdAt?: number;
 }

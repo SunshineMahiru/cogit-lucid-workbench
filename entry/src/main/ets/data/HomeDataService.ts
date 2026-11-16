@@ -3,6 +3,7 @@ import { common } from '@kit.AbilityKit';
 import { DbHelper } from '../db/DbHelper';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
+import { DecisionRecordDao } from '../db/dao/DecisionRecordDao';
 import { EventDao } from '../db/dao/EventDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
 import { RelationDao } from '../db/dao/RelationDao';
@@ -26,6 +27,7 @@ export class HomeDataService {
   private store: relationalStore.RdbStore;
   private eventDao: EventDao;
   private decisionDao: DecisionDao;
+  private decisionRecordDao: DecisionRecordDao;
   private relationDao: RelationDao;
   private predictionDao: PredictionDao;
   private anchorDao: AnchorDao;
@@ -37,6 +39,7 @@ export class HomeDataService {
     this.store = store;
     this.eventDao = new EventDao(store);
     this.decisionDao = new DecisionDao(store);
+    this.decisionRecordDao = new DecisionRecordDao(store);
     this.relationDao = new RelationDao(store);
     this.predictionDao = new PredictionDao(store);
     this.anchorDao = new AnchorDao(store);
@@ -118,6 +121,7 @@ export class HomeDataService {
     const hits = binary.filter(p => p.hit === true);
     const hitRate = binary.length > 0 ? Math.round(hits.length / binary.length * 100) : 0;
     const closedNodeReviews = await this.countClosedNodeReviews();
+    const pendingDecisions = await this.decisionRecordDao.countPending(today);
     return {
       totalNotes: totalNotes,
       todayNotes: todayNotes,
@@ -130,7 +134,8 @@ export class HomeDataService {
       totalRelations: totalRelations,
       duePredictions: duePredictions,
       revisionPredictions: revisionPredictions,
-      closedNodeReviews: closedNodeReviews
+      closedNodeReviews: closedNodeReviews,
+      pendingDecisions: pendingDecisions
     };
   }
 

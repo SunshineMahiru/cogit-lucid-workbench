@@ -1,5 +1,6 @@
 import { SecurityLevel } from './SecurityLevel';
 import { PlanStatus } from './PlanStatus';
+import { WorkDepth } from './WorkDepth';
 
 /** A long-running goal; only one plan is the primary goal at a time. */
 export interface Plan {
@@ -20,6 +21,14 @@ export interface Plan {
   isPrimary: boolean;
   /** Security level controlling aggregation and export */
   level?: SecurityLevel;
+  /** How much attention this plan is meant to take; absent reads as normal */
+  depth?: WorkDepth;
+  /** Minutes each session on this plan is allowed to take; 0 means no budget */
+  timeBudget?: number;
+  /** How the owner will know the goal is done */
+  doneStandard?: string;
+  /** Who or what the goal affects */
+  impact?: string;
   /** Milliseconds */
   createdAt: number;
 }

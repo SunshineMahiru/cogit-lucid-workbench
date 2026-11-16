@@ -121,7 +121,7 @@ export class PredictionService {
     if (existing.status !== PredictionStatus.PENDING) {
       throw new Error('prediction already settled');
     }
-    if (todayDateString(now) < existing.settlementDate) {
+    if (existing.settlementDate.length > 0 && todayDateString(now) < existing.settlementDate) {
       throw new Error('prediction not due');
     }
     const result = actualResult.trim();
@@ -131,7 +131,8 @@ export class PredictionService {
     if (outcome.length === 0) {
       throw new Error('outcome required');
     }
-    await this.predictionDao.settle(id, result, outcome, evidenceLevel);
+    await this.predictionDao.settle(id, result, outcome, evidenceLevel,
+      existing.settlementDate.length > 0 ? existing.settlementDate : todayDateString(now));
     const updated = await this.predictionDao.queryById(id);
     return updated === null ? null : toPredictionDetail(updated);
   }

@@ -56,7 +56,7 @@ export class PredictionDao {
    * the other three outcomes leave it null so the binary hit rate ignores them.
    */
   async settle(id: string, actualResult: string, outcome: PredictionOutcome,
-    evidenceLevel: string = ''): Promise<number> {
+    evidenceLevel: string = '', settlementDate: string = ''): Promise<number> {
     const latest = await this.queryById(id);
     if (latest === null) {
       return 0;
@@ -69,6 +69,9 @@ export class PredictionDao {
       [PREDICTION_COLS.OUTCOME]: outcome,
       [PREDICTION_COLS.EVIDENCE_LEVEL]: evidenceLevel
     };
+    if (settlementDate.length > 0) {
+      values[PREDICTION_COLS.SETTLEMENT_DATE] = settlementDate;
+    }
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PREDICTION);
     predicates.equalTo(PREDICTION_COLS.ID, latest.id);
     return this.store.update(values, predicates);

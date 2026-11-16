@@ -64,10 +64,12 @@ export function validatePredictionDraft(draft: PredictionDraft, now: number = Da
     errors.confidence = '置信度需在 0–100 之间，或选择无法量化';
   }
 
-  if (!isValidDate(settlementDate)) {
-    errors.settlementDate = '日期格式应为 YYYY-MM-DD';
-  } else if (settlementDate < todayDateString(now)) {
-    errors.settlementDate = '结算日不能早于今天';
+  if (settlementDate.length > 0) {
+    if (!isValidDate(settlementDate)) {
+      errors.settlementDate = '日期格式应为 YYYY-MM-DD';
+    } else if (settlementDate < todayDateString(now)) {
+      errors.settlementDate = '结算日不能早于今天';
+    }
   }
 
   return errors;

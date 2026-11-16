@@ -54,6 +54,8 @@ export struct DashboardView {
   @Local loadFailed: boolean = false;
   @Local isPreview: boolean = false;
   @Local showWelcome: boolean = false;
+  @Local readingsVisible: boolean = true;
+  @Local promptVisible: boolean = true;
   private reviewService: ReviewService | null = null;
   private refreshListener: (() => void) | null = null;
 
@@ -381,20 +383,40 @@ export struct DashboardView {
               }
 
               // Body readings
-              Grid() {
-                ForEach(this.readings, (reading: BodyReading) => {
-                  GridItem() {
-                    ReadingCard({ reading: reading })
+              Column({ space: 6 }) {
+                Row() {
+                  Text('身体读数')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                  Blank()
+                  Text(this.readingsVisible ? '隐藏' : '显示')
+                    .id('home_readings_toggle')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.primary)
+                    .onClick(() => {
+                      this.readingsVisible = !this.readingsVisible;
+                    })
+                }
+                .width('100%')
+
+                if (this.readingsVisible) {
+                  Grid() {
+                    ForEach(this.readings, (reading: BodyReading) => {
+                      GridItem() {
+                        ReadingCard({ reading: reading })
+                      }
+                    }, (reading: BodyReading) => `${reading.label}_${this.dataVersion}`)
                   }
-                }, (reading: BodyReading) => `${reading.label}_${this.dataVersion}`)
+                  .columnsTemplate('1fr 1fr 1fr')
+                  .rowsGap(0)
+                  .columnsGap(0)
+                  .width('100%')
+                  .padding(AppTheme.spacing.s16)
+                  .backgroundColor(AppTheme.color.surface)
+                  .borderRadius(AppTheme.radius.lg)
+                }
               }
-              .columnsTemplate('1fr 1fr 1fr')
-              .rowsGap(0)
-              .columnsGap(0)
               .width('100%')
-              .padding(AppTheme.spacing.s16)
-              .backgroundColor(AppTheme.color.surface)
-              .borderRadius(AppTheme.radius.lg)
 
               // Summary
               Row() {
@@ -487,8 +509,15 @@ export struct DashboardView {
               PlanHomeCard({ pathStack: this.pathStack })
                 .id('home_section_plan')
 
-              ReviewPromptPanel({ period: ReviewPeriod.WEEK })
-                .id('home_section_review_prompt')
+              if (this.promptVisible) {
+                ReviewPromptPanel({
+                  period: ReviewPeriod.WEEK,
+                  onDismiss: () => {
+                    this.promptVisible = false;
+                  }
+                })
+                  .id('home_section_review_prompt')
+              }
 
               Column() {
                 ModuleGridCard({

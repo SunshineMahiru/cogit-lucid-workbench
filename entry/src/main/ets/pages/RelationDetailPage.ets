@@ -169,7 +169,7 @@ export struct RelationDetailPage {
           interactionCount: log.length,
           lastInteractionLabel: formatInteractionTime(now),
           lastInteractionAt: now,
-          rawMaterialTest: this.detail.rawMaterialTest,
+          rawMaterialTest: false,
           forbidAnalysis: this.detail.forbidAnalysis,
           level: this.detail.level,
           notes: this.detail.notes,

@@ -80,7 +80,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     status TEXT NOT NULL DEFAULT 'active',
     context TEXT NOT NULL DEFAULT '',
     revision_reason TEXT NOT NULL DEFAULT '',
-    synthetic INTEGER NOT NULL DEFAULT 0
+    synthetic INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT 0
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.STATUS_RECORD} (
     id TEXT PRIMARY KEY,
@@ -135,6 +136,20 @@ export const TABLE_CREATE_SQLS: string[] = [
     created_at INTEGER NOT NULL,
     PRIMARY KEY (review_id, decision_id)
   )`,
+  `CREATE TABLE IF NOT EXISTS ${DB_TABLES.DECISION_RECORD} (
+    id TEXT PRIMARY KEY,
+    review_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    action TEXT,
+    commitment TEXT,
+    relation_id TEXT,
+    plan_item_id TEXT,
+    outcome TEXT,
+    review_at TEXT,
+    level TEXT NOT NULL DEFAULT 'local_only',
+    created_at INTEGER NOT NULL
+  )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN} (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -147,6 +162,10 @@ export const TABLE_CREATE_SQLS: string[] = [
     level TEXT NOT NULL DEFAULT 'local_only',
     pause_reason TEXT NOT NULL DEFAULT '',
     resume_at TEXT NOT NULL DEFAULT '',
+    depth TEXT NOT NULL DEFAULT 'normal',
+    time_budget INTEGER NOT NULL DEFAULT 0,
+    done_standard TEXT NOT NULL DEFAULT '',
+    impact TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN_PROJECT} (

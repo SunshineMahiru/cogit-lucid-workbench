@@ -6,9 +6,11 @@ import {
   MOCK_STATUS_RECORDS
 } from '../model/mockData';
 import { Anchor } from '../model/Anchor';
+import { DecisionRecord } from '../model/DecisionRecord';
 import { HomeSummary, BodyReading, PredictionItem } from '../model/HomeModel';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { ReviewResult } from '../model/ReviewResult';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { NoteDetail, toNoteDetail } from '../note/NoteDetail';
 import { NoteListItem } from '../note/NoteListItem';
 import { toNoteListItems } from '../note/NoteListMapper';
@@ -94,9 +96,40 @@ export const PREVIEW_REVIEW_RESULT: ReviewResult = {
   interpretation: '记录频率稳定，但复盘集中在周末。',
   contradiction: '把忙碌当成不记录的原因，实际记录只需要一分钟。',
   action: '下周把速记固定在午休后。',
+  payload: {
+    scene: '本周完成了三次速记，预测结算两次。',
+    model: '记录频率稳定，但复盘集中在周末。',
+    relation: '把忙碌当成不记录的原因，实际记录只需要一分钟。',
+    evidence: '连续三天午休后记录，当天都能写满两行。',
+    cost: '集中在周末补记，每次要多花二十分钟回忆。',
+    revision: '下周把速记固定在午休后。',
+    materialIds: [],
+    decisionIds: ['dc_demo_1'],
+    evidenceDrafts: [
+      { sourceType: 'practice', note: '午休后记录更顺畅。', effect: 'supports' }
+    ],
+    costDrafts: [
+      { dimension: 'time', text: '周末补记多花二十分钟。', bearable: true }
+    ]
+  },
   anchorIds: ['an_demo_1', 'an_demo_2'],
+  level: SecurityLevel.LOCAL_ONLY,
   createdAt: PREVIEW_NOW
 };
+
+export const PREVIEW_DECISION_RECORDS: DecisionRecord[] = [
+  {
+    id: 'dr_demo_1',
+    reviewId: 'rv_demo_1',
+    type: 'continue',
+    reason: '午休后记录已经能稳定写下两行，继续这个安排。',
+    action: '每个工作日午休后写一条速记。',
+    commitment: '连续两周不间断。',
+    reviewAt: '2026-11-02',
+    level: SecurityLevel.LOCAL_ONLY,
+    createdAt: PREVIEW_NOW
+  }
+];
 
 export const PREVIEW_REVIEW_HISTORY: ReviewHistoryItem[] = [toReviewHistoryItem(PREVIEW_REVIEW_RESULT)];
 export const PREVIEW_REVIEW_DETAIL: ReviewDetailView =

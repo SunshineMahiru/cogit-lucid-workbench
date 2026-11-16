@@ -24,7 +24,10 @@ export class TemplateContradictionAnalyzer implements ContradictionAnalyzer {
         candidates.push({
           anchorId: '',
           gap: `解释里出现「${word}」，事实部分未必支持这种绝对化表述`,
-          prompt: '把这句话改成可核对的程度描述，还剩下多少成立？'
+          prompt: '把这句话改成可核对的程度描述，还剩下多少成立？',
+          basis: `解释中的「${word}」`,
+          unknowns: '事实是否足以支持这个绝对化表述',
+          uncertainty: 'medium'
         });
         break;
       }
@@ -34,7 +37,10 @@ export class TemplateContradictionAnalyzer implements ContradictionAnalyzer {
       candidates.push({
         anchorId: '',
         gap: '事实里有具体数字，解释却没有引用任何数字或时间',
-        prompt: '解释能否对应到某一个具体日期、次数或时长？'
+        prompt: '解释能否对应到某一个具体日期、次数或时长？',
+        basis: '事实中的数字与解释的对照',
+        unknowns: '解释对应的具体日期或次数',
+        uncertainty: 'medium'
       });
     }
 
@@ -45,7 +51,10 @@ export class TemplateContradictionAnalyzer implements ContradictionAnalyzer {
         candidates.push({
           anchorId: anchor.id,
           gap: `解释与锚点「${anchor.text}」的侧重点可能不一致`,
-          prompt: '这条锚点要求你先做什么？现在的解释跳过了哪一步？'
+          prompt: '这条锚点要求你先做什么？现在的解释跳过了哪一步？',
+          basis: `锚点「${anchor.text}」`,
+          unknowns: '',
+          uncertainty: 'low'
         });
       }
     }
@@ -54,12 +63,18 @@ export class TemplateContradictionAnalyzer implements ContradictionAnalyzer {
       candidates.push({
         anchorId: '',
         gap: '解释暂时没有引用具体事件或数字',
-        prompt: '这条解释最依赖哪一个事实？那个事实能否被他人核对？'
+        prompt: '这条解释最依赖哪一个事实？那个事实能否被他人核对？',
+        basis: '',
+        unknowns: '缺少可核对的事件或数字',
+        uncertainty: 'high'
       });
       candidates.push({
         anchorId: '',
         gap: '目前只有一种解释，没有反证视角',
-        prompt: '如果这条解释是错的，最可能错在哪一步？'
+        prompt: '如果这条解释是错的，最可能错在哪一步？',
+        basis: '',
+        unknowns: '缺少反证或替代解释',
+        uncertainty: 'high'
       });
     }
 

@@ -9,6 +9,7 @@ import { PlanItem } from '../model/PlanItem';
 import { PlanLink } from '../model/PlanLink';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PlanNodeStatus, PlanStatus } from '../model/PlanStatus';
+import { WorkDepth } from '../model/WorkDepth';
 import {
   addPlanDays,
   createPlan,
@@ -56,9 +57,10 @@ export class PlanService {
   }
 
   /** Creates a goal and its first week atomically; it becomes primary when no active primary goal exists. */
-  async createPlan(title: string, startDate: string, targetDate: string = ''): Promise<Plan> {
+  async createPlan(title: string, startDate: string, targetDate: string = '',
+    depth: WorkDepth = 'normal', timeBudget: number = 0): Promise<Plan> {
     const existing = await this.dao.queryPlans();
-    const plan = createPlan(title, startDate, targetDate);
+    const plan = createPlan(title, startDate, targetDate, depth, timeBudget);
     plan.isPrimary = !this.hasActivePrimary(existing);
     const firstNode = createPlanNode(plan.id, 1, plan.startDate);
     await this.dao.insertPlanWithFirstNode(plan, firstNode);

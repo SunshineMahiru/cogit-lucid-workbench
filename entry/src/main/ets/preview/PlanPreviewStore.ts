@@ -5,6 +5,7 @@ import { PlanLink } from '../model/PlanLink';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { PlanProject } from '../model/PlanProject';
 import { PlanNodeStatus, PlanStatus } from '../model/PlanStatus';
+import { WorkDepth } from '../model/WorkDepth';
 import {
   addPlanDays,
   createPlan,
@@ -57,8 +58,9 @@ class PlanPreviewStore {
     return null;
   }
 
-  create(title: string, startDate: string, targetDate: string = ''): Plan {
-    const plan = createPlan(title, startDate, targetDate);
+  create(title: string, startDate: string, targetDate: string = '',
+    depth: WorkDepth = 'normal', timeBudget: number = 0): Plan {
+    const plan = createPlan(title, startDate, targetDate, depth, timeBudget);
     plan.isPrimary = this.plans.length === 0;
     this.plans.push(plan);
     this.planNodes.push(createPlanNode(plan.id, 1, plan.startDate));

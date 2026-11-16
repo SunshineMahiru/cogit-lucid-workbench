@@ -2,6 +2,7 @@ import { AppTheme } from '../theme/AppTheme';
 
 /** One material line shown before an outbound request; carries counts and ids only, never text. */
 export interface ConfirmSheetItem {
+  id: string;
   label: string;
   level: string;
   chars: number;
@@ -17,6 +18,7 @@ export struct RequestConfirmSheet {
   @Param droppedCount: number = 0;
   @Event onConfirm: () => void = () => {};
   @Event onCancel: () => void = () => {};
+  @Event onRemove: (id: string) => void = () => {};
 
   build() {
     if (this.visible) {
@@ -26,6 +28,9 @@ export struct RequestConfirmSheet {
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
         Text('只发送下列可分析内容；本地与封存内容不会离开本机')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+        Text('点「移除」可以不发送某一条；清单为空时不能发送')
           .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
         Text(`${this.providerLabel} · ${this.host}`)
@@ -45,9 +50,15 @@ export struct RequestConfirmSheet {
               Text(`${item.chars} 字`)
                 .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textSecondary)
+              Text('移除')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.danger)
+                .onClick(() => {
+                  this.onRemove(item.id);
+                })
             }
             .width('100%')
-          }, (item: ConfirmSheetItem, index: number) => `${item.label}_${index}`)
+          }, (item: ConfirmSheetItem, index: number) => `${item.id}_${index}`)
         }
         .width('100%')
         .padding(AppTheme.spacing.s10)

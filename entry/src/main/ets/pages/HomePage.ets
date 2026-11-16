@@ -22,7 +22,7 @@ export struct HomePage {
   @Local summary: HomeSummary = {
     totalNotes: 0, todayNotes: 0, totalPredictions: 0, pendingPredictions: 0, settledPredictions: 0,
     hitRate: 0, unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0,
-    duePredictions: 0, revisionPredictions: 0, closedNodeReviews: 0
+    duePredictions: 0, revisionPredictions: 0, closedNodeReviews: 0, pendingDecisions: 0
   };
   @Local pulse: HomePulse = { streakDays: 0, lastReviewLabel: NO_RATE_TEXT };
   @Local loadFailed: boolean = false;
@@ -163,8 +163,12 @@ export struct HomePage {
     return this.summary.closedNodeReviews ?? 0;
   }
 
+  private todoDecisions(): number {
+    return this.summary.pendingDecisions ?? 0;
+  }
+
   private todoTotal(): number {
-    return this.todoDue() + this.todoRevision() + this.todoClosed();
+    return this.todoDue() + this.todoRevision() + this.todoClosed() + this.todoDecisions();
   }
 
   /** Scrolls the dashboard scroll area down to the module grid. */
@@ -245,7 +249,10 @@ export struct HomePage {
           this.todoRow('home_todo_revision', '待修订模型', this.todoRevision(), '暂不区分', true, () => {
             this.openTodo();
           })
-          this.todoRow('home_todo_closed', '已结束周节点', this.todoClosed(), '', false, () => {
+          this.todoRow('home_todo_closed', '已结束周节点', this.todoClosed(), '', true, () => {
+            this.openReviewHistory();
+          })
+          this.todoRow('home_todo_decisions', '待回看决定', this.todoDecisions(), '', false, () => {
             this.openReviewHistory();
           })
         }

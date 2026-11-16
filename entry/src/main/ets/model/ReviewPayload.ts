@@ -1,5 +1,41 @@
 import { CostDraft } from './CostNote';
+import { DecisionDraft } from './DecisionRecord';
 import { EvidenceDraft } from './EvidenceItem';
+import { WorkDepth } from './WorkDepth';
+
+/** Where the drive behind one action comes from. */
+export type MotivationKind = 'autonomous' | 'external' | 'internal_command' | 'unclear';
+
+/** Every motivation in display order. */
+export const MOTIVATION_KINDS: MotivationKind[] = [
+  'autonomous',
+  'external',
+  'internal_command',
+  'unclear'
+];
+
+/** Human label for one motivation; empty reads as not filled in. */
+export function motivationText(value: string): string {
+  if (value === 'autonomous') {
+    return '自主选择';
+  }
+  if (value === 'external') {
+    return '外部要求';
+  }
+  if (value === 'internal_command') {
+    return '内部命令';
+  }
+  if (value === 'unclear') {
+    return '无法辨认';
+  }
+  return '未填写';
+}
+
+/** One anchor cited by a review, with the reason it was chosen. */
+export interface AnchorCitation {
+  anchorId: string;
+  reason: string;
+}
 
 /** The six working zones of one review session; every field is optional by design. */
 export interface ReviewPayload {
@@ -23,6 +59,16 @@ export interface ReviewPayload {
   evidenceDrafts?: EvidenceDraft[];
   /** Costs the session charged, in the order it was written */
   costDrafts?: CostDraft[];
+  /** Main decision the session recorded; absent when no type was chosen */
+  decisionDraft?: DecisionDraft;
+  /** Where the drive behind the recorded action comes from; absent when not answered */
+  motivation?: MotivationKind;
+  /** How much attention this session is meant to take; absent reads as normal */
+  depth?: WorkDepth;
+  /** Minutes the session is allowed to take; absent or 0 means no budget */
+  timeBudget?: number;
+  /** Anchors this session used, with the reason each one was chosen */
+  anchorCitations?: AnchorCitation[];
 }
 
 /** Empty payload: a review may be saved with only the scene filled in. */

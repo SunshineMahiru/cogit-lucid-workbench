@@ -3,28 +3,34 @@ import { common } from '@kit.AbilityKit';
 import { Anchor } from '../model/Anchor';
 import { CostDraft, CostNote } from '../model/CostNote';
 import { Decision } from '../model/Decision';
+import { DecisionDraft, DecisionRecord } from '../model/DecisionRecord';
 import { Event } from '../model/Event';
 import { EvidenceDraft, EvidenceItem } from '../model/EvidenceItem';
-import { ExperienceMaterial } from '../model/ExperienceMaterial';
+import { ExperienceMaterial, InteractionSource as MaterialInteractionSource } from '../model/ExperienceMaterial';
 import { createReviewResult } from '../model/factories';
 import { Prediction } from '../model/Prediction';
+import { Relation } from '../model/Relation';
 import { ReviewMaterial, REVIEW_ZONE } from '../model/ReviewMaterial';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { emptyReviewPayload, hasAnyZone } from '../model/ReviewPayload';
 import { SecurityLevel } from '../model/SecurityLevel';
+import { StatusRecord } from '../model/StatusRecord';
 import { countReviewWindow, ReviewWindowCounts } from '../analysis/metrics/ReviewMetrics';
 import { DbHelper } from '../db/DbHelper';
 import { uniqueStrings } from '../db/SafeJson';
 import { AnchorDao } from '../db/dao/AnchorDao';
 import { CostNoteDao } from '../db/dao/CostNoteDao';
 import { DecisionDao } from '../db/dao/DecisionDao';
+import { DecisionRecordDao } from '../db/dao/DecisionRecordDao';
 import { EventDao } from '../db/dao/EventDao';
 import { EvidenceItemDao } from '../db/dao/EvidenceItemDao';
 import { ExperienceMaterialDao } from '../db/dao/ExperienceMaterialDao';
 import { PredictionDao } from '../db/dao/PredictionDao';
+import { RelationDao } from '../db/dao/RelationDao';
 import { ReviewDecisionDao } from '../db/dao/ReviewDecisionDao';
 import { ReviewMaterialDao } from '../db/dao/ReviewMaterialDao';
 import { ReviewResultDao } from '../db/dao/ReviewResultDao';
+import { StatusRecordDao } from '../db/dao/StatusRecordDao';
 import { ReviewDraft, ReviewStats } from './ReviewDraft';
 import { MaterialSourceRow, buildRows, parseMaterialIds } from './ReviewMaterialSnapshot';
 import { PeriodRange, rangeFor } from './ReviewRange';
@@ -60,9 +66,12 @@ export class ReviewService {
   private reviewDao: ReviewResultDao;
   private reviewMaterialDao: ReviewMaterialDao;
   private reviewDecisionDao: ReviewDecisionDao;
+  private decisionRecordDao: DecisionRecordDao;
   private experienceMaterialDao: ExperienceMaterialDao;
   private evidenceItemDao: EvidenceItemDao;
   private costNoteDao: CostNoteDao;
+  private statusDao: StatusRecordDao;
+  private relationDao: RelationDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.store = store;
@@ -73,9 +82,12 @@ export class ReviewService {
     this.reviewDao = new ReviewResultDao(store);
     this.reviewMaterialDao = new ReviewMaterialDao(store);
     this.reviewDecisionDao = new ReviewDecisionDao(store);
+    this.decisionRecordDao = new DecisionRecordDao(store);
     this.experienceMaterialDao = new ExperienceMaterialDao(store);
     this.evidenceItemDao = new EvidenceItemDao(store);
     this.costNoteDao = new CostNoteDao(store);
+    this.statusDao = new StatusRecordDao(store);
+    this.relationDao = new RelationDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -107,12 +119,28 @@ export class ReviewService {
 
   /** Returns the newest materials a session may quote; sealed and deleted ones stay out. */
   async recentMaterials(limit: number = 50): Promise<ExperienceMaterial[]> {
-    return this.experienceMaterialDao.queryRecentVisible(limit);
+    const actual = await this.experienceMaterialDao.queryRecentVisible(limit);
+    const statusRows = (await this.statusDao.queryAll())
+      .filter((record: StatusRecord) => record.level !== SecurityLevel.SEALED && record.deleted !== true)
+      .sort((left: StatusRecord, right: StatusRecord) => right.date.localeCompare(left.date))
+      .slice(0, 10)
+      .map((record: StatusRecord) => toStatusMaterial(record));
+    const relationRows = (await this.relationDao.queryAll())
+      .filter((relation: Relation) => relation.level !== SecurityLevel.SEALED && relation.deleted !== true)
+      .slice(0, 10)
+      .map((relation: Relation) => toRelationMaterial(relation));
+    return statusRows.concat(relationRows, actual);
   }
 
-  /** Returns the newest decisions a session may cite, capped at limit. */
+  /** Returns the newest unsealed decisions a session may cite, capped at limit. */
   async recentDecisions(limit: number = 20): Promise<RecentDecisionItem[]> {
-    const decisions = await this.decisionDao.queryRecent(limit);
+    if (limit <= 0) {
+      return [];
+    }
+    const decisions = (await this.decisionDao.queryAll())
+      .filter((decision: Decision) => decision.level !== SecurityLevel.SEALED)
+      .sort((left: Decision, right: Decision) => right.timestamp - left.timestamp)
+      .slice(0, limit);
     return decisions.map((decision: Decision) => {
       const item: RecentDecisionItem = {
         id: decision.id,
@@ -157,14 +185,23 @@ export class ReviewService {
     const evidenceDrafts = result.payload.evidenceDrafts ?? [];
     const costDrafts = result.payload.costDrafts ?? [];
     const evidenceLevel: SecurityLevel = result.level ?? SecurityLevel.LOCAL_ONLY;
+    const decisionDraft = result.payload.decisionDraft;
+    const decision: DecisionRecord | null = decisionDraft === undefined ||
+      decisionDraft.reason.trim().length === 0 ? null :
+      ReviewService.decisionRow(result.id, result.createdAt, decisionDraft,
+        decisionLevelFor(result.level));
     this.store.beginTransaction();
     try {
       await this.evidenceItemDao.deleteByTarget('review', result.id);
       await this.costNoteDao.deleteByReview(result.id);
       await this.reviewDecisionDao.deleteByReview(result.id);
+      await this.decisionRecordDao.deleteByReview(result.id);
       await this.reviewDao.insert(result);
       for (const decisionId of decisionIds) {
         await this.reviewDecisionDao.insert(result.id, decisionId);
+      }
+      if (decision !== null) {
+        await this.decisionRecordDao.insert(decision);
       }
       const sources = await this.loadMaterialSources(materialIds);
       const rows = ReviewService.withSceneZone(buildRows(result.id, result.createdAt, materialIds,
@@ -264,6 +301,12 @@ export class ReviewService {
     return result;
   }
 
+  /** Returns the main decision one review recorded, or null when it has none. */
+  async reviewDecision(reviewId: string): Promise<DecisionRecord | null> {
+    const records = await this.decisionRecordDao.queryByReview(reviewId);
+    return records.length > 0 ? records[0] : null;
+  }
+
   /** Returns saved sessions, newest first. */
   async history(limit: number = 20): Promise<ReviewHistoryItem[]> {
     const results = await this.reviewDao.queryRecent(limit);
@@ -296,6 +339,35 @@ export class ReviewService {
   private async loadMaterialSources(ids: string[]): Promise<Map<string, MaterialSourceRow>> {
     const sources = new Map<string, MaterialSourceRow>();
     for (const id of ids) {
+      if (id.startsWith('status:')) {
+        const records = await this.statusDao.queryAll();
+        const record = records.find((item: StatusRecord) => item.id === id.substring(7));
+        if (record !== undefined) {
+          sources.set(id, {
+            id: id,
+            text: statusText(record),
+            source: 'direct',
+            level: record.level ?? SecurityLevel.LOCAL_ONLY,
+            deleted: record.deleted === true,
+            kind: 'body'
+          });
+        }
+        continue;
+      }
+      if (id.startsWith('relation:')) {
+        const relation = await this.relationDao.queryById(id.substring(9));
+        if (relation !== null) {
+          sources.set(id, {
+            id: id,
+            text: relationText(relation),
+            source: 'interaction',
+            level: relation.level,
+            deleted: relation.deleted === true,
+            kind: 'unclassified'
+          });
+        }
+        continue;
+      }
       const material = await this.experienceMaterialDao.queryById(id);
       if (material === null) {
         continue;
@@ -347,6 +419,30 @@ export class ReviewService {
       createdAt: createdAt + index
     };
   }
+
+  /** Builds the single main decision row a review records. */
+  private static decisionRow(reviewId: string, createdAt: number, draft: DecisionDraft,
+    level: SecurityLevel): DecisionRecord {
+    return {
+      id: `${reviewId}_decision`,
+      reviewId: reviewId,
+      type: draft.type,
+      reason: draft.reason.trim(),
+      action: (draft.action ?? '').trim(),
+      commitment: (draft.commitment ?? '').trim(),
+      relationId: draft.relationId ?? '',
+      planItemId: draft.planItemId ?? '',
+      outcome: (draft.outcome ?? '').trim(),
+      reviewAt: (draft.reviewAt ?? '').trim(),
+      level: level,
+      createdAt: createdAt
+    };
+  }
+}
+
+/** Narrows a decision to LOCAL_ONLY or stricter, following the review it belongs to. */
+export function decisionLevelFor(reviewLevel: SecurityLevel | undefined): SecurityLevel {
+  return reviewLevel === SecurityLevel.SEALED ? SecurityLevel.SEALED : SecurityLevel.LOCAL_ONLY;
 }
 
 /** Orders snapshots the way the table reads them back: zone, citation time, material id. */
@@ -378,5 +474,91 @@ function summarize(events: Event[], decisions: Decision[], predictions: Predicti
     settledPredictions: counts.settledPredictions,
     hitRate: counts.hitRate,
     anchorCount: anchorCount
+  };
+}
+
+/** One status record as citable text; it keeps whatever the author actually filled in. */
+function statusText(record: StatusRecord): string {
+  const parts: string[] = [];
+  if ((record.functionState ?? '').trim().length > 0) {
+    parts.push(record.functionState as string);
+  }
+  if ((record.bodySignals ?? '').trim().length > 0) {
+    parts.push(record.bodySignals as string);
+  }
+  if (record.note.trim().length > 0) {
+    parts.push(record.note);
+  }
+  if ((record.costPaid ?? '').trim().length > 0) {
+    parts.push(`代价：${record.costPaid as string}`);
+  }
+  return parts.length > 0 ? parts.join('；') : record.date;
+}
+
+/** The latest interaction of a relation, or its correction when no entry exists. */
+function relationText(relation: Relation): string {
+  if (relation.interactionLog.length > 0) {
+    const latest = relation.interactionLog[relation.interactionLog.length - 1];
+    if (latest.content.trim().length > 0) {
+      return latest.content;
+    }
+  }
+  if ((relation.correction ?? '').trim().length > 0) {
+    return relation.correction as string;
+  }
+  return relation.notes;
+}
+
+function interactionSourceOf(relation: Relation): MaterialInteractionSource {
+  if (relation.interactionLog.length === 0) {
+    return 'observed';
+  }
+  const latest = relation.interactionLog[relation.interactionLog.length - 1];
+  if (latest.source === 'stated') {
+    return 'stated';
+  }
+  if (latest.source === 'joint') {
+    return 'shared_activity';
+  }
+  if (latest.source === 'inference') {
+    return 'inferred';
+  }
+  return 'observed';
+}
+
+function toStatusMaterial(record: StatusRecord): ExperienceMaterial {
+  return {
+    id: `status:${record.id}`,
+    eventId: '',
+    kind: 'body',
+    form: '',
+    text: statusText(record),
+    observedAt: 0,
+    source: 'direct',
+    sourceStance: '',
+    level: record.level ?? SecurityLevel.LOCAL_ONLY,
+    revisionOf: '',
+    deleted: record.deleted === true,
+    createdAt: 0
+  };
+}
+
+function toRelationMaterial(relation: Relation): ExperienceMaterial {
+  const observedAt = relation.interactionLog.length > 0
+    ? relation.interactionLog[relation.interactionLog.length - 1].timestamp : 0;
+  return {
+    id: `relation:${relation.id}`,
+    eventId: '',
+    kind: 'unclassified',
+    form: 'dialogue',
+    text: relationText(relation),
+    observedAt: observedAt,
+    source: 'interaction',
+    sourceStance: '',
+    interactionSource: interactionSourceOf(relation),
+    level: relation.level,
+    revisionOf: '',
+    deleted: relation.deleted === true,
+    createdAt: observedAt
   };
 }

@@ -31,6 +31,7 @@ import {
   weekDates
 } from '../plan/PlanInsights';
 import { addPlanDays, parsePlanDate } from '../plan/PlanFactory';
+import { workDepthText } from '../model/WorkDepth';
 import { QuickNoteService } from '../note';
 import { StatusService } from '../status';
 import { PlanDetailParams, PlanEditParams, PlanNodeParams } from '../navigation/RouteParams';
@@ -275,6 +276,38 @@ export struct PlanDetailPage {
       });
     }
     return points;
+  }
+
+  private totalDone(): number {
+    let total = 0;
+    for (const row of this.nodes) {
+      total += row.done;
+    }
+    return total;
+  }
+
+  private totalCarried(): number {
+    let total = 0;
+    for (const row of this.nodes) {
+      total += row.openCarried;
+    }
+    return total;
+  }
+
+  private totalPaused(): number {
+    let total = 0;
+    for (const row of this.nodes) {
+      total += row.paused;
+    }
+    return total;
+  }
+
+  private totalDiscarded(): number {
+    let total = 0;
+    for (const row of this.nodes) {
+      total += row.discarded;
+    }
+    return total;
   }
 
   private totalLinkCount(): number {
@@ -636,6 +669,16 @@ export struct PlanDetailPage {
     }
   }
 
+  private depthLine(): string {
+    if (this.plan === null) {
+      return '';
+    }
+    const depth = workDepthText(this.plan.depth ?? 'normal');
+    const budget = this.plan.timeBudget !== undefined && this.plan.timeBudget > 0
+      ? ` · 预算 ${this.plan.timeBudget} 分钟` : '';
+    return `深度 ${depth}${budget}`;
+  }
+
   @Builder
   detailBody() {
     if (this.isLoading) {
@@ -692,6 +735,22 @@ export struct PlanDetailPage {
                 .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textMuted)
                 .width('100%')
+              Text(this.depthLine())
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+              if ((this.plan.doneStandard ?? '').length > 0) {
+                Text(`完成标准：${this.plan.doneStandard as string}`)
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+              }
+              if ((this.plan.impact ?? '').length > 0) {
+                Text(`影响对象：${this.plan.impact as string}`)
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+              }
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)
@@ -816,8 +875,13 @@ export struct PlanDetailPage {
               }
               .width('100%')
 
-              Text('延续项占当期清单项的比例；完成、暂停、舍弃的明细待计划汇总补充字段后再加入')
-                .id('plan_disposition_note')
+              Text(`完成 ${this.totalDone()} · 延续 ${this.totalCarried()} · 暂停 ${this.totalPaused()} · 舍弃 ${this.totalDiscarded()}`)
+                .id('plan_disposition_counts')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textSecondary)
+                .width('100%')
+              Text(`基于 ${this.nodes.length} 个周节点的清单记录；没有清单的一周不计入。`)
+                .id('plan_sample_note')
                 .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textMuted)
                 .width('100%')

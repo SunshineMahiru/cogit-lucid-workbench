@@ -16,6 +16,7 @@ export struct ReviewHistoryPage {
   @Local items: ReviewHistoryItem[] = [];
   @Local isLoading: boolean = true;
   @Local range: string = 'all';
+  @Local period: string = 'all';
   @Local decisionFilter: string = '';
   @Local decisions: RecentDecisionItem[] = [];
   private navStack: NavPathStack | null = null;
@@ -53,13 +54,15 @@ export struct ReviewHistoryPage {
 
   /** Rows created inside the chosen range; all rows for 'all'. */
   private filtered(): ReviewHistoryItem[] {
+    const byPeriod: ReviewHistoryItem[] = this.period === 'all' ? this.items :
+      this.items.filter((item: ReviewHistoryItem) => item.period === this.period);
     if (this.range === 'all') {
-      return this.items;
+      return byPeriod;
     }
     const days = this.range === '7d' ? 7 : 30;
     const since = Date.now() - days * 24 * 60 * 60 * 1000;
     const rows: ReviewHistoryItem[] = [];
-    for (const item of this.items) {
+    for (const item of byPeriod) {
       if ((item.createdAt ?? 0) >= since) {
         rows.push(item);
       }
@@ -137,6 +140,20 @@ export struct ReviewHistoryPage {
   }
 
   @Builder
+  periodChip(value: string, label: string, chipId: string) {
+    Text(label)
+      .id(chipId)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.period === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.period === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.period = value;
+      })
+  }
+
+  @Builder
   decisionChip(value: string, label: string, chipId: string) {
     Text(label)
       .id(chipId)
@@ -183,6 +200,14 @@ export struct ReviewHistoryPage {
               .fontColor(AppTheme.color.textMuted)
               .width('100%')
               .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.page })
+
+            Row({ space: 8 }) {
+              this.periodChip('all', '全部周期', 'history_period_all')
+              this.periodChip('week', '周复盘', 'history_period_week')
+              this.periodChip('month', '月复盘', 'history_period_month')
+            }
+            .width('100%')
+            .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8 })
 
             Row({ space: 8 }) {
               this.rangeChip('all', '全部', 'history_range_all')

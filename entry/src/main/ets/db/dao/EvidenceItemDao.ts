@@ -47,6 +47,22 @@ export class EvidenceItemDao {
     }
   }
 
+  /** Returns every evidence row, oldest first; used by the export path. */
+  async queryAll(): Promise<EvidenceItem[]> {
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVIDENCE_ITEM);
+    predicates.orderByAsc(EVIDENCE_COLS.CREATED_AT);
+    const resultSet = await this.store.query(predicates);
+    try {
+      const results: EvidenceItem[] = [];
+      while (resultSet.goToNextRow()) {
+        results.push(this.mapRow(resultSet));
+      }
+      return results;
+    } finally {
+      resultSet.close();
+    }
+  }
+
   /** Removes every evidence item of one record, returns the deleted row count. */
   async deleteByTarget(targetType: EvidenceTargetType, targetId: string): Promise<number> {
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.EVIDENCE_ITEM);

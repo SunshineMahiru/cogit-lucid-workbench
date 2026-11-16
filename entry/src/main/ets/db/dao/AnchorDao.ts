@@ -25,7 +25,8 @@ export class AnchorDao {
       [ANCHOR_COLS.STATUS]: anchor.status ?? 'active',
       [ANCHOR_COLS.CONTEXT]: anchor.context ?? '',
       [ANCHOR_COLS.REVISION_REASON]: anchor.revisionReason ?? '',
-      [ANCHOR_COLS.SYNTHETIC]: anchor.synthetic === true ? 1 : 0
+      [ANCHOR_COLS.SYNTHETIC]: anchor.synthetic === true ? 1 : 0,
+      [ANCHOR_COLS.CREATED_AT]: anchor.createdAt ?? 0
     };
     return this.store.insert(DB_TABLES.ANCHOR, values);
   }
@@ -104,7 +105,8 @@ export class AnchorDao {
       status: resultSet.getString(resultSet.getColumnIndex(ANCHOR_COLS.STATUS)) as Anchor['status'],
       context: resultSet.getString(resultSet.getColumnIndex(ANCHOR_COLS.CONTEXT)),
       revisionReason: resultSet.getString(resultSet.getColumnIndex(ANCHOR_COLS.REVISION_REASON)),
-      synthetic: resultSet.getLong(resultSet.getColumnIndex(ANCHOR_COLS.SYNTHETIC)) === 1
+      synthetic: resultSet.getLong(resultSet.getColumnIndex(ANCHOR_COLS.SYNTHETIC)) === 1,
+      createdAt: resultSet.getLong(resultSet.getColumnIndex(ANCHOR_COLS.CREATED_AT))
     };
   }
 }

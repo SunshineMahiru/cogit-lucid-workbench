@@ -9,6 +9,7 @@ export const DB_TABLES = {
   REVIEW_RESULT: 'review_result',
   REVIEW_MATERIAL: 'review_material',
   REVIEW_DECISION: 'review_decision',
+  DECISION_RECORD: 'decision_record',
   PLAN: 'plan',
   PLAN_PROJECT: 'plan_project',
   PLAN_NODE: 'plan_node',
@@ -39,7 +40,8 @@ export const LEVELED_TABLES: string[] = [
   DB_TABLES.PLAN,
   DB_TABLES.PLAN_ITEM,
   DB_TABLES.EXPERIENCE_MATERIAL,
-  DB_TABLES.EVIDENCE_ITEM
+  DB_TABLES.EVIDENCE_ITEM,
+  DB_TABLES.DECISION_RECORD
 ];
 
 export const DB_TABLES_CHILD_FIRST: string[] = [
@@ -60,6 +62,7 @@ export const DB_TABLES_CHILD_FIRST: string[] = [
   DB_TABLES.ANCHOR,
   DB_TABLES.STATUS_RECORD,
   DB_TABLES.REVIEW_DECISION,
+  DB_TABLES.DECISION_RECORD,
   DB_TABLES.REVIEW_RESULT
 ];
 
@@ -150,7 +153,8 @@ export const ANCHOR_COLS = {
   STATUS: 'status',
   CONTEXT: 'context',
   REVISION_REASON: 'revision_reason',
-  SYNTHETIC: 'synthetic'
+  SYNTHETIC: 'synthetic',
+  CREATED_AT: 'created_at'
 } as const;
 
 /** Column names for the status record table. */
@@ -205,6 +209,10 @@ export const PLAN_COLS = {
   LEVEL: 'level',
   PAUSE_REASON: 'pause_reason',
   RESUME_AT: 'resume_at',
+  DEPTH: 'depth',
+  TIME_BUDGET: 'time_budget',
+  DONE_STANDARD: 'done_standard',
+  IMPACT: 'impact',
   CREATED_AT: 'created_at'
 } as const;
 
@@ -315,6 +323,22 @@ export const REVIEW_MATERIAL_COLS = {
 export const REVIEW_DECISION_COLS = {
   REVIEW_ID: 'review_id',
   DECISION_ID: 'decision_id',
+  CREATED_AT: 'created_at'
+} as const;
+
+/** Column names for the main decision a review recorded. */
+export const DECISION_RECORD_COLS = {
+  ID: 'id',
+  REVIEW_ID: 'review_id',
+  TYPE: 'type',
+  REASON: 'reason',
+  ACTION: 'action',
+  COMMITMENT: 'commitment',
+  RELATION_ID: 'relation_id',
+  PLAN_ITEM_ID: 'plan_item_id',
+  OUTCOME: 'outcome',
+  REVIEW_AT: 'review_at',
+  LEVEL: 'level',
   CREATED_AT: 'created_at'
 } as const;
 

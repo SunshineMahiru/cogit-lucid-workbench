@@ -90,7 +90,8 @@ export function createAnchor(): Anchor {
     text: '',
     source: '',
     order: 0,
-    level: SecurityLevel.LOCAL_ONLY
+    level: SecurityLevel.LOCAL_ONLY,
+    createdAt: Date.now()
   };
 }
 

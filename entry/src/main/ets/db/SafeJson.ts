@@ -1,7 +1,9 @@
-import { CostDimension, CostDraft } from '../model/CostNote';
+import { toCostDimension, CostDraft } from '../model/CostNote';
+import { DECISION_RECORD_TYPES, DecisionDraft, DecisionRecordType } from '../model/DecisionRecord';
 import { CitationScope, InteractionLog, InteractionSource } from '../model/Relation';
 import { EvidenceDraft, EvidenceEffect, EvidenceSource } from '../model/EvidenceItem';
-import { ReviewPayload } from '../model/ReviewPayload';
+import { AnchorCitation, MotivationKind, MOTIVATION_KINDS, ReviewPayload } from '../model/ReviewPayload';
+import { WorkDepth } from '../model/WorkDepth';
 
 /** 整个进程累计的字段解析异常次数，供首页提示使用。 */
 let issueCount: number = 0;
@@ -148,9 +150,6 @@ function readEvidenceDrafts(value: Object | undefined): EvidenceDraft[] {
   return result;
 }
 
-/** Dimensions a cost draft may name. */
-const COST_DIMENSIONS: string[] = ['time', 'attention', 'body', 'relationship', 'money', 'other'];
-
 /** Reads the cost drafts of a payload; a malformed entry is skipped and counted. */
 function readCostDrafts(value: Object | undefined): CostDraft[] {
   if (!Array.isArray(value)) {
@@ -166,10 +165,9 @@ function readCostDrafts(value: Object | undefined): CostDraft[] {
     const dimension = entry.dimension;
     const text = entry.text;
     const bearable = entry.bearable;
-    if (typeof dimension === 'string' && COST_DIMENSIONS.indexOf(dimension) >= 0 &&
-      typeof text === 'string' && typeof bearable === 'boolean') {
+    if (typeof dimension === 'string' && typeof text === 'string' && typeof bearable === 'boolean') {
       const draft: CostDraft = {
-        dimension: dimension as CostDimension,
+        dimension: toCostDimension(dimension),
         text: text,
         bearable: bearable
       };
@@ -179,6 +177,95 @@ function readCostDrafts(value: Object | undefined): CostDraft[] {
     }
   }
   return result;
+}
+
+/** Reads an optional text field; absent or non-text values read as empty. */
+function readOptionalText(value: Object | undefined): string {
+  return typeof value === 'string' ? value as string : '';
+}
+
+/** Reads the main decision draft; a malformed entry is dropped and counted. */
+function readDecisionDraft(value: Object | undefined): DecisionDraft | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value !== 'object') {
+    issueCount += 1;
+    return undefined;
+  }
+  const entry = value as Record<string, Object>;
+  const type = entry.type;
+  const reason = entry.reason;
+  if (typeof type !== 'string' || DECISION_RECORD_TYPES.indexOf(type as DecisionRecordType) < 0 ||
+    typeof reason !== 'string') {
+    issueCount += 1;
+    return undefined;
+  }
+  return {
+    type: type as DecisionRecordType,
+    reason: reason,
+    action: readOptionalText(entry.action),
+    commitment: readOptionalText(entry.commitment),
+    relationId: readOptionalText(entry.relationId),
+    planItemId: readOptionalText(entry.planItemId),
+    outcome: readOptionalText(entry.outcome),
+    reviewAt: readOptionalText(entry.reviewAt)
+  };
+}
+
+/** Reads the motivation answer; an unknown value reads as not answered. */
+function readMotivation(value: Object | undefined): MotivationKind | undefined {
+  if (typeof value !== 'string' || MOTIVATION_KINDS.indexOf(value as MotivationKind) < 0) {
+    return undefined;
+  }
+  return value as MotivationKind;
+}
+
+/** Reads anchor citations; entries without an id are dropped and repeated ids keep the first. */
+function readAnchorCitations(value: Object | undefined): AnchorCitation[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const items: Object[] = value as Object[];
+  const result: AnchorCitation[] = [];
+  for (const item of items) {
+    const entry = item as Record<string, Object>;
+    const anchorId = entry.anchorId;
+    if (typeof anchorId !== 'string' || anchorId.length === 0) {
+      continue;
+    }
+    let duplicate = false;
+    for (const existing of result) {
+      if (existing.anchorId === anchorId) {
+        duplicate = true;
+        break;
+      }
+    }
+    if (duplicate) {
+      continue;
+    }
+    result.push({
+      anchorId: anchorId,
+      reason: typeof entry.reason === 'string' ? (entry.reason as string).trim() : ''
+    });
+  }
+  return result;
+}
+
+/** Reads the work depth; absent or unknown reads as not recorded. */
+function readWorkDepth(value: Object | undefined): WorkDepth | undefined {
+  if (value === 'quick' || value === 'normal' || value === 'deep') {
+    return value as WorkDepth;
+  }
+  return undefined;
+}
+
+/** Reads the optional time budget; non-positive or non-numeric reads as absent. */
+function readTimeBudget(value: Object | undefined): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return undefined;
+  }
+  return Math.round(value);
 }
 
 /** Reads the six-zone payload; returns undefined for old records without one. */
@@ -202,6 +289,11 @@ export function parseReviewPayload(raw: string): ReviewPayload | undefined {
     materialIds: readStringFieldList(entry.materialIds),
     decisionIds: uniqueStrings(readStringFieldList(entry.decisionIds)),
     evidenceDrafts: readEvidenceDrafts(entry.evidenceDrafts),
-    costDrafts: readCostDrafts(entry.costDrafts)
+    costDrafts: readCostDrafts(entry.costDrafts),
+    decisionDraft: readDecisionDraft(entry.decisionDraft),
+    motivation: readMotivation(entry.motivation),
+    depth: readWorkDepth(entry.depth),
+    timeBudget: readTimeBudget(entry.timeBudget),
+    anchorCitations: readAnchorCitations(entry.anchorCitations)
   };
 }

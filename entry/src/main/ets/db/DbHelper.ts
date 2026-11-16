@@ -481,6 +481,48 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // Cost dimensions changed to meaning, body, relationship, time and public life.
+    const costDimensionMigrations: string[] = [
+      `UPDATE cost_note SET dimension = 'other' WHERE dimension IN ('attention', 'money')`
+    ];
+    for (const sql of costDimensionMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
+    // Plans gained a depth and a per-session time budget.
+    const planDepthMigrations: string[] = [
+      `ALTER TABLE plan ADD COLUMN depth TEXT NOT NULL DEFAULT 'normal'`,
+      `ALTER TABLE plan ADD COLUMN time_budget INTEGER NOT NULL DEFAULT 0`
+    ];
+    for (const sql of planDepthMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
+    // Anchors gained a creation time for the version history.
+    const anchorCreatedMigrations: string[] = [
+      `ALTER TABLE anchor ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0`
+    ];
+    for (const sql of anchorCreatedMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
+    // Plans gained a completion standard and an affected-object field.
+    const planGoalMigrations: string[] = [
+      `ALTER TABLE plan ADD COLUMN done_standard TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE plan ADD COLUMN impact TEXT NOT NULL DEFAULT ''`
+    ];
+    for (const sql of planGoalMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     // Reviews saved before the snapshot table keep their cited ids only in the payload; the
     // backfill copies them once, and a failure leaves the read path to resolve live materials.
     try {

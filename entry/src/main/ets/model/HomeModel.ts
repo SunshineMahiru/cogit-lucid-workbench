@@ -32,6 +32,8 @@ export interface HomeSummary {
   revisionPredictions?: number;
   /** Closed weeks that have no review attached yet */
   closedNodeReviews?: number;
+  /** Recorded decisions whose review date has arrived */
+  pendingDecisions?: number;
 }
 
 /** A dashboard tile: the route it opens plus its live summary line. */

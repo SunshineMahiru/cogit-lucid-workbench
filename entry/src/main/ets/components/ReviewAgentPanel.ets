@@ -4,7 +4,7 @@ import { SecurityLevel } from '../model/SecurityLevel';
 import { AppTheme } from '../theme/AppTheme';
 import { ContradictionCandidate, ContradictionInput } from '../analysis/contradiction/ContradictionAnalyzer';
 import { AgentOutcome, ReviewAgent } from '../review';
-import { buildAnalysisInput } from '../security/RequestBuilder';
+import { buildAnalysisInput, filterConfirmedInput } from '../security/RequestBuilder';
 import { AppSettings, defaultAppSettings } from '../settings/AppSettings';
 import { SettingsStore } from '../settings/SettingsStore';
 import { ConfirmSheetItem, RequestConfirmSheet } from './RequestConfirmSheet';
@@ -32,6 +32,7 @@ export struct ReviewAgentPanel {
   @Local confirmDropped: number = 0;
   @Local confirmProviderLabel: string = '';
   @Local confirmHost: string = '';
+  @Local ignoredKeys: string[] = [];
 
   private async generate(): Promise<void> {
     if (this.isLoading) {
@@ -92,33 +93,39 @@ export struct ReviewAgentPanel {
   private sheetItems(input: ContradictionInput): ConfirmSheetItem[] {
     const items: ConfirmSheetItem[] = [];
     if (input.facts.length > 0) {
-      items.push({ label: '事实', level: input.factsLevel, chars: input.facts.length });
+      items.push({ id: 'facts', label: '事实', level: input.factsLevel, chars: input.facts.length });
     }
     if (input.interpretation.length > 0) {
-      items.push({ label: '解释', level: input.interpretationLevel, chars: input.interpretation.length });
+      items.push({ id: 'interpretation', label: '解释', level: input.interpretationLevel, chars: input.interpretation.length });
     }
     input.anchors.forEach((anchor: Anchor, index: number) => {
       const level: SecurityLevel = anchor.level ?? SecurityLevel.LOCAL_ONLY;
-      items.push({ label: `锚点 ${index + 1}`, level: level, chars: anchor.text.length });
+      items.push({ id: `anchor:${anchor.id}`, label: `锚点 ${index + 1}`, level: level, chars: anchor.text.length });
     });
     return items;
   }
 
   private confirmSend(): void {
     this.confirmVisible = false;
+    if (this.confirmItems.length === 0) {
+      this.errorText = '至少保留一项再发送';
+      return;
+    }
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined) {
       this.errorText = '运行环境未就绪';
       return;
     }
-    this.runAnalyze(hostContext, true);
+    const keepIds = this.confirmItems.map((item: ConfirmSheetItem) => item.id);
+    this.runAnalyze(hostContext, true, filterConfirmedInput(this.buildInput(), keepIds));
   }
 
   private cancelSend(): void {
     this.confirmVisible = false;
   }
 
-  private async runAnalyze(hostContext: common.Context, confirmed: boolean): Promise<void> {
+  private async runAnalyze(hostContext: common.Context, confirmed: boolean,
+    input?: ContradictionInput): Promise<void> {
     if (this.isLoading) {
       return;
     }
@@ -127,8 +134,9 @@ export struct ReviewAgentPanel {
     this.requested = true;
     try {
       const agent = await ReviewAgent.create(hostContext);
-      const outcome: AgentOutcome = await agent.analyze(this.buildInput(), Date.now(), confirmed);
+      const outcome: AgentOutcome = await agent.analyze(input ?? this.buildInput(), Date.now(), confirmed);
       this.candidates = outcome.candidates;
+      this.ignoredKeys = [];
       this.droppedCount = outcome.dropped.length;
       this.message = outcome.fellBack ? `${outcome.message}（${outcome.provider}）` : outcome.message;
     } catch (error) {
@@ -139,8 +147,49 @@ export struct ReviewAgentPanel {
   }
 
   private insert(candidate: ContradictionCandidate): void {
-    const text = `${candidate.gap}\n追问：${candidate.prompt}`;
-    this.onInsert(text);
+    const parts: string[] = [candidate.gap];
+    if ((candidate.basis ?? '').trim().length > 0) {
+      parts.push(`依据：${(candidate.basis as string).trim()}`);
+    }
+    if ((candidate.unknowns ?? '').trim().length > 0) {
+      parts.push(`未知：${(candidate.unknowns as string).trim()}`);
+    }
+    parts.push(`追问：${candidate.prompt}`);
+    this.onInsert(parts.join('\n'));
+  }
+
+  private candidateKey(candidate: ContradictionCandidate): string {
+    return `${candidate.gap}|${candidate.prompt}`;
+  }
+
+  private isIgnored(candidate: ContradictionCandidate): boolean {
+    return this.ignoredKeys.includes(this.candidateKey(candidate));
+  }
+
+  private visibleCandidates(): ContradictionCandidate[] {
+    return this.candidates.filter((candidate: ContradictionCandidate) => !this.isIgnored(candidate));
+  }
+
+  private toggleIgnore(candidate: ContradictionCandidate): void {
+    const key = this.candidateKey(candidate);
+    if (this.ignoredKeys.includes(key)) {
+      this.ignoredKeys = this.ignoredKeys.filter((item: string) => item !== key);
+    } else {
+      this.ignoredKeys = this.ignoredKeys.concat([key]);
+    }
+  }
+
+  private uncertaintyText(value: string | undefined): string {
+    if (value === 'low') {
+      return '低';
+    }
+    if (value === 'medium') {
+      return '中';
+    }
+    if (value === 'high') {
+      return '高';
+    }
+    return '';
   }
 
   @Builder
@@ -156,6 +205,9 @@ export struct ReviewAgentPanel {
       },
       onCancel: () => {
         this.cancelSend();
+      },
+      onRemove: (id: string) => {
+        this.confirmItems = this.confirmItems.filter((item: ConfirmSheetItem) => item.id !== id);
       }
     })
   }
@@ -294,19 +346,67 @@ export struct ReviewAgentPanel {
           .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
       } else {
-        ForEach(this.candidates, (candidate: ContradictionCandidate, index: number) => {
+        if (this.ignoredKeys.length > 0) {
+          Row({ space: 6 }) {
+            Text(`已忽略 ${this.ignoredKeys.length} 条`)
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.textMuted)
+              .layoutWeight(1)
+            Text('全部恢复')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.primary)
+              .onClick(() => {
+                this.ignoredKeys = [];
+              })
+          }
+          .width('100%')
+        }
+
+        ForEach(this.visibleCandidates(), (candidate: ContradictionCandidate) => {
           Column({ space: 4 }) {
             Text(candidate.gap)
               .fontSize(AppTheme.font.bodyStrong)
               .lineHeight(19)
               .fontColor(AppTheme.color.text)
               .width('100%')
-            Row() {
-              Text(candidate.prompt)
-                .fontSize(AppTheme.font.body)
-                .lineHeight(17)
+            if ((candidate.basis ?? '').trim().length > 0) {
+              Text(`依据：${(candidate.basis as string).trim()}`)
+                .fontSize(AppTheme.font.caption)
+                .lineHeight(16)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+            }
+            if ((candidate.unknowns ?? '').trim().length > 0) {
+              Text(`未知：${(candidate.unknowns as string).trim()}`)
+                .fontSize(AppTheme.font.caption)
+                .lineHeight(16)
+                .fontColor(AppTheme.color.warning)
+                .width('100%')
+            }
+            Text(candidate.prompt)
+              .fontSize(AppTheme.font.body)
+              .lineHeight(17)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            Row({ space: 6 }) {
+              if (this.uncertaintyText(candidate.uncertainty).length > 0) {
+                Text(`不确定度 ${this.uncertaintyText(candidate.uncertainty)}`)
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                  .backgroundColor(AppTheme.color.chip)
+                  .borderRadius(AppTheme.radius.sm)
+              }
+              Blank()
+              Text('忽略')
+                .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textSecondary)
-                .layoutWeight(1)
+                .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+                .backgroundColor(AppTheme.color.surface)
+                .borderRadius(AppTheme.radius.sm)
+                .onClick(() => {
+                  this.toggleIgnore(candidate);
+                })
               Text('填入')
                 .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.primary)
@@ -323,7 +423,7 @@ export struct ReviewAgentPanel {
           .padding(AppTheme.spacing.s10)
           .backgroundColor(AppTheme.color.surfaceAlt)
           .borderRadius(AppTheme.radius.sm)
-        }, (candidate: ContradictionCandidate, index: number) => `${candidate.anchorId}_${index}`)
+        }, (candidate: ContradictionCandidate) => this.candidateKey(candidate))
       }
     }
     .width('100%')

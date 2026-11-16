@@ -1,21 +1,28 @@
 import { Anchor } from '../model/Anchor';
 import { CostDimension, CostDraft } from '../model/CostNote';
+import { DECISION_RECORD_TYPES, DecisionDraft, DecisionRecordType } from '../model/DecisionRecord';
 import { EvidenceDraft, EvidenceEffect, EvidenceSource } from '../model/EvidenceItem';
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
+import { PlanItem } from '../model/PlanItem';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { AppTheme } from '../theme/AppTheme';
 import { formatHitRate } from '../model/HomeModel';
+import { isPlanDate } from '../plan/PlanValidation';
+import { PlanService } from '../plan/PlanService';
+import { RelationListItem } from '../relation/RelationListItem';
+import { RelationService } from '../relation/RelationService';
 import { MaterialPicker } from './MaterialPicker';
 import { ReviewPromptPanel } from './ReviewPromptPanel';
 import { ReviewAgentPanel } from './ReviewAgentPanel';
-import { hasAnyZone, ReviewPayload } from '../model/ReviewPayload';
+import { AnchorCitation, hasAnyZone, MotivationKind, MOTIVATION_KINDS, motivationText, ReviewPayload } from '../model/ReviewPayload';
+import { WorkDepth, WORK_DEPTHS, workDepthText } from '../model/WorkDepth';
 import {
   ReviewDraft,
   ReviewService,
   ReviewStats,
   emptyReviewStats
 } from '../review';
-import { PREVIEW_ANCHORS, PREVIEW_REVIEW_STATS } from '../preview/PreviewData';
+import { PREVIEW_ANCHORS, PREVIEW_RELATION_ITEMS, PREVIEW_REVIEW_STATS } from '../preview/PreviewData';
 import { previewStore } from '../preview/PreviewStore';
 import { ReviewDraftStore } from '../review/ReviewDraftStore';
 import { RecentDecisionItem } from '../review/ReviewService';
@@ -77,8 +84,22 @@ export struct ReviewForm {
   @Local isSaving: boolean = false;
   @Local saved: boolean = false;
   @Local selectedAnchorIds: string[] = [];
+  @Local anchorCitations: AnchorCitation[] = [];
   @Local decisionIds: string[] = [];
   @Local decisions: RecentDecisionItem[] = [];
+  @Local relations: RelationListItem[] = [];
+  @Local decisionType: DecisionRecordType | null = null;
+  @Local decisionReason: string = '';
+  @Local decisionAction: string = '';
+  @Local decisionCommitment: string = '';
+  @Local decisionRelationId: string = '';
+  @Local decisionOutcome: string = '';
+  @Local decisionReviewAt: string = '';
+  @Local motivation: MotivationKind | '' = '';
+  @Local depth: WorkDepth = 'normal';
+  @Local timeBudgetText: string = '';
+  @Local planItems: PlanItem[] = [];
+  @Local planItemId: string = '';
   @Local isPreview: boolean = false;
   private service: ReviewService | null = null;
   private draftStore: ReviewDraftStore | null = null;
@@ -103,11 +124,31 @@ export struct ReviewForm {
       this.stats = await this.service.loadStats(this.period);
       this.anchors = await this.service.loadAnchors(3);
       this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
+      this.syncAnchorCitations();
       this.materials = await this.service.recentMaterials(50);
       try {
         this.decisions = await this.service.recentDecisions(20);
       } catch (error) {
         this.decisions = [];
+      }
+      try {
+        const relationService = await RelationService.open(hostContext);
+        this.relations = await relationService.list(null);
+      } catch (error) {
+        this.relations = [];
+      }
+      try {
+        const planService = await PlanService.open(hostContext);
+        const primary = await planService.primaryPlan();
+        if (primary !== null) {
+          const node = await planService.currentNode(primary.id);
+          if (node !== null) {
+            const items = await planService.listItems(node.id);
+            this.planItems = items.filter((item: PlanItem) => !item.done);
+          }
+        }
+      } catch (error) {
+        this.planItems = [];
       }
       const draft = await this.draftStore.loadFor(this.period, this.planNodeId);
       if (draft !== null) {
@@ -125,9 +166,26 @@ export struct ReviewForm {
           this.evidenceDrafts = (draft.payload.evidenceDrafts ?? []).slice();
           this.costDrafts = (draft.payload.costDrafts ?? []).slice();
           this.decisionIds = (draft.payload.decisionIds ?? []).slice();
+          const decisionDraft = draft.payload.decisionDraft;
+          if (decisionDraft !== undefined) {
+            this.decisionType = decisionDraft.type;
+            this.decisionReason = decisionDraft.reason;
+            this.decisionAction = decisionDraft.action ?? '';
+            this.decisionCommitment = decisionDraft.commitment ?? '';
+            this.decisionRelationId = decisionDraft.relationId ?? '';
+            this.decisionOutcome = decisionDraft.outcome ?? '';
+            this.decisionReviewAt = decisionDraft.reviewAt ?? '';
+            this.planItemId = decisionDraft.planItemId ?? '';
+          }
+          this.motivation = draft.payload.motivation ?? '';
+          this.depth = draft.payload.depth ?? 'normal';
+          this.timeBudgetText = draft.payload.timeBudget !== undefined ? String(draft.payload.timeBudget) : '';
         }
         if (draft.anchorIds.length > 0) {
           this.selectedAnchorIds = draft.anchorIds.slice();
+          this.anchorCitations = draft.payload !== undefined ?
+            (draft.payload.anchorCitations ?? []).slice() : [];
+          this.syncAnchorCitations();
         }
         if (draft.materialIds !== undefined && draft.materialIds.length > 0) {
           this.selectedMaterialIds = draft.materialIds.slice();
@@ -150,8 +208,104 @@ export struct ReviewForm {
       revision: this.zoneRevision,
       decisionIds: this.uniqueDecisionIds(),
       evidenceDrafts: this.evidenceDrafts.slice(),
-      costDrafts: this.costDrafts.slice()
+      costDrafts: this.costDrafts.slice(),
+      decisionDraft: this.currentDecisionDraft(),
+      motivation: this.motivation === '' ? undefined : this.motivation,
+      depth: this.depth,
+      timeBudget: this.budgetValue(),
+      anchorCitations: this.anchorCitations.slice()
     };
+  }
+
+  private budgetValue(): number | undefined {
+    const value = Number(this.timeBudgetText.trim());
+    return Number.isFinite(value) && value > 0 ? Math.round(value) : undefined;
+  }
+
+  private currentDecisionDraft(): DecisionDraft | undefined {
+    if (this.decisionType === null) {
+      return undefined;
+    }
+    return {
+      type: this.decisionType,
+      reason: this.decisionReason,
+      action: this.decisionAction,
+      commitment: this.decisionCommitment,
+      relationId: this.decisionRelationId,
+      planItemId: this.planItemId,
+      outcome: this.decisionOutcome,
+      reviewAt: this.decisionReviewAt
+    };
+  }
+
+  private decisionError(): string {
+    if (this.decisionType === null) {
+      return '';
+    }
+    if (this.decisionReason.trim().length === 0) {
+      return '填写决定原因后再保存';
+    }
+    if (this.decisionType === 'joint' && this.decisionRelationId.length === 0) {
+      return '共同实践要选一条关系';
+    }
+    const reviewAt = this.decisionReviewAt.trim();
+    if (reviewAt.length > 0 && !isPlanDate(reviewAt)) {
+      return '回看日期格式应为 YYYY-MM-DD';
+    }
+    return '';
+  }
+
+  private selectDecisionType(type: DecisionRecordType): void {
+    this.decisionType = type;
+    if (type !== 'joint') {
+      this.decisionRelationId = '';
+      this.decisionOutcome = '';
+    }
+    if (type !== 'joint' && type !== 'switch') {
+      this.decisionReviewAt = '';
+    }
+    this.persistDraft();
+  }
+
+  private updateDecisionReason(value: string): void {
+    this.decisionReason = value;
+    this.persistDraft();
+  }
+
+  private updateDecisionAction(value: string): void {
+    this.decisionAction = value;
+    this.persistDraft();
+  }
+
+  private updateDecisionCommitment(value: string): void {
+    this.decisionCommitment = value;
+    this.persistDraft();
+  }
+
+  private updateDecisionRelation(id: string): void {
+    this.decisionRelationId = id;
+    this.persistDraft();
+  }
+
+  private updateDecisionOutcome(value: string): void {
+    this.decisionOutcome = value;
+    this.persistDraft();
+  }
+
+  private updateDecisionReviewAt(value: string): void {
+    this.decisionReviewAt = value;
+    this.persistDraft();
+  }
+
+  /** Picks one plan item, or clears it when the same item is tapped again. */
+  private togglePlanItem(id: string): void {
+    this.planItemId = this.planItemId === id ? '' : id;
+    this.persistDraft();
+  }
+
+  private actionHint(): string {
+    return this.decisionType === 'pause' || this.decisionType === 'discard' ||
+      this.decisionType === 'exit' ? '可留空' : '下一步具体做什么';
   }
 
   /** Drops repeated decision ids while keeping the order they were picked in. */
@@ -193,6 +347,7 @@ export struct ReviewForm {
     this.stats = PREVIEW_REVIEW_STATS;
     this.anchors = PREVIEW_ANCHORS.slice(0, 3);
     this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
+    this.relations = PREVIEW_RELATION_ITEMS.slice();
     this.isLoading = false;
   }
 
@@ -258,6 +413,30 @@ export struct ReviewForm {
     } else {
       this.selectedAnchorIds = this.selectedAnchorIds.concat([id]);
     }
+    this.syncAnchorCitations();
+    this.persistDraft();
+  }
+
+  private syncAnchorCitations(): void {
+    const next: AnchorCitation[] = [];
+    for (const id of this.selectedAnchorIds) {
+      const existing = this.anchorCitations.find((item: AnchorCitation) => item.anchorId === id);
+      next.push({ anchorId: id, reason: existing !== undefined ? existing.reason : '' });
+    }
+    this.anchorCitations = next;
+  }
+
+  private reasonOf(id: string): string {
+    const existing = this.anchorCitations.find((item: AnchorCitation) => item.anchorId === id);
+    return existing !== undefined ? existing.reason : '';
+  }
+
+  private updateAnchorReason(id: string, value: string): void {
+    const next: AnchorCitation[] = [];
+    for (const citation of this.anchorCitations) {
+      next.push(citation.anchorId === id ? { anchorId: id, reason: value } : citation);
+    }
+    this.anchorCitations = next;
     this.persistDraft();
   }
 
@@ -387,6 +566,12 @@ export struct ReviewForm {
     if (this.isSaving) {
       return;
     }
+    const decisionError = this.decisionError();
+    if (decisionError.length > 0) {
+      this.step = LAST_ZONE;
+      this.getUIContext().getPromptAction().showToast({ message: decisionError });
+      return;
+    }
     if (!hasAnyZone(this.currentPayload())) {
       this.step = 0;
       this.getUIContext().getPromptAction().showToast({ message: '先写一句现场，或填任意一区' });
@@ -436,6 +621,18 @@ export struct ReviewForm {
     this.costDrafts = [];
     this.costRevision += 1;
     this.decisionIds = [];
+    this.anchorCitations = [];
+    this.decisionType = null;
+    this.decisionReason = '';
+    this.decisionAction = '';
+    this.decisionCommitment = '';
+    this.decisionRelationId = '';
+    this.decisionOutcome = '';
+    this.decisionReviewAt = '';
+    this.planItemId = '';
+    this.motivation = '';
+    this.depth = 'normal';
+    this.timeBudgetText = '';
     this.saved = false;
     if (this.draftStore !== null) {
       this.draftStore.clearFor(this.period, this.planNodeId).catch(() => {
@@ -653,11 +850,11 @@ export struct ReviewForm {
       ForEach(this.costDrafts, (draft: CostDraft, index: number) => {
         Column({ space: 6 }) {
           Flex({ wrap: FlexWrap.Wrap }) {
-            this.costDimensionChip(index, 'time', '时间')
-            this.costDimensionChip(index, 'attention', '注意力')
+            this.costDimensionChip(index, 'meaning', '意义')
             this.costDimensionChip(index, 'body', '身体')
             this.costDimensionChip(index, 'relationship', '关系')
-            this.costDimensionChip(index, 'money', '金钱')
+            this.costDimensionChip(index, 'time', '时间')
+            this.costDimensionChip(index, 'public', '公共生活')
             this.costDimensionChip(index, 'other', '其他')
           }
           .width('100%')
@@ -718,6 +915,290 @@ export struct ReviewForm {
         })
     }
     .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  motivationChip(value: MotivationKind, label: string) {
+    Text(label)
+      .id(`review_motivation_${value}`)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.motivation === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.motivation === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.motivation = this.motivation === value ? '' : value;
+        this.persistDraft();
+      })
+  }
+
+  @Builder
+  motivationEditor() {
+    Column({ space: 6 }) {
+      Text('动机')
+        .fontSize(AppTheme.font.bodyStrong)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppTheme.color.text)
+        .width('100%')
+      Text('这次行动的动力来自哪里；可跳过，再点一次取消。')
+        .fontSize(AppTheme.font.caption)
+        .lineHeight(17)
+        .fontColor(AppTheme.color.textSecondary)
+        .width('100%')
+      Flex({ wrap: FlexWrap.Wrap }) {
+        ForEach(MOTIVATION_KINDS, (kind: MotivationKind) => {
+          this.motivationChip(kind, motivationText(kind))
+        }, (kind: MotivationKind) => kind)
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  depthChip(value: WorkDepth, label: string) {
+    Text(label)
+      .id(`review_depth_${value}`)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.depth === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .margin({ right: AppTheme.spacing.s6 })
+      .backgroundColor(this.depth === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.depth = value;
+        this.persistDraft();
+      })
+  }
+
+  @Builder
+  depthEditor() {
+    Column({ space: 6 }) {
+      Text('本次深度')
+        .fontSize(AppTheme.font.bodyStrong)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppTheme.color.text)
+        .width('100%')
+      Text('快速只写现场；普通走完六区；深入再回看模型与证据。')
+        .fontSize(AppTheme.font.caption)
+        .lineHeight(17)
+        .fontColor(AppTheme.color.textSecondary)
+        .width('100%')
+      Flex({ wrap: FlexWrap.Wrap }) {
+        ForEach(WORK_DEPTHS, (value: WorkDepth) => {
+          this.depthChip(value, workDepthText(value))
+        }, (value: WorkDepth) => value)
+      }
+      .width('100%')
+      TextInput({ text: this.timeBudgetText, placeholder: '本次时间预算（分钟，可空）' })
+        .id('review_depth_budget')
+        .type(InputType.Number)
+        .fontSize(AppTheme.font.bodyStrong)
+        .padding(AppTheme.spacing.s10)
+        .backgroundColor(AppTheme.color.surface)
+        .borderRadius(AppTheme.radius.sm)
+        .border({ width: 0.5, color: AppTheme.color.border })
+        .onChange((value: string) => {
+          this.timeBudgetText = value;
+          this.persistDraft();
+        })
+    }
+    .width('100%')
+    .padding(AppTheme.spacing.s16)
+    .backgroundColor(AppTheme.color.surfaceAlt)
+    .borderRadius(AppTheme.radius.md)
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  decisionTypeChip(value: DecisionRecordType, label: string) {
+    Text(label)
+      .id(`review_decision_type_${value}`)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.decisionType === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.decisionType === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.selectDecisionType(value);
+      })
+  }
+
+  @Builder
+  relationChip(relation: RelationListItem) {
+    Text(relation.name)
+      .id(`review_decision_relation_${relation.id}`)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.decisionRelationId === relation.id ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .margin({ right: AppTheme.spacing.s6 })
+      .backgroundColor(this.decisionRelationId === relation.id ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.updateDecisionRelation(relation.id);
+      })
+  }
+
+  @Builder
+  decisionEditor() {
+    Column({ space: 10 }) {
+      Column({ space: 2 }) {
+        Text('本次决定')
+          .fontSize(AppTheme.font.bodyStrong)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(AppTheme.color.text)
+          .width('100%')
+        Text('选一种类型并写清原因；不选类型时只保存复盘。')
+          .fontSize(AppTheme.font.caption)
+          .lineHeight(17)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+
+      Flex({ wrap: FlexWrap.Wrap }) {
+        ForEach(DECISION_RECORD_TYPES, (type: DecisionRecordType) => {
+          this.decisionTypeChip(type, decisionTypeLabel(type))
+        }, (type: DecisionRecordType) => type)
+      }
+      .width('100%')
+
+      if (this.decisionType !== null) {
+        Text('原因')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        TextInput({ text: this.decisionReason, placeholder: '为什么这样选（必填）' })
+          .id('review_decision_reason')
+          .fontSize(AppTheme.font.bodyStrong)
+          .padding(AppTheme.spacing.s10)
+          .backgroundColor(AppTheme.color.surface)
+          .borderRadius(AppTheme.radius.sm)
+          .border({ width: 0.5, color: AppTheme.color.border })
+          .onChange((value: string) => {
+            this.updateDecisionReason(value);
+          })
+
+        Text(`行动 · ${this.actionHint()}`)
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        TextArea({ text: this.decisionAction, placeholder: this.actionHint() })
+          .id('review_decision_action')
+          .fontSize(AppTheme.font.bodyStrong)
+          .height(90)
+          .padding(AppTheme.spacing.s10)
+          .backgroundColor(AppTheme.color.surface)
+          .borderRadius(AppTheme.radius.sm)
+          .border({ width: 0.5, color: AppTheme.color.border })
+          .onChange((value: string) => {
+            this.updateDecisionAction(value);
+          })
+
+        Text('承诺')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        TextInput({ text: this.decisionCommitment, placeholder: '叙事真空处的主动承诺（可空）' })
+          .id('review_decision_commitment')
+          .fontSize(AppTheme.font.bodyStrong)
+          .padding(AppTheme.spacing.s10)
+          .backgroundColor(AppTheme.color.surface)
+          .borderRadius(AppTheme.radius.sm)
+          .border({ width: 0.5, color: AppTheme.color.border })
+          .onChange((value: string) => {
+            this.updateDecisionCommitment(value);
+          })
+
+        if (this.planItems.length > 0) {
+          Text('关联计划项 · 再点一次取消')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textSecondary)
+            .width('100%')
+          Flex({ wrap: FlexWrap.Wrap }) {
+            ForEach(this.planItems, (item: PlanItem) => {
+              Text(item.text)
+                .id(`review_decision_plan_item_${item.id}`)
+                .fontSize(AppTheme.font.caption)
+                .fontColor(this.planItemId === item.id ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+                .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+                .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+                .backgroundColor(this.planItemId === item.id ? AppTheme.color.tint : AppTheme.color.chip)
+                .borderRadius(AppTheme.radius.sm)
+                .onClick(() => {
+                  this.togglePlanItem(item.id);
+                })
+            }, (item: PlanItem) => `${item.id}_${this.planItemId === item.id ? 1 : 0}`)
+          }
+          .width('100%')
+        }
+
+        if (this.decisionType === 'joint') {
+          Text('关系')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textSecondary)
+            .width('100%')
+          if (this.relations.length === 0) {
+            Text('还没有关系记录')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+          } else {
+            Scroll() {
+              Row({ space: 6 }) {
+                ForEach(this.relations, (relation: RelationListItem) => {
+                  this.relationChip(relation)
+                }, (relation: RelationListItem) => `${relation.id}_${this.decisionRelationId === relation.id ? 1 : 0}`)
+              }
+            }
+            .width('100%')
+            .scrollable(ScrollDirection.Horizontal)
+            .scrollBar(BarState.Off)
+          }
+
+          Text('结果')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textSecondary)
+            .width('100%')
+          TextInput({ text: this.decisionOutcome, placeholder: '共同实践的实际结果（可空）' })
+            .id('review_decision_outcome')
+            .fontSize(AppTheme.font.bodyStrong)
+            .padding(AppTheme.spacing.s10)
+            .backgroundColor(AppTheme.color.surface)
+            .borderRadius(AppTheme.radius.sm)
+            .border({ width: 0.5, color: AppTheme.color.border })
+            .onChange((value: string) => {
+              this.updateDecisionOutcome(value);
+            })
+        }
+
+        if (this.decisionType === 'joint' || this.decisionType === 'switch') {
+          Text('回看日期')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textSecondary)
+            .width('100%')
+          TextInput({ text: this.decisionReviewAt, placeholder: 'YYYY-MM-DD（可空）' })
+            .id('review_decision_review_at')
+            .fontSize(AppTheme.font.bodyStrong)
+            .padding(AppTheme.spacing.s10)
+            .backgroundColor(AppTheme.color.surface)
+            .borderRadius(AppTheme.radius.sm)
+            .border({ width: 0.5, color: AppTheme.color.border })
+            .onChange((value: string) => {
+              this.updateDecisionReviewAt(value);
+            })
+        }
+      }
+    }
+    .width('100%')
+    .padding(AppTheme.spacing.s16)
+    .backgroundColor(AppTheme.color.surface)
+    .borderRadius(AppTheme.radius.md)
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -851,6 +1332,8 @@ export struct ReviewForm {
             .backgroundColor(AppTheme.color.surface)
             .borderRadius(AppTheme.radius.md)
 
+            this.depthEditor()
+
             this.zoneTabs()
 
             if (this.step === 0) {
@@ -896,6 +1379,19 @@ export struct ReviewForm {
                       .fontSize(AppTheme.font.caption)
                       .fontColor(AppTheme.color.textMuted)
                       .width('100%')
+                    if (this.isAnchorSelected(anchor.id)) {
+                      TextInput({ text: this.reasonOf(anchor.id), placeholder: '为什么选这条锚点（可空）' })
+                        .id(`review_anchor_reason_${anchor.id}`)
+                        .fontSize(AppTheme.font.caption)
+                        .padding(AppTheme.spacing.s8)
+                        .backgroundColor(AppTheme.color.surface)
+                        .borderRadius(AppTheme.radius.sm)
+                        .onClick(() => {
+                        })
+                        .onChange((value: string) => {
+                          this.updateAnchorReason(anchor.id, value);
+                        })
+                    }
                   }
                   .width('100%')
                   .padding(AppTheme.spacing.s10)
@@ -928,6 +1424,11 @@ export struct ReviewForm {
               })
             }
 
+            if (this.step === LAST_ZONE) {
+              this.decisionEditor()
+              this.decisionPicker()
+            }
+
             TextArea({ text: this.currentText(), placeholder: ZONE_PLACEHOLDERS[this.step] })
               .fontSize(AppTheme.font.bodyStrong)
               .height(180)
@@ -945,10 +1446,7 @@ export struct ReviewForm {
 
             if (this.step === 4) {
               this.costEditor()
-            }
-
-            if (this.step === LAST_ZONE) {
-              this.decisionPicker()
+              this.motivationEditor()
             }
 
             if (this.step === 0) {
@@ -1009,4 +1507,23 @@ export struct ReviewForm {
     .height('100%')
     .backgroundColor(Color.Transparent)
   }
+}
+
+function decisionTypeLabel(type: DecisionRecordType): string {
+  if (type === 'continue') {
+    return '继续';
+  }
+  if (type === 'switch') {
+    return '切换';
+  }
+  if (type === 'pause') {
+    return '暂停';
+  }
+  if (type === 'discard') {
+    return '舍弃';
+  }
+  if (type === 'exit') {
+    return '退出';
+  }
+  return '共同实践';
 }

@@ -7,15 +7,18 @@ import { ReviewDetailView, ReviewService } from '../review';
 import { ReviewDecisionItem } from '../review/ReviewService';
 import { Anchor } from '../model/Anchor';
 import { CostDimension, CostNote } from '../model/CostNote';
+import { DecisionRecord, DecisionRecordType } from '../model/DecisionRecord';
 import { EvidenceEffect, EvidenceItem, EvidenceSource } from '../model/EvidenceItem';
 import { ReviewMaterial } from '../model/ReviewMaterial';
-import { ReviewPayload } from '../model/ReviewPayload';
+import { motivationText, ReviewPayload } from '../model/ReviewPayload';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { ReviewDetailParams, PlanNodeParams, PlanAttachParams } from '../navigation/RouteParams';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
 import { previewStore } from '../preview/PreviewStore';
+import { PREVIEW_RELATION_ITEMS } from '../preview/PreviewData';
+import { RelationService } from '../relation/RelationService';
 import { DbHelper } from '../db/DbHelper';
 import { EvidenceItemDao } from '../db/dao/EvidenceItemDao';
 import { ReviewResultDao } from '../db/dao/ReviewResultDao';
@@ -39,6 +42,9 @@ export struct ReviewDetailPage {
   @Local payload: ReviewPayload | null = null;
   @Local cited: ReviewMaterial[] = [];
   @Local citedDecisions: ReviewDecisionItem[] = [];
+  @Local decision: DecisionRecord | null = null;
+  @Local decisionRelationName: string = '';
+  @Local decisionRelationCorrection: string = '';
   @Local evidence: EvidenceItem[] = [];
   @Local costs: CostNote[] = [];
   @Local isLoading: boolean = true;
@@ -61,6 +67,8 @@ export struct ReviewDetailPage {
         this.payload = await this.loadPayload(reviewId, hostContext);
         this.cited = await this.loadCited(reviewId, service);
         this.citedDecisions = await this.loadCitedDecisions(reviewId, service);
+        this.decision = await this.loadDecision(reviewId, service);
+        this.decisionRelationName = await this.loadRelationName(this.decision, hostContext);
         this.evidence = await this.loadEvidence(reviewId, hostContext);
         this.costs = await this.loadCosts(reviewId, service);
       }
@@ -87,6 +95,34 @@ export struct ReviewDetailPage {
     } catch (error) {
       return [];
     }
+  }
+
+  /** Reads the main decision of this review; a failed read leaves the section pending. */
+  private async loadDecision(reviewId: string, service: ReviewService): Promise<DecisionRecord | null> {
+    try {
+      return await service.reviewDecision(reviewId);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /** Resolves the relation a joint decision is practised with. */
+  private async loadRelationName(record: DecisionRecord | null, hostContext: common.Context): Promise<string> {
+    if (record === null || record.relationId === undefined || record.relationId.length === 0) {
+      return '';
+    }
+    const relationId: string = record.relationId;
+    try {
+      const relationService = await RelationService.open(hostContext);
+      const detail = await relationService.find(relationId);
+      if (detail !== null) {
+        this.decisionRelationCorrection = detail.correction ?? '';
+        return detail.name;
+      }
+    } catch (error) {
+      return '';
+    }
+    return '';
   }
 
   /** Reads the six-zone payload; older records and failed reads leave it absent. */
@@ -132,7 +168,10 @@ export struct ReviewDetailPage {
       this.missing = true;
     } else {
       this.detail = detail;
+      this.payload = previewStore.findReviewPayload(reviewId);
     }
+    this.decision = previewStore.findDecision(reviewId);
+    this.decisionRelationName = previewRelationName(this.decision);
     this.isLoading = false;
   }
 
@@ -292,8 +331,83 @@ export struct ReviewDetailPage {
     }
   }
 
+  private anchorReason(id: string): string {
+    if (this.payload === null) {
+      return '';
+    }
+    const citations = this.payload.anchorCitations ?? [];
+    for (const citation of citations) {
+      if (citation.anchorId === id) {
+        return citation.reason;
+      }
+    }
+    return '';
+  }
+
   @Builder
-  decisionSection() {
+  decisionField(label: string, value: string) {
+    Column({ space: 2 }) {
+      Text(label)
+        .fontSize(AppTheme.font.caption)
+        .fontColor(AppTheme.color.textSecondary)
+        .width('100%')
+      Text(value.trim().length > 0 ? value : '未填写')
+        .fontSize(AppTheme.font.bodyStrong)
+        .lineHeight(20)
+        .fontColor(value.trim().length > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
+        .width('100%')
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  mainDecisionBody(record: DecisionRecord, relationName: string) {
+    Column({ space: 8 }) {
+      Row({ space: 4 }) {
+        this.miniTag(decisionTypeLabel(record.type))
+      }
+      .width('100%')
+      this.decisionField('原因', record.reason)
+      this.decisionField('行动', record.action ?? '')
+      this.decisionField('承诺', record.commitment ?? '')
+      if (record.type === 'joint') {
+        this.decisionField('关系', relationName)
+        this.decisionField('结果', record.outcome ?? '')
+        if (this.decisionRelationCorrection.length > 0) {
+          this.decisionField('对方纠正', this.decisionRelationCorrection)
+        }
+      }
+      this.decisionField('回看日期', record.reviewAt ?? '')
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  mainDecisionSection() {
+    SectionCard() {
+      Column({ space: 8 }) {
+        Text('本次决定')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        if (this.decision === null) {
+          Text('未记录决定')
+            .fontSize(AppTheme.font.bodyStrong)
+            .fontColor(AppTheme.color.textMuted)
+            .width('100%')
+        } else {
+          this.mainDecisionBody(this.decision, this.decisionRelationName)
+        }
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
+  @Builder
+  citedDecisionSection() {
     SectionCard() {
       Column({ space: 8 }) {
         Text(`涉及的决定 · ${this.citedDecisions.length} 条`)
@@ -458,12 +572,25 @@ export struct ReviewDetailPage {
                 this.evidenceSection()
               }
               this.zoneSection('5. 成本与动机', this.payload.cost)
+              if (this.payload.motivation !== undefined) {
+                Text(`动机：${motivationText(this.payload.motivation)}`)
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                  .padding({
+                    left: AppTheme.spacing.s16,
+                    right: AppTheme.spacing.s16,
+                    top: AppTheme.spacing.s4,
+                    bottom: AppTheme.spacing.s4
+                  })
+              }
               if (this.costs.length > 0) {
                 this.costSection()
               }
               this.zoneSection('6. 调节与修订', this.payload.revision)
+              this.mainDecisionSection()
               if (this.citedDecisions.length > 0) {
-                this.decisionSection()
+                this.citedDecisionSection()
               }
             } else {
               this.stepSection('1. 事实', this.detail.facts)
@@ -513,6 +640,12 @@ export struct ReviewDetailPage {
                         .fontSize(AppTheme.font.caption)
                         .fontColor(AppTheme.color.textMuted)
                         .width('100%')
+                      if (this.anchorReason(anchor.id).length > 0) {
+                        Text(`选择理由：${this.anchorReason(anchor.id)}`)
+                          .fontSize(AppTheme.font.caption)
+                          .fontColor(AppTheme.color.textSecondary)
+                          .width('100%')
+                      }
                     }
                     .width('100%')
                   }, (anchor: Anchor) => anchor.id)
@@ -626,11 +759,8 @@ function evidenceEffectLabel(effect: EvidenceEffect): string {
 }
 
 function costDimensionLabel(dimension: CostDimension): string {
-  if (dimension === 'time') {
-    return '时间';
-  }
-  if (dimension === 'attention') {
-    return '注意力';
+  if (dimension === 'meaning') {
+    return '意义';
   }
   if (dimension === 'body') {
     return '身体';
@@ -638,8 +768,42 @@ function costDimensionLabel(dimension: CostDimension): string {
   if (dimension === 'relationship') {
     return '关系';
   }
-  if (dimension === 'money') {
-    return '金钱';
+  if (dimension === 'time') {
+    return '时间';
+  }
+  if (dimension === 'public') {
+    return '公共生活';
   }
   return '其他';
+}
+
+function decisionTypeLabel(type: DecisionRecordType): string {
+  if (type === 'continue') {
+    return '继续';
+  }
+  if (type === 'switch') {
+    return '切换';
+  }
+  if (type === 'pause') {
+    return '暂停';
+  }
+  if (type === 'discard') {
+    return '舍弃';
+  }
+  if (type === 'exit') {
+    return '退出';
+  }
+  return '共同实践';
+}
+
+function previewRelationName(record: DecisionRecord | null): string {
+  if (record === null || record.relationId === undefined || record.relationId.length === 0) {
+    return '';
+  }
+  for (const relation of PREVIEW_RELATION_ITEMS) {
+    if (relation.id === record.relationId) {
+      return relation.name;
+    }
+  }
+  return '';
 }

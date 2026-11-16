@@ -6,6 +6,7 @@ import { Plan } from '../model/Plan';
 import { PlanService } from '../plan';
 import { formatPlanDate, mondayOf } from '../plan/PlanFactory';
 import { validatePlanDraft } from '../plan/PlanValidation';
+import { WorkDepth, WORK_DEPTHS, workDepthText } from '../model/WorkDepth';
 import { PlanEditParams } from '../navigation/RouteParams';
 import { planPreviewStore } from '../preview/PlanPreviewStore';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
@@ -17,6 +18,10 @@ export struct PlanEditPage {
   @Local goal: string = '';
   @Local startDate: string = '';
   @Local targetDate: string = '';
+  @Local depth: WorkDepth = 'normal';
+  @Local timeBudgetText: string = '';
+  @Local doneStandard: string = '';
+  @Local impact: string = '';
   @Local errorText: string = '';
   @Local isSaving: boolean = false;
   @Local isDirty: boolean = false;
@@ -60,6 +65,15 @@ export struct PlanEditPage {
     this.goal = plan.goal;
     this.startDate = plan.startDate;
     this.targetDate = plan.targetDate ?? '';
+    this.depth = plan.depth ?? 'normal';
+    this.timeBudgetText = plan.timeBudget !== undefined && plan.timeBudget > 0 ? String(plan.timeBudget) : '';
+    this.doneStandard = plan.doneStandard ?? '';
+    this.impact = plan.impact ?? '';
+  }
+
+  private budgetValue(): number {
+    const value = Number(this.timeBudgetText.trim());
+    return Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
   }
 
   private async save(): Promise<void> {
@@ -78,7 +92,9 @@ export struct PlanEditPage {
     const hostContext = this.getUIContext().getHostContext();
     if (hostContext === undefined || this.isPreview) {
       if (this.planId === null) {
-        planPreviewStore.create(this.title, monday, target);
+        const created = planPreviewStore.create(this.title, monday, target, this.depth, this.budgetValue());
+        created.doneStandard = this.doneStandard.trim();
+        created.impact = this.impact.trim();
       } else {
         const plan = planPreviewStore.find(this.planId);
         if (plan !== null) {
@@ -86,6 +102,10 @@ export struct PlanEditPage {
           plan.goal = this.goal.trim();
           plan.startDate = monday;
           plan.targetDate = target.length > 0 ? target : undefined;
+          plan.depth = this.depth;
+          plan.timeBudget = this.budgetValue();
+          plan.doneStandard = this.doneStandard.trim();
+          plan.impact = this.impact.trim();
           planPreviewStore.update(plan);
         }
       }
@@ -115,7 +135,11 @@ export struct PlanEditPage {
 
   private async createInStore(context: common.Context): Promise<void> {
     const service = await PlanService.open(context);
-    await service.createPlan(this.title, mondayOf(this.startDate), this.targetDate.trim());
+    const plan = await service.createPlan(this.title, mondayOf(this.startDate), this.targetDate.trim(),
+      this.depth, this.budgetValue());
+    plan.doneStandard = this.doneStandard.trim();
+    plan.impact = this.impact.trim();
+    await service.updatePlan(plan);
   }
 
   private async updateInStore(context: common.Context): Promise<void> {
@@ -129,6 +153,10 @@ export struct PlanEditPage {
     plan.startDate = mondayOf(this.startDate);
     const target = this.targetDate.trim();
     plan.targetDate = target.length > 0 ? target : undefined;
+    plan.depth = this.depth;
+    plan.timeBudget = this.budgetValue();
+    plan.doneStandard = this.doneStandard.trim();
+    plan.impact = this.impact.trim();
     await service.updatePlan(plan);
   }
 
@@ -136,6 +164,22 @@ export struct PlanEditPage {
     if (this.navStack !== null) {
       this.navStack.pop(true);
     }
+  }
+
+  @Builder
+  depthChip(value: WorkDepth) {
+    Text(workDepthText(value))
+      .id(`plan_depth_${value}`)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.depth === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.depth === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.depth = value;
+        this.isDirty = true;
+      })
   }
 
   @Builder
@@ -197,13 +241,38 @@ export struct PlanEditPage {
               .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
-            TextArea({ text: this.goal, placeholder: '写清完成标准，不写口号' })
+            TextArea({ text: this.goal, placeholder: '这段时间要推进什么' })
               .id('plan_goal')
               .height(100)
               .maxLength(300)
               .backgroundColor(AppTheme.color.surfaceAlt)
               .onChange((value: string) => {
                 this.goal = value;
+                this.isDirty = true;
+              })
+            Text('完成标准')
+              .fontSize(AppTheme.font.body)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            TextArea({ text: this.doneStandard, placeholder: '看到什么就算完成（可空）' })
+              .id('plan_done_standard')
+              .height(72)
+              .maxLength(200)
+              .backgroundColor(AppTheme.color.surfaceAlt)
+              .onChange((value: string) => {
+                this.doneStandard = value;
+                this.isDirty = true;
+              })
+            Text('影响对象')
+              .fontSize(AppTheme.font.body)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            TextInput({ text: this.impact, placeholder: '这件事影响谁或什么（可空）' })
+              .id('plan_impact')
+              .maxLength(120)
+              .backgroundColor(AppTheme.color.surfaceAlt)
+              .onChange((value: string) => {
+                this.impact = value;
                 this.isDirty = true;
               })
           }
@@ -249,6 +318,39 @@ export struct PlanEditPage {
                 this.isDirty = true;
               })
             Text('设了结束日，目标详情才会显示剩余天数与完成百分比。')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.textMuted)
+              .width('100%')
+          }
+          .width('100%')
+          .alignItems(HorizontalAlign.Start)
+        }
+
+        SectionCard() {
+          Column({ space: 6 }) {
+            Text('本次深度')
+              .fontSize(AppTheme.font.body)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            Flex({ wrap: FlexWrap.Wrap }) {
+              ForEach(WORK_DEPTHS, (value: WorkDepth) => {
+                this.depthChip(value)
+              }, (value: WorkDepth) => value)
+            }
+            .width('100%')
+            Text('时间预算（分钟，可空）')
+              .fontSize(AppTheme.font.body)
+              .fontColor(AppTheme.color.textSecondary)
+              .width('100%')
+            TextInput({ text: this.timeBudgetText, placeholder: '例如 30；留空表示不设预算' })
+              .id('plan_budget')
+              .type(InputType.Number)
+              .backgroundColor(AppTheme.color.surfaceAlt)
+              .onChange((value: string) => {
+                this.timeBudgetText = value;
+                this.isDirty = true;
+              })
+            Text('预算只作提示，不参与评分。')
               .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textMuted)
               .width('100%')

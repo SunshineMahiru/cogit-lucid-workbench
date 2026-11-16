@@ -110,9 +110,9 @@ export struct ProfileHeader {
   }
 
   build() {
-    Column({ space: 6 }) {
-      Row({ space: 12 }) {
-        this.avatar(56)
+    Column({ space: 4 }) {
+      Row({ space: 8 }) {
+        this.avatar(48)
         Row({ space: 6 }) {
           Text(this.profile.nickname)
             .fontSize(AppTheme.font.title)

@@ -14,7 +14,6 @@ export struct RelationEditPage {
   @Local name: string = '';
   @Local trustLevel: TrustLevel = TrustLevel.FRIENDLY;
   @Local notes: string = '';
-  @Local rawMaterialTest: boolean = false;
   @Local forbidAnalysis: boolean = false;
   @Local correction: string = '';
   @Local level: SecurityLevel = SecurityLevel.LOCAL_ONLY;
@@ -48,7 +47,6 @@ export struct RelationEditPage {
         this.name = detail.name;
         this.trustLevel = detail.trustLevel;
         this.notes = detail.notes;
-        this.rawMaterialTest = detail.rawMaterialTest;
         this.forbidAnalysis = detail.forbidAnalysis;
         this.correction = detail.correction;
         this.level = detail.level;
@@ -79,7 +77,7 @@ export struct RelationEditPage {
     this.errorText = '';
     try {
       const service = await RelationService.open(hostContext);
-      await service.save(this.relationId, this.name, this.trustLevel, this.rawMaterialTest,
+      await service.save(this.relationId, this.name, this.trustLevel, false,
         this.forbidAnalysis, this.level, this.notes, this.correction);
       notifyHomeRefresh();
       this.getUIContext().getPromptAction().showToast({ message: '关系已保存' });

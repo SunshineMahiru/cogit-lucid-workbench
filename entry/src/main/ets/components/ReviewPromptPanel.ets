@@ -27,6 +27,7 @@ const LOCAL_PROMPTS: ReviewPrompt[] = [
 @ComponentV2
 export struct ReviewPromptPanel {
   @Param period: ReviewPeriod = ReviewPeriod.WEEK;
+  @Event onDismiss: () => void = () => {};
   @Local state: string = 'loading';
   @Local prompts: ReviewPrompt[] = [];
   @Local isRealDevice: boolean = false;
@@ -80,6 +81,13 @@ export struct ReviewPromptPanel {
             .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.textSecondary)
           Blank()
+          Text('忽略')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textMuted)
+            .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6 })
+            .onClick(() => {
+              this.onDismiss();
+            })
           Text(this.state === STATE_ERROR ? 'Mock 未连接' :
             (this.state === STATE_LOCAL ? '本地示例' : '本地 Mock'))
             .fontSize(AppTheme.font.caption)
