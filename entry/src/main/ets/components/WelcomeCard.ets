@@ -54,25 +54,21 @@ export struct WelcomeCard {
       }
       .width('100%')
 
-      Scroll() {
-        Column({ space: AppTheme.spacing.s10 }) {
-          Text('一页说明，可以随时跳过。五件事构成同一个循环，不需要每天打卡。')
-            .fontSize(AppTheme.font.bodyStrong)
-            .lineHeight(19)
-            .fontColor(AppTheme.color.textSecondary)
-            .width('100%')
-          this.step('welcome_step_1', '1', '保存经验', '记下现场、感受和已经做过的事。')
-          this.step('welcome_step_2', '2', '形成模型', '写清当时的判断和结算日期。')
-          this.step('welcome_step_3', '3', '进入实践', '按计划推进，留下真实行动。')
-          this.step('welcome_step_4', '4', '接受校正', '到期回看事实，修正判断与解释。')
-          this.step('welcome_step_5', '5', '允许暂停', '状态不好可以停下，暂停不算失败。')
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
+      Column({ space: AppTheme.spacing.s10 }) {
+        Text('一页说明，可以随时跳过。五件事构成同一个循环，不需要每天打卡。')
+          .fontSize(AppTheme.font.bodyStrong)
+          .lineHeight(19)
+          .fontColor(AppTheme.color.textSecondary)
+          .width('100%')
+        this.step('welcome_step_1', '1', '保存经验', '记下现场、感受和已经做过的事。')
+        this.step('welcome_step_2', '2', '形成模型', '写清当时的判断和结算日期。')
+        this.step('welcome_step_3', '3', '进入实践', '按计划推进，留下真实行动。')
+        this.step('welcome_step_4', '4', '接受校正', '到期回看事实，修正判断与解释。')
+        this.step('welcome_step_5', '5', '允许暂停', '状态不好可以停下，暂停不算失败。')
       }
       .width('100%')
+      .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
-      .scrollBar(BarState.Off)
 
       Column({ space: AppTheme.spacing.s10 }) {
         Row({ space: 10 }) {
@@ -125,7 +121,7 @@ export struct WelcomeCard {
       .margin({ top: AppTheme.spacing.s12 })
     }
     .width('100%')
-    .height('100%')
+    .constraintSize({ minHeight: 320 })
     .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s12 })
     .alignItems(HorizontalAlign.Start)
     .id('welcome_panel')
