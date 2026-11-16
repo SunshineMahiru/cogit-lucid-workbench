@@ -1389,6 +1389,15 @@ test('审计接线写入编号密级与剔除数', () => {
   assert.ok(panel.includes('removedCount: Math.max(0, this.confirmInitialCount - this.confirmItems.length)'));
 });
 
+test('历史筛选与统计口径已接线', () => {
+  const history = fs.readFileSync('entry/src/main/ets/pages/ReviewHistoryPage.ets', 'utf8');
+  const analytics = fs.readFileSync('entry/src/main/ets/pages/AnalyticsPage.ets', 'utf8');
+  assert.ok(history.includes('history_material_with'));
+  assert.ok(history.includes('history_evidence_without'));
+  assert.ok(history.includes('item.materialCount ?? 0'));
+  assert.ok(analytics.includes('未记录按缺失留空'));
+});
+
 test('请求清单显示编号且候选可改写', () => {
   const sheet = fs.readFileSync('entry/src/main/ets/components/RequestConfirmSheet.ets', 'utf8');
   const panel = fs.readFileSync('entry/src/main/ets/components/ReviewAgentPanel.ets', 'utf8');

@@ -329,6 +329,7 @@ const { NoteTemplateId } = require('./out2/note/NoteTemplateId');
 const { NoteDepth } = require('./out2/note/NoteDraft');
 const { AnchorService } = require('./out2/anchor/AnchorService');
 const { RelationService } = require('./out2/relation/RelationService');
+const { toReviewHistoryItem } = require('./out2/review/ReviewHistory');
 const { StatusService } = require('./out2/status/StatusService');
 const { HomeDataService } = require('./out2/data/HomeDataService');
 const { ExperienceMaterialDao } = require('./out2/db/dao/ExperienceMaterialDao');
@@ -2580,6 +2581,22 @@ async function main() {
     assert.strictEqual(logs[0].level, 'sealed');
     assert.strictEqual(logs[1].level, undefined);
     assert.strictEqual(logs[2].level, undefined);
+  });
+
+  await test('历史条目统计引用材料与证据数', () => {
+    const item = toReviewHistoryItem({
+      id: 'rv_hist', period: 'week', rangeLabel: '11-16 ~ 11-22',
+      action: '', createdAt: 1000, anchorIds: [],
+      payload: {
+        scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+        materialIds: ['m1', 'm2'],
+        evidenceDrafts: [
+          { source: 'practice', effect: 'support', text: '证据' }
+        ]
+      }
+    });
+    assert.strictEqual(item.materialCount, 2);
+    assert.strictEqual(item.evidenceCount, 1);
   });
 
   if (failures.length > 0) {

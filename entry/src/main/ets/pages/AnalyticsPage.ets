@@ -343,6 +343,10 @@ export struct AnalyticsPage {
       Column({ space: 10 }) {
         this.header()
         this.monthPicker()
+        Text('口径：各图标注样本量；未记录按缺失留空，不补零；封存与非二值结果不进入命中率；样本不足 10 条只作观察。')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+          .width('100%')
         this.stateCard()
         if (this.stats !== null && this.stats.months.length > 0) {
           ChartSection({ title: '月度命中率', hint: '折线为命中率，标签为月份；样本量见下方结果分布' }) {

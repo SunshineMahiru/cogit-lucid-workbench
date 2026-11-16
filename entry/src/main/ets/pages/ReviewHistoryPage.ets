@@ -18,6 +18,8 @@ export struct ReviewHistoryPage {
   @Local range: string = 'all';
   @Local period: string = 'all';
   @Local decisionFilter: string = '';
+  @Local materialScope: string = 'all';
+  @Local evidenceScope: string = 'all';
   @Local decisions: RecentDecisionItem[] = [];
   private navStack: NavPathStack | null = null;
   private hasShownOnce: boolean = false;
@@ -56,18 +58,32 @@ export struct ReviewHistoryPage {
   private filtered(): ReviewHistoryItem[] {
     const byPeriod: ReviewHistoryItem[] = this.period === 'all' ? this.items :
       this.items.filter((item: ReviewHistoryItem) => item.period === this.period);
-    if (this.range === 'all') {
-      return byPeriod;
+    let rows: ReviewHistoryItem[] = byPeriod;
+    if (this.range !== 'all') {
+      const days = this.range === '7d' ? 7 : 30;
+      const since = Date.now() - days * 24 * 60 * 60 * 1000;
+      rows = rows.filter((item: ReviewHistoryItem) => (item.createdAt ?? 0) >= since);
     }
-    const days = this.range === '7d' ? 7 : 30;
-    const since = Date.now() - days * 24 * 60 * 60 * 1000;
-    const rows: ReviewHistoryItem[] = [];
-    for (const item of byPeriod) {
-      if ((item.createdAt ?? 0) >= since) {
-        rows.push(item);
-      }
+    if (this.materialScope !== 'all') {
+      rows = rows.filter((item: ReviewHistoryItem) => this.matchesCount(
+        item.materialCount ?? 0, this.materialScope));
+    }
+    if (this.evidenceScope !== 'all') {
+      rows = rows.filter((item: ReviewHistoryItem) => this.matchesCount(
+        item.evidenceCount ?? 0, this.evidenceScope));
     }
     return rows;
+  }
+
+  /** True when a count matches the with/without bucket; 'all' always matches. */
+  private matchesCount(count: number, filter: string): boolean {
+    if (filter === 'with') {
+      return count > 0;
+    }
+    if (filter === 'without') {
+      return count === 0;
+    }
+    return true;
   }
 
   /** Narrow Chip label for one decision; long titles are cut to 12 characters. */
@@ -168,6 +184,34 @@ export struct ReviewHistoryPage {
   }
 
   @Builder
+  materialScopeChip(value: string, label: string, chipId: string) {
+    Text(label)
+      .id(chipId)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.materialScope === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.materialScope === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.materialScope = value;
+      })
+  }
+
+  @Builder
+  evidenceScopeChip(value: string, label: string, chipId: string) {
+    Text(label)
+      .id(chipId)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.evidenceScope === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.evidenceScope === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.evidenceScope = value;
+      })
+  }
+
+  @Builder
   reviewHistoryBody() {
       Column() {
         if (this.isLoading) {
@@ -213,6 +257,22 @@ export struct ReviewHistoryPage {
               this.rangeChip('all', '全部', 'history_range_all')
               this.rangeChip('7d', '近七天', 'history_range_7d')
               this.rangeChip('30d', '近三十天', 'history_range_30d')
+            }
+            .width('100%')
+            .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8 })
+
+            Row({ space: 6 }) {
+              this.materialScopeChip('all', '全部材料', 'history_material_all')
+              this.materialScopeChip('with', '有材料', 'history_material_with')
+              this.materialScopeChip('without', '无材料', 'history_material_without')
+            }
+            .width('100%')
+            .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8 })
+
+            Row({ space: 6 }) {
+              this.evidenceScopeChip('all', '全部证据', 'history_evidence_all')
+              this.evidenceScopeChip('with', '有证据', 'history_evidence_with')
+              this.evidenceScopeChip('without', '无证据', 'history_evidence_without')
             }
             .width('100%')
             .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s8 })

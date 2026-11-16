@@ -16,6 +16,10 @@ export interface ReviewHistoryItem {
   planId?: string;
   planNodeId?: string;
   anchorCount: number;
+  /** Cited materials; absent on old projections reads as 0 */
+  materialCount?: number;
+  /** Recorded evidence drafts; absent on old projections reads as 0 */
+  evidenceCount?: number;
 }
 
 /** Read-only review with resolved anchors for the contrast section. */
@@ -36,7 +40,9 @@ export function toReviewHistoryItem(result: ReviewResult): ReviewHistoryItem {
     action: result.action,
     createdAtLabel: formatReviewTime(result.createdAt),
     createdAt: result.createdAt,
-    anchorCount: result.anchorIds.length
+    anchorCount: result.anchorIds.length,
+    materialCount: (result.payload?.materialIds ?? []).length,
+    evidenceCount: (result.payload?.evidenceDrafts ?? []).length
   };
   if (result.planId !== undefined) {
     item.planId = result.planId;
