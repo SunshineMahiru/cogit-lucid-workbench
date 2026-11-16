@@ -9,6 +9,17 @@ import { AppSettings, defaultAppSettings } from '../settings/AppSettings';
 import { SettingsStore } from '../settings/SettingsStore';
 import { ConfirmSheetItem, RequestConfirmSheet } from './RequestConfirmSheet';
 
+/** Strictness order: analyzable is loosest, sealed is strictest. */
+function levelRank(level: SecurityLevel): number {
+  if (level === SecurityLevel.ANALYZABLE) {
+    return 0;
+  }
+  if (level === SecurityLevel.LOCAL_ONLY) {
+    return 1;
+  }
+  return 2;
+}
+
 /** Self-contained agent panel: pass facts, interpretation and anchors, receive insert text. */
 @ComponentV2
 export struct ReviewAgentPanel {
@@ -18,6 +29,9 @@ export struct ReviewAgentPanel {
   @Param factsLevel: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Param interpretationLevel: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Param relationForbidsAnalysis: boolean = false;
+  @Param relationInvolvedByMaterial: boolean = false;
+  @Param relationIdHint: string = '';
+  @Param maxLevel: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Event onInsert: (text: string) => void = () => {};
   @Local factsLevelValue: SecurityLevel = SecurityLevel.LOCAL_ONLY;
   @Local interpretationLevelValue: SecurityLevel = SecurityLevel.LOCAL_ONLY;
@@ -37,6 +51,22 @@ export struct ReviewAgentPanel {
   @Local relationIdText: string = '';
   @Local relationBoundaryText: string = '';
 
+  private materialRelationInvolved(): boolean {
+    return this.relationInvolved || this.relationInvolvedByMaterial;
+  }
+
+  private effectiveRelationId(): string {
+    return this.relationInvolvedByMaterial ? this.relationIdHint.trim() : this.relationIdText.trim();
+  }
+
+  private effectiveLevel(level: SecurityLevel): SecurityLevel {
+    return levelRank(level) < levelRank(this.maxLevel) ? this.maxLevel : level;
+  }
+
+  private canUseLevel(level: SecurityLevel): boolean {
+    return levelRank(level) >= levelRank(this.maxLevel);
+  }
+
   private async generate(): Promise<void> {
     if (this.isLoading) {
       return;
@@ -45,8 +75,8 @@ export struct ReviewAgentPanel {
       this.errorText = '先填写事实与解释，再生成提示';
       return;
     }
-    if (this.relationInvolved &&
-      (this.relationIdText.trim().length === 0 || this.relationBoundaryText.trim().length === 0)) {
+    if (this.materialRelationInvolved() &&
+      (this.effectiveRelationId().length === 0 || this.relationBoundaryText.trim().length === 0)) {
       this.errorText = '涉及他人时，先写关系与分析边界，再生成提示';
       return;
     }
@@ -92,11 +122,11 @@ export struct ReviewAgentPanel {
       facts: this.facts,
       interpretation: this.interpretation,
       anchors: this.anchors,
-      factsLevel: this.factsLevelValue,
-      interpretationLevel: this.interpretationLevelValue,
+      factsLevel: this.effectiveLevel(this.factsLevelValue),
+      interpretationLevel: this.effectiveLevel(this.interpretationLevelValue),
       relationForbidsAnalysis: this.relationForbidsAnalysis,
-      relationInvolved: this.relationInvolved,
-      relationId: this.relationIdText.trim(),
+      relationInvolved: this.materialRelationInvolved(),
+      relationId: this.effectiveRelationId(),
       relationBoundary: this.relationBoundaryText.trim()
     };
   }
@@ -270,8 +300,12 @@ export struct ReviewAgentPanel {
           .backgroundColor(this.factsLevelValue === SecurityLevel.ANALYZABLE ? AppTheme.color.primary : AppTheme.color.chip)
           .borderRadius(AppTheme.radius.sm)
           .id('agent_level_facts_analyzable')
+          .enabled(this.canUseLevel(SecurityLevel.ANALYZABLE))
+          .opacity(this.canUseLevel(SecurityLevel.ANALYZABLE) ? 1 : 0.45)
           .onClick(() => {
-            this.factsLevelValue = SecurityLevel.ANALYZABLE;
+            if (this.canUseLevel(SecurityLevel.ANALYZABLE)) {
+              this.factsLevelValue = SecurityLevel.ANALYZABLE;
+            }
           })
         Text('仅本地')
           .fontSize(AppTheme.font.caption)
@@ -308,8 +342,12 @@ export struct ReviewAgentPanel {
           .backgroundColor(this.interpretationLevelValue === SecurityLevel.ANALYZABLE ? AppTheme.color.primary : AppTheme.color.chip)
           .borderRadius(AppTheme.radius.sm)
           .id('agent_level_interpretation_analyzable')
+          .enabled(this.canUseLevel(SecurityLevel.ANALYZABLE))
+          .opacity(this.canUseLevel(SecurityLevel.ANALYZABLE) ? 1 : 0.45)
           .onClick(() => {
-            this.interpretationLevelValue = SecurityLevel.ANALYZABLE;
+            if (this.canUseLevel(SecurityLevel.ANALYZABLE)) {
+              this.interpretationLevelValue = SecurityLevel.ANALYZABLE;
+            }
           })
         Text('仅本地')
           .fontSize(AppTheme.font.caption)
@@ -340,27 +378,42 @@ export struct ReviewAgentPanel {
             .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textSecondary)
           Blank()
-          Text(this.relationInvolved ? '已开启' : '未开启')
-            .id('agent_relation_toggle')
-            .fontSize(AppTheme.font.caption)
-            .fontColor(this.relationInvolved ? Color.White : AppTheme.color.text)
-            .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
-            .backgroundColor(this.relationInvolved ? AppTheme.color.primary : AppTheme.color.chip)
-            .borderRadius(AppTheme.radius.sm)
-            .onClick(() => {
-              this.relationInvolved = !this.relationInvolved;
-            })
+          if (this.relationInvolvedByMaterial) {
+            Text('由引用关系材料带入')
+              .id('agent_relation_forced')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.primaryDeep)
+          } else {
+            Text(this.relationInvolved ? '已开启' : '未开启')
+              .id('agent_relation_toggle')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(this.relationInvolved ? Color.White : AppTheme.color.text)
+              .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+              .backgroundColor(this.relationInvolved ? AppTheme.color.primary : AppTheme.color.chip)
+              .borderRadius(AppTheme.radius.sm)
+              .onClick(() => {
+                this.relationInvolved = !this.relationInvolved;
+              })
+          }
         }
         .width('100%')
 
-        if (this.relationInvolved) {
-          TextInput({ text: this.relationIdText, placeholder: '关系别名或编号（必填）' })
-            .id('agent_relation_id')
-            .fontSize(AppTheme.font.caption)
-            .backgroundColor(AppTheme.color.surfaceAlt)
-            .onChange((value: string) => {
-              this.relationIdText = value;
-            })
+        if (this.materialRelationInvolved()) {
+          if (this.relationInvolvedByMaterial) {
+            Text(`关系：${this.relationIdHint}`)
+              .id('agent_relation_id')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.text)
+              .width('100%')
+          } else {
+            TextInput({ text: this.relationIdText, placeholder: '关系别名或编号（必填）' })
+              .id('agent_relation_id')
+              .fontSize(AppTheme.font.caption)
+              .backgroundColor(AppTheme.color.surfaceAlt)
+              .onChange((value: string) => {
+                this.relationIdText = value;
+              })
+          }
           TextInput({ text: this.relationBoundaryText, placeholder: '可以分析什么、不能分析什么（必填）' })
             .id('agent_relation_boundary')
             .fontSize(AppTheme.font.caption)

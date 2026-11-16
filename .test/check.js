@@ -1368,6 +1368,16 @@ test('汇总并入待校正卡', () => {
   assert.strictEqual(dashboard.includes('总速记'), false);
 });
 
+test('关系材料接线到禁分析与关系前置', () => {
+  const form = fs.readFileSync('entry/src/main/ets/components/ReviewForm.ets', 'utf8');
+  const panel = fs.readFileSync('entry/src/main/ets/components/ReviewAgentPanel.ets', 'utf8');
+  assert.ok(form.includes('relationForbidsAnalysis: this.relationForbids()'));
+  assert.ok(form.includes('relationInvolvedByMaterial: this.hasRelationMaterial()'));
+  assert.ok(form.includes('maxLevel: this.relationMaxLevel()'));
+  assert.ok(panel.includes('agent_relation_forced'));
+  assert.ok(panel.includes('由引用关系材料带入'));
+});
+
 test('数据库版本为 20', () => {
   const source = fs.readFileSync(DB_CONFIG_FILE, 'utf8');
   assert.ok(/export const DB_VERSION\s*=\s*20;/.test(source), 'DB_VERSION 不是 20');

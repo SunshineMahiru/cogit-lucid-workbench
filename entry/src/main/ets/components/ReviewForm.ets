@@ -5,6 +5,7 @@ import { EvidenceDraft, EvidenceEffect, EvidenceSource } from '../model/Evidence
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { PlanItem } from '../model/PlanItem';
 import { ReviewPeriod } from '../model/ReviewPeriod';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { AppTheme } from '../theme/AppTheme';
 import { formatHitRate } from '../model/HomeModel';
 import { isPlanDate } from '../plan/PlanValidation';
@@ -447,6 +448,54 @@ export struct ReviewForm {
       this.selectedMaterialIds = this.selectedMaterialIds.concat([id]);
     }
     this.persistDraft();
+  }
+
+  /** Relation rows cited by the selected `relation:` materials. */
+  private selectedRelationMaterials(): RelationListItem[] {
+    const ids: string[] = [];
+    for (const id of this.selectedMaterialIds) {
+      if (id.startsWith('relation:')) {
+        ids.push(id.substring('relation:'.length));
+      }
+    }
+    return this.relations.filter((item: RelationListItem) => ids.includes(item.id));
+  }
+
+  /** True when any selected material comes from a relation. */
+  private hasRelationMaterial(): boolean {
+    return this.selectedMaterialIds.some((id: string) => id.startsWith('relation:'));
+  }
+
+  /** True when any cited relation forbids motive, personality or outcome analysis. */
+  private relationForbids(): boolean {
+    const rows = this.selectedRelationMaterials();
+    const ids = this.selectedMaterialIds.filter((id: string) => id.startsWith('relation:'));
+    return rows.length < ids.length || rows.some((item: RelationListItem) => item.forbidAnalysis);
+  }
+
+  /** First cited relation id; the panel shows it as the binding. */
+  private relationHintId(): string {
+    const rows = this.selectedRelationMaterials();
+    return rows.length > 0 ? rows[0].id : '';
+  }
+
+  /** Strictest level among the review body and its cited relation materials. */
+  private relationMaxLevel(): SecurityLevel {
+    const rows = this.selectedRelationMaterials();
+    const ids = this.selectedMaterialIds.filter((id: string) => id.startsWith('relation:'));
+    if (rows.length < ids.length) {
+      return SecurityLevel.SEALED;
+    }
+    let level = SecurityLevel.LOCAL_ONLY;
+    for (const row of rows) {
+      if (row.level === SecurityLevel.SEALED) {
+        return SecurityLevel.SEALED;
+      }
+      if (row.level === SecurityLevel.LOCAL_ONLY) {
+        level = SecurityLevel.LOCAL_ONLY;
+      }
+    }
+    return level;
   }
 
   private isDecisionSelected(id: string): boolean {
@@ -1418,6 +1467,10 @@ export struct ReviewForm {
                 facts: this.zoneScene,
                 interpretation: this.zoneModel,
                 anchors: this.anchors,
+                relationForbidsAnalysis: this.relationForbids(),
+                relationInvolvedByMaterial: this.hasRelationMaterial(),
+                relationIdHint: this.relationHintId(),
+                maxLevel: this.relationMaxLevel(),
                 onInsert: (text: string) => {
                   this.appendRelation(text);
                 }

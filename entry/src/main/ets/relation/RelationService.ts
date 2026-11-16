@@ -9,19 +9,21 @@ import { DbHelper } from '../db/DbHelper';
 import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
 import { RelationDao } from '../db/dao/RelationDao';
+import { ReviewMaterialDao } from '../db/dao/ReviewMaterialDao';
 import { RelationDetail, RelationListItem } from './RelationListItem';
 import { filterRelationItems, toRelationDetail, toRelationListItems } from './RelationListMapper';
 
-/** Read access to relations plus an explicit demo seed; editing lands in 6.4. */
-export class RelationService {
+/** Read access to relations plus an explicit demo seed; editing lands in 6.4. */export class RelationService {
   private relationDao: RelationDao;
   private eventDao: EventDao;
   private decisionDao: DecisionDao;
+  private reviewMaterialDao: ReviewMaterialDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.relationDao = new RelationDao(store);
     this.eventDao = new EventDao(store);
     this.decisionDao = new DecisionDao(store);
+    this.reviewMaterialDao = new ReviewMaterialDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -58,6 +60,7 @@ export class RelationService {
   async save(id: string | null, name: string, trustLevel: TrustLevel, rawMaterialTest: boolean,
     forbidAnalysis: boolean, level: SecurityLevel, notes: string, correction: string = ''): Promise<RelationDetail> {
     const relation: Relation = id === null ? createRelation() : await this.requireRelation(id);
+    const previousLevel: SecurityLevel = relation.level;
     relation.name = name.trim();
     relation.trustLevel = trustLevel;
     relation.rawMaterialTest = rawMaterialTest;
@@ -75,6 +78,9 @@ export class RelationService {
       await this.relationDao.updateProfile(relation.id, relation.name, relation.trustLevel,
         relation.rawMaterialTest, relation.forbidAnalysis, relation.level, relation.notes,
         relation.correction ?? '', relation.correctionAt ?? 0);
+      if (levelRank(relation.level) > levelRank(previousLevel)) {
+        await this.reviewMaterialDao.clampLevels([`relation:${relation.id}`], relation.level);
+      }
     }
     return toRelationDetail(relation);
   }
@@ -149,4 +155,15 @@ export class RelationService {
     }
     return MOCK_RELATIONS.length;
   }
+}
+
+/** Strictness order: analyzable is loosest, sealed is strictest. */
+function levelRank(level: SecurityLevel): number {
+  if (level === SecurityLevel.ANALYZABLE) {
+    return 0;
+  }
+  if (level === SecurityLevel.LOCAL_ONLY) {
+    return 1;
+  }
+  return 2;
 }

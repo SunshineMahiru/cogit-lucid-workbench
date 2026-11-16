@@ -341,6 +341,7 @@ const { PlanDao } = require('./out2/db/dao/PlanDao');
 const { createPlan } = require('./out2/plan/PlanFactory');
 const { AnchorDao } = require('./out2/db/dao/AnchorDao');
 const { ReviewResultDao } = require('./out2/db/dao/ReviewResultDao');
+const { ReviewMaterialDao } = require('./out2/db/dao/ReviewMaterialDao');
 const { buildNodeProgress, carryRatePercent, carrySeries } = require('./out2/plan/PlanInsights');
 const { DB_TABLES, DB_TABLES_CHILD_FIRST, LEVELED_TABLES } = require('./out2/db/DbConstants');
 const { TABLE_CREATE_SQLS } = require('./out2/db/schemas');
@@ -1433,6 +1434,36 @@ async function main() {
     assert.ok(detail !== null);
     assert.strictEqual(detail.linkedEvents.length, 1);
     assert.ok(detail.linkedEvents[0].includes('作息'));
+  });
+
+  await test('关系封存后引用快照降级并清正文', async () => {
+    reset();
+    const relationService = await RelationService.open({});
+    await relationService.seedDemoRelations();
+    const relation = (await relationService.list(null))[0];
+    const reviewService = await ReviewService.open({});
+    const reviewId = await reviewService.save('week', {
+      facts: '', interpretation: '', contradiction: '', action: '',
+      payload: {
+        scene: '引用了关系材料', model: '', relation: '', evidence: '', cost: '', revision: ''
+      },
+      materialIds: [`relation:${relation.id}`],
+      anchorIds: []
+    }, '11-16 ~ 11-22');
+    const materialDao = new ReviewMaterialDao(store);
+    let rows = await materialDao.queryByReview(reviewId);
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].levelSnapshot, 'local_only');
+    assert.ok(rows[0].textSnapshot.length > 0);
+
+    const detail = await relationService.find(relation.id);
+    assert.ok(detail !== null);
+    await relationService.save(relation.id, detail.name, detail.trustLevel, false,
+      detail.forbidAnalysis, 'sealed', detail.notes, detail.correction);
+
+    rows = await materialDao.queryByReview(reviewId);
+    assert.strictEqual(rows[0].levelSnapshot, 'sealed');
+    assert.strictEqual(rows[0].textSnapshot, '');
   });
 
   await test('周统计支持指定周锚点', async () => {
