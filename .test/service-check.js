@@ -1185,6 +1185,31 @@ async function main() {
     assert.deepStrictEqual(ids, ['dc_1', 'dc_2']);
   });
 
+  await test('旧复盘只有 payload 决定引用时 decisions 回退读取', async () => {
+    reset();
+    const reviewService = await ReviewService.open({});
+    const reviewId = await reviewService.save('week', {
+      facts: '',
+      interpretation: '',
+      contradiction: '',
+      action: '',
+      payload: {
+        scene: '只写了现场',
+        model: '',
+        relation: '',
+        evidence: '',
+        cost: '',
+        revision: '',
+        decisionIds: ['dc_legacy_1', 'dc_legacy_2']
+      },
+      anchorIds: []
+    }, '11-09 ~ 11-15');
+    store.rows('review_decision').length = 0;
+
+    const ids = await reviewService.decisions(reviewId);
+    assert.deepStrictEqual(ids, ['dc_legacy_1', 'dc_legacy_2']);
+  });
+
   await test('最近决定按时间倒序并截断', async () => {
     reset();
     store.rows('decision').push(

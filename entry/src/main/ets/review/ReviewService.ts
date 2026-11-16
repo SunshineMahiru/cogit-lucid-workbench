@@ -218,9 +218,24 @@ export class ReviewService {
     return this.costNoteDao.queryByReview(reviewId);
   }
 
-  /** Returns the decisions one review cited, in citation order. */
+  /**
+   * Returns the decisions one review cited, in citation order. A review saved before the link table
+   * existed resolves its payload ids directly, so history keeps reading without writing new rows.
+   */
   async decisions(reviewId: string): Promise<string[]> {
-    return this.reviewDecisionDao.queryByReview(reviewId);
+    const cited = await this.reviewDecisionDao.queryByReview(reviewId);
+    if (cited.length > 0) {
+      return cited;
+    }
+    const review = await this.reviewDao.queryById(reviewId);
+    if (review === null) {
+      return [];
+    }
+    const payload = review.payload;
+    if (payload === undefined || payload.decisionIds === undefined) {
+      return [];
+    }
+    return uniqueStrings(payload.decisionIds);
   }
 
   /** Resolves the decisions one review cited; an id whose decision is gone reads back as missing. */
