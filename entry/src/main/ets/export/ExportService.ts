@@ -24,6 +24,8 @@ import { prepareExportBundle } from './ExportFilter';
 import { ExportOptions, defaultExportOptions } from './ExportOptions';
 import { buildExportFileName, writeExportFile } from './ExportFileWriter';
 import { renderExportDocument } from './render';
+import { EXPORT_FILE_PREFIX } from './ExportRetention';
+import { formatFileStamp } from './MarkdownText';
 import { latestPerRoot } from '../note/QuickNoteService';
 
 /** Outcome of one Markdown export. */
@@ -76,6 +78,26 @@ export class ExportService {
     options: ExportOptions = defaultExportOptions()): Promise<string> {
     const bundle = await this.loadPreparedBundle(now, options);
     return renderExportDocument(bundle);
+  }
+
+  /** Renders a public copy: safe export options plus anchor reasons removed. */
+  async buildPublicMarkdown(now: number = Date.now()): Promise<string> {
+    const bundle = await this.loadPreparedBundle(now, defaultExportOptions());
+    return stripPublicShareLines(renderExportDocument(bundle));
+  }
+
+  /** Writes the public copy into the sandbox and returns the file that was written. */
+  async exportPublicMarkdown(context: common.Context, now: number = Date.now()): Promise<ExportResult> {
+    const markdown = await this.buildPublicMarkdown(now);
+    const fileName = `${EXPORT_FILE_PREFIX}-public-${formatFileStamp(now)}.md`;
+    const filePath = await writeExportFile(context, fileName, markdown);
+    const bundle = await this.loadPreparedBundle(now, defaultExportOptions());
+    return {
+      fileName: fileName,
+      filePath: filePath,
+      charCount: markdown.length,
+      counts: countExportBundle(bundle)
+    };
   }
 
   /** Opens the system share sheet for an exported Markdown file. */
@@ -161,4 +183,25 @@ export class ExportService {
     };
     return prepareExportBundle(bundle, options);
   }
+}
+
+/** Removes lines that carry anchor reasoning or other-statement placeholders from a public copy. */
+function stripPublicShareLines(markdown: string): string {
+  const privateMarkers: string[] = [
+    '锚点理由：', '锚点支持：', '锚点限制：', '锚点不适用：', '（对方陈述仅保存在本机）'
+  ];
+  const kept: string[] = [];
+  for (const line of markdown.split('\n')) {
+    let drop = false;
+    for (const marker of privateMarkers) {
+      if (line.includes(marker)) {
+        drop = true;
+        break;
+      }
+    }
+    if (!drop) {
+      kept.push(line);
+    }
+  }
+  return kept.join('\n');
 }

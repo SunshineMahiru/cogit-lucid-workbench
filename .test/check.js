@@ -1350,7 +1350,7 @@ test('复盘历史支持周期筛选', () => {
 
 test('分享前有内容预览', () => {
   const source = fs.readFileSync('entry/src/main/ets/pages/SettingsPage.ets', 'utf8');
-  assert.ok(source.includes('分享预览'));
+  assert.ok(source.includes('公共副本预览'));
   assert.ok(source.includes('继续分享'));
   assert.ok(source.includes('分享后文件会离开本机'));
 });
@@ -1387,6 +1387,16 @@ test('审计接线写入编号密级与剔除数', () => {
   assert.ok(agent.includes('materialIds: meta.materialIds'));
   assert.ok(agent.includes('removedCount: meta.removedCount'));
   assert.ok(panel.includes('removedCount: Math.max(0, this.confirmInitialCount - this.confirmItems.length)'));
+});
+
+test('公共分享副本默认剥离锚点理由', () => {
+  const service = fs.readFileSync('entry/src/main/ets/export/ExportService.ts', 'utf8');
+  const settings = fs.readFileSync('entry/src/main/ets/pages/SettingsPage.ets', 'utf8');
+  assert.ok(service.includes('stripPublicShareLines'));
+  assert.ok(service.includes("'锚点理由：'"));
+  assert.ok(service.includes("'（对方陈述仅保存在本机）'"));
+  assert.ok(settings.includes('公共副本预览'));
+  assert.ok(settings.includes('分享公共副本'));
 });
 
 test('历史筛选与统计口径已接线', () => {

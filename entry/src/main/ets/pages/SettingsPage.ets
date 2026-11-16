@@ -76,6 +76,10 @@ export struct SettingsPage {
   @Local lastExportPath: string = '';
   @Local lastExportChars: number = 0;
   @Local lastExportTotal: number = 0;
+  @Local publicExportName: string = '';
+  @Local publicExportPath: string = '';
+  @Local publicExportChars: number = 0;
+  @Local publicExportTotal: number = 0;
   @Local spentYuan: number = 0;
   @Local backgroundBusy: string = '';
   @Local globalApplied: boolean = false;
@@ -220,34 +224,47 @@ export struct SettingsPage {
     return this.globalApplied ? `全局默认 · 覆盖 ${total} 个页面` : `已应用到 ${total} 个页面`;
   }
 
-  private shareExport(): void {
-    if (this.isExporting || this.hostContext === null || this.lastExportPath.length === 0) {
+  private async shareExport(): Promise<void> {
+    if (this.isExporting || this.hostContext === null) {
       return;
     }
-    this.getUIContext().showAlertDialog({
-      title: '分享预览',
-      message: `文件：${this.lastExportName}\n${this.lastExportChars} 字符 · 共 ${this.lastExportTotal} 条记录\n分享后文件会离开本机，可能被其他应用读取。`,
-      primaryButton: {
-        value: '取消',
-        action: () => {
+    this.isExporting = true;
+    try {
+      const service = await ExportService.open(this.hostContext);
+      const result = await service.exportPublicMarkdown(this.hostContext, Date.now());
+      this.publicExportName = result.fileName;
+      this.publicExportPath = result.filePath;
+      this.publicExportChars = result.charCount;
+      this.publicExportTotal = totalExportRecords(result.counts);
+      this.getUIContext().showAlertDialog({
+        title: '公共副本预览',
+        message: `文件：${this.publicExportName}\n${this.publicExportChars} 字符 · 共 ${this.publicExportTotal} 条记录\n已隐藏仅本地内容、对方陈述、锚点理由与请求元数据。\n分享后文件会离开本机，可能被其他应用读取。`,
+        primaryButton: {
+          value: '取消',
+          action: () => {
+          }
+        },
+        secondaryButton: {
+          value: '继续分享',
+          action: () => {
+            this.doShare();
+          }
         }
-      },
-      secondaryButton: {
-        value: '继续分享',
-        action: () => {
-          this.doShare();
-        }
-      }
-    });
+      });
+    } catch (error) {
+      this.showToast('公共副本生成失败；请检查存储空间');
+    } finally {
+      this.isExporting = false;
+    }
   }
 
   private async doShare(): Promise<void> {
-    if (this.hostContext === null || this.lastExportPath.length === 0) {
+    if (this.hostContext === null || this.publicExportPath.length === 0) {
       return;
     }
     try {
       const service = await ExportService.open(this.hostContext);
-      await service.share(this.hostContext, this.lastExportPath);
+      await service.share(this.hostContext, this.publicExportPath);
     } catch (error) {
       this.showToast('系统分享暂不可用，请使用另存为');
     }
@@ -820,15 +837,13 @@ export struct SettingsPage {
                       this.requestExport();
                     })
 
-                  if (this.lastExportPath.length > 0) {
-                    Text('分享')
-                      .fontSize(AppTheme.font.bodyStrong)
-                      .fontColor(AppTheme.color.primary)
-                      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
-                      .onClick(() => {
-                        this.shareExport();
-                      })
-                  }
+                  Text('分享公共副本')
+                    .fontSize(AppTheme.font.bodyStrong)
+                    .fontColor(AppTheme.color.primary)
+                    .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+                    .onClick(() => {
+                      this.shareExport();
+                    })
 
                   if (this.lastExportName.length > 0) {
                     Text(`已写入 ${this.lastExportName}`)
