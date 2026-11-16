@@ -112,11 +112,8 @@ export class ReviewService {
 
   /** Returns the newest decisions a session may cite, capped at limit. */
   async recentDecisions(limit: number = 20): Promise<RecentDecisionItem[]> {
-    const decisions = await this.decisionDao.queryAll();
-    const ordered = decisions.slice();
-    ordered.sort((left: Decision, right: Decision) => right.timestamp - left.timestamp);
-    const capped = limit > 0 ? ordered.slice(0, limit) : [];
-    return capped.map((decision: Decision) => {
+    const decisions = await this.decisionDao.queryRecent(limit);
+    return decisions.map((decision: Decision) => {
       const item: RecentDecisionItem = {
         id: decision.id,
         title: decision.title,

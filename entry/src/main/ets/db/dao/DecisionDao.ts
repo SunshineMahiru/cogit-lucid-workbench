@@ -58,6 +58,25 @@ export class DecisionDao {
     }
   }
 
+  /** Returns the newest decisions first, capped at limit; a non-positive limit reads as empty. */
+  async queryRecent(limit: number): Promise<Decision[]> {
+    if (limit <= 0) {
+      return [];
+    }
+    const predicates = new relationalStore.RdbPredicates(DB_TABLES.DECISION);
+    predicates.orderByDesc(DECISION_COLS.TIMESTAMP).limitAs(limit);
+    const resultSet = await this.store.query(predicates);
+    try {
+      const decisions: Decision[] = [];
+      while (resultSet.goToNextRow()) {
+        decisions.push(this.mapRow(resultSet));
+      }
+      return decisions;
+    } finally {
+      resultSet.close();
+    }
+  }
+
   /** Returns the decisions that cite one event. */
   async queryByEvent(eventId: string): Promise<Decision[]> {
     const decisions = await this.queryAll();
