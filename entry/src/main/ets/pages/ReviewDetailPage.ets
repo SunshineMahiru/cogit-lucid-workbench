@@ -10,7 +10,7 @@ import { CostDimension, CostNote } from '../model/CostNote';
 import { DecisionRecord, DecisionRecordType } from '../model/DecisionRecord';
 import { EvidenceEffect, EvidenceItem, EvidenceSource } from '../model/EvidenceItem';
 import { ReviewMaterial } from '../model/ReviewMaterial';
-import { motivationText, ReviewPayload } from '../model/ReviewPayload';
+import { motivationText, ReviewPayload, standingText } from '../model/ReviewPayload';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { ReviewDetailParams, PlanNodeParams, PlanAttachParams } from '../navigation/RouteParams';
@@ -561,6 +561,15 @@ export struct ReviewDetailPage {
             }
 
             if (this.payload !== null) {
+              if (this.payload.standing !== undefined && this.payload.standing !== 'decided') {
+                Text(`本次结果：${standingText(this.payload.standing)}`)
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontColor(AppTheme.color.primaryDeep)
+                  .width('100%')
+                  .padding(AppTheme.spacing.s10)
+                  .backgroundColor(AppTheme.color.tint)
+                  .borderRadius(AppTheme.radius.sm)
+              }
               this.zoneSection('1. 现场与既有行动', this.payload.scene)
               if (this.cited.length > 0) {
                 this.citedSection()

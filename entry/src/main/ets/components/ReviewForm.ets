@@ -15,7 +15,7 @@ import { RelationService } from '../relation/RelationService';
 import { MaterialPicker } from './MaterialPicker';
 import { ReviewPromptPanel } from './ReviewPromptPanel';
 import { ReviewAgentPanel } from './ReviewAgentPanel';
-import { AnchorCitation, hasAnyZone, MotivationKind, MOTIVATION_KINDS, motivationText, ReviewPayload } from '../model/ReviewPayload';
+import { AnchorCitation, hasAnyZone, MotivationKind, MOTIVATION_KINDS, motivationText, ReviewPayload, ReviewStanding, REVIEW_STANDINGS, standingText } from '../model/ReviewPayload';
 import { WorkDepth, WORK_DEPTHS, workDepthText } from '../model/WorkDepth';
 import {
   ReviewDraft,
@@ -90,6 +90,7 @@ export struct ReviewForm {
   @Local decisions: RecentDecisionItem[] = [];
   @Local relations: RelationListItem[] = [];
   @Local decisionType: DecisionRecordType | null = null;
+  @Local standing: ReviewStanding = 'decided';
   @Local decisionReason: string = '';
   @Local decisionAction: string = '';
   @Local decisionCommitment: string = '';
@@ -167,6 +168,7 @@ export struct ReviewForm {
           this.evidenceDrafts = (draft.payload.evidenceDrafts ?? []).slice();
           this.costDrafts = (draft.payload.costDrafts ?? []).slice();
           this.decisionIds = (draft.payload.decisionIds ?? []).slice();
+          this.standing = draft.payload.standing ?? 'decided';
           const decisionDraft = draft.payload.decisionDraft;
           if (decisionDraft !== undefined) {
             this.decisionType = decisionDraft.type;
@@ -214,7 +216,8 @@ export struct ReviewForm {
       motivation: this.motivation === '' ? undefined : this.motivation,
       depth: this.depth,
       timeBudget: this.budgetValue(),
-      anchorCitations: this.anchorCitations.slice()
+      anchorCitations: this.anchorCitations.slice(),
+      standing: this.standing
     };
   }
 
@@ -224,7 +227,7 @@ export struct ReviewForm {
   }
 
   private currentDecisionDraft(): DecisionDraft | undefined {
-    if (this.decisionType === null) {
+    if (this.standing !== 'decided' || this.decisionType === null) {
       return undefined;
     }
     return {
@@ -240,7 +243,7 @@ export struct ReviewForm {
   }
 
   private decisionError(): string {
-    if (this.decisionType === null) {
+    if (this.standing !== 'decided' || this.decisionType === null) {
       return '';
     }
     if (this.decisionReason.trim().length === 0) {
@@ -422,7 +425,13 @@ export struct ReviewForm {
     const next: AnchorCitation[] = [];
     for (const id of this.selectedAnchorIds) {
       const existing = this.anchorCitations.find((item: AnchorCitation) => item.anchorId === id);
-      next.push({ anchorId: id, reason: existing !== undefined ? existing.reason : '' });
+      next.push({
+        anchorId: id,
+        reason: existing !== undefined ? existing.reason : '',
+        supports: existing !== undefined ? (existing.supports ?? '') : '',
+        limits: existing !== undefined ? (existing.limits ?? '') : '',
+        notApplicable: existing !== undefined ? (existing.notApplicable ?? '') : ''
+      });
     }
     this.anchorCitations = next;
   }
@@ -432,13 +441,43 @@ export struct ReviewForm {
     return existing !== undefined ? existing.reason : '';
   }
 
-  private updateAnchorReason(id: string, value: string): void {
+  private supportsOf(id: string): string {
+    const existing = this.anchorCitations.find((item: AnchorCitation) => item.anchorId === id);
+    return existing !== undefined ? (existing.supports ?? '') : '';
+  }
+
+  private limitsOf(id: string): string {
+    const existing = this.anchorCitations.find((item: AnchorCitation) => item.anchorId === id);
+    return existing !== undefined ? (existing.limits ?? '') : '';
+  }
+
+  private notApplicableOf(id: string): string {
+    const existing = this.anchorCitations.find((item: AnchorCitation) => item.anchorId === id);
+    return existing !== undefined ? (existing.notApplicable ?? '') : '';
+  }
+
+  private updateAnchorField(id: string, field: 'reason' | 'supports' | 'limits' | 'notApplicable',
+    value: string): void {
     const next: AnchorCitation[] = [];
     for (const citation of this.anchorCitations) {
-      next.push(citation.anchorId === id ? { anchorId: id, reason: value } : citation);
+      if (citation.anchorId !== id) {
+        next.push(citation);
+        continue;
+      }
+      next.push({
+        anchorId: id,
+        reason: field === 'reason' ? value : citation.reason,
+        supports: field === 'supports' ? value : (citation.supports ?? ''),
+        limits: field === 'limits' ? value : (citation.limits ?? ''),
+        notApplicable: field === 'notApplicable' ? value : (citation.notApplicable ?? '')
+      });
     }
     this.anchorCitations = next;
     this.persistDraft();
+  }
+
+  private updateAnchorReason(id: string, value: string): void {
+    this.updateAnchorField(id, 'reason', value);
   }
 
   private toggleMaterial(id: string): void {
@@ -1093,6 +1132,49 @@ export struct ReviewForm {
   }
 
   @Builder
+  standingChip(value: ReviewStanding) {
+    Text(standingText(value))
+      .id(`review_standing_${value}`)
+      .fontSize(AppTheme.font.caption)
+      .fontColor(this.standing === value ? AppTheme.color.primaryDeep : AppTheme.color.textSecondary)
+      .padding({ left: AppTheme.spacing.s10, right: AppTheme.spacing.s10, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s4 })
+      .backgroundColor(this.standing === value ? AppTheme.color.tint : AppTheme.color.chip)
+      .borderRadius(AppTheme.radius.sm)
+      .onClick(() => {
+        this.standing = value;
+        this.persistDraft();
+      })
+  }
+
+  @Builder
+  standingEditor() {
+    Column({ space: 6 }) {
+      Text('本次结果')
+        .fontSize(AppTheme.font.bodyStrong)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppTheme.color.text)
+        .width('100%')
+      Text('不形成决定也可以保存；选择后不会要求填写决定原因。')
+        .fontSize(AppTheme.font.caption)
+        .lineHeight(17)
+        .fontColor(AppTheme.color.textSecondary)
+        .width('100%')
+      Flex({ wrap: FlexWrap.Wrap }) {
+        ForEach(REVIEW_STANDINGS, (value: ReviewStanding) => {
+          this.standingChip(value)
+        }, (value: ReviewStanding) => value)
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .padding(AppTheme.spacing.s16)
+    .backgroundColor(AppTheme.color.surfaceAlt)
+    .borderRadius(AppTheme.radius.md)
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
   decisionEditor() {
     Column({ space: 10 }) {
       Column({ space: 2 }) {
@@ -1440,6 +1522,33 @@ export struct ReviewForm {
                         .onChange((value: string) => {
                           this.updateAnchorReason(anchor.id, value);
                         })
+                      TextInput({ text: this.supportsOf(anchor.id), placeholder: '支持什么（可空）' })
+                        .id(`review_anchor_supports_${anchor.id}`)
+                        .fontSize(AppTheme.font.caption)
+                        .padding(AppTheme.spacing.s8)
+                        .backgroundColor(AppTheme.color.surface)
+                        .borderRadius(AppTheme.radius.sm)
+                        .onChange((value: string) => {
+                          this.updateAnchorField(anchor.id, 'supports', value);
+                        })
+                      TextInput({ text: this.limitsOf(anchor.id), placeholder: '限制什么（可空）' })
+                        .id(`review_anchor_limits_${anchor.id}`)
+                        .fontSize(AppTheme.font.caption)
+                        .padding(AppTheme.spacing.s8)
+                        .backgroundColor(AppTheme.color.surface)
+                        .borderRadius(AppTheme.radius.sm)
+                        .onChange((value: string) => {
+                          this.updateAnchorField(anchor.id, 'limits', value);
+                        })
+                      TextInput({ text: this.notApplicableOf(anchor.id), placeholder: '何处不适用（可空）' })
+                        .id(`review_anchor_not_applicable_${anchor.id}`)
+                        .fontSize(AppTheme.font.caption)
+                        .padding(AppTheme.spacing.s8)
+                        .backgroundColor(AppTheme.color.surface)
+                        .borderRadius(AppTheme.radius.sm)
+                        .onChange((value: string) => {
+                          this.updateAnchorField(anchor.id, 'notApplicable', value);
+                        })
                     }
                   }
                   .width('100%')
@@ -1478,7 +1587,15 @@ export struct ReviewForm {
             }
 
             if (this.step === LAST_ZONE) {
-              this.decisionEditor()
+              this.standingEditor()
+              if (this.standing === 'decided') {
+                this.decisionEditor()
+              } else {
+                Text('本次不形成决定，决定区不会写入；仍可补充现场、模型或修订。')
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textMuted)
+                  .width('100%')
+              }
               this.decisionPicker()
             }
 

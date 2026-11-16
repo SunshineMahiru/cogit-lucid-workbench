@@ -3,6 +3,7 @@ import { CostDimension, CostNote } from '../../model/CostNote';
 import { DecisionRecord, DecisionRecordType } from '../../model/DecisionRecord';
 import { EvidenceEffect, EvidenceItem } from '../../model/EvidenceItem';
 import { ReviewResult } from '../../model/ReviewResult';
+import { standingText } from '../../model/ReviewPayload';
 import { EMPTY_FIELD, formatExportTime, inlineText } from '../MarkdownText';
 
 /** Renders saved reviews with the anchors they referenced and the decisions they wrote. */
@@ -21,10 +22,22 @@ export function renderReviewSection(reviews: ReviewResult[], anchors: Anchor[],
     lines.push(`- 引用锚点：${anchorText(review.anchorIds, anchors)}`);
     const payload = review.payload;
     if (payload !== undefined) {
+      if (payload.standing !== undefined && payload.standing !== 'decided') {
+        lines.push(`- 本次结果：${standingText(payload.standing)}`);
+      }
       const citations = payload.anchorCitations ?? [];
       for (const citation of citations) {
         if (citation.reason.trim().length > 0) {
           lines.push(`  - 锚点理由：${inlineText(citation.reason)}`);
+        }
+        if ((citation.supports ?? '').trim().length > 0) {
+          lines.push(`  - 锚点支持：${inlineText(citation.supports as string)}`);
+        }
+        if ((citation.limits ?? '').trim().length > 0) {
+          lines.push(`  - 锚点限制：${inlineText(citation.limits as string)}`);
+        }
+        if ((citation.notApplicable ?? '').trim().length > 0) {
+          lines.push(`  - 锚点不适用：${inlineText(citation.notApplicable as string)}`);
         }
       }
     }

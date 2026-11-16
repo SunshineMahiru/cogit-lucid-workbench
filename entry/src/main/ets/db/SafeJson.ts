@@ -3,7 +3,7 @@ import { DECISION_RECORD_TYPES, DecisionDraft, DecisionRecordType } from '../mod
 import { CitationScope, InteractionLog, InteractionSource } from '../model/Relation';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { EvidenceDraft, EvidenceEffect, EvidenceSource } from '../model/EvidenceItem';
-import { AnchorCitation, MotivationKind, MOTIVATION_KINDS, ReviewPayload } from '../model/ReviewPayload';
+import { AnchorCitation, MotivationKind, MOTIVATION_KINDS, ReviewPayload, ReviewStanding } from '../model/ReviewPayload';
 import { WorkDepth } from '../model/WorkDepth';
 
 /** 整个进程累计的字段解析异常次数，供首页提示使用。 */
@@ -251,7 +251,10 @@ function readAnchorCitations(value: Object | undefined): AnchorCitation[] {
     }
     result.push({
       anchorId: anchorId,
-      reason: typeof entry.reason === 'string' ? (entry.reason as string).trim() : ''
+      reason: typeof entry.reason === 'string' ? (entry.reason as string).trim() : '',
+      supports: typeof entry.supports === 'string' ? (entry.supports as string).trim() : '',
+      limits: typeof entry.limits === 'string' ? (entry.limits as string).trim() : '',
+      notApplicable: typeof entry.notApplicable === 'string' ? (entry.notApplicable as string).trim() : ''
     });
   }
   return result;
@@ -299,6 +302,16 @@ export function parseReviewPayload(raw: string): ReviewPayload | undefined {
     motivation: readMotivation(entry.motivation),
     depth: readWorkDepth(entry.depth),
     timeBudget: readTimeBudget(entry.timeBudget),
-    anchorCitations: readAnchorCitations(entry.anchorCitations)
+    anchorCitations: readAnchorCitations(entry.anchorCitations),
+    standing: readStanding(entry.standing)
   };
+}
+
+/** Reads the optional closing state; unknown or absent values read as undefined. */
+function readStanding(value: Object | undefined): ReviewStanding | undefined {
+  if (value === 'decided' || value === 'no_action' || value === 'cannot_judge' ||
+    value === 'stop_analysis') {
+    return value as ReviewStanding;
+  }
+  return undefined;
 }

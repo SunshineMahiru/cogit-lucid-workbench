@@ -34,7 +34,37 @@ export function motivationText(value: string): string {
 /** One anchor cited by a review, with the reason it was chosen. */
 export interface AnchorCitation {
   anchorId: string;
+  /** Legacy single reason; kept so old reviews stay readable */
   reason: string;
+  /** What this anchor supports in the current situation */
+  supports?: string;
+  /** What it limits or rules out */
+  limits?: string;
+  /** Where it does not apply */
+  notApplicable?: string;
+}
+
+/** How a session ended when no decision was formed. */
+export type ReviewStanding = 'decided' | 'no_action' | 'cannot_judge' | 'stop_analysis';
+
+export const REVIEW_STANDINGS: ReviewStanding[] = [
+  'decided',
+  'no_action',
+  'cannot_judge',
+  'stop_analysis'
+];
+
+export function standingText(value: ReviewStanding): string {
+  if (value === 'no_action') {
+    return '暂未形成行动';
+  }
+  if (value === 'cannot_judge') {
+    return '暂时无法判断';
+  }
+  if (value === 'stop_analysis') {
+    return '不想继续分析';
+  }
+  return '已形成决定';
 }
 
 /** The six working zones of one review session; every field is optional by design. */
@@ -69,6 +99,8 @@ export interface ReviewPayload {
   timeBudget?: number;
   /** Anchors this session used, with the reason each one was chosen */
   anchorCitations?: AnchorCitation[];
+  /** How the session ended; absent reads as decided */
+  standing?: ReviewStanding;
 }
 
 /** Empty payload: a review may be saved with only the scene filled in. */
