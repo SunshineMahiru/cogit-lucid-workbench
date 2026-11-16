@@ -1,6 +1,9 @@
 import { Anchor } from '../model/Anchor';
+import { CostNote } from '../model/CostNote';
 import { Decision } from '../model/Decision';
+import { DecisionRecord } from '../model/DecisionRecord';
 import { Event } from '../model/Event';
+import { EvidenceItem } from '../model/EvidenceItem';
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { Prediction } from '../model/Prediction';
 import { Relation } from '../model/Relation';
@@ -17,10 +20,16 @@ export interface ExportBundle {
   anchors: Anchor[];
   statusRecords: StatusRecord[];
   reviews: ReviewResult[];
+  /** Evidence rows attached to reviews; each keeps its targetId */
+  evidenceItems?: EvidenceItem[];
+  /** Costs attached to reviews; each keeps its reviewId */
+  costNotes?: CostNote[];
   /** Experience materials carried by the exported events; each keeps its eventId */
   materials?: ExperienceMaterial[];
   /** Optional plan section; absent in older callers */
   plans?: PlanExport[];
+  /** Decisions written by review sessions; absent in older callers */
+  decisionRecords?: DecisionRecord[];
   /** Export time in milliseconds */
   exportedAt: number;
 }

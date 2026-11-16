@@ -370,6 +370,36 @@ function statusRecord(date, overrides) {
   }, overrides);
 }
 
+function review(overrides) {
+  return Object.assign({
+    id: 'rv_1',
+    period: 'week',
+    rangeLabel: '10-21 ~ 10-27',
+    facts: '本周晚睡三天',
+    interpretation: '最近状态差',
+    contradiction: '解释没有引用日期',
+    action: '十点后不安排任务',
+    anchorIds: ['an_1'],
+    level: 'local_only',
+    createdAt: NOW
+  }, overrides);
+}
+
+function decisionRecord(overrides) {
+  return Object.assign({
+    id: 'dr_1',
+    reviewId: 'rv_1',
+    type: 'continue',
+    reason: '维持现在的节奏',
+    action: '',
+    commitment: '',
+    outcome: '',
+    reviewAt: '2026-11-10',
+    level: 'local_only',
+    createdAt: NOW
+  }, overrides);
+}
+
 function bundle(overrides) {
   return Object.assign({
     events: [event()],
@@ -546,6 +576,127 @@ async function main() {
     assert.ok(markdown.includes('本周晚睡三天'));
     assert.ok(markdown.includes('第一条'));
     assert.ok(markdown.includes('十点后不安排任务'));
+  });
+
+  await test('复盘决定写入导出', () => {
+    const markdown = renderExportDocument(prepareExportBundle(bundle({
+      reviews: [review()],
+      decisionRecords: [decisionRecord()]
+    })));
+    assert.ok(markdown.includes('- 本次决定：'));
+    assert.ok(markdown.includes('- 类型：继续'));
+    assert.ok(markdown.includes('原因：维持现在的节奏'));
+    assert.ok(markdown.includes('行动：未填写'));
+    assert.ok(markdown.includes('承诺：—'));
+    assert.ok(markdown.includes('共同实践结果：—'));
+    assert.ok(markdown.includes('回看日期：2026-11-10'));
+  });
+
+  await test('封存决定不出现', () => {
+    const prepared = prepareExportBundle(bundle({
+      reviews: [review()],
+      decisionRecords: [
+        decisionRecord({ id: 'dr_sealed', level: 'sealed', reason: '封存决定原因' }),
+        decisionRecord()
+      ]
+    }));
+    assert.deepStrictEqual(prepared.decisionRecords.map((item) => item.id), ['dr_1']);
+    const markdown = renderExportDocument(prepared);
+    assert.strictEqual(markdown.includes('封存决定原因'), false);
+    assert.strictEqual(markdown.split('- 本次决定：').length - 1, 1);
+  });
+
+  await test('复盘导出六区正文', () => {
+    const markdown = renderExportDocument(prepareExportBundle(bundle({
+      reviews: [review({
+        payload: {
+          scene: '现场 A', model: '模型 B', relation: '关系 C', evidence: '证据 D',
+          cost: '成本 E', revision: '修订 F', materialIds: [], decisionIds: []
+        }
+      })]
+    }), { includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: true }));
+    assert.ok(markdown.includes('- 现场：现场 A'));
+    assert.ok(markdown.includes('- 模型：模型 B'));
+    assert.ok(markdown.includes('- 关系与矛盾：关系 C'));
+    assert.ok(markdown.includes('- 多源校正：证据 D'));
+    assert.ok(markdown.includes('- 成本与动机：成本 E'));
+    assert.ok(markdown.includes('- 调节与修订：修订 F'));
+  });
+
+  await test('复盘导出证据条目', () => {
+    const markdown = renderExportDocument(prepareExportBundle(bundle({
+      reviews: [review()],
+      evidenceItems: [{
+        id: 'ei_1', targetType: 'review', targetId: 'rv_1', sourceType: 'practice',
+        note: '午休后记录更顺', effect: 'supports', level: 'local_only', zone: 1, createdAt: NOW
+      }]
+    }), { includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: true }));
+    assert.ok(markdown.includes('- 证据：'));
+    assert.ok(markdown.includes('支持：午休后记录更顺'));
+  });
+
+  await test('复盘导出成本条目', () => {
+    const markdown = renderExportDocument(prepareExportBundle(bundle({
+      reviews: [review()],
+      costNotes: [{
+        id: 'cn_1', reviewId: 'rv_1', dimension: 'time', text: '周末补记多花二十分钟',
+        bearable: true, createdAt: NOW
+      }]
+    }), { includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: true }));
+    assert.ok(markdown.includes('- 成本：'));
+    assert.ok(markdown.includes('时间 · 周末补记多花二十分钟 · 可承受'));
+  });
+
+  await test('仅本地复盘默认不导出，勾选后才导出', () => {
+    const input = bundle({ reviews: [review()] });
+    const omitted = prepareExportBundle(input, {
+      includeLocalOnly: false, includeOtherStatements: false, includeDemoRecords: false
+    });
+    assert.strictEqual(omitted.reviews.length, 0);
+    const kept = prepareExportBundle(input, {
+      includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: false
+    });
+    assert.strictEqual(kept.reviews.length, 1);
+  });
+
+  await test('封存复盘不导出，其成本也不出现', () => {
+    const prepared = prepareExportBundle(bundle({
+      reviews: [review({ level: 'sealed' })],
+      costNotes: [{ id: 'cn_sealed', reviewId: 'rv_1', dimension: 'time', text: '封存成本', bearable: true, createdAt: NOW }]
+    }), { includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: true });
+    assert.strictEqual(prepared.reviews.length, 0);
+    assert.strictEqual(prepared.costNotes.length, 0);
+  });
+
+  await test('仅本地证据默认不导出', () => {
+    const prepared = prepareExportBundle(bundle({
+      reviews: [review({ level: 'analyzable' })],
+      evidenceItems: [{
+        id: 'ei_local', targetType: 'review', targetId: 'rv_1', sourceType: 'practice',
+        note: '仅本地证据', effect: 'supports', level: 'local_only', zone: 1, createdAt: NOW
+      }]
+    }), { includeLocalOnly: false, includeOtherStatements: false, includeDemoRecords: false });
+    assert.strictEqual(prepared.evidenceItems.length, 0);
+  });
+
+  await test('非复盘目标的证据不进入复盘节', () => {
+    const prepared = prepareExportBundle(bundle({
+      reviews: [review({ level: 'analyzable' })],
+      evidenceItems: [{
+        id: 'ei_prediction', targetType: 'prediction', targetId: 'rv_1', sourceType: 'practice',
+        note: '预测证据', effect: 'supports', level: 'analyzable', zone: 0, createdAt: NOW
+      }]
+    }), { includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: true });
+    assert.strictEqual(prepared.evidenceItems.length, 0);
+  });
+
+  await test('设置页包含导出、分享与模型文案', () => {
+    const fs = require('fs');
+    const source = fs.readFileSync('entry/src/main/ets/pages/SettingsPage.ets', 'utf8');
+    assert.ok(source.includes('导出并另存为'));
+    assert.ok(source.includes('分享'));
+    assert.ok(source.includes('模型端点'));
+    assert.ok(source.includes('已封存'));
   });
 
   await test('文档头部列出时间、总数与密级说明', () => {

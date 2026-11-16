@@ -1,6 +1,9 @@
 import { Anchor } from '../model/Anchor';
+import { CostNote } from '../model/CostNote';
 import { Decision } from '../model/Decision';
+import { DecisionRecord } from '../model/DecisionRecord';
 import { Event } from '../model/Event';
+import { EvidenceItem } from '../model/EvidenceItem';
 import { ExperienceMaterial } from '../model/ExperienceMaterial';
 import { InteractionLog, Relation } from '../model/Relation';
 import { Prediction } from '../model/Prediction';
@@ -36,6 +39,8 @@ export function prepareExportBundle(bundle: ExportBundle,
   options: ExportOptions = allExportOptions()): ExportBundle {
   const sealedKeys = collectSealedKeys(bundle);
   const events = prepareEvents(bundle.events, options);
+  const reviews = prepareReviews(bundle.reviews, options);
+  const reviewIds = reviews.map((review) => review.id);
   return {
     events: events,
     decisions: prepareDecisions(bundle.decisions, options),
@@ -43,9 +48,12 @@ export function prepareExportBundle(bundle: ExportBundle,
     predictions: preparePredictions(bundle.predictions, options),
     anchors: prepareAnchors(bundle.anchors, options),
     statusRecords: prepareStatusRecords(bundle.statusRecords, options),
-    reviews: prepareReviews(bundle.reviews, options),
+    reviews: reviews,
+    evidenceItems: prepareEvidence(bundle.evidenceItems ?? [], reviewIds, options),
+    costNotes: prepareCosts(bundle.costNotes ?? [], reviewIds),
     materials: prepareMaterials(bundle.materials ?? [], events, options),
     plans: preparePlans(bundle.plans ?? [], sealedKeys, options),
+    decisionRecords: prepareDecisionRecords(bundle.decisionRecords ?? []),
     exportedAt: bundle.exportedAt
   };
 }
@@ -227,6 +235,28 @@ function prepareReviews(reviews: ReviewResult[], options: ExportOptions): Review
     }
   }
   items.sort((left, right) => right.createdAt - left.createdAt);
+  return items;
+}
+
+/** Keeps evidence attached to exported reviews and at an exportable level. */
+function prepareEvidence(items: EvidenceItem[], reviewIds: string[], options: ExportOptions): EvidenceItem[] {
+  return items.filter((item: EvidenceItem) => item.targetType === 'review' &&
+    reviewIds.includes(item.targetId) && keepLevel(item.level ?? SecurityLevel.LOCAL_ONLY, options));
+}
+
+/** Costs follow the review they belong to; a cost has no level of its own. */
+function prepareCosts(notes: CostNote[], reviewIds: string[]): CostNote[] {
+  return notes.filter((note: CostNote) => reviewIds.includes(note.reviewId));
+}
+
+/** Drops sealed decisions; the rest keep the reviewing order. */
+function prepareDecisionRecords(records: DecisionRecord[]): DecisionRecord[] {
+  const items: DecisionRecord[] = [];
+  for (const record of records) {
+    if (isExportable(record.level)) {
+      items.push(record);
+    }
+  }
   return items;
 }
 

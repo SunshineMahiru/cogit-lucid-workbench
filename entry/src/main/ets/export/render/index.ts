@@ -30,7 +30,8 @@ export function renderExportDocument(bundle: ExportBundle): string {
     renderPredictionSection(bundle.predictions),
     renderAnchorSection(bundle.anchors),
     renderStatusSection(bundle.statusRecords),
-    renderReviewSection(bundle.reviews, bundle.anchors),
+    renderReviewSection(bundle.reviews, bundle.anchors, bundle.decisionRecords ?? [],
+      bundle.evidenceItems ?? [], bundle.costNotes ?? []),
     renderPlanSection(bundle.plans ?? [])
   ];
   const blocks: string[] = [];
