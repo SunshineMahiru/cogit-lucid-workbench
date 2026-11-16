@@ -37,7 +37,7 @@ The home page opens with the identity band (avatar, nickname, signature, custom 
 
 The build covers six record modules — notes, predictions and settlement, six-zone reviews with an optional agent, relations, anchors, and status readings — plus plans that organise them: a goal, optional projects, seven-day nodes, and a checklist. Reviews record one main decision with reason, optional action, commitment, relation, and look-back date; old four-step reviews stay read-only. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over line, and a split of linked records by module. Settings carry page backgrounds and surface opacity, Markdown export writes the chosen record set, backup and restore hand a `.cogitbackup` file to the system save dialog, and the analytics dashboard renders a remote sample payload with twelve months of detail.
 
-Records live in an encrypted `relationalStore` database (twelve tables). If the store cannot be opened on a device, the home page shows a blocking view with retry and exit instead of writing plaintext; only runs without `relationalStore` — the DevEco Previewer reports code 801 — fall back to the in-memory demo data, and the counters are labelled as demo content.
+Records live in an encrypted `relationalStore` database (nineteen tables). If the store cannot be opened on a device, the home page shows a blocking view with retry and exit instead of writing plaintext; only runs without `relationalStore` — the DevEco Previewer reports code 801 — fall back to the in-memory demo data, and the counters are labelled as demo content.
 
 The app is one module, targets `targetSdkVersion` 26.0.0 with a minimum of 6.1.1 (API 24), declares `phone` as the only device type, and ships a light and a dark palette that follow the system colour mode. The device suite has seven cases; the local check scripts cover the pure functions and services, and both are described under Tests. Known limits: the interface is Chinese only, the analytics page reads the remote sample file rather than local records, and model modes need your own endpoint and key.
 
@@ -48,7 +48,7 @@ The app is one module, targets `targetSdkVersion` 26.0.0 with a minimum of 6.1.1
 | Frozen prediction log | Target, judgment, confidence 0-100, reason, and a settlement date written once; settlement fills the outcome and marks hit or miss. |
 | Hit-rate statistics | Overall rate, a six-month monthly trend, and a hit/miss donut, drawn with `@ohos/mpchart`. |
 | Analytics dashboard | Ten charts over one remote payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. A month picker selects one of twelve months, and every chart reads that month's detail. The page renders the remote sample and does not read local records. |
-| Encrypted local store | All twelve tables live in an encrypted `relationalStore` database. If the store cannot be opened, the home page shows a blocking view with retry and exit instead of writing plaintext. |
+| Encrypted local store | All nineteen tables live in an encrypted `relationalStore` database. If the store cannot be opened, the home page shows a blocking view with retry and exit instead of writing plaintext. |
 | Previewer demo mode | Only where `relationalStore` is missing — the DevEco Previewer reports code 801 — the home page reads the in-memory preview store and labels the counters as demo data. |
 | Four-step review | Facts, interpretation, contradiction, action. The contradiction step ticks value anchors and uses them to test the explanation. |
 | Plan ladder | A goal, an optional project group, seven-day nodes, and a checklist. Only one goal is primary; closing a node carries unfinished items into the next week and writes a review draft. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over rate line, and a link split by module. |
@@ -312,7 +312,7 @@ Budget 0 leaves template mode as the only option: local mock and model mode both
 | Level | Default for new records | Enters LLM context | Enters export |
 |---|---|---|---|
 | `analyzable` | No | Yes, once a model mode is on | Yes |
-| `local_only` | Yes | No | Yes |
+| `local_only` | Yes | No | On request |
 | `sealed` | No | No | No |
 
 A level is chosen per record. The default in settings applies to records created after the change; it does not rewrite what already exists.
@@ -343,7 +343,7 @@ Sealed records are dropped. A plan link that points at a sealed record prints `�
 | Restore order | Version and database are validated, the current database is copied to `pre-restore-*.db`, then database, identity, settings and backgrounds come back, and the home page refreshes |
 | Left out | The API key. The field is emptied before packing and the restore writes non-secret options only, so enter it again on the new phone |
 
-The same card holds `清空全部数据`: the first tap turns it into `确认清空`, and the second one deletes. It wipes every row in the twelve tables, settings, identity, background pictures, the exported and backup files inside the sandbox, and the API key; files already saved elsewhere on the phone are left alone.
+The same card holds `清空全部数据`: the first tap turns it into `确认清空`, and the second one deletes. It wipes every row in the nineteen tables, settings, identity, background pictures, the exported and backup files inside the sandbox, and the API key; files already saved elsewhere on the phone are left alone.
 
 ## Project Layout
 
@@ -372,7 +372,7 @@ cogit-lucid-workbench/
 │   │   │   ├── status/             status readings
 │   │   │   ├── plan/               goals, week nodes, chart inputs
 │   │   │   ├── analysis/           rules, analyzers, date and metric helpers, LLM adapters
-│   │   │   ├── db/                 12 table statements, 8 DAOs, tolerant JSON
+│   │   │   ├── db/                 19 table statements, 15 DAOs, tolerant JSON
 │   │   │   ├── settings/           options, backgrounds, asset-store key, budget ledger
 │   │   │   ├── export/             Markdown sections and the file writer
 │   │   │   ├── network/            prompt and stats repositories, HTTP, LLM clients
@@ -447,10 +447,10 @@ Two things that trip people up: `hvigorw test` runs on Windows and macOS only, n
 ## FAQ
 
 **Where do records live, and do they leave the device?**
-All twelve tables sit in the local `relationalStore`, encrypted as a whole with a key the system manages. Template mode never touches the network. Once model mode is on, only `analyzable` text reaches the base URL you entered. `sealed` records enter neither the model context nor an export.
+All nineteen tables sit in the local `relationalStore`, encrypted as a whole with a key the system manages. Template mode never touches the network. Once model mode is on, only `analyzable` text reaches the base URL you entered. `sealed` records enter neither the model context nor an export.
 
 **How do I move records to a new phone?**
-Settings → `数据管理` → `备份并另存` produces a `.cogitbackup` file carrying a database snapshot, the identity, settings, and background pictures. Install the app on the new phone and pick `恢复备份`; a `pre-restore-*.db` copy is kept before anything is overwritten. The API key does not travel with the backup, so enter it again.
+Settings → `数据管理` → `备份并另存` produces a `.cogitbackup` file carrying row-level records, the identity, settings, and background pictures. Install the app on the new phone and pick `恢复备份`; a `pre-restore-*.db` copy is kept before anything is overwritten. The API key does not travel with the backup, so enter it again.
 
 **Where does the exported Markdown go?**
 `导出并另存为` opens the system save dialog, and the file lands in whatever folder you pick. Cancel the dialog and it stays in `${filesDir}/exports`, where `分享` can still send it out; the folder keeps the ten newest exports.
