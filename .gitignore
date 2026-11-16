@@ -77,3 +77,15 @@ docs/PROJECT.md
 spec/
 .deveco/
 .cache/
+# App backup bundles and local dumps; they carry personal records
+*.cogitbackup
+*.hprof
+test-results/
+coverage/
+
+# Local AI tool state; may contain prompts or paths
+.claude/
+.cursor/
+.gemini/
+.aider*
+.continue/
