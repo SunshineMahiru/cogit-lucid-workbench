@@ -11,6 +11,12 @@ export interface ContradictionInput {
   factsLevel: SecurityLevel;
   interpretationLevel: SecurityLevel;
   relationForbidsAnalysis: boolean;
+  /** True when the material involves another person and needs an explicit relation binding */
+  relationInvolved?: boolean;
+  /** Relation the material belongs to; required when relationInvolved is true */
+  relationId?: string;
+  /** What may be analyzed about the relation; required before any outbound request */
+  relationBoundary?: string;
 }
 
 /** How sure the analyzer is about one candidate. */

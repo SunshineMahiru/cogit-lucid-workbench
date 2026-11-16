@@ -18,13 +18,17 @@ export interface BuildResult {
 /** Keeps only the items the user left in the confirmation sheet. */
 export function filterConfirmedInput(raw: ContradictionInput, keepIds: string[]): ContradictionInput {
   const anchors = raw.anchors.filter((anchor) => keepIds.includes(`anchor:${anchor.id}`));
+  const keepRelation = keepIds.includes('relation');
   return {
     facts: keepIds.includes('facts') ? raw.facts : '',
     interpretation: keepIds.includes('interpretation') ? raw.interpretation : '',
     anchors: anchors,
     factsLevel: raw.factsLevel,
     interpretationLevel: raw.interpretationLevel,
-    relationForbidsAnalysis: raw.relationForbidsAnalysis
+    relationForbidsAnalysis: raw.relationForbidsAnalysis,
+    relationInvolved: raw.relationInvolved === true,
+    relationId: keepRelation ? (raw.relationId ?? '') : '',
+    relationBoundary: keepRelation ? (raw.relationBoundary ?? '') : ''
   };
 }
 
@@ -43,10 +47,37 @@ export function buildAnalysisInput(raw: ContradictionInput, provider: LlmProvide
         anchors: [],
         factsLevel: SecurityLevel.LOCAL_ONLY,
         interpretationLevel: SecurityLevel.LOCAL_ONLY,
-        relationForbidsAnalysis: true
+        relationForbidsAnalysis: true,
+        relationInvolved: false,
+        relationId: '',
+        relationBoundary: ''
       },
       dropped
     };
+  }
+  if (raw.relationInvolved === true) {
+    const relationId = (raw.relationId ?? '').trim();
+    const boundary = (raw.relationBoundary ?? '').trim();
+    if (relationId.length === 0 || boundary.length === 0) {
+      dropped.push({
+        kind: 'relation',
+        reason: relationId.length === 0 ? '关系材料未绑定关系' : '关系材料未填写分析边界'
+      });
+      return {
+        input: {
+          facts: '',
+          interpretation: '',
+          anchors: [],
+          factsLevel: SecurityLevel.LOCAL_ONLY,
+          interpretationLevel: SecurityLevel.LOCAL_ONLY,
+          relationForbidsAnalysis: false,
+          relationInvolved: true,
+          relationId: relationId,
+          relationBoundary: ''
+        },
+        dropped
+      };
+    }
   }
   let facts = raw.facts;
   let interpretation = raw.interpretation;
@@ -76,7 +107,10 @@ export function buildAnalysisInput(raw: ContradictionInput, provider: LlmProvide
       anchors: anchors,
       factsLevel: raw.factsLevel,
       interpretationLevel: raw.interpretationLevel,
-      relationForbidsAnalysis: false
+      relationForbidsAnalysis: false,
+      relationInvolved: raw.relationInvolved === true,
+      relationId: raw.relationId ?? '',
+      relationBoundary: raw.relationBoundary ?? ''
     },
     dropped: dropped
   };

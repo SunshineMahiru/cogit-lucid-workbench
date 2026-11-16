@@ -33,6 +33,9 @@ export struct ReviewAgentPanel {
   @Local confirmProviderLabel: string = '';
   @Local confirmHost: string = '';
   @Local ignoredKeys: string[] = [];
+  @Local relationInvolved: boolean = false;
+  @Local relationIdText: string = '';
+  @Local relationBoundaryText: string = '';
 
   private async generate(): Promise<void> {
     if (this.isLoading) {
@@ -40,6 +43,11 @@ export struct ReviewAgentPanel {
     }
     if (this.facts.trim().length === 0 || this.interpretation.trim().length === 0) {
       this.errorText = '先填写事实与解释，再生成提示';
+      return;
+    }
+    if (this.relationInvolved &&
+      (this.relationIdText.trim().length === 0 || this.relationBoundaryText.trim().length === 0)) {
+      this.errorText = '涉及他人时，先写关系与分析边界，再生成提示';
       return;
     }
     const hostContext = this.getUIContext().getHostContext();
@@ -86,7 +94,10 @@ export struct ReviewAgentPanel {
       anchors: this.anchors,
       factsLevel: this.factsLevelValue,
       interpretationLevel: this.interpretationLevelValue,
-      relationForbidsAnalysis: this.relationForbidsAnalysis
+      relationForbidsAnalysis: this.relationForbidsAnalysis,
+      relationInvolved: this.relationInvolved,
+      relationId: this.relationIdText.trim(),
+      relationBoundary: this.relationBoundaryText.trim()
     };
   }
 
@@ -102,6 +113,14 @@ export struct ReviewAgentPanel {
       const level: SecurityLevel = anchor.level ?? SecurityLevel.LOCAL_ONLY;
       items.push({ id: `anchor:${anchor.id}`, label: `锚点 ${index + 1}`, level: level, chars: anchor.text.length });
     });
+    if (input.relationInvolved === true) {
+      items.push({
+        id: 'relation',
+        label: `关系绑定 · ${input.relationId ?? ''}`,
+        level: '已绑定',
+        chars: (input.relationBoundary ?? '').length
+      });
+    }
     return items;
   }
 
@@ -312,6 +331,48 @@ export struct ReviewAgentPanel {
           .onClick(() => {
             this.interpretationLevelValue = SecurityLevel.SEALED;
           })
+      }
+      .width('100%')
+
+      Column({ space: 6 }) {
+        Row() {
+          Text('涉及他人')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textSecondary)
+          Blank()
+          Text(this.relationInvolved ? '已开启' : '未开启')
+            .id('agent_relation_toggle')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(this.relationInvolved ? Color.White : AppTheme.color.text)
+            .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+            .backgroundColor(this.relationInvolved ? AppTheme.color.primary : AppTheme.color.chip)
+            .borderRadius(AppTheme.radius.sm)
+            .onClick(() => {
+              this.relationInvolved = !this.relationInvolved;
+            })
+        }
+        .width('100%')
+
+        if (this.relationInvolved) {
+          TextInput({ text: this.relationIdText, placeholder: '关系别名或编号（必填）' })
+            .id('agent_relation_id')
+            .fontSize(AppTheme.font.caption)
+            .backgroundColor(AppTheme.color.surfaceAlt)
+            .onChange((value: string) => {
+              this.relationIdText = value;
+            })
+          TextInput({ text: this.relationBoundaryText, placeholder: '可以分析什么、不能分析什么（必填）' })
+            .id('agent_relation_boundary')
+            .fontSize(AppTheme.font.caption)
+            .backgroundColor(AppTheme.color.surfaceAlt)
+            .onChange((value: string) => {
+              this.relationBoundaryText = value;
+            })
+          Text('未绑定关系或未写分析边界时，不会调用模型。')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.danger)
+            .width('100%')
+        }
       }
       .width('100%')
 
