@@ -699,6 +699,26 @@ async function main() {
     assert.ok(source.includes('已封存'));
   });
 
+  await test('复盘导出包含一等结果与锚点三问', () => {
+    const markdown = renderExportDocument(bundle({
+      reviews: [review({
+        payload: {
+          scene: '现场', model: '模型', relation: '', evidence: '', cost: '', revision: '',
+          standing: 'no_action',
+          anchorCitations: [{
+            anchorId: 'an_1', reason: '旧理由', supports: '支持继续观察',
+            limits: '不能证明对方动机', notApplicable: '不适用于工作场景'
+          }]
+        }
+      })]
+    }));
+    assert.ok(markdown.includes('本次结果：暂未形成行动'));
+    assert.ok(markdown.includes('锚点支持：支持继续观察'));
+    assert.ok(markdown.includes('锚点限制：不能证明对方动机'));
+    assert.ok(markdown.includes('锚点不适用：不适用于工作场景'));
+    assert.ok(markdown.includes('锚点理由：旧理由'));
+  });
+
   await test('互动条目按自身密级过滤', () => {
     const markdown = renderExportDocument(prepareExportBundle(bundle({
       relations: [relation({

@@ -2204,6 +2204,32 @@ async function main() {
     assert.strictEqual(payload.timeBudget, undefined);
   });
 
+  await test('载荷解析读取一等结果与锚点三问', () => {
+    const payload = parseReviewPayload(JSON.stringify({
+      scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+      standing: 'cannot_judge',
+      anchorCitations: [{
+        anchorId: 'an_1', reason: '旧理由', supports: '支持判断',
+        limits: '限制范围', notApplicable: '不适用于工作'
+      }]
+    }));
+    assert.ok(payload !== undefined);
+    assert.strictEqual(payload.standing, 'cannot_judge');
+    assert.strictEqual(payload.anchorCitations[0].reason, '旧理由');
+    assert.strictEqual(payload.anchorCitations[0].supports, '支持判断');
+    assert.strictEqual(payload.anchorCitations[0].limits, '限制范围');
+    assert.strictEqual(payload.anchorCitations[0].notApplicable, '不适用于工作');
+  });
+
+  await test('未知结果状态读作未记录', () => {
+    const payload = parseReviewPayload(JSON.stringify({
+      scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+      standing: 'done'
+    }));
+    assert.ok(payload !== undefined);
+    assert.strictEqual(payload.standing, undefined);
+  });
+
   await test('计划保存与读取深度预算', async () => {
     reset();
     const dao = new PlanDao(store);

@@ -1386,6 +1386,14 @@ test('审计接线写入编号密级与剔除数', () => {
   assert.ok(panel.includes('removedCount: Math.max(0, this.confirmInitialCount - this.confirmItems.length)'));
 });
 
+test('复盘一等结果与锚点三问已接线', () => {
+  const form = fs.readFileSync('entry/src/main/ets/components/ReviewForm.ets', 'utf8');
+  assert.ok(form.includes('review_standing_'));
+  assert.ok(form.includes('review_anchor_supports_'));
+  assert.ok(form.includes("this.updateAnchorField(anchor.id, 'notApplicable', value)"));
+  assert.ok(form.includes("if (this.standing !== 'decided' || this.decisionType === null)"));
+});
+
 test('数据库版本为 21 且包含新增列', () => {
   const source = fs.readFileSync(DB_CONFIG_FILE, 'utf8');
   assert.ok(/export const DB_VERSION\s*=\s*21;/.test(source), 'DB_VERSION 不是 21');
