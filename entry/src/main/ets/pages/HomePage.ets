@@ -151,6 +151,12 @@ export struct HomePage {
     });
   }
 
+  private summaryLine(): string {
+    const rate = this.summary.settledPredictions > 0 ?
+      `${Math.round(this.summary.hitRate * 100)}%` : NO_RATE_TEXT;
+    return `总速记 ${this.summary.totalNotes} · 待结算 ${this.summary.pendingPredictions} · 命中率 ${rate}`;
+  }
+
   private todoDue(): number {
     return this.summary.duePredictions ?? 0;
   }
@@ -233,6 +239,12 @@ export struct HomePage {
   @Builder
   todoCard() {
     Column() {
+      Text(this.summaryLine())
+        .id('home_todo_summary')
+        .fontSize(AppTheme.font.caption)
+        .fontColor(AppTheme.color.textMuted)
+        .width('100%')
+        .padding({ bottom: AppTheme.spacing.s4 })
       Column() {
         if (this.todoTotal() === 0) {
           Text('此刻没有需要回看的项目')

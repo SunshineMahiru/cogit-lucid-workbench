@@ -5,7 +5,6 @@ import {
   PredictionItem,
   formatHitRate,
   formatNoteCount,
-  hitRateCaption,
   todayLabel
 } from '../model/HomeModel';
 import { HomeDataService } from '../data/HomeDataService';
@@ -417,49 +416,6 @@ export struct DashboardView {
                 }
               }
               .width('100%')
-
-              // Summary
-              Row() {
-                Column({ space: 4 }) {
-                  Text(String(this.summary.totalNotes))
-                    .fontSize(AppTheme.font.title)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor(AppTheme.color.text)
-                  Text('总速记')
-                    .fontSize(AppTheme.font.body)
-                    .fontColor(AppTheme.color.textSecondary)
-                }
-                .layoutWeight(1)
-                .alignItems(HorizontalAlign.Center)
-
-                Column({ space: 4 }) {
-                  Text(String(this.summary.pendingPredictions))
-                    .fontSize(AppTheme.font.title)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor(AppTheme.color.text)
-                  Text('待结算')
-                    .fontSize(AppTheme.font.body)
-                    .fontColor(AppTheme.color.textSecondary)
-                }
-                .layoutWeight(1)
-                .alignItems(HorizontalAlign.Center)
-
-                Column({ space: 4 }) {
-                  Text(formatHitRate(this.summary.hitRate, this.summary.settledPredictions))
-                    .fontSize(AppTheme.font.title)
-                    .fontWeight(FontWeight.Medium)
-                    .fontColor(AppTheme.color.primary)
-                  Text(hitRateCaption(this.summary.settledPredictions))
-                    .fontSize(AppTheme.font.body)
-                    .fontColor(AppTheme.color.textSecondary)
-                }
-                .layoutWeight(1)
-                .alignItems(HorizontalAlign.Center)
-              }
-              .width('100%')
-              .padding(AppTheme.spacing.s16)
-              .backgroundColor(AppTheme.color.surface)
-              .borderRadius(AppTheme.radius.lg)
 
               // Weekly settlement
               Column({ space: 6 }) {

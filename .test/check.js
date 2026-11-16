@@ -1345,6 +1345,29 @@ test('复盘历史支持周期筛选', () => {
   assert.ok(source.includes("this.periodChip('week'"));
 });
 
+test('分享前有内容预览', () => {
+  const source = fs.readFileSync('entry/src/main/ets/pages/SettingsPage.ets', 'utf8');
+  assert.ok(source.includes('分享预览'));
+  assert.ok(source.includes('继续分享'));
+  assert.ok(source.includes('分享后文件会离开本机'));
+});
+
+test('涉及他人时要求关系与分析边界', () => {
+  const source = fs.readFileSync('entry/src/main/ets/components/ReviewAgentPanel.ets', 'utf8');
+  assert.ok(source.includes('agent_relation_toggle'));
+  assert.ok(source.includes('agent_relation_id'));
+  assert.ok(source.includes('agent_relation_boundary'));
+  assert.ok(source.includes('不会调用模型'));
+});
+
+test('汇总并入待校正卡', () => {
+  const home = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
+  const dashboard = fs.readFileSync('entry/src/main/ets/views/DashboardView.ets', 'utf8');
+  assert.ok(home.includes('home_todo_summary'));
+  assert.ok(home.includes('总速记 ${this.summary.totalNotes}'));
+  assert.strictEqual(dashboard.includes('总速记'), false);
+});
+
 test('数据库版本为 20', () => {
   const source = fs.readFileSync(DB_CONFIG_FILE, 'utf8');
   assert.ok(/export const DB_VERSION\s*=\s*20;/.test(source), 'DB_VERSION 不是 20');

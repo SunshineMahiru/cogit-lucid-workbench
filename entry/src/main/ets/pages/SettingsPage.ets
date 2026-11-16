@@ -220,8 +220,29 @@ export struct SettingsPage {
     return this.globalApplied ? `全局默认 · 覆盖 ${total} 个页面` : `已应用到 ${total} 个页面`;
   }
 
-  private async shareExport(): Promise<void> {
+  private shareExport(): void {
     if (this.isExporting || this.hostContext === null || this.lastExportPath.length === 0) {
+      return;
+    }
+    this.getUIContext().showAlertDialog({
+      title: '分享预览',
+      message: `文件：${this.lastExportName}\n${this.lastExportChars} 字符 · 共 ${this.lastExportTotal} 条记录\n分享后文件会离开本机，可能被其他应用读取。`,
+      primaryButton: {
+        value: '取消',
+        action: () => {
+        }
+      },
+      secondaryButton: {
+        value: '继续分享',
+        action: () => {
+          this.doShare();
+        }
+      }
+    });
+  }
+
+  private async doShare(): Promise<void> {
+    if (this.hostContext === null || this.lastExportPath.length === 0) {
       return;
     }
     try {
