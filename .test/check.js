@@ -1294,9 +1294,60 @@ test('建表语句包含迁移新增的列', () => {
   }
 });
 
-test('数据库版本为 19', () => {
+test('首页待校正保留四行与待回看', () => {
+  const source = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
+  const rows = source.split('this.todoRow(').length - 1;
+  assert.strictEqual(rows, 4, `待校正行数为 ${rows}，应为 4`);
+  assert.ok(source.includes('home_todo_decisions'));
+  assert.ok(source.includes('待回看决定'));
+});
+
+test('首页读数可关闭且复盘提示可忽略', () => {
+  const dashboard = fs.readFileSync('entry/src/main/ets/views/DashboardView.ets', 'utf8');
+  assert.ok(dashboard.includes('home_readings_toggle'));
+  assert.ok(dashboard.includes('readingsVisible'));
+  assert.ok(dashboard.includes('promptVisible'));
+  const prompt = fs.readFileSync('entry/src/main/ets/components/ReviewPromptPanel.ets', 'utf8');
+  assert.ok(prompt.includes('onDismiss'));
+});
+
+test('身份区头像缩到 48', () => {
+  const source = fs.readFileSync('entry/src/main/ets/components/ProfileHeader.ets', 'utf8');
+  assert.ok(source.includes('this.avatar(48)'));
+});
+
+test('关系页不再出现未加工测试', () => {
+  const edit = fs.readFileSync('entry/src/main/ets/pages/RelationEditPage.ets', 'utf8');
+  const detail = fs.readFileSync('entry/src/main/ets/pages/RelationDetailPage.ets', 'utf8');
+  assert.strictEqual(edit.includes('rawMaterialTest'), false);
+  assert.strictEqual(edit.includes('未加工'), false);
+  assert.strictEqual(detail.includes('未加工'), false);
+});
+
+test('计划图显示四类清单计数', () => {
+  const source = fs.readFileSync('entry/src/main/ets/pages/PlanDetailPage.ets', 'utf8');
+  assert.ok(source.includes('plan_disposition_counts'));
+  assert.ok(source.includes('完成 ${this.totalDone()}'));
+  assert.ok(source.includes('暂停 ${this.totalPaused()}'));
+  assert.ok(source.includes('舍弃 ${this.totalDiscarded()}'));
+});
+
+test('计划图标注样本范围', () => {
+  const source = fs.readFileSync('entry/src/main/ets/pages/PlanDetailPage.ets', 'utf8');
+  assert.ok(source.includes('plan_sample_note'));
+  assert.ok(source.includes('个周节点的清单记录'));
+});
+
+test('复盘历史支持周期筛选', () => {
+  const source = fs.readFileSync('entry/src/main/ets/pages/ReviewHistoryPage.ets', 'utf8');
+  assert.ok(source.includes('history_period_week'));
+  assert.ok(source.includes('history_period_month'));
+  assert.ok(source.includes("this.periodChip('week'"));
+});
+
+test('数据库版本为 20', () => {
   const source = fs.readFileSync(DB_CONFIG_FILE, 'utf8');
-  assert.ok(/export const DB_VERSION\s*=\s*19;/.test(source), 'DB_VERSION 不是 19');
+  assert.ok(/export const DB_VERSION\s*=\s*20;/.test(source), 'DB_VERSION 不是 20');
 });
 
 if (failures.length > 0) {

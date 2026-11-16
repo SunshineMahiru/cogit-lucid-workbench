@@ -215,7 +215,21 @@ class FakeStore {
     return removed;
   }
 
-  async querySql(sql) {
+  async querySql(sql, args) {
+    if (/COUNT\(\*\)/i.test(sql) && /FROM\s+decision_record/i.test(sql) &&
+      /JOIN\s+review_result/i.test(sql)) {
+      const today = args !== undefined && args.length > 0 ? String(args[0]) : '';
+      const reviews = this.rows('review_result');
+      const pending = this.rows('decision_record').filter((row) => {
+        const reviewAt = row.review_at === null || row.review_at === undefined ? '' : String(row.review_at);
+        if (reviewAt.length === 0 || reviewAt > today || row.level === 'sealed') {
+          return false;
+        }
+        const review = reviews.find((item) => item.id === row.review_id);
+        return review !== undefined && review.level !== 'sealed';
+      });
+      return new FakeResultSet([{ total: pending.length }]);
+    }
     const from = /FROM\s+([a-z_]+)/i.exec(sql);
     const table = from === null ? '' : from[1];
     if (/COUNT\(\*\)/i.test(sql) && table.length > 0) {
@@ -319,13 +333,25 @@ const { StatusService } = require('./out2/status/StatusService');
 const { HomeDataService } = require('./out2/data/HomeDataService');
 const { ExperienceMaterialDao } = require('./out2/db/dao/ExperienceMaterialDao');
 const { EvidenceItemDao } = require('./out2/db/dao/EvidenceItemDao');
+const { DecisionRecordDao } = require('./out2/db/dao/DecisionRecordDao');
+const { CostNoteDao } = require('./out2/db/dao/CostNoteDao');
+const { toCostDimension } = require('./out2/model/CostNote');
+const { parseReviewPayload } = require('./out2/db/SafeJson');
+const { PlanDao } = require('./out2/db/dao/PlanDao');
+const { createPlan } = require('./out2/plan/PlanFactory');
+const { AnchorDao } = require('./out2/db/dao/AnchorDao');
+const { ReviewResultDao } = require('./out2/db/dao/ReviewResultDao');
+const { buildNodeProgress, carryRatePercent, carrySeries } = require('./out2/plan/PlanInsights');
+const { DB_TABLES, DB_TABLES_CHILD_FIRST, LEVELED_TABLES } = require('./out2/db/DbConstants');
+const { TABLE_CREATE_SQLS } = require('./out2/db/schemas');
 const { EventDao } = require('./out2/db/dao/EventDao');
 const { DecisionDao } = require('./out2/db/dao/DecisionDao');
 const { prepareExportBundle, allExportOptions } = require('./out2/export/ExportFilter');
 const { renderExportDocument } = require('./out2/export/render');
 const { ExportService } = require('./out2/export/ExportService');
 const { PredictionService } = require('./out2/prediction/PredictionService');
-const { ReviewService } = require('./out2/review/ReviewService');
+const { validatePredictionDraft } = require('./out2/prediction/PredictionValidation');
+const { ReviewService, decisionLevelFor } = require('./out2/review/ReviewService');
 const { rangeFor } = require('./out2/review/ReviewRange');
 const { PlanService } = require('./out2/plan/PlanService');
 const { buildAnalysisInput } = require('./out2/security/RequestBuilder');
@@ -1843,6 +1869,593 @@ async function main() {
     const afterPartial = await reviewService.loadStatsFor('week', now);
     assert.strictEqual(afterPartial.settledPredictions, 3);
     assert.strictEqual(afterPartial.hitRate, 50);
+  });
+
+  await test('决定记录写入全部字段', async () => {
+    reset();
+    const dao = new DecisionRecordDao(store);
+    const rowId = await dao.insert({
+      id: 'dr_1',
+      reviewId: 'rv_1',
+      type: 'joint',
+      reason: '一起调整作息',
+      action: '每周同步一次',
+      commitment: '不临时改约定',
+      relationId: 'rl_1',
+      planItemId: 'pi_1',
+      outcome: '第一周按约完成',
+      reviewAt: '2026-11-20',
+      level: SecurityLevel.LOCAL_ONLY,
+      createdAt: 1000
+    });
+    assert.strictEqual(rowId, 1);
+    const stored = store.rows('decision_record')[0];
+    assert.strictEqual(stored.review_id, 'rv_1');
+    assert.strictEqual(stored.type, 'joint');
+    assert.strictEqual(stored.reason, '一起调整作息');
+    assert.strictEqual(stored.action, '每周同步一次');
+    assert.strictEqual(stored.commitment, '不临时改约定');
+    assert.strictEqual(stored.relation_id, 'rl_1');
+    assert.strictEqual(stored.plan_item_id, 'pi_1');
+    assert.strictEqual(stored.outcome, '第一周按约完成');
+    assert.strictEqual(stored.review_at, '2026-11-20');
+    assert.strictEqual(stored.level, 'local_only');
+    assert.strictEqual(stored.created_at, 1000);
+  });
+
+  await test('决定记录按复盘读取并可按复盘清理', async () => {
+    reset();
+    const dao = new DecisionRecordDao(store);
+    await dao.insert({
+      id: 'dr_1', reviewId: 'rv_1', type: 'continue', reason: '继续',
+      level: SecurityLevel.LOCAL_ONLY, createdAt: 2000
+    });
+    await dao.insert({
+      id: 'dr_2', reviewId: 'rv_2', type: 'pause', reason: '先停', action: '',
+      level: SecurityLevel.LOCAL_ONLY, createdAt: 1000
+    });
+    await dao.insert({
+      id: 'dr_3', reviewId: 'rv_1', type: 'exit', reason: '退出', action: '收回时间',
+      level: SecurityLevel.LOCAL_ONLY, createdAt: 3000
+    });
+
+    const rows = await dao.queryByReview('rv_1');
+    assert.deepStrictEqual(rows.map((row) => row.id), ['dr_1', 'dr_3']);
+    assert.strictEqual(rows[0].action, '');
+    assert.strictEqual(rows[1].action, '收回时间');
+    assert.strictEqual(rows[1].level, 'local_only');
+
+    assert.strictEqual(await dao.deleteByReview('rv_1'), 2);
+    assert.deepStrictEqual((await dao.queryByReview('rv_1')).map((row) => row.id), []);
+    assert.deepStrictEqual((await dao.queryByReview('rv_2')).map((row) => row.id), ['dr_2']);
+  });
+
+  await test('待回看决定排除未到期、无日期与封存记录', async () => {
+    reset();
+    store.rows('review_result').push(
+      { id: 'rv_open', level: 'local_only' },
+      { id: 'rv_sealed', level: 'sealed' }
+    );
+    const dao = new DecisionRecordDao(store);
+    const base = {
+      reason: '原因',
+      action: '',
+      level: SecurityLevel.LOCAL_ONLY
+    };
+    await dao.insert(Object.assign({}, base, {
+      id: 'dr_due', reviewId: 'rv_open', type: 'continue', reviewAt: '2026-11-15', createdAt: 1
+    }));
+    await dao.insert(Object.assign({}, base, {
+      id: 'dr_today', reviewId: 'rv_open', type: 'switch', reviewAt: '2026-11-16', createdAt: 2
+    }));
+    await dao.insert(Object.assign({}, base, {
+      id: 'dr_future', reviewId: 'rv_open', type: 'pause', reviewAt: '2026-11-17', createdAt: 3
+    }));
+    await dao.insert(Object.assign({}, base, {
+      id: 'dr_none', reviewId: 'rv_open', type: 'discard', reviewAt: '', createdAt: 4
+    }));
+    await dao.insert(Object.assign({}, base, {
+      id: 'dr_sealed', reviewId: 'rv_open', type: 'exit', reviewAt: '2026-11-10',
+      level: SecurityLevel.SEALED, createdAt: 5
+    }));
+    await dao.insert(Object.assign({}, base, {
+      id: 'dr_sealed_review', reviewId: 'rv_sealed', type: 'joint', relationId: 'rl_1',
+      reviewAt: '2026-11-10', createdAt: 6
+    }));
+    await dao.insert(Object.assign({}, base, {
+      id: 'dr_no_review', reviewId: 'rv_missing', type: 'continue', reviewAt: '2026-11-10', createdAt: 7
+    }));
+
+    assert.strictEqual(await dao.countPending('2026-11-16'), 2);
+  });
+
+  await test('决定表在表清单与建表语句中齐全', async () => {
+    assert.strictEqual(DB_TABLES.DECISION_RECORD, 'decision_record');
+    assert.ok(DB_TABLES_CHILD_FIRST.indexOf(DB_TABLES.DECISION_RECORD) >= 0);
+    assert.ok(DB_TABLES_CHILD_FIRST.indexOf(DB_TABLES.DECISION_RECORD) <
+      DB_TABLES_CHILD_FIRST.indexOf(DB_TABLES.REVIEW_RESULT));
+    assert.ok(LEVELED_TABLES.indexOf(DB_TABLES.DECISION_RECORD) >= 0);
+    const marker = `CREATE TABLE IF NOT EXISTS ${DB_TABLES.DECISION_RECORD} (`;
+    const createSql = TABLE_CREATE_SQLS.find((sql) => sql.indexOf(marker) >= 0);
+    assert.ok(createSql !== undefined);
+    assert.ok(createSql.indexOf('review_id') >= 0);
+    assert.ok(createSql.indexOf('review_at') >= 0);
+  });
+
+  await test('复盘保存时同事务写入主决定', async () => {
+    reset();
+    const reviewService = await ReviewService.open({});
+    const reviewId = await reviewService.save('week', {
+      facts: '',
+      interpretation: '',
+      contradiction: '',
+      action: '',
+      payload: {
+        scene: '只写了现场',
+        model: '',
+        relation: '',
+        evidence: '',
+        cost: '',
+        revision: '',
+        decisionDraft: {
+          type: 'switch',
+          reason: '换一种做法',
+          action: '先试一周',
+          commitment: '每天记录',
+          relationId: '',
+          planItemId: '',
+          outcome: '',
+          reviewAt: '2026-11-20'
+        }
+      },
+      anchorIds: []
+    }, '11-16 ~ 11-22');
+
+    const rows = store.rows('decision_record');
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].review_id, reviewId);
+    assert.strictEqual(rows[0].id, `${reviewId}_decision`);
+    assert.strictEqual(rows[0].type, 'switch');
+    assert.strictEqual(rows[0].reason, '换一种做法');
+    assert.strictEqual(rows[0].action, '先试一周');
+    assert.strictEqual(rows[0].commitment, '每天记录');
+    assert.strictEqual(rows[0].review_at, '2026-11-20');
+    assert.strictEqual(rows[0].level, 'local_only');
+
+    const read = await reviewService.reviewDecision(reviewId);
+    assert.ok(read !== null);
+    assert.strictEqual(read.type, 'switch');
+    assert.strictEqual(read.planItemId, '');
+  });
+
+  await test('决定写入后成本失败时整笔复盘回滚', async () => {
+    reset();
+    store.failTable = 'cost_note';
+    const reviewService = await ReviewService.open({});
+    let failed = false;
+    try {
+      await reviewService.save('week', {
+        facts: '',
+        interpretation: '',
+        contradiction: '',
+        action: '',
+        payload: {
+          scene: '只写了现场',
+          model: '',
+          relation: '',
+          evidence: '',
+          cost: '',
+          revision: '',
+          decisionDraft: {
+            type: 'continue',
+            reason: '继续观察',
+            action: '',
+            commitment: '',
+            relationId: '',
+            planItemId: '',
+            outcome: '',
+            reviewAt: ''
+          },
+          costDrafts: [
+            { dimension: 'time', text: '代价', bearable: true }
+          ]
+        },
+        anchorIds: []
+      }, '11-16 ~ 11-22');
+    } catch (error) {
+      failed = true;
+    }
+    assert.strictEqual(failed, true);
+    assert.strictEqual(store.rows('decision_record').length, 0);
+    assert.strictEqual(store.rows('review_result').length, 0);
+    assert.strictEqual(store.rows('review_decision').length, 0);
+    assert.strictEqual(store.rows('cost_note').length, 0);
+  });
+
+  await test('决定密级跟随复盘且不宽于仅本地', async () => {
+    assert.strictEqual(decisionLevelFor(SecurityLevel.SEALED), SecurityLevel.SEALED);
+    assert.strictEqual(decisionLevelFor(SecurityLevel.ANALYZABLE), SecurityLevel.LOCAL_ONLY);
+    assert.strictEqual(decisionLevelFor(SecurityLevel.LOCAL_ONLY), SecurityLevel.LOCAL_ONLY);
+    assert.strictEqual(decisionLevelFor(undefined), SecurityLevel.LOCAL_ONLY);
+  });
+
+  await test('候选决定排除封存记录', async () => {
+    reset();
+    store.rows('decision').push(
+      { id: 'dc_open', title: '开放', choice: '继续', timestamp: 3000, level: 'local_only' },
+      { id: 'dc_sealed', title: '封存', choice: '隐藏', timestamp: 4000, level: 'sealed' },
+      { id: 'dc_old', title: '旧', choice: '停下', timestamp: 1000, level: 'analyzable' }
+    );
+    const reviewService = await ReviewService.open({});
+    const items = await reviewService.recentDecisions(20);
+    assert.deepStrictEqual(items.map((item) => item.id), ['dc_open', 'dc_old']);
+    const capped = await reviewService.recentDecisions(1);
+    assert.deepStrictEqual(capped.map((item) => item.id), ['dc_open']);
+  });
+
+  await test('成本维度保留六个新值', () => {
+    for (const value of ['meaning', 'body', 'relationship', 'time', 'public', 'other']) {
+      assert.strictEqual(toCostDimension(value), value);
+    }
+  });
+
+  await test('旧成本维度归一为其他', () => {
+    for (const value of ['attention', 'money', 'unknown', '']) {
+      assert.strictEqual(toCostDimension(value), 'other');
+    }
+  });
+
+  await test('成本 DAO 读取旧维度时归一为其他', async () => {
+    reset();
+    store.rows('cost_note').push({
+      id: 'cn_old', review_id: 'rv_cost', dimension: 'attention', text: '旧维度',
+      bearable: 1, created_at: 1
+    });
+    const dao = new CostNoteDao(store);
+    const rows = await dao.queryByReview('rv_cost');
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].dimension, 'other');
+  });
+
+  await test('载荷解析把旧成本维度归一为其他', () => {
+    const payload = parseReviewPayload(JSON.stringify({
+      scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+      costDrafts: [{ dimension: 'money', text: '花费', bearable: true }]
+    }));
+    assert.ok(payload !== undefined);
+    assert.strictEqual(payload.costDrafts.length, 1);
+    assert.strictEqual(payload.costDrafts[0].dimension, 'other');
+  });
+
+  await test('载荷解析读取动机', () => {
+    const payload = parseReviewPayload(JSON.stringify({
+      scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+      motivation: 'external'
+    }));
+    assert.ok(payload !== undefined);
+    assert.strictEqual(payload.motivation, 'external');
+  });
+
+  await test('未知动机读作未填写', () => {
+    const payload = parseReviewPayload(JSON.stringify({
+      scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+      motivation: 'other'
+    }));
+    assert.ok(payload !== undefined);
+    assert.strictEqual(payload.motivation, undefined);
+  });
+
+  await test('载荷解析读取深度与预算', () => {
+    const payload = parseReviewPayload(JSON.stringify({
+      scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+      depth: 'deep', timeBudget: 45
+    }));
+    assert.ok(payload !== undefined);
+    assert.strictEqual(payload.depth, 'deep');
+    assert.strictEqual(payload.timeBudget, 45);
+  });
+
+  await test('非法深度与预算读作未记录', () => {
+    const payload = parseReviewPayload(JSON.stringify({
+      scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+      depth: 'slow', timeBudget: -5
+    }));
+    assert.ok(payload !== undefined);
+    assert.strictEqual(payload.depth, undefined);
+    assert.strictEqual(payload.timeBudget, undefined);
+  });
+
+  await test('计划保存与读取深度预算', async () => {
+    reset();
+    const dao = new PlanDao(store);
+    const plan = createPlan('测试计划', '2026-11-16', '', 'deep', 45);
+    plan.goal = '目标';
+    await dao.insertPlan(plan);
+    const found = await dao.findPlan(plan.id);
+    assert.ok(found !== null);
+    assert.strictEqual(found.depth, 'deep');
+    assert.strictEqual(found.timeBudget, 45);
+  });
+
+  await test('旧计划行读回普通与零预算', async () => {
+    reset();
+    store.rows('plan').push({
+      id: 'pl_old', title: '旧计划', goal: '', project_id: '', start_date: '2026-11-16',
+      target_date: '', status: 'active', is_primary: 0, level: 'local_only',
+      pause_reason: '', resume_at: '', depth: '', time_budget: 0, created_at: 1
+    });
+    const dao = new PlanDao(store);
+    const old = await dao.findPlan('pl_old');
+    assert.ok(old !== null);
+    assert.strictEqual(old.depth, 'normal');
+    assert.strictEqual(old.timeBudget, 0);
+  });
+
+  await test('计划建表包含深度与预算列', () => {
+    const sql = TABLE_CREATE_SQLS.find((item) => item.indexOf('CREATE TABLE IF NOT EXISTS plan (') >= 0);
+    assert.ok(sql !== undefined);
+    assert.ok(sql.indexOf('depth') >= 0);
+    assert.ok(sql.indexOf('time_budget') >= 0);
+    assert.ok(sql.indexOf('done_standard') >= 0);
+    assert.ok(sql.indexOf('impact') >= 0);
+  });
+
+  await test('计划保存与读取完成标准与影响对象', async () => {
+    reset();
+    const dao = new PlanDao(store);
+    const plan = createPlan('目标', '2026-11-16');
+    plan.goal = '推进计划模块';
+    plan.doneStandard = '首页出现四项';
+    plan.impact = '自己与同伴';
+    await dao.insertPlan(plan);
+    const found = await dao.findPlan(plan.id);
+    assert.ok(found !== null);
+    assert.strictEqual(found.doneStandard, '首页出现四项');
+    assert.strictEqual(found.impact, '自己与同伴');
+  });
+
+  await test('旧计划缺少完成标准时读作空', async () => {
+    reset();
+    store.rows('plan').push({
+      id: 'pl_old_goal', title: '旧目标', goal: '', project_id: '', start_date: '2026-11-16',
+      target_date: '', status: 'active', is_primary: 0, level: 'local_only',
+      pause_reason: '', resume_at: '', depth: 'normal', time_budget: 0,
+      done_standard: '', impact: '', created_at: 1
+    });
+    const dao = new PlanDao(store);
+    const old = await dao.findPlan('pl_old_goal');
+    assert.ok(old !== null);
+    assert.strictEqual(old.doneStandard, '');
+    assert.strictEqual(old.impact, '');
+  });
+
+  await test('计划更新保留完成标准与影响对象', async () => {
+    reset();
+    const dao = new PlanDao(store);
+    const plan = createPlan('目标', '2026-11-16');
+    plan.doneStandard = '第一版标准';
+    plan.impact = '第一版对象';
+    await dao.insertPlan(plan);
+    plan.doneStandard = '第二版标准';
+    await dao.updatePlan(plan);
+    const found = await dao.findPlan(plan.id);
+    assert.ok(found !== null);
+    assert.strictEqual(found.doneStandard, '第二版标准');
+    assert.strictEqual(found.impact, '第一版对象');
+  });
+
+  await test('预测期限可以留空', () => {
+    const errors = validatePredictionDraft({
+      target: '对象', judgment: '会成立', confidence: 60, reason: '',
+      settlementDate: '', falsification: '出现反例就不成立'
+    }, Date.now());
+    assert.strictEqual(errors.settlementDate, '');
+  });
+
+  await test('无期限预测可结算并记录当天', async () => {
+    reset();
+    const service = await PredictionService.open({});
+    const created = await service.create({
+      target: '无期限预测', judgment: '会成立', confidence: 60, reason: '',
+      settlementDate: '', falsification: '出现反例就不成立'
+    });
+    const settled = await service.settle(created.id, '实际发生', 'hold');
+    assert.ok(settled !== null);
+    assert.strictEqual(settled.settlementDate.length, 10);
+  });
+
+  await test('复盘材料包含状态与关系候选', async () => {
+    reset();
+    store.rows('status_record').push({
+      id: 'st_1', date: '2026-11-15', sleep_hours: 7, exercise_count: 1, alert_count: 0,
+      note: '状态备注', body_signals: '肩颈紧', function_state: '能写两行', emotion: '',
+      environment: '', capacity: '', function_gain: '', cost_paid: '晚上疲惫',
+      unknown_readings: '', corrected_at: 0, revisions: '', level: 'local_only', deleted: 0
+    });
+    store.rows('relation').push({
+      id: 'rl_1', name: '同事', trust_level: 'friendly',
+      interaction_log: JSON.stringify([
+        { timestamp: 1000, content: '他说下周三有空', source: 'stated', citation: 'hidden', allowContext: false }
+      ]),
+      raw_material_test: 0, forbid_analysis: 0, correction: '', correction_at: 0,
+      level: 'local_only', deleted: 0, notes: ''
+    });
+    const service = await ReviewService.open({});
+    const items = await service.recentMaterials(20);
+    const status = items.find((item) => item.id === 'status:st_1');
+    const relation = items.find((item) => item.id === 'relation:rl_1');
+    assert.ok(status !== undefined);
+    assert.strictEqual(status.source, 'direct');
+    assert.ok(status.text.includes('能写两行'));
+    assert.ok(relation !== undefined);
+    assert.strictEqual(relation.source, 'interaction');
+    assert.strictEqual(relation.interactionSource, 'stated');
+    assert.strictEqual(relation.text, '他说下周三有空');
+  });
+
+  await test('封存关系不进入材料候选', async () => {
+    reset();
+    store.rows('relation').push({
+      id: 'rl_sealed', name: '封存关系', trust_level: 'friendly', interaction_log: '[]',
+      raw_material_test: 0, forbid_analysis: 0, correction: '', correction_at: 0,
+      level: 'sealed', deleted: 0, notes: ''
+    });
+    const service = await ReviewService.open({});
+    const items = await service.recentMaterials(20);
+    assert.strictEqual(items.some((item) => item.id === 'relation:rl_sealed'), false);
+  });
+
+  await test('引用状态与关系后写入快照', async () => {
+    reset();
+    store.rows('status_record').push({
+      id: 'st_snap', date: '2026-11-15', sleep_hours: 7, exercise_count: 1, alert_count: 0,
+      note: '状态快照', body_signals: '', function_state: '', emotion: '', environment: '',
+      capacity: '', function_gain: '', cost_paid: '', unknown_readings: '', corrected_at: 0,
+      revisions: '', level: 'local_only', deleted: 0
+    });
+    store.rows('relation').push({
+      id: 'rl_snap', name: '同事', trust_level: 'friendly',
+      interaction_log: JSON.stringify([{ timestamp: 1000, content: '一起吃了午饭', source: 'joint' }]),
+      raw_material_test: 0, forbid_analysis: 0, correction: '', correction_at: 0,
+      level: 'local_only', deleted: 0, notes: ''
+    });
+    const service = await ReviewService.open({});
+    const reviewId = await service.save('week', {
+      facts: '', interpretation: '', contradiction: '', action: '',
+      payload: {
+        scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+        materialIds: ['status:st_snap', 'relation:rl_snap']
+      },
+      materialIds: ['status:st_snap', 'relation:rl_snap'],
+      anchorIds: []
+    }, '11-16 ~ 11-22');
+    const snapshots = await service.materials(reviewId);
+    assert.strictEqual(snapshots.length, 2);
+    assert.strictEqual(snapshots.every((row) => row.textSnapshot.length > 0), true);
+    assert.strictEqual(snapshots.every((row) => row.snapshotMissing === false), true);
+  });
+
+  await test('引用已删除状态时快照标记缺失', async () => {
+    reset();
+    store.rows('status_record').push({
+      id: 'st_gone', date: '2026-11-14', sleep_hours: 6, exercise_count: 0, alert_count: 1,
+      note: '', body_signals: '', function_state: '', emotion: '', environment: '',
+      capacity: '', function_gain: '', cost_paid: '', unknown_readings: '', corrected_at: 0,
+      revisions: '', level: 'local_only', deleted: 1
+    });
+    const service = await ReviewService.open({});
+    const reviewId = await service.save('week', {
+      facts: '', interpretation: '', contradiction: '', action: '',
+      payload: {
+        scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+        materialIds: ['status:st_gone']
+      },
+      materialIds: ['status:st_gone'],
+      anchorIds: []
+    }, '11-16 ~ 11-22');
+    const snapshots = await service.materials(reviewId);
+    assert.strictEqual(snapshots.length, 1);
+    assert.strictEqual(snapshots[0].snapshotMissing, true);
+    assert.strictEqual(snapshots[0].textSnapshot, '');
+  });
+
+  await test('载荷解析锚点理由并去重', () => {
+    const payload = parseReviewPayload(JSON.stringify({
+      scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+      anchorCitations: [
+        { anchorId: 'a1', reason: '对应睡眠记录' },
+        { anchorId: 'a1', reason: '重复' },
+        { anchorId: '', reason: '坏项' }
+      ]
+    }));
+    assert.ok(payload !== undefined);
+    assert.strictEqual(payload.anchorCitations.length, 1);
+    assert.strictEqual(payload.anchorCitations[0].anchorId, 'a1');
+    assert.strictEqual(payload.anchorCitations[0].reason, '对应睡眠记录');
+  });
+
+  await test('旧载荷没有锚点理由时读作空数组', () => {
+    const payload = parseReviewPayload(JSON.stringify({
+      scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: ''
+    }));
+    assert.ok(payload !== undefined);
+    assert.deepStrictEqual(payload.anchorCitations, []);
+  });
+
+  await test('锚点创建时间写入与读取', async () => {
+    reset();
+    const dao = new AnchorDao(store);
+    await dao.insert({
+      id: 'an_time', text: '先记录再解释', source: '自定', order: 1,
+      level: 'local_only', rootId: 'an_time', version: 1, status: 'active',
+      context: '', revisionReason: '', synthetic: false, createdAt: 1000
+    });
+    const rows = await dao.queryAll();
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].createdAt, 1000);
+  });
+
+  await test('复盘保存锚点选择理由', async () => {
+    reset();
+    const service = await ReviewService.open({});
+    const reviewId = await service.save('week', {
+      facts: '', interpretation: '', contradiction: '', action: '',
+      payload: {
+        scene: '现场', model: '', relation: '', evidence: '', cost: '', revision: '',
+        anchorCitations: [{ anchorId: 'an_1', reason: '这条锚点对应本周的睡眠记录' }]
+      },
+      anchorIds: ['an_1']
+    }, '11-16 ~ 11-22');
+    const row = await new ReviewResultDao(store).queryById(reviewId);
+    assert.ok(row !== null);
+    assert.ok(row.payload !== undefined);
+    assert.strictEqual(row.payload.anchorCitations.length, 1);
+    assert.strictEqual(row.payload.anchorCitations[0].reason, '这条锚点对应本周的睡眠记录');
+  });
+
+  await test('清单处理四类计数可核对', () => {
+    const node = {
+      id: 'pn_1', planId: 'pl_1', weekIndex: 1,
+      startDate: '2026-11-02', endDate: '2026-11-08', status: 'closed'
+    };
+    const items = [
+      { id: 'pi_1', nodeId: 'pn_1', text: '完成项', done: true, sortOrder: 0 },
+      { id: 'pi_2', nodeId: 'pn_1', text: '延续项', done: false, carriedFrom: 'pi_old', sortOrder: 1 },
+      { id: 'pi_3', nodeId: 'pn_1', text: '暂停项', done: false, disposition: 'paused', sortOrder: 2 },
+      { id: 'pi_4', nodeId: 'pn_1', text: '舍弃项', done: false, disposition: 'discarded', sortOrder: 3 },
+      { id: 'pi_5', nodeId: 'pn_1', text: '新开项', done: false, sortOrder: 4 }
+    ];
+    const rows = buildNodeProgress([node], items);
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].done, 1);
+    assert.strictEqual(rows[0].openCarried, 1);
+    assert.strictEqual(rows[0].paused, 1);
+    assert.strictEqual(rows[0].discarded, 1);
+    assert.strictEqual(rows[0].total, 5);
+  });
+
+  await test('延续率排除暂停与舍弃项', () => {
+    const row = {
+      nodeId: 'pn_1', weekIndex: 1, startDate: '', endDate: '', status: 'closed',
+      done: 0, openCarried: 1, openNew: 1, paused: 1, discarded: 1, total: 4
+    };
+    assert.strictEqual(carryRatePercent(row), 50);
+  });
+
+  await test('清单走势跳过没有清单的周', () => {
+    const rows = [
+      {
+        nodeId: 'pn_1', weekIndex: 1, startDate: '', endDate: '', status: 'closed',
+        done: 1, openCarried: 0, openNew: 0, paused: 0, discarded: 0, total: 1
+      },
+      {
+        nodeId: 'pn_2', weekIndex: 2, startDate: '', endDate: '', status: 'closed',
+        done: 0, openCarried: 0, openNew: 0, paused: 0, discarded: 0, total: 0
+      }
+    ];
+    const points = carrySeries(rows);
+    assert.strictEqual(points.length, 1);
+    assert.strictEqual(points[0].label, '第1周');
   });
 
   if (failures.length > 0) {

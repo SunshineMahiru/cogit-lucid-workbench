@@ -38,6 +38,10 @@ Module._load = function (request, parent, isMain) {
 const { KeywordAnchorMatcher } = require('./out2/analysis/anchors/KeywordAnchorMatcher');
 const { TemplateContradictionAnalyzer } = require('./out2/analysis/contradiction/TemplateContradictionAnalyzer');
 const { parseContradictionCandidates } = require('./out2/analysis/contradiction/LlmContradictionAnalyzer');
+const {
+  CONTRADICTION_SYSTEM_PROMPT,
+  buildContradictionUserPrompt
+} = require('./out2/analysis/contradiction/LlmContradictionAnalyzer');
 const { ReviewAgent } = require('./out2/review/ReviewAgent');
 const { defaultAppSettings } = require('./out2/settings/AppSettings');
 
@@ -88,6 +92,57 @@ async function test(name, fn) {
     assert.strictEqual(parsed.length, 1);
     assert.strictEqual(parsed[0].anchorId, 'a1');
     assert.throws(() => parseContradictionCandidates('not json'));
+  });
+
+  await test('候选解析读取依据未知项与不确定度', () => {
+    const parsed = parseContradictionCandidates(JSON.stringify({
+      candidates: [{
+        anchorId: 'a1', gap: '差距', prompt: '追问',
+        basis: '事实里的数字', unknowns: '缺少日期', uncertainty: 'high'
+      }]
+    }));
+    assert.strictEqual(parsed.length, 1);
+    assert.strictEqual(parsed[0].basis, '事实里的数字');
+    assert.strictEqual(parsed[0].unknowns, '缺少日期');
+    assert.strictEqual(parsed[0].uncertainty, 'high');
+  });
+
+  await test('缺少依据字段时读作空', () => {
+    const parsed = parseContradictionCandidates(JSON.stringify({
+      candidates: [{ anchorId: '', gap: '差距', prompt: '追问' }]
+    }));
+    assert.strictEqual(parsed[0].basis, '');
+    assert.strictEqual(parsed[0].unknowns, '');
+    assert.strictEqual(parsed[0].uncertainty, '');
+  });
+
+  await test('非法不确定度读作空', () => {
+    const parsed = parseContradictionCandidates(JSON.stringify({
+      candidates: [{ anchorId: '', gap: '差距', prompt: '追问', uncertainty: 'certain' }]
+    }));
+    assert.strictEqual(parsed[0].uncertainty, '');
+  });
+
+  await test('模板候选带依据', async () => {
+    const analyzer = new TemplateContradictionAnalyzer();
+    const candidates = await analyzer.analyze({
+      facts: '这周有 3 天睡不到 7 小时', interpretation: '我总是状态差', anchors: []
+    }, { now: Date.now() });
+    assert.ok(candidates.some((item) => (item.basis ?? '').length > 0));
+    assert.ok(candidates.some((item) => (item.uncertainty ?? '').length > 0));
+  });
+
+  await test('系统提示禁止推断动机与关系结局', () => {
+    assert.ok(CONTRADICTION_SYSTEM_PROMPT.includes('动机'));
+    assert.ok(CONTRADICTION_SYSTEM_PROMPT.includes('关系结局'));
+  });
+
+  await test('用户提示重复边界约束', () => {
+    const prompt = buildContradictionUserPrompt({
+      facts: '事实', interpretation: '解释', anchors: [],
+      factsLevel: 'analyzable', interpretationLevel: 'analyzable', relationForbidsAnalysis: false
+    });
+    assert.ok(prompt.includes('不要推断动机'));
   });
 
   const agentInput = () => ({
