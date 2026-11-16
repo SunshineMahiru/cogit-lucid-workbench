@@ -1389,6 +1389,15 @@ test('审计接线写入编号密级与剔除数', () => {
   assert.ok(panel.includes('removedCount: Math.max(0, this.confirmInitialCount - this.confirmItems.length)'));
 });
 
+test('安全副本可逐份删除并提示恢复后果', () => {
+  const settings = fs.readFileSync('entry/src/main/ets/pages/SettingsPage.ets', 'utf8');
+  const inventory = fs.readFileSync('entry/src/main/ets/settings/BackupInventory.ts', 'utf8');
+  assert.ok(settings.includes('confirmDeleteCopy'));
+  assert.ok(settings.includes('恢复旧备份？'));
+  assert.ok(settings.includes('可能带回已删除的记录'));
+  assert.ok(inventory.includes('static async deleteOne'));
+});
+
 test('首页不再计算连续记录天数', () => {
   const home = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
   const data = fs.readFileSync('entry/src/main/ets/data/HomeDataService.ts', 'utf8');

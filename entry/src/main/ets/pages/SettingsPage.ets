@@ -20,7 +20,7 @@ import {
 } from '../settings/PageBackgroundService';
 import { BackupService, RestoreOutcome, RestoreReport } from '../settings/BackupService';
 import { BackupOptionsStore } from '../settings/BackupOptionsStore';
-import { BackupInventory } from '../settings/BackupInventory';
+import { BackupCopy, BackupInventory } from '../settings/BackupInventory';
 import { ROUTES } from '../navigation/Routes';
 import { ExportService, totalExportRecords, ExportOptions, carriesLocalContent, describeExportOptions } from '../export';
 import { SecurityLevel } from '../model/SecurityLevel';
@@ -72,6 +72,7 @@ export struct SettingsPage {
   @Local backupIncludeBackgrounds: boolean = false;
   @Local safetyCount: number = 0;
   @Local safetyLatest: string = '';
+  @Local safetyCopies: BackupCopy[] = [];
   @Local lastExportName: string = '';
   @Local lastExportPath: string = '';
   @Local lastExportChars: number = 0;
@@ -285,6 +286,55 @@ export struct SettingsPage {
     }
   }
 
+  private confirmRestore(): void {
+    if (this.safetyCount === 0) {
+      this.restoreData();
+      return;
+    }
+    this.getUIContext().showAlertDialog({
+      title: '恢复旧备份？',
+      message: `本机已有 ${this.safetyCount} 份恢复前副本。恢复旧备份可能带回已删除的记录；当前数据库会先另存一份再替换。`,
+      primaryButton: {
+        value: '继续恢复',
+        action: () => {
+          this.restoreData();
+        }
+      },
+      secondaryButton: {
+        value: '取消',
+        action: () => {
+        }
+      }
+    });
+  }
+
+  private confirmDeleteCopy(copy: BackupCopy): void {
+    this.getUIContext().showAlertDialog({
+      title: '删除这份安全副本？',
+      message: `${formatCopyTime(copy.createdAt)} · ${copy.name}\n删除后无法再从这份副本回退。`,
+      primaryButton: {
+        value: '删除',
+        action: () => {
+          this.deleteCopy(copy.name);
+        }
+      },
+      secondaryButton: {
+        value: '取消',
+        action: () => {
+        }
+      }
+    });
+  }
+
+  private async deleteCopy(name: string): Promise<void> {
+    if (this.hostContext === null) {
+      return;
+    }
+    const removed = await BackupInventory.deleteOne(this.hostContext, name);
+    await this.loadSafetyCopies();
+    this.showToast(removed ? '已删除该安全副本' : '删除失败，请检查文件权限');
+  }
+
   private async restoreData(): Promise<void> {
     if (this.hostContext === null || this.dataBusy) {
       return;
@@ -401,9 +451,11 @@ export struct SettingsPage {
     }
     try {
       const copies = await BackupInventory.list(this.hostContext);
+      this.safetyCopies = copies;
       this.safetyCount = copies.length;
       this.safetyLatest = copies.length > 0 ? formatCopyTime(copies[0].createdAt) : '';
     } catch (error) {
+      this.safetyCopies = [];
       this.safetyCount = 0;
       this.safetyLatest = '';
     }
@@ -927,6 +979,34 @@ export struct SettingsPage {
                     }
                   }
                   .width('100%')
+                  if (this.safetyCopies.length > 0) {
+                    Column({ space: AppTheme.spacing.s4 }) {
+                      ForEach(this.safetyCopies.slice(0, 5), (copy: BackupCopy) => {
+                        Row({ space: AppTheme.spacing.s8 }) {
+                          Column({ space: 1 }) {
+                            Text(formatCopyTime(copy.createdAt))
+                              .fontSize(AppTheme.font.caption)
+                              .fontColor(AppTheme.color.textSecondary)
+                            Text(`${Math.max(1, Math.round(copy.bytes / 1024))} KB · ${copy.name}`)
+                              .fontSize(AppTheme.font.caption)
+                              .fontColor(AppTheme.color.textMuted)
+                              .maxLines(1)
+                              .textOverflow({ overflow: TextOverflow.Ellipsis })
+                          }
+                          .layoutWeight(1)
+                          .alignItems(HorizontalAlign.Start)
+                          Text('删除')
+                            .fontSize(AppTheme.font.caption)
+                            .fontColor(AppTheme.color.danger)
+                            .onClick(() => {
+                              this.confirmDeleteCopy(copy);
+                            })
+                        }
+                        .width('100%')
+                      }, (copy: BackupCopy) => copy.name)
+                    }
+                    .width('100%')
+                  }
                   Text('每次恢复前都会先保留一份当前数据库副本；清理后无法再从这些副本回退。')
                     .fontSize(AppTheme.font.caption)
                     .lineHeight(15)
@@ -945,7 +1025,7 @@ export struct SettingsPage {
                   this.backupData();
                 },
                 onRestore: () => {
-                  this.restoreData();
+                  this.confirmRestore();
                 },
                 onClear: () => {
                   this.clearData();

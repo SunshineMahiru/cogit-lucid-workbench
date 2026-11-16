@@ -62,6 +62,19 @@ export class BackupInventory {
     return removed;
   }
 
+  /** Removes one safety copy by file name; returns false for names outside the prefix. */
+  static async deleteOne(context: common.Context, name: string): Promise<boolean> {
+    if (!name.startsWith(PREFIX) || !name.endsWith('.db')) {
+      return false;
+    }
+    try {
+      fileIo.unlinkSync(`${BackupInventory.directory(context)}/${name}`);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   /** Parses the timestamp embedded in `pre-restore-<stamp>.db`. */
   private static stampOf(name: string): number {
     const body = name.substring(PREFIX.length, name.length - 3);
