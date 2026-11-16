@@ -337,11 +337,13 @@ const { DecisionRecordDao } = require('./out2/db/dao/DecisionRecordDao');
 const { CostNoteDao } = require('./out2/db/dao/CostNoteDao');
 const { toCostDimension } = require('./out2/model/CostNote');
 const { parseReviewPayload } = require('./out2/db/SafeJson');
+const { parseInteractionLog } = require('./out2/db/SafeJson');
 const { PlanDao } = require('./out2/db/dao/PlanDao');
 const { createPlan } = require('./out2/plan/PlanFactory');
 const { AnchorDao } = require('./out2/db/dao/AnchorDao');
 const { ReviewResultDao } = require('./out2/db/dao/ReviewResultDao');
 const { ReviewMaterialDao } = require('./out2/db/dao/ReviewMaterialDao');
+const { RequestAuditDao } = require('./out2/db/dao/RequestAuditDao');
 const { buildNodeProgress, carryRatePercent, carrySeries } = require('./out2/plan/PlanInsights');
 const { DB_TABLES, DB_TABLES_CHILD_FIRST, LEVELED_TABLES } = require('./out2/db/DbConstants');
 const { TABLE_CREATE_SQLS } = require('./out2/db/schemas');
@@ -2028,6 +2030,8 @@ async function main() {
         evidence: '',
         cost: '',
         revision: '',
+        depth: 'deep',
+        timeBudget: 30,
         decisionDraft: {
           type: 'switch',
           reason: '换一种做法',
@@ -2052,11 +2056,15 @@ async function main() {
     assert.strictEqual(rows[0].commitment, '每天记录');
     assert.strictEqual(rows[0].review_at, '2026-11-20');
     assert.strictEqual(rows[0].level, 'local_only');
+    assert.strictEqual(rows[0].depth, 'deep');
+    assert.strictEqual(rows[0].time_budget, 30);
 
     const read = await reviewService.reviewDecision(reviewId);
     assert.ok(read !== null);
     assert.strictEqual(read.type, 'switch');
     assert.strictEqual(read.planItemId, '');
+    assert.strictEqual(read.depth, 'deep');
+    assert.strictEqual(read.timeBudget, 30);
   });
 
   await test('决定写入后成本失败时整笔复盘回滚', async () => {
@@ -2487,6 +2495,45 @@ async function main() {
     const points = carrySeries(rows);
     assert.strictEqual(points.length, 1);
     assert.strictEqual(points[0].label, '第1周');
+  });
+
+  await test('审计只保存编号密级与剔除数，不保存正文', async () => {
+    reset();
+    const dao = new RequestAuditDao(store);
+    await dao.insert({
+      id: 'aud_1', provider: 'mock', host: 'http://127.0.0.1:8787',
+      materialIds: ['relation:rl_1', 'facts'], levels: ['local_only', 'analyzable'],
+      chars: 128, confirmed: true, fellBack: false, removedCount: 2, createdAt: 1000
+    });
+    const rows = await dao.queryRecent(1);
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].removedCount, 2);
+    assert.deepStrictEqual(rows[0].materialIds, ['relation:rl_1', 'facts']);
+    assert.deepStrictEqual(rows[0].levels, ['local_only', 'analyzable']);
+    assert.strictEqual(JSON.stringify(rows[0]).includes('正文内容'), false);
+  });
+
+  await test('旧审计行缺少剔除数时读作零', async () => {
+    reset();
+    store.rows('request_audit').push({
+      id: 'aud_old', provider: 'mock', host: 'http://127.0.0.1:8787',
+      material_ids: '[]', levels: '[]', chars: 10, confirmed: 1, fell_back: 0, created_at: 1
+    });
+    const rows = await new RequestAuditDao(store).queryRecent(1);
+    assert.strictEqual(rows.length, 1);
+    assert.strictEqual(rows[0].removedCount, 0);
+  });
+
+  await test('互动条目密级缺省时保持未标注', () => {
+    const logs = parseInteractionLog(JSON.stringify([
+      { timestamp: 1, content: '已封存互动', level: 'sealed' },
+      { timestamp: 2, content: '旧条目没有密级' },
+      { timestamp: 3, content: '非法密级', level: 'unknown' }
+    ]));
+    assert.strictEqual(logs.length, 3);
+    assert.strictEqual(logs[0].level, 'sealed');
+    assert.strictEqual(logs[1].level, undefined);
+    assert.strictEqual(logs[2].level, undefined);
   });
 
   if (failures.length > 0) {

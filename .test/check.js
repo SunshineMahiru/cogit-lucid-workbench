@@ -1378,9 +1378,21 @@ test('关系材料接线到禁分析与关系前置', () => {
   assert.ok(panel.includes('由引用关系材料带入'));
 });
 
-test('数据库版本为 20', () => {
+test('审计接线写入编号密级与剔除数', () => {
+  const agent = fs.readFileSync('entry/src/main/ets/review/ReviewAgent.ts', 'utf8');
+  const panel = fs.readFileSync('entry/src/main/ets/components/ReviewAgentPanel.ets', 'utf8');
+  assert.ok(agent.includes('materialIds: meta.materialIds'));
+  assert.ok(agent.includes('removedCount: meta.removedCount'));
+  assert.ok(panel.includes('removedCount: Math.max(0, this.confirmInitialCount - this.confirmItems.length)'));
+});
+
+test('数据库版本为 21 且包含新增列', () => {
   const source = fs.readFileSync(DB_CONFIG_FILE, 'utf8');
-  assert.ok(/export const DB_VERSION\s*=\s*20;/.test(source), 'DB_VERSION 不是 20');
+  assert.ok(/export const DB_VERSION\s*=\s*21;/.test(source), 'DB_VERSION 不是 21');
+  const schema = fs.readFileSync(SCHEMA_FILE, 'utf8');
+  assert.ok(schema.includes('removed_count INTEGER NOT NULL DEFAULT 0'));
+  assert.ok(schema.includes('depth TEXT'));
+  assert.ok(schema.includes('time_budget INTEGER'));
 });
 
 if (failures.length > 0) {

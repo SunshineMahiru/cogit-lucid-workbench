@@ -699,6 +699,21 @@ async function main() {
     assert.ok(source.includes('已封存'));
   });
 
+  await test('互动条目按自身密级过滤', () => {
+    const markdown = renderExportDocument(prepareExportBundle(bundle({
+      relations: [relation({
+        level: 'analyzable',
+        interactionLog: [
+          { timestamp: NOW, content: '仅本地观察', source: 'observation', level: 'local_only' },
+          { timestamp: NOW + 1, content: '可导出观察', source: 'observation', level: 'analyzable' }
+        ]
+      })]
+    }), { includeLocalOnly: false, includeOtherStatements: true, includeDemoRecords: true }));
+    assert.strictEqual(markdown.includes('仅本地观察'), false);
+    assert.ok(markdown.includes('（仅本地记录）'));
+    assert.ok(markdown.includes('可导出观察'));
+  });
+
   await test('仅本地决定默认不导出', () => {
     const input = bundle({ decisionRecords: [decisionRecord()] });
     const omitted = prepareExportBundle(input, {
