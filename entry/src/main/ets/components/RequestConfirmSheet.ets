@@ -40,10 +40,20 @@ export struct RequestConfirmSheet {
         Column({ space: AppTheme.spacing.s6 }) {
           ForEach(this.items, (item: ConfirmSheetItem, index: number) => {
             Row({ space: AppTheme.spacing.s8 }) {
-              Text(item.label)
-                .fontSize(AppTheme.font.body)
-                .fontColor(AppTheme.color.text)
-                .layoutWeight(1)
+              Column({ space: 2 }) {
+                Text(item.label)
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.text)
+                  .width('100%')
+                Text(`编号 ${item.id}`)
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textMuted)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  .width('100%')
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Start)
               Text(item.level)
                 .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.textMuted)

@@ -1389,6 +1389,15 @@ test('审计接线写入编号密级与剔除数', () => {
   assert.ok(panel.includes('removedCount: Math.max(0, this.confirmInitialCount - this.confirmItems.length)'));
 });
 
+test('请求清单显示编号且候选可改写', () => {
+  const sheet = fs.readFileSync('entry/src/main/ets/components/RequestConfirmSheet.ets', 'utf8');
+  const panel = fs.readFileSync('entry/src/main/ets/components/ReviewAgentPanel.ets', 'utf8');
+  assert.ok(sheet.includes('编号 ${item.id}'));
+  assert.ok(panel.includes('agent_candidate_edit'));
+  assert.ok(panel.includes('填入改写'));
+  assert.ok(panel.includes('startEdit(candidate)'));
+});
+
 test('复盘一等结果与锚点三问已接线', () => {
   const form = fs.readFileSync('entry/src/main/ets/components/ReviewForm.ets', 'utf8');
   assert.ok(form.includes('review_standing_'));

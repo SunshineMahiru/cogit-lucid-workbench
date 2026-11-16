@@ -51,6 +51,8 @@ export struct ReviewAgentPanel {
   @Local relationInvolved: boolean = false;
   @Local relationIdText: string = '';
   @Local relationBoundaryText: string = '';
+  @Local editingKey: string = '';
+  @Local editText: string = '';
 
   private materialRelationInvolved(): boolean {
     return this.relationInvolved || this.relationInvolvedByMaterial;
@@ -203,7 +205,7 @@ export struct ReviewAgentPanel {
     }
   }
 
-  private insert(candidate: ContradictionCandidate): void {
+  private composeCandidate(candidate: ContradictionCandidate): string {
     const parts: string[] = [candidate.gap];
     if ((candidate.basis ?? '').trim().length > 0) {
       parts.push(`依据：${(candidate.basis as string).trim()}`);
@@ -212,7 +214,16 @@ export struct ReviewAgentPanel {
       parts.push(`未知：${(candidate.unknowns as string).trim()}`);
     }
     parts.push(`追问：${candidate.prompt}`);
-    this.onInsert(parts.join('\n'));
+    return parts.join('\n');
+  }
+
+  private insert(candidate: ContradictionCandidate): void {
+    this.onInsert(this.composeCandidate(candidate));
+  }
+
+  private startEdit(candidate: ContradictionCandidate): void {
+    this.editingKey = this.candidateKey(candidate);
+    this.editText = this.composeCandidate(candidate);
   }
 
   private candidateKey(candidate: ContradictionCandidate): string {
@@ -529,6 +540,15 @@ export struct ReviewAgentPanel {
                 .onClick(() => {
                   this.toggleIgnore(candidate);
                 })
+              Text('改写')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textSecondary)
+                .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+                .backgroundColor(AppTheme.color.surface)
+                .borderRadius(AppTheme.radius.sm)
+                .onClick(() => {
+                  this.startEdit(candidate);
+                })
               Text('填入')
                 .fontSize(AppTheme.font.caption)
                 .fontColor(AppTheme.color.primary)
@@ -540,6 +560,47 @@ export struct ReviewAgentPanel {
                 })
             }
             .width('100%')
+
+            if (this.editingKey === this.candidateKey(candidate)) {
+              TextArea({ text: this.editText })
+                .id('agent_candidate_edit')
+                .fontSize(AppTheme.font.body)
+                .height(120)
+                .padding(AppTheme.spacing.s8)
+                .backgroundColor(AppTheme.color.surface)
+                .borderRadius(AppTheme.radius.sm)
+                .onChange((value: string) => {
+                  this.editText = value;
+                })
+              Row({ space: AppTheme.spacing.s8 }) {
+                Text('取消改写')
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .layoutWeight(1)
+                  .textAlign(TextAlign.Center)
+                  .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+                  .backgroundColor(AppTheme.color.surface)
+                  .borderRadius(AppTheme.radius.sm)
+                  .onClick(() => {
+                    this.editingKey = '';
+                    this.editText = '';
+                  })
+                Text('填入改写')
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(Color.White)
+                  .layoutWeight(1)
+                  .textAlign(TextAlign.Center)
+                  .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+                  .backgroundColor(AppTheme.color.primary)
+                  .borderRadius(AppTheme.radius.sm)
+                  .onClick(() => {
+                    this.onInsert(this.editText);
+                    this.editingKey = '';
+                    this.editText = '';
+                  })
+              }
+              .width('100%')
+            }
           }
           .width('100%')
           .padding(AppTheme.spacing.s10)
