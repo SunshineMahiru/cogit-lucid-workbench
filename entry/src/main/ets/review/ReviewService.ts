@@ -15,6 +15,7 @@ import { ReviewPeriod } from '../model/ReviewPeriod';
 import { emptyReviewPayload, hasAnyZone } from '../model/ReviewPayload';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { StatusRecord } from '../model/StatusRecord';
+import { WorkDepth } from '../model/WorkDepth';
 import { countReviewWindow, ReviewWindowCounts } from '../analysis/metrics/ReviewMetrics';
 import { DbHelper } from '../db/DbHelper';
 import { uniqueStrings } from '../db/SafeJson';
@@ -189,7 +190,7 @@ export class ReviewService {
     const decision: DecisionRecord | null = decisionDraft === undefined ||
       decisionDraft.reason.trim().length === 0 ? null :
       ReviewService.decisionRow(result.id, result.createdAt, decisionDraft,
-        decisionLevelFor(result.level));
+        decisionLevelFor(result.level), result.payload.depth, result.payload.timeBudget);
     this.store.beginTransaction();
     try {
       await this.evidenceItemDao.deleteByTarget('review', result.id);
@@ -422,8 +423,8 @@ export class ReviewService {
 
   /** Builds the single main decision row a review records. */
   private static decisionRow(reviewId: string, createdAt: number, draft: DecisionDraft,
-    level: SecurityLevel): DecisionRecord {
-    return {
+    level: SecurityLevel, depth?: WorkDepth, timeBudget?: number): DecisionRecord {
+    const record: DecisionRecord = {
       id: `${reviewId}_decision`,
       reviewId: reviewId,
       type: draft.type,
@@ -437,6 +438,13 @@ export class ReviewService {
       level: level,
       createdAt: createdAt
     };
+    if (depth !== undefined) {
+      record.depth = depth;
+    }
+    if (timeBudget !== undefined && timeBudget > 0) {
+      record.timeBudget = timeBudget;
+    }
+    return record;
   }
 }
 

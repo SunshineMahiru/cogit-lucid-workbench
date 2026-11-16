@@ -31,6 +31,13 @@ export interface AgentOutcome {
   audited: boolean;
 }
 
+/** Metadata recorded with one request; ids and levels only, never text. */
+export interface AgentAuditMeta {
+  materialIds: string[];
+  levels: string[];
+  removedCount: number;
+}
+
 /** Chooses template, local mock or OpenAI-compatible client from settings. */
 export class ReviewAgent {
   private settings: AppSettings;
@@ -69,7 +76,8 @@ export class ReviewAgent {
   }
 
   async analyze(input: ContradictionInput, now: number = Date.now(),
-    confirmed: boolean = false): Promise<AgentOutcome> {
+    confirmed: boolean = false,
+    meta: AgentAuditMeta = { materialIds: [], levels: [], removedCount: 0 }): Promise<AgentOutcome> {
     const built = buildAnalysisInput(input, this.settings.llmProvider);
     const safeInput = built.input;
     const dropped = built.dropped;
@@ -94,7 +102,7 @@ export class ReviewAgent {
       };
     }
     if (!confirmed) {
-      await this.recordAudit(false, 0, true);
+      await this.recordAudit(false, 0, true, meta);
       return {
         candidates: await this.template.analyze(input, { now: now }),
         provider: 'template',
@@ -132,7 +140,7 @@ export class ReviewAgent {
             .reduce((sum: number, value: number) => sum + value, 0);
           await this.spendStore.record(estimateCostYuan(inputChars, outputChars), now);
         }
-        await this.recordAudit(true, inputChars, false);
+        await this.recordAudit(true, inputChars, false, meta);
         return {
           candidates: candidates,
           provider: this.settings.llmProvider,
@@ -142,7 +150,7 @@ export class ReviewAgent {
           audited: true
         };
       } catch (error) {
-        await this.recordAudit(true, inputChars, true);
+        await this.recordAudit(true, inputChars, true, meta);
         return {
           candidates: await this.template.analyze(input, { now: now }),
           provider: 'template',
@@ -156,7 +164,8 @@ export class ReviewAgent {
   }
 
   /** Records what was sent without storing any material text. */
-  private async recordAudit(confirmed: boolean, chars: number, fellBack: boolean): Promise<void> {
+  private async recordAudit(confirmed: boolean, chars: number, fellBack: boolean,
+    meta: AgentAuditMeta): Promise<void> {
     if (this.auditDao === null) {
       return;
     }
@@ -165,11 +174,12 @@ export class ReviewAgent {
       id: `aud-${Date.now()}-${this.seq}`,
       provider: this.settings.llmProvider,
       host: this.settings.llmBaseUrl,
-      materialIds: [],
-      levels: [],
+      materialIds: meta.materialIds,
+      levels: meta.levels,
       chars: chars,
       confirmed: confirmed,
       fellBack: fellBack,
+      removedCount: meta.removedCount,
       createdAt: Date.now()
     };
     try {

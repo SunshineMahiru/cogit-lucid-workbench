@@ -3,7 +3,7 @@ import { Anchor } from '../model/Anchor';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { AppTheme } from '../theme/AppTheme';
 import { ContradictionCandidate, ContradictionInput } from '../analysis/contradiction/ContradictionAnalyzer';
-import { AgentOutcome, ReviewAgent } from '../review';
+import { AgentAuditMeta, AgentOutcome, ReviewAgent } from '../review';
 import { buildAnalysisInput, filterConfirmedInput } from '../security/RequestBuilder';
 import { AppSettings, defaultAppSettings } from '../settings/AppSettings';
 import { SettingsStore } from '../settings/SettingsStore';
@@ -44,6 +44,7 @@ export struct ReviewAgentPanel {
   @Local confirmVisible: boolean = false;
   @Local confirmItems: ConfirmSheetItem[] = [];
   @Local confirmDropped: number = 0;
+  @Local confirmInitialCount: number = 0;
   @Local confirmProviderLabel: string = '';
   @Local confirmHost: string = '';
   @Local ignoredKeys: string[] = [];
@@ -97,6 +98,7 @@ export struct ReviewAgentPanel {
       return;
     }
     this.confirmItems = items;
+    this.confirmInitialCount = items.length;
     this.confirmDropped = built.dropped.length;
     this.confirmProviderLabel = settings.llmProvider === 'mock' ? '本地模拟' : '模型端点';
     this.confirmHost = settings.llmBaseUrl;
@@ -166,7 +168,12 @@ export struct ReviewAgentPanel {
       return;
     }
     const keepIds = this.confirmItems.map((item: ConfirmSheetItem) => item.id);
-    this.runAnalyze(hostContext, true, filterConfirmedInput(this.buildInput(), keepIds));
+    const meta: AgentAuditMeta = {
+      materialIds: this.confirmItems.map((item: ConfirmSheetItem) => item.id),
+      levels: this.confirmItems.map((item: ConfirmSheetItem) => item.level),
+      removedCount: Math.max(0, this.confirmInitialCount - this.confirmItems.length)
+    };
+    this.runAnalyze(hostContext, true, filterConfirmedInput(this.buildInput(), keepIds), meta);
   }
 
   private cancelSend(): void {
@@ -174,7 +181,8 @@ export struct ReviewAgentPanel {
   }
 
   private async runAnalyze(hostContext: common.Context, confirmed: boolean,
-    input?: ContradictionInput): Promise<void> {
+    input?: ContradictionInput,
+    meta?: AgentAuditMeta): Promise<void> {
     if (this.isLoading) {
       return;
     }
@@ -183,7 +191,7 @@ export struct ReviewAgentPanel {
     this.requested = true;
     try {
       const agent = await ReviewAgent.create(hostContext);
-      const outcome: AgentOutcome = await agent.analyze(input ?? this.buildInput(), Date.now(), confirmed);
+      const outcome: AgentOutcome = await agent.analyze(input ?? this.buildInput(), Date.now(), confirmed, meta);
       this.candidates = outcome.candidates;
       this.ignoredKeys = [];
       this.droppedCount = outcome.dropped.length;
@@ -401,7 +409,7 @@ export struct ReviewAgentPanel {
         if (this.materialRelationInvolved()) {
           if (this.relationInvolvedByMaterial) {
             Text(`关系：${this.relationIdHint}`)
-              .id('agent_relation_id')
+              .id('agent_relation_id_fixed')
               .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.text)
               .width('100%')

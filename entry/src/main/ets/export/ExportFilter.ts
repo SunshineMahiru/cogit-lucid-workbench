@@ -13,7 +13,7 @@ import { StatusRecord } from '../model/StatusRecord';
 import { PlanItem } from '../model/PlanItem';
 import { PlanLink } from '../model/PlanLink';
 import { PlanLinkModule } from '../model/PlanLinkModule';
-import { visibleInExport } from '../relation/InteractionSource';
+import { visibleInExport, isOtherStatement } from '../relation/InteractionSource';
 import * as DeletionPolicy from '../policy/DeletionPolicy';
 import { ExportBundle } from './ExportBundle';
 import { ExportOptions } from './ExportOptions';
@@ -161,17 +161,32 @@ function prepareRelations(relations: Relation[], options: ExportOptions): Relati
     if (keepLevel(relation.level, options, relation.deleted ?? false) && keepRecord(relation.id, options)) {
       const logs: InteractionLog[] = [];
       for (const log of relation.interactionLog) {
-        if (options.includeOtherStatements && visibleInExport(log)) {
-          logs.push(log);
+        const other = isOtherStatement(log);
+        if (other && !(options.includeOtherStatements && visibleInExport(log))) {
+          logs.push({
+            timestamp: log.timestamp,
+            content: '（对方陈述仅保存在本机）',
+            source: 'stated',
+            citation: 'hidden',
+            allowContext: false
+          });
           continue;
         }
-        logs.push({
-          timestamp: log.timestamp,
-          content: '（对方陈述仅保存在本机）',
-          source: 'stated',
-          citation: 'hidden',
-          allowContext: false
-        });
+        const level = log.level ?? relation.level;
+        if (level === SecurityLevel.SEALED) {
+          continue;
+        }
+        if (level === SecurityLevel.LOCAL_ONLY && !options.includeLocalOnly) {
+          logs.push({
+            timestamp: log.timestamp,
+            content: '（仅本地记录）',
+            source: log.source ?? 'observation',
+            citation: 'hidden',
+            allowContext: false
+          });
+          continue;
+        }
+        logs.push(log);
       }
       items.push({
         id: relation.id,
