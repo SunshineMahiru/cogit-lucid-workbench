@@ -130,10 +130,10 @@ export class ReviewService {
     result.period = period;
     result.rangeLabel = rangeLabel;
     result.payload = draft.payload ?? emptyReviewPayload();
-    // Quoted materials ride with the payload so history and export can resolve them later.
-    result.payload.materialIds = (draft.materialIds ?? []).slice();
+    const materialIds = uniqueStrings(draft.materialIds ?? []);
     const decisionIds = uniqueStrings(result.payload.decisionIds ?? []);
-    result.payload.decisionIds = decisionIds;
+    result.payload.materialIds = [];
+    result.payload.decisionIds = [];
     if (hasAnyZone(result.payload)) {
       // Zone content is the source of truth for new sessions; the four legacy columns mirror it
       // so history rows and Markdown export keep reading something meaningful.
@@ -154,7 +154,6 @@ export class ReviewService {
     if (planNodeId.length > 0) {
       result.planNodeId = planNodeId;
     }
-    const citedIds = (draft.materialIds ?? []).slice();
     const evidenceDrafts = result.payload.evidenceDrafts ?? [];
     const costDrafts = result.payload.costDrafts ?? [];
     const evidenceLevel: SecurityLevel = result.level ?? SecurityLevel.LOCAL_ONLY;
@@ -167,8 +166,8 @@ export class ReviewService {
       for (const decisionId of decisionIds) {
         await this.reviewDecisionDao.insert(result.id, decisionId);
       }
-      const sources = await this.loadMaterialSources(citedIds);
-      const rows = ReviewService.withSceneZone(buildRows(result.id, result.createdAt, citedIds,
+      const sources = await this.loadMaterialSources(materialIds);
+      const rows = ReviewService.withSceneZone(buildRows(result.id, result.createdAt, materialIds,
         (id: string) => sources.get(id) ?? null));
       for (const row of rows) {
         await this.reviewMaterialDao.insert(row);

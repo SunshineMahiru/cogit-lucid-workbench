@@ -1185,14 +1185,25 @@ async function main() {
     assert.deepStrictEqual(ids, ['dc_1', 'dc_2']);
   });
 
-  await test('旧复盘只有 payload 决定引用时 decisions 回退读取', async () => {
+  await test('复盘保存把引用编号写进关联表并从 payload 清空', async () => {
     reset();
+    const noteDraft = createFreeformNoteDraft();
+    noteDraft.content = 'MARKER_LINK_ONE';
+    noteDraft.materials = [
+      { kind: 'scene', text: 'MARKER_LINK_ONE', source: 'reading' },
+      { kind: 'scene', text: 'MARKER_LINK_TWO', source: 'practice' }
+    ];
+    await service.save(noteDraft);
+    const materialIds = store.rows('experience_material').map((row) => row.id);
+    assert.strictEqual(materialIds.length, 2);
+
     const reviewService = await ReviewService.open({});
     const reviewId = await reviewService.save('week', {
       facts: '',
       interpretation: '',
       contradiction: '',
       action: '',
+      materialIds: materialIds,
       payload: {
         scene: '只写了现场',
         model: '',
@@ -1200,13 +1211,31 @@ async function main() {
         evidence: '',
         cost: '',
         revision: '',
-        decisionIds: ['dc_legacy_1', 'dc_legacy_2']
+        decisionIds: ['dc_1', 'dc_2']
       },
       anchorIds: []
     }, '11-09 ~ 11-15');
-    store.rows('review_decision').length = 0;
 
-    const ids = await reviewService.decisions(reviewId);
+    const stored = JSON.parse(store.rows('review_result')[0].payload);
+    assert.deepStrictEqual(stored.materialIds, []);
+    assert.deepStrictEqual(stored.decisionIds, []);
+    assert.strictEqual(store.rows('review_material').length, 2);
+    assert.strictEqual(store.rows('review_decision').length, 2);
+
+    const snapshots = await reviewService.materials(reviewId);
+    assert.deepStrictEqual(snapshots.map((row) => row.materialId).sort(), materialIds.slice().sort());
+    assert.deepStrictEqual(await reviewService.decisions(reviewId), ['dc_1', 'dc_2']);
+  });
+
+  await test('旧复盘只有 payload 决定引用时 decisions 回退读取', async () => {
+    reset();
+    store.rows('review_result').push({
+      id: 'rv_legacy_decision',
+      payload: JSON.stringify({ decisionIds: ['dc_legacy_1', 'dc_legacy_2'] })
+    });
+
+    const reviewService = await ReviewService.open({});
+    const ids = await reviewService.decisions('rv_legacy_decision');
     assert.deepStrictEqual(ids, ['dc_legacy_1', 'dc_legacy_2']);
   });
 
