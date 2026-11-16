@@ -917,6 +917,7 @@ test('预测草稿校验覆盖必填、置信度与日期', () => {
     judgment: '本周日均睡眠达到 7 小时',
     confidence: 70,
     reason: '',
+    falsification: '若日均睡眠低于 6 小时',
     settlementDate: '2026-10-30'
   };
   assert.strictEqual(hasPredictionErrors(validatePredictionDraft(valid, now)), false);
@@ -926,12 +927,14 @@ test('预测草稿校验覆盖必填、置信度与日期', () => {
     judgment: '',
     confidence: -1,
     reason: '',
+    falsification: '',
     settlementDate: '2026-10-20'
   }, now);
   assert.ok(invalid.target.length > 0);
   assert.ok(invalid.judgment.length > 0);
   assert.ok(invalid.confidence.length > 0);
   assert.ok(invalid.settlementDate.length > 0);
+  assert.ok(invalid.falsification.length > 0);
 
   assert.strictEqual(todayDateString(now), '2026-10-27');
   assert.strictEqual(dateAfterDays(now, 7), '2026-11-03');

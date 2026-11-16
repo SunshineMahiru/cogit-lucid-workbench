@@ -29,6 +29,7 @@ export interface PredictionDraftErrors {
   judgment: string;
   confidence: string;
   settlementDate: string;
+  falsification: string;
 }
 
 export const MAX_TARGET_LENGTH = 40;
@@ -44,7 +45,8 @@ export function validatePredictionDraft(draft: PredictionDraft, now: number = Da
     target: '',
     judgment: '',
     confidence: '',
-    settlementDate: ''
+    settlementDate: '',
+    falsification: ''
   };
 
   if (target.length === 0) {
@@ -64,6 +66,10 @@ export function validatePredictionDraft(draft: PredictionDraft, now: number = Da
     errors.confidence = '置信度需在 0–100 之间，或选择无法量化';
   }
 
+  if ((draft.falsification ?? '').trim().length === 0) {
+    errors.falsification = '请填写失效条件：出现什么情况就说明这条预测不成立';
+  }
+
   if (settlementDate.length > 0) {
     if (!isValidDate(settlementDate)) {
       errors.settlementDate = '日期格式应为 YYYY-MM-DD';
@@ -78,7 +84,8 @@ export function validatePredictionDraft(draft: PredictionDraft, now: number = Da
 /** True when at least one field has an error. */
 export function hasPredictionErrors(errors: PredictionDraftErrors): boolean {
   return errors.target.length > 0 || errors.judgment.length > 0 ||
-    errors.confidence.length > 0 || errors.settlementDate.length > 0;
+    errors.confidence.length > 0 || errors.settlementDate.length > 0 ||
+    errors.falsification.length > 0;
 }
 
 /** Today as YYYY-MM-DD in local time. */

@@ -34,7 +34,8 @@ export struct PredictionCreatePage {
     target: '',
     judgment: '',
     confidence: '',
-    settlementDate: ''
+    settlementDate: '',
+    falsification: ''
   };
   @Local isSaving: boolean = false;
   @Local isDirty: boolean = false;
@@ -92,7 +93,8 @@ export struct PredictionCreatePage {
     this.settlementDate = dateAfterDays(Date.now(), days);
     this.isDirty = true;
     this.errors = { target: this.errors.target, judgment: this.errors.judgment,
-      confidence: this.errors.confidence, settlementDate: '' };
+      confidence: this.errors.confidence, settlementDate: '',
+      falsification: this.errors.falsification };
   }
 
   /** Toggles the unquantified state; the numeric value stays so switching back restores it. */
@@ -127,7 +129,8 @@ export struct PredictionCreatePage {
     if (hasPredictionErrors(errors)) {
       const first = errors.target.length > 0 ? errors.target :
         (errors.judgment.length > 0 ? errors.judgment :
-          (errors.confidence.length > 0 ? errors.confidence : errors.settlementDate));
+          (errors.confidence.length > 0 ? errors.confidence :
+            (errors.settlementDate.length > 0 ? errors.settlementDate : errors.falsification)));
       this.getUIContext().getPromptAction().showToast({ message: first });
       return;
     }

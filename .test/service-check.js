@@ -1009,6 +1009,7 @@ async function main() {
       judgment: '本周日均睡眠达到 7 小时',
       confidence: 70,
       reason: '已调整晚间安排',
+      falsification: '若日均睡眠低于 6 小时',
       settlementDate: '2026-10-27'
     }, now);
     assert.strictEqual(created.status, 'pending');
@@ -1020,6 +1021,7 @@ async function main() {
       judgment: '下月日均睡眠达到 7 小时',
       confidence: 60,
       reason: '',
+      falsification: '若日均睡眠低于 6 小时',
       settlementDate: '2026-11-03'
     }, now);
     await assert.rejects(async () => {
@@ -1032,7 +1034,18 @@ async function main() {
         judgment: '',
         confidence: 0,
         reason: '',
+        falsification: '',
         settlementDate: '2026-10-01'
+      }, now);
+    });
+
+    await assert.rejects(async () => {
+      await predictionService.create({
+        target: '没有失效条件',
+        judgment: '下周达成',
+        confidence: 50,
+        reason: '',
+        settlementDate: '2026-11-03'
       }, now);
     });
 
@@ -1793,6 +1806,7 @@ async function main() {
       judgment: '本周日均睡眠达到 7 小时',
       confidence: 70,
       reason: '初版',
+      falsification: '若日均睡眠低于 6 小时',
       settlementDate: '2026-11-03'
     }, now);
 
@@ -1801,6 +1815,7 @@ async function main() {
       judgment: '本周日均睡眠达到 7 小时',
       confidence: 80,
       reason: '补充理由',
+      falsification: '若日均睡眠低于 6 小时',
       settlementDate: '2026-11-03',
       revisionReason: '初版把原因归到睡眠',
       invalidated: '睡眠决定状态',
@@ -1819,6 +1834,7 @@ async function main() {
       judgment: '本周日均睡眠达到 7 小时',
       confidence: 90,
       reason: '',
+      falsification: '若日均睡眠低于 6 小时',
       settlementDate: '2026-11-03',
       revisionReason: '置信度再抬高'
     }, now + 2000);
@@ -1862,6 +1878,7 @@ async function main() {
       judgment: '达成',
       confidence: 70,
       reason: '',
+      falsification: '若未达成',
       settlementDate: '2026-10-27'
     }, now);
     await predictionService.settle(hit.id, '达成', 'hold', '', now);
@@ -1870,6 +1887,7 @@ async function main() {
       judgment: '达成',
       confidence: 60,
       reason: '',
+      falsification: '若未达成',
       settlementDate: '2026-10-27'
     }, now);
     await predictionService.settle(miss.id, '未达成', 'fail', '', now);
@@ -1878,6 +1896,7 @@ async function main() {
       judgment: '达成',
       confidence: 60,
       reason: '',
+      falsification: '若未达成',
       settlementDate: '2026-11-10'
     }, now);
 
@@ -1896,6 +1915,7 @@ async function main() {
       judgment: '达成',
       confidence: 50,
       reason: '',
+      falsification: '若未达成',
       settlementDate: '2026-10-27'
     }, now);
     await predictionService.settle(partial.id, '部分达成', 'partial', '', now);
