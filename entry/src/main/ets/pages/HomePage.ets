@@ -5,7 +5,7 @@ import { AppDestination } from '../components/AppDestination';
 import { DashboardView } from '../views/DashboardView';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { HomeDataService } from '../data/HomeDataService';
-import { HomePulse, HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
+import { HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 import { appHealth, isDatabaseUnsupported } from '../app/AppHealth';
 import { consumeJsonIssues } from '../db/SafeJson';
@@ -24,7 +24,6 @@ export struct HomePage {
     hitRate: 0, unreviewedDecisions: 0, totalAnchors: 0, totalRelations: 0,
     duePredictions: 0, revisionPredictions: 0, closedNodeReviews: 0, pendingDecisions: 0
   };
-  @Local pulse: HomePulse = { streakDays: 0, lastReviewLabel: NO_RATE_TEXT };
   @Local loadFailed: boolean = false;
   @Local isPreview: boolean = false;
   @Local dataNotice: string = '';
@@ -69,12 +68,7 @@ export struct HomePage {
       if (token !== this.loadToken) {
         return;
       }
-      const pulse = await this.service.loadPulse();
-      if (token !== this.loadToken) {
-        return;
-      }
       this.summary = summary;
-      this.pulse = pulse;
       this.dataNotice = consumeJsonIssues() > 0 ? '部分记录格式异常，已跳过' : '';
       this.encryptionNotice = (DbHelper.usesPlaintextFallback() || DebugFaults.encryptionFallback(context)) ?
         '数据库未能加密，记录以明文保存在本机；建议更新系统或重装应用' : '';
@@ -104,7 +98,6 @@ export struct HomePage {
 
   private loadPreview(): void {
     this.summary = previewStore.homeSummary();
-    this.pulse = previewStore.homePulse();
     this.isPreview = true;
     this.dbBlocked = false;
     this.loadFailed = false;

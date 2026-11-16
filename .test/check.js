@@ -1389,6 +1389,15 @@ test('审计接线写入编号密级与剔除数', () => {
   assert.ok(panel.includes('removedCount: Math.max(0, this.confirmInitialCount - this.confirmItems.length)'));
 });
 
+test('首页不再计算连续记录天数', () => {
+  const home = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
+  const data = fs.readFileSync('entry/src/main/ets/data/HomeDataService.ts', 'utf8');
+  const preview = fs.readFileSync('entry/src/main/ets/preview/PreviewStore.ts', 'utf8');
+  assert.strictEqual(home.includes('streakDays'), false);
+  assert.strictEqual(data.includes('streakDays'), false);
+  assert.strictEqual(preview.includes('streakDays'), false);
+});
+
 test('公共分享副本默认剥离锚点理由', () => {
   const service = fs.readFileSync('entry/src/main/ets/export/ExportService.ts', 'utf8');
   const settings = fs.readFileSync('entry/src/main/ets/pages/SettingsPage.ets', 'utf8');

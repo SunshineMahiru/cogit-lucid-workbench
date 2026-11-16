@@ -1,7 +1,7 @@
 import { MOCK_EVENTS, MOCK_PREDICTIONS } from '../model/mockData';
 import { CostDraft } from '../model/CostNote';
 import { EvidenceDraft } from '../model/EvidenceItem';
-import { BodyReading, HomePulse, HomeSummary, NO_RATE_TEXT, PredictionItem } from '../model/HomeModel';
+import { BodyReading, HomeSummary, PredictionItem } from '../model/HomeModel';
 import { DecisionDraft, DecisionRecord } from '../model/DecisionRecord';
 import { Event } from '../model/Event';
 import { Prediction } from '../model/Prediction';
@@ -178,28 +178,6 @@ class PreviewStore {
       totalRelations: 3,
       pendingDecisions: pendingDecisions
     };
-  }
-
-  homePulse(): HomePulse {
-    const days: string[] = [];
-    for (const note of this.notes) {
-      const day = formatDay(new Date(note.timestamp));
-      if (!days.includes(day)) {
-        days.push(day);
-      }
-    }
-    let streakDays = 0;
-    const cursor = new Date();
-    if (!days.includes(formatDay(cursor))) {
-      cursor.setDate(cursor.getDate() - 1);
-    }
-    while (days.includes(formatDay(cursor))) {
-      streakDays += 1;
-      cursor.setDate(cursor.getDate() - 1);
-    }
-    const lastReviewLabel = this.reviews.length > 0 ?
-      formatMonthDay(new Date(this.reviews[0].createdAt)) : NO_RATE_TEXT;
-    return { streakDays: streakDays, lastReviewLabel: lastReviewLabel };
   }
 
   pendingPredictions(): PredictionItem[] {
@@ -454,12 +432,6 @@ function normalizeTags(tags: string[]): string[] {
     }
   }
   return values;
-}
-
-function formatMonthDay(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${month}-${day}`;
 }
 
 function formatDay(date: Date): string {
