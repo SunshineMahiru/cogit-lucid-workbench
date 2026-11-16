@@ -53,7 +53,7 @@ export function prepareExportBundle(bundle: ExportBundle,
     costNotes: prepareCosts(bundle.costNotes ?? [], reviewIds),
     materials: prepareMaterials(bundle.materials ?? [], events, options),
     plans: preparePlans(bundle.plans ?? [], sealedKeys, options),
-    decisionRecords: prepareDecisionRecords(bundle.decisionRecords ?? []),
+    decisionRecords: prepareDecisionRecords(bundle.decisionRecords ?? [], options),
     exportedAt: bundle.exportedAt
   };
 }
@@ -250,10 +250,10 @@ function prepareCosts(notes: CostNote[], reviewIds: string[]): CostNote[] {
 }
 
 /** Drops sealed decisions; the rest keep the reviewing order. */
-function prepareDecisionRecords(records: DecisionRecord[]): DecisionRecord[] {
+function prepareDecisionRecords(records: DecisionRecord[], options: ExportOptions): DecisionRecord[] {
   const items: DecisionRecord[] = [];
   for (const record of records) {
-    if (isExportable(record.level)) {
+    if (keepLevel(record.level, options)) {
       items.push(record);
     }
   }

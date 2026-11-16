@@ -699,6 +699,26 @@ async function main() {
     assert.ok(source.includes('已封存'));
   });
 
+  await test('仅本地决定默认不导出', () => {
+    const input = bundle({ decisionRecords: [decisionRecord()] });
+    const omitted = prepareExportBundle(input, {
+      includeLocalOnly: false, includeOtherStatements: false, includeDemoRecords: false
+    });
+    assert.strictEqual(omitted.decisionRecords.length, 0);
+    const kept = prepareExportBundle(input, {
+      includeLocalOnly: true, includeOtherStatements: false, includeDemoRecords: false
+    });
+    assert.strictEqual(kept.decisionRecords.length, 1);
+  });
+
+  await test('封存或删除锚点用占位而不打印 id', () => {
+    const markdown = renderExportDocument(bundle({
+      reviews: [review({ anchorIds: ['an_missing'] })]
+    }));
+    assert.ok(markdown.includes('（已封存或已删除的锚点）'));
+    assert.strictEqual(markdown.includes('an_missing'), false);
+  });
+
   await test('文档头部列出时间、总数与密级说明', () => {
     const markdown = renderExportDocument(bundle());
     assert.ok(markdown.startsWith('# 元认知外化工作台 · 数据导出'));

@@ -151,7 +151,7 @@ function anchorText(ids: string[], anchors: Anchor[]): string {
   const texts: string[] = [];
   for (const id of ids) {
     const anchor = anchors.find((item: Anchor) => item.id === id);
-    texts.push(anchor !== undefined ? inlineText(anchor.text) : id);
+    texts.push(anchor !== undefined ? inlineText(anchor.text) : '（已封存或已删除的锚点）');
   }
   return texts.join('；');
 }
