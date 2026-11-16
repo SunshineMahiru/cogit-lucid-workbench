@@ -31,11 +31,11 @@ Three choices set it apart from a journal:
 
 The interface is Chinese only. The in-app name lives in `entry/src/main/ets/theme/AppIdentity.ts`, the launcher label in `AppScope/resources/base/element/string.json`.
 
-The home page opens with the identity band (avatar, nickname, signature, custom title) and four counters: notes today, pending settlements, consecutive record days, and the latest review. Readings, the weekly card, the plan card, and the six-module grid follow. The `数据看板` button under the counters opens the analytics page.
+The home page opens with the identity band (avatar, nickname, signature, custom title) and four quick entries: record now, todo, current plan, and all modules. The todo card carries total notes, pending settlements, and hit rate at its top. Readings, the weekly card, the plan card, and the six-module grid follow; the `示例数据看板（远端合成）` entry sits after the grid.
 
 ## Project status
 
-The build covers six record modules — notes, predictions and settlement, four-step reviews with an optional agent, relations, anchors, and status readings — plus plans that organise them: a goal, optional projects, seven-day nodes, and a checklist. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over line, and a split of linked records by module. Settings carry page backgrounds and surface opacity, Markdown export writes the whole record set, backup and restore hand a `.cogitbackup` file to the system save dialog, and the analytics dashboard renders a remote sample payload with twelve months of detail.
+The build covers six record modules — notes, predictions and settlement, six-zone reviews with an optional agent, relations, anchors, and status readings — plus plans that organise them: a goal, optional projects, seven-day nodes, and a checklist. Reviews record one main decision with reason, optional action, commitment, relation, and look-back date; old four-step reviews stay read-only. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over line, and a split of linked records by module. Settings carry page backgrounds and surface opacity, Markdown export writes the chosen record set, backup and restore hand a `.cogitbackup` file to the system save dialog, and the analytics dashboard renders a remote sample payload with twelve months of detail.
 
 Records live in an encrypted `relationalStore` database (twelve tables). If the store cannot be opened on a device, the home page shows a blocking view with retry and exit instead of writing plaintext; only runs without `relationalStore` — the DevEco Previewer reports code 801 — fall back to the in-memory demo data, and the counters are labelled as demo content.
 
@@ -57,7 +57,7 @@ The app is one module, targets `targetSdkVersion` 26.0.0 with a minimum of 6.1.1
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
 | Markdown export | Eight record groups render into one Markdown file, written to the sandbox first and then handed to the system save dialog; plan links to sealed records print a placeholder instead of their titles. |
 | Backup and restore | Rows, identity, settings and background pictures travel in one `.cogitbackup`; sealed records stay on the device, the current database is copied aside before a restore, and the API key never enters the bundle. |
-| Home identity band | Avatar, nickname, signature, and a hand-written title sit above four counters: notes today, pending settlements, record streak, and the latest review. |
+| Home identity band | Avatar, nickname, signature, and a hand-written title sit above four quick entries: record now, todo, current plan, and all modules; the todo card carries total notes, pending settlements, and hit rate. |
 | Backgrounds and page opacity | One default picture or one per module, from the gallery, the camera, or the file picker. Picture strength runs 4-30% and the page surface itself takes 0-60% transparency, so the setting works with or without a picture. |
 
 ## Architecture
@@ -95,9 +95,9 @@ flowchart TB
 
 ## Usage Example
 
-The home page opens with the identity band and four counters; today's readings, a weekly settlement or onboarding card, the plan card, and the grid of six modules follow below. `编辑` and `设置` sit on the right of the identity band.
+The home page opens with the identity band and four quick entries; today's readings, a weekly settlement or onboarding card, the plan card, and the grid of six modules follow below, with the sample-data dashboard entry after the grid. `编辑` and `设置` sit on the right of the identity band.
 
-<img src="./docs/images/debug/home.jpeg" width="300" alt="Upper half of the home page: the identity band, four counters, the dashboard button, the readings card, the weekly settlement card marked reviewed and the plan card">
+<img src="./docs/images/debug/home.jpeg" width="300" alt="Upper half of the home page: the identity band, four quick entries, the readings card, the weekly settlement card marked reviewed and the plan card">
 
 ### Set your identity
 
@@ -120,7 +120,7 @@ Expected result: after two or three settled predictions the statistics page draw
 
 ### Open the analytics dashboard
 
-1. On the home page, tap `数据看板` under the four counters.
+1. On the home page, scroll past the module grid and tap `示例数据看板（远端合成）`.
 2. The page requests `stats-12m.json` from `docs/mock/` in the public repository and draws ten charts: monthly hit rate, calibration curve, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. It does not read local records.
 3. Pick a month chip; the header and every chart switch to that month's detail. Tap `刷新` to request the payload again.
 4. If both the Gitee and GitHub requests fail, the page keeps the error message and a retry action.
@@ -165,7 +165,7 @@ Captured on a Mate 70 Pro emulator from the current build, in dark mode. Every r
 
 | Home | Analytics, current month |
 |---|---|
-| <img src="./docs/images/debug/home.jpeg" width="300" alt="Home page with the identity band, four counters (two notes today, one pending prediction, a one-day streak, last review on 11-13), the readings card, the weekly settlement marked reviewed, the current goal 验收计划1109 at week 1, and this period's prompts"> | <img src="./docs/images/debug/analytics-month.jpeg" width="300" alt="Top of the analytics dashboard: remote payload timestamp, month chips with the current month highlighted, the monthly hit-rate line and the calibration curve"> |
+| <img src="./docs/images/debug/home.jpeg" width="300" alt="Home page with the identity band, four quick entries, the todo card summary, the readings card, the weekly settlement marked reviewed, the current goal 验收计划1109 at week 1, and this period's prompts"> | <img src="./docs/images/debug/analytics-month.jpeg" width="300" alt="Top of the analytics dashboard: remote payload timestamp, month chips with the current month highlighted, the monthly hit-rate line and the calibration curve"> |
 | **Analytics, mid-page** | **Analytics, lower section** |
 | <img src="./docs/images/debug/analytics-mid.jpeg" width="300" alt="Middle of the analytics dashboard: the outcome donut at 38 percent and the confidence distribution bars"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the dashboard: interaction bars and the reading coverage heatmap with weekday labels and a light-to-dark legend"> |
 | **Goal detail** | **Review detail** |
@@ -291,7 +291,7 @@ Opacity needs no picture: it lowers the alpha of the page surface itself. The wi
 | Fields | Nickname up to 12 characters, signature 24, title 8; an empty nickname or title falls back to `记录者` / `未命名` |
 | Avatar | Gallery, camera, or the file picker; centre-cropped to a 320×320 PNG in `${filesDir}/profile`; replacing it deletes the previous file |
 | Storage | Preferences store `cogit_profile`; none of the fields is secret |
-| Refresh | Settings → `数据管理` → `刷新首页数据` re-reads the four counters |
+| Refresh | Settings → `数据管理` → `刷新首页数据` re-reads the summary, todo card, and readings |
 
 ### Review agent modes
 
