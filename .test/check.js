@@ -1351,10 +1351,10 @@ test('建表语句包含迁移新增的列', () => {
 });
 
 test('首页待校正保留四行与待回看', () => {
-  const source = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
-  const rows = source.split('this.todoRow(').length - 1;
+  const source = fs.readFileSync('entry/src/main/ets/views/DashboardView.ets', 'utf8');
+  const rows = source.split('this.todoLine(').length - 1;
   assert.strictEqual(rows, 4, `待校正行数为 ${rows}，应为 4`);
-  assert.ok(source.includes('home_todo_decisions'));
+  assert.ok(source.includes('home_todo_quiet'));
   assert.ok(source.includes('待回看决定'));
 });
 
@@ -1416,11 +1416,12 @@ test('涉及他人时要求关系与分析边界', () => {
   assert.ok(source.includes('不会调用模型'));
 });
 
-test('汇总并入待校正卡', () => {
+test('首屏以书写主卡承载汇总', () => {
   const home = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
   const dashboard = fs.readFileSync('entry/src/main/ets/views/DashboardView.ets', 'utf8');
-  assert.ok(home.includes('home_todo_summary'));
-  assert.ok(home.includes('总速记 ${this.summary.totalNotes}'));
+  assert.ok(dashboard.includes('home_write_hero'));
+  assert.ok(dashboard.includes('今天 ${this.summary.todayNotes} 条'));
+  assert.strictEqual(home.includes('总速记'), false);
   assert.strictEqual(dashboard.includes('总速记'), false);
 });
 

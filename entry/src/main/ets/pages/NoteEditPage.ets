@@ -158,14 +158,14 @@ export struct NoteEditPage {
     this.errors = [];
   }
 
-  /** Depth selected in the editor; an absent value reads as NORMAL. */
+  /** Depth selected in the editor; a fresh capture starts at the quick tier. */
   private currentDepth(): NoteDepth {
-    return this.draft.depth ?? NoteDepth.NORMAL;
+    return this.draft.depth ?? NoteDepth.QUICK;
   }
 
-  /** Stored depth text mapped back to the editor scale; absent or unknown reads as NORMAL. */
+  /** Stored depth text mapped back to the editor scale; absent reads as quick. */
   private depthFromText(text: string | undefined): NoteDepth {
-    if (text === NoteDepth.QUICK) {
+    if (text === NoteDepth.QUICK || text === undefined) {
       return NoteDepth.QUICK;
     }
     if (text === NoteDepth.DEEP) {

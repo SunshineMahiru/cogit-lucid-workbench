@@ -71,6 +71,7 @@ export struct ReviewForm {
   @Local costDrafts: CostDraft[] = [];
   @Local costRevision: number = 0;
   @Local step: number = 0;
+  @Local promptVisible: boolean = true;
   @Local facts: string = '';
   @Local interpretation: string = '';
   @Local contradiction: string = '';
@@ -125,7 +126,7 @@ export struct ReviewForm {
       this.draftStore = await ReviewDraftStore.open(hostContext);
       this.stats = await this.service.loadStats(this.period);
       this.anchors = await this.service.loadAnchors(3);
-      this.selectedAnchorIds = this.anchors.map((anchor: Anchor) => anchor.id);
+      this.selectedAnchorIds = [];
       this.syncAnchorCitations();
       this.materials = await this.service.recentMaterials(50);
       try {
@@ -660,9 +661,9 @@ export struct ReviewForm {
       this.getUIContext().getPromptAction().showToast({ message: decisionError });
       return;
     }
-    if (!hasAnyZone(this.currentPayload())) {
+    if (!hasAnyZone(this.currentPayload()) && this.selectedMaterialIds.length === 0) {
       this.step = 0;
-      this.getUIContext().getPromptAction().showToast({ message: '先写一句现场，或填任意一区' });
+      this.getUIContext().getPromptAction().showToast({ message: '先写一句现场，或引用一条材料' });
       return;
     }
     if (this.isPreview) {
@@ -1467,8 +1468,13 @@ export struct ReviewForm {
 
             this.zoneTabs()
 
-            if (this.step === 0) {
-              ReviewPromptPanel({ period: this.period })
+            if (this.step === 0 && this.promptVisible) {
+              ReviewPromptPanel({
+                period: this.period,
+                onDismiss: () => {
+                  this.promptVisible = false;
+                }
+              })
             }
 
             Text(`${this.step + 1}. ${ZONE_LABELS[this.step]}`)
@@ -1639,34 +1645,43 @@ export struct ReviewForm {
 
         Row({ space: 12 }) {
           if (this.step > 0) {
-            Text('上一步')
+            Text('上一区')
               .fontSize(AppTheme.font.subtitle)
               .fontColor(AppTheme.color.textSecondaryStrong)
               .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
               .backgroundColor(AppTheme.color.chip)
-              .borderRadius(AppTheme.radius.md)
+              .borderRadius(20)
               .onClick(() => {
                 this.step -= 1;
               })
           }
           Blank()
-          Text(this.step < LAST_ZONE ? '下一步' : '完成复盘')
+          if (this.step < LAST_ZONE) {
+            Text('下一区')
+              .fontSize(AppTheme.font.subtitle)
+              .fontColor(AppTheme.color.primary)
+              .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
+              .backgroundColor(AppTheme.color.tint)
+              .borderRadius(20)
+              .onClick(() => {
+                this.step += 1;
+              })
+          }
+          Text('保存复盘')
+            .id('review_save')
             .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
             .padding({ left: AppTheme.spacing.s24, right: AppTheme.spacing.s24, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
             .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
-            .borderRadius(AppTheme.radius.md)
-            .accessibilityText(this.step < LAST_ZONE ? '进入下一步' : '完成复盘')
+            .borderRadius(20)
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+            .accessibilityText('保存复盘')
             .onClick(() => {
               if (this.isSaving) {
                 return;
               }
-              if (this.step < LAST_ZONE) {
-                this.step += 1;
-              } else {
-                this.complete();
-              }
+              this.complete();
             })
         }
         .width('100%')
