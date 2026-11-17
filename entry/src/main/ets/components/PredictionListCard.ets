@@ -82,7 +82,9 @@ export struct PredictionListCard {
     .width('100%')
     .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(AppTheme.radius.md)
+    .borderRadius(16)
+    .border({ width: 0.5, color: AppTheme.color.border })
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
     .onClick(() => {
       this.onTap();
     })
