@@ -544,16 +544,21 @@ export struct ReviewDetailPage {
                   .fontColor(AppTheme.color.warning)
                   .width('100%')
                 if (this.detail.planNodeId !== undefined) {
-                  Text('返回计划节点 ›')
-                    .fontSize(AppTheme.font.body)
-                    .fontColor(AppTheme.color.primary)
-                    .width('100%')
-                    .onClick(() => {
-                      if (this.navStack !== null && this.detail.planNodeId !== undefined) {
-                        const params: PlanNodeParams = { nodeId: this.detail.planNodeId };
-                        this.navStack.pushPathByName(ROUTES.PLAN_NODE, params);
-                      }
-                    })
+                  Row({ space: 4 }) {
+                    Text('返回计划节点')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.primary)
+                    SymbolGlyph($r('sys.symbol.chevron_forward'))
+                      .fontSize(14)
+                      .fontColor([AppTheme.color.primary])
+                  }
+                  .width('100%')
+                  .onClick(() => {
+                    if (this.navStack !== null && this.detail.planNodeId !== undefined) {
+                      const params: PlanNodeParams = { nodeId: this.detail.planNodeId };
+                      this.navStack.pushPathByName(ROUTES.PLAN_NODE, params);
+                    }
+                  })
                 }
               }
               .width('100%')

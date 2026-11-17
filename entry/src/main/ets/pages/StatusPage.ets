@@ -481,13 +481,18 @@ export struct StatusPage {
                       .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                     Blank()
-                    Text('设置 ›')
-                      .fontSize(AppTheme.font.body)
-                      .fontColor(AppTheme.color.primary)
-                      .id('status_rule_entry')
-                      .onClick(() => {
-                        this.openRule();
-                      })
+                    Row({ space: 4 }) {
+                      Text('设置')
+                        .fontSize(AppTheme.font.body)
+                        .fontColor(AppTheme.color.primary)
+                      SymbolGlyph($r('sys.symbol.chevron_forward'))
+                        .fontSize(14)
+                        .fontColor([AppTheme.color.primary])
+                    }
+                    .id('status_rule_entry')
+                    .onClick(() => {
+                      this.openRule();
+                    })
                   }
                   .width('100%')
                   Text(`睡眠低于 ${this.rule.sleepMinHours} 小时、报警达到 ${this.rule.alertWarnCount} 次时给提示；${this.rule.hintsEnabled ? '提示已开启' : '提示已关闭'}`)
@@ -531,12 +536,17 @@ export struct StatusPage {
                       .fontSize(AppTheme.font.body)
                       .fontColor(AppTheme.color.textSecondary)
                     Blank()
-                    Text('全部记录 ›')
-                      .fontSize(AppTheme.font.body)
-                      .fontColor(AppTheme.color.primary)
-                      .onClick(() => {
-                        this.openHistory();
-                      })
+                    Row({ space: 4 }) {
+                      Text('全部记录')
+                        .fontSize(AppTheme.font.body)
+                        .fontColor(AppTheme.color.primary)
+                      SymbolGlyph($r('sys.symbol.chevron_forward'))
+                        .fontSize(14)
+                        .fontColor([AppTheme.color.primary])
+                    }
+                    .onClick(() => {
+                      this.openHistory();
+                    })
                   }
                   .width('100%')
 

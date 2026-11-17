@@ -1427,12 +1427,17 @@ export struct ReviewForm {
             .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
           Blank()
-          Text('返回节点 ›')
-            .fontSize(AppTheme.font.body)
-            .fontColor(AppTheme.color.primary)
-            .onClick(() => {
-              this.onBackToPlan();
-            })
+          Row({ space: 4 }) {
+            Text('返回节点')
+              .fontSize(AppTheme.font.body)
+              .fontColor(AppTheme.color.primary)
+            SymbolGlyph($r('sys.symbol.chevron_forward'))
+              .fontSize(14)
+              .fontColor([AppTheme.color.primary])
+          }
+          .onClick(() => {
+            this.onBackToPlan();
+          })
         }
         .width('100%')
         .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })

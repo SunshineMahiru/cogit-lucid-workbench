@@ -16,12 +16,12 @@ export struct PlanMonthView {
   build() {
     Column({ space: 8 }) {
       Row({ space: 8 }) {
-        Text('‹')
-          .fontSize(AppTheme.font.title)
-          .fontColor(AppTheme.color.primary)
+        SymbolGlyph($r('sys.symbol.chevron_forward'))
+          .fontSize(14)
+          .fontColor([AppTheme.color.primary])
+          .rotate({ angle: 180 })
           .width(28)
           .height(24)
-          .textAlign(TextAlign.Center)
           .onClick(() => {
             this.onPrev();
           })
@@ -30,12 +30,11 @@ export struct PlanMonthView {
           .fontColor(AppTheme.color.textSecondary)
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
-        Text('›')
-          .fontSize(AppTheme.font.title)
-          .fontColor(AppTheme.color.primary)
+        SymbolGlyph($r('sys.symbol.chevron_forward'))
+          .fontSize(14)
+          .fontColor([AppTheme.color.primary])
           .width(28)
           .height(24)
-          .textAlign(TextAlign.Center)
           .onClick(() => {
             this.onNext();
           })

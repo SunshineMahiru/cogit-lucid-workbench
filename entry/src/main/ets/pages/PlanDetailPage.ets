@@ -994,9 +994,14 @@ export struct PlanDetailPage {
                 }
                 .layoutWeight(1)
                 .alignItems(HorizontalAlign.Start)
-                Text(this.currentNode()!.status === PlanNodeStatus.OPEN ? '进入本周 ›' : '查看 ›')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.primary)
+                Row({ space: 4 }) {
+                  Text(this.currentNode()!.status === PlanNodeStatus.OPEN ? '进入本周' : '查看')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.primary)
+                  SymbolGlyph($r('sys.symbol.chevron_forward'))
+                    .fontSize(14)
+                    .fontColor([AppTheme.color.primary])
+                }
               }
               .width('100%')
               .onClick(() => {

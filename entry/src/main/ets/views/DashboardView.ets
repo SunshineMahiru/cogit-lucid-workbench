@@ -661,9 +661,14 @@ export struct DashboardView {
                     .fontWeight(FontWeight.Medium)
                     .fontColor(AppTheme.color.primaryDeep)
                   Blank()
-                  Text('查看 ›')
-                    .fontSize(AppTheme.font.body)
-                    .fontColor(AppTheme.color.primary)
+                  Row({ space: 4 }) {
+                    Text('查看')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.primary)
+                    SymbolGlyph($r('sys.symbol.chevron_forward'))
+                      .fontSize(14)
+                      .fontColor([AppTheme.color.primary])
+                  }
                 }
                 .width('100%')
 
@@ -735,17 +740,22 @@ export struct DashboardView {
               }
 
               Row() {
-                Text('示例数据看板（远端合成） ›')
-                  .id('home_dashboard_entry')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.primary)
-                  .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
-                  .backgroundColor(AppTheme.color.surfaceAlt)
-                  .borderRadius(AppTheme.radius.lg)
-                  .onClick(() => {
-                    this.guardedPush(ROUTES.ANALYTICS, null, () => {
-                    });
-                  })
+                Row({ space: 4 }) {
+                  Text('示例数据看板（远端合成）')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.primary)
+                  SymbolGlyph($r('sys.symbol.chevron_forward'))
+                    .fontSize(14)
+                    .fontColor([AppTheme.color.primary])
+                }
+                .id('home_dashboard_entry')
+                .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+                .backgroundColor(AppTheme.color.surfaceAlt)
+                .borderRadius(AppTheme.radius.lg)
+                .onClick(() => {
+                  this.guardedPush(ROUTES.ANALYTICS, null, () => {
+                  });
+                })
               }
               .width('100%')
               .justifyContent(FlexAlign.End)
@@ -800,16 +810,22 @@ export struct DashboardView {
           .scrollBar(BarState.Auto)
 
           Row() {
-            Text('＋ 速记')
-              .fontSize(AppTheme.font.bodyStrong)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(Color.White)
-              .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
-              .backgroundColor(AppTheme.color.primary)
-              .borderRadius(AppTheme.radius.xl)
-              .onClick(() => {
-                this.openNoteEditor();
-              })
+            Row({ space: 6 }) {
+              SymbolGlyph($r('sys.symbol.plus'))
+                .fontSize(16)
+                .fontColor([Color.White])
+              Text('速记')
+                .fontSize(AppTheme.font.bodyStrong)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(Color.White)
+            }
+            .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+            .backgroundColor(AppTheme.color.primary)
+            .borderRadius(AppTheme.radius.xl)
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+            .onClick(() => {
+              this.openNoteEditor();
+            })
           }
           .width('100%')
           .justifyContent(FlexAlign.End)

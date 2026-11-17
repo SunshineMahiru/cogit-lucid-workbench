@@ -220,12 +220,17 @@ export struct PlanListPage {
             .borderRadius(AppTheme.radius.sm)
           Blank()
           Row({ space: 10 }) {
-            Text('查看 ›')
-              .fontSize(AppTheme.font.body)
-              .fontColor(AppTheme.color.primary)
-              .onClick(() => {
-                this.openDetail(plan.id);
-              })
+            Row({ space: 4 }) {
+              Text('查看')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.primary)
+              SymbolGlyph($r('sys.symbol.chevron_forward'))
+                .fontSize(14)
+                .fontColor([AppTheme.color.primary])
+            }
+            .onClick(() => {
+              this.openDetail(plan.id);
+            })
             Text('编辑')
               .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.textSecondary)

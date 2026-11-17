@@ -114,14 +114,19 @@ export struct PlanHomeCard {
         }
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
-        Text('全部目标 ›')
-          .id('plan_home_all')
-          .fontSize(AppTheme.font.body)
-          .fontColor(AppTheme.color.textSecondary)
-          .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s8, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-          .onClick(() => {
-            this.openList();
-          })
+        Row({ space: 4 }) {
+          Text('全部目标')
+            .fontSize(AppTheme.font.body)
+            .fontColor(AppTheme.color.textSecondary)
+          SymbolGlyph($r('sys.symbol.chevron_forward'))
+            .fontSize(14)
+            .fontColor([AppTheme.color.textSecondary])
+        }
+        .id('plan_home_all')
+        .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s8, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+        .onClick(() => {
+          this.openList();
+        })
         Text('新建')
           .id('plan_home_create')
           .fontSize(AppTheme.font.body)
@@ -150,9 +155,14 @@ export struct PlanHomeCard {
             .backgroundColor(AppTheme.color.tint)
             .borderRadius(AppTheme.radius.sm)
           Blank()
-          Text('查看 ›')
-            .fontSize(AppTheme.font.caption)
-            .fontColor(AppTheme.color.textMuted)
+          Row({ space: 4 }) {
+            Text('查看')
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.textMuted)
+            SymbolGlyph($r('sys.symbol.chevron_forward'))
+              .fontSize(14)
+              .fontColor([AppTheme.color.textMuted])
+          }
         }
         .width('100%')
 
