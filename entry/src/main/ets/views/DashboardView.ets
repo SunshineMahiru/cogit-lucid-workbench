@@ -26,6 +26,9 @@ import { previewStore } from '../preview/PreviewStore';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 import { ModuleGridCard } from './dashboard/ModuleGridCard';
 import { RecentNotesCard } from './dashboard/RecentNotesCard';
+import { QuickNoteService } from '../note/QuickNoteService';
+import { NoteDepth, NoteDraft } from '../note/NoteDraft';
+import { SecurityLevel } from '../model/SecurityLevel';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -56,6 +59,8 @@ export struct DashboardView {
   @Local showWelcome: boolean = false;
   @Local readingsVisible: boolean = false;
   @Local todoExpanded: boolean = false;
+  @Local captureText: string = '';
+  @Local capturing: boolean = false;
   @Local promptVisible: boolean = true;
   private reviewService: ReviewService | null = null;
   private refreshListener: (() => void) | null = null;
@@ -223,6 +228,41 @@ export struct DashboardView {
     });
   }
 
+  /** Saving a single line completes the first layer's minimal form without leaving home. */
+  private async saveCapture(): Promise<void> {
+    const text = this.captureText.trim();
+    if (text.length === 0 || this.capturing) {
+      return;
+    }
+    const context = this.getUIContext().getHostContext();
+    if (context === undefined) {
+      return;
+    }
+    this.capturing = true;
+    try {
+      const service = await QuickNoteService.open(context);
+      const draft: NoteDraft = {
+        templateId: null,
+        title: '',
+        content: text,
+        entries: [],
+        tags: [],
+        relatedRelationIds: [],
+        level: SecurityLevel.LOCAL_ONLY,
+        materials: [{ kind: 'scene', text: text }],
+        depth: NoteDepth.QUICK,
+        timestamp: Date.now()
+      };
+      await service.save(draft);
+      this.captureText = '';
+      this.refresh();
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '保存失败，请重试' });
+    } finally {
+      this.capturing = false;
+    }
+  }
+
   private openNoteEditor(): void {
     const params: NoteEditParams = { templateId: null };
     this.guardedPush(ROUTES.NOTE_EDIT, params, () => {
@@ -270,40 +310,50 @@ export struct DashboardView {
       (this.summary.closedNodeReviews ?? 0) + (this.summary.pendingDecisions ?? 0);
   }
 
-  /** The writable surface that opens the app: one tap to leave a trace. */
+  /** The writable surface: one input box; saving completes the first layer without leaving home. */
   @Builder
   writeHero() {
     Column({ space: 10 }) {
+      TextArea({ placeholder: '此刻发生了什么', text: this.captureText })
+        .id('home_capture_input')
+        .fontSize(AppTheme.font.bodyStrong)
+        .height(72)
+        .backgroundColor(Color.Transparent)
+        .onChange((value: string) => {
+          this.captureText = value;
+        })
       Row({ space: 10 }) {
-        SymbolGlyph($r('sys.symbol.plus'))
-          .fontSize(22)
-          .fontColor([AppTheme.color.primary])
-        Text('此刻，留下什么')
-          .fontSize(AppTheme.font.title)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(AppTheme.color.text)
-          .layoutWeight(1)
-        Text(this.summary.todayNotes > 0 ? `今天 ${this.summary.todayNotes} 条` : '还没有记录')
+        Text('一句现场、一种感受、一个身体信号都可以。不必解释。')
           .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
+          .layoutWeight(1)
+        Text(this.capturing ? '保存中' : '保存')
+          .id('home_capture_save')
+          .fontSize(AppTheme.font.body)
+          .fontColor(Color.White)
+          .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+          .backgroundColor(this.captureText.trim().length > 0 ? AppTheme.color.primary : AppTheme.color.primaryDisabled)
+          .borderRadius(20)
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+          .onClick(() => {
+            this.saveCapture();
+          })
+        SymbolGlyph($r('sys.symbol.chevron_forward'))
+          .fontSize(14)
+          .fontColor([AppTheme.color.textSecondary])
+          .onClick(() => {
+            this.openNoteEditor();
+          })
       }
       .width('100%')
-
-      Text('一句现场、一种感受、一个身体信号都可以。不必解释。')
-        .fontSize(AppTheme.font.body)
-        .fontColor(AppTheme.color.textSecondary)
-        .width('100%')
     }
     .id('home_write_hero')
     .width('100%')
     .alignItems(HorizontalAlign.Start)
-    .padding(AppTheme.spacing.s20)
+    .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
     .borderRadius(16)
-    .border({ width: 1, color: AppTheme.color.borderSelected })
-    .onClick(() => {
-      this.openNoteEditor();
-    })
+    .border({ width: 0.5, color: AppTheme.color.border })
     .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ y: 16 }))
       .animation({ curve: curves.springMotion(0.35, 0.9) }))
   }

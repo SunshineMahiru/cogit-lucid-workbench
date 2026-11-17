@@ -1420,7 +1420,7 @@ test('首屏以书写主卡承载汇总', () => {
   const home = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
   const dashboard = fs.readFileSync('entry/src/main/ets/views/DashboardView.ets', 'utf8');
   assert.ok(dashboard.includes('home_write_hero'));
-  assert.ok(dashboard.includes('今天 ${this.summary.todayNotes} 条'));
+  assert.ok(dashboard.includes('home_capture_input'));
   assert.strictEqual(home.includes('总速记'), false);
   assert.strictEqual(dashboard.includes('总速记'), false);
 });

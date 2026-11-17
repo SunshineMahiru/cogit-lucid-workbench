@@ -57,22 +57,12 @@ export struct RecentNotesCard {
       .animation({ curve: curves.springMotion(0.35, 0.9) }))
   }
 
+  /** Core surface stays blank when empty: no placeholder, no skeleton, no inferred text. */
   @Builder
   emptyView() {
-    Column({ space: 8 }) {
-      Text('还没有痕迹')
-        .fontSize(AppTheme.font.subtitle)
-        .fontColor(AppTheme.color.textSecondary)
-      Text('点上方「此刻」卡片，留下第一句。')
-        .fontSize(AppTheme.font.body)
-        .fontColor(AppTheme.color.textMuted)
-    }
-    .id('home_traces_empty')
-    .width('100%')
-    .padding(AppTheme.spacing.s24)
-    .justifyContent(FlexAlign.Center)
-    .onClick(() => {
-      this.onWrite();
-    })
+    Column()
+      .id('home_traces_empty')
+      .width('100%')
+      .height(AppTheme.spacing.s24)
   }
 }
