@@ -7,6 +7,7 @@ import { PlanItem } from '../model/PlanItem';
 import { ReviewPeriod } from '../model/ReviewPeriod';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { AppTheme } from '../theme/AppTheme';
+import { SettingsStore } from '../settings/SettingsStore';
 import { formatHitRate } from '../model/HomeModel';
 import { isPlanDate } from '../plan/PlanValidation';
 import { PlanService } from '../plan/PlanService';
@@ -72,6 +73,8 @@ export struct ReviewForm {
   @Local costRevision: number = 0;
   @Local step: number = 0;
   @Local promptVisible: boolean = true;
+  @Local monitorPaused: boolean = false;
+  @Local subtractionDemo: boolean = false;
   @Local facts: string = '';
   @Local interpretation: string = '';
   @Local contradiction: string = '';
@@ -122,6 +125,10 @@ export struct ReviewForm {
       this.loadPreview();
       return;
     }
+    const settingsStore = await SettingsStore.open(hostContext);
+    const settings = await settingsStore.load();
+    this.monitorPaused = settings.monitorPaused;
+    this.subtractionDemo = settings.subtractionDemo;
     try {
       this.service = await ReviewService.open(hostContext);
       this.draftStore = await ReviewDraftStore.open(hostContext);
@@ -1502,7 +1509,7 @@ export struct ReviewForm {
 
             this.zoneTabs()
 
-            if (this.step === 0 && this.promptVisible) {
+            if (this.step === 0 && this.promptVisible && !this.monitorPaused && !this.subtractionDemo) {
               ReviewPromptPanel({
                 period: this.period,
                 onDismiss: () => {

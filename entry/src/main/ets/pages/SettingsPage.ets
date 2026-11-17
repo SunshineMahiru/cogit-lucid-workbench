@@ -177,7 +177,10 @@ export struct SettingsPage {
       llmApiKey: apiKey,
       llmModel: model,
       llmMonthlyBudget: budget,
-      defaultLevel: level
+      defaultLevel: level,
+      monitorPaused: this.settings.monitorPaused,
+      subtractionEnabled: this.settings.subtractionEnabled,
+      subtractionDemo: this.settings.subtractionDemo
     };
   }
 
@@ -1086,6 +1089,60 @@ export struct SettingsPage {
                 .alignItems(HorizontalAlign.Start)
               }
 
+              SectionCard() {
+                Column({ space: 10 }) {
+                  Text('监控与减法')
+                    .fontSize(AppTheme.font.subtitle)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor(AppTheme.color.text)
+                    .width('100%')
+                  Row() {
+                    Text('暂停元监控提问')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.text)
+                      .layoutWeight(1)
+                    Toggle({ type: ToggleType.Switch, isOn: this.settings.monitorPaused })
+                      .id('settings_monitor_paused')
+                      .onChange((on: boolean) => {
+                        this.settings.monitorPaused = on;
+                        this.isDirty = true;
+                      })
+                  }
+                  .width('100%')
+                  Row() {
+                    Text('允许减法模式（自动减少要求）')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.text)
+                      .layoutWeight(1)
+                    Toggle({ type: ToggleType.Switch, isOn: this.settings.subtractionEnabled })
+                      .id('settings_subtraction_enabled')
+                      .onChange((on: boolean) => {
+                        this.settings.subtractionEnabled = on;
+                        this.isDirty = true;
+                      })
+                  }
+                  .width('100%')
+                  Row() {
+                    Text('答辩演示：强制减法模式')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.text)
+                      .layoutWeight(1)
+                    Toggle({ type: ToggleType.Switch, isOn: this.settings.subtractionDemo })
+                      .id('settings_subtraction_demo')
+                      .onChange((on: boolean) => {
+                        this.settings.subtractionDemo = on;
+                        this.isDirty = true;
+                      })
+                  }
+                  .width('100%')
+                  Text('减法模式默认隐藏状态；写入一条现场或感受即自然退出。')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
               SectionCard() {
                 Column({ space: 6 }) {
                   Text('数据与隐私')

@@ -41,6 +41,9 @@ export class SettingsStore {
     const model = await this.prefs.get(SETTINGS_KEYS.LLM_MODEL, defaults.llmModel);
     const budget = await this.prefs.get(SETTINGS_KEYS.LLM_MONTHLY_BUDGET, defaults.llmMonthlyBudget);
     const level = await this.prefs.get(SETTINGS_KEYS.DEFAULT_LEVEL, defaults.defaultLevel);
+    const monitorPaused = await this.prefs.get(SETTINGS_KEYS.MONITOR_PAUSED, defaults.monitorPaused);
+    const subtractionEnabled = await this.prefs.get(SETTINGS_KEYS.SUBTRACTION_ENABLED, defaults.subtractionEnabled);
+    const subtractionDemo = await this.prefs.get(SETTINGS_KEYS.SUBTRACTION_DEMO, defaults.subtractionDemo);
     let providerValue = typeof provider === 'string' ? provider as LlmProvider : defaults.llmProvider;
     // Legacy installs only had llm_enabled; preserve "on" as the local mock provider.
     if (enabled === true && providerValue === 'template') {
@@ -53,7 +56,10 @@ export class SettingsStore {
       llmApiKey: typeof apiKey === 'string' ? apiKey : defaults.llmApiKey,
       llmModel: typeof model === 'string' ? model : defaults.llmModel,
       llmMonthlyBudget: typeof budget === 'number' ? budget : defaults.llmMonthlyBudget,
-      defaultLevel: typeof level === 'string' ? level as SecurityLevel : defaults.defaultLevel
+      defaultLevel: typeof level === 'string' ? level as SecurityLevel : defaults.defaultLevel,
+      monitorPaused: typeof monitorPaused === 'boolean' ? monitorPaused : defaults.monitorPaused,
+      subtractionEnabled: typeof subtractionEnabled === 'boolean' ? subtractionEnabled : defaults.subtractionEnabled,
+      subtractionDemo: typeof subtractionDemo === 'boolean' ? subtractionDemo : defaults.subtractionDemo
     });
   }
 
@@ -67,6 +73,9 @@ export class SettingsStore {
     await prefs.put(SETTINGS_KEYS.LLM_MODEL, safe.llmModel);
     await prefs.put(SETTINGS_KEYS.LLM_MONTHLY_BUDGET, safe.llmMonthlyBudget);
     await prefs.put(SETTINGS_KEYS.DEFAULT_LEVEL, safe.defaultLevel);
+    await prefs.put(SETTINGS_KEYS.MONITOR_PAUSED, safe.monitorPaused);
+    await prefs.put(SETTINGS_KEYS.SUBTRACTION_ENABLED, safe.subtractionEnabled);
+    await prefs.put(SETTINGS_KEYS.SUBTRACTION_DEMO, safe.subtractionDemo);
     await prefs.flush();
   }
 
@@ -84,6 +93,28 @@ export class SettingsStore {
     await this.prefs.put(SETTINGS_KEYS.LLM_MODEL, safe.llmModel);
     await this.prefs.put(SETTINGS_KEYS.LLM_MONTHLY_BUDGET, safe.llmMonthlyBudget);
     await this.prefs.put(SETTINGS_KEYS.DEFAULT_LEVEL, safe.defaultLevel);
+    await this.prefs.put(SETTINGS_KEYS.MONITOR_PAUSED, safe.monitorPaused);
+    await this.prefs.put(SETTINGS_KEYS.SUBTRACTION_ENABLED, safe.subtractionEnabled);
+    await this.prefs.put(SETTINGS_KEYS.SUBTRACTION_DEMO, safe.subtractionDemo);
+    await this.prefs.flush();
+  }
+
+  /** Prompt ids the author refused; refused questions are never shown again. */
+  async loadRefusedPrompts(): Promise<string[]> {
+    const raw = await this.prefs.get(SETTINGS_KEYS.PROMPT_REFUSED, '[]');
+    if (typeof raw !== 'string') {
+      return [];
+    }
+    try {
+      const parsed: string[] = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async saveRefusedPrompts(ids: string[]): Promise<void> {
+    await this.prefs.put(SETTINGS_KEYS.PROMPT_REFUSED, JSON.stringify(ids));
     await this.prefs.flush();
   }
 }

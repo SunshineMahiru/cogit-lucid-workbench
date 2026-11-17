@@ -13,5 +13,9 @@ export const SETTINGS_KEYS = {
   STATUS_SLEEP_MIN: 'status_sleep_min',
   STATUS_ALERT_WARN: 'status_alert_warn',
   STATUS_HINTS_ENABLED: 'status_hints_enabled',
-  BACKUP_INCLUDE_BACKGROUND: 'backup_include_background'
+  BACKUP_INCLUDE_BACKGROUND: 'backup_include_background',
+  MONITOR_PAUSED: 'monitor_paused',
+  SUBTRACTION_ENABLED: 'subtraction_enabled',
+  SUBTRACTION_DEMO: 'subtraction_demo',
+  PROMPT_REFUSED: 'prompt_refused'
 } as const;

@@ -349,6 +349,7 @@ const { buildNodeProgress, carryRatePercent, carrySeries } = require('./out2/pla
 const { DB_TABLES, DB_TABLES_CHILD_FIRST, LEVELED_TABLES } = require('./out2/db/DbConstants');
 const { TABLE_CREATE_SQLS } = require('./out2/db/schemas');
 const { EventDao } = require('./out2/db/dao/EventDao');
+const { shouldEnterSubtraction } = require('./out2/analysis/meta/SubtractionMode');
 const { DecisionDao } = require('./out2/db/dao/DecisionDao');
 const { prepareExportBundle, allExportOptions } = require('./out2/export/ExportFilter');
 const { renderExportDocument } = require('./out2/export/render');
@@ -2747,6 +2748,69 @@ async function main() {
     });
     assert.strictEqual(item.materialCount, 2);
     assert.strictEqual(item.evidenceCount, 1);
+  });
+
+  await test('减法模式：空输入不触发', () => {
+    assert.strictEqual(shouldEnterSubtraction({
+      writes: [],
+      prompts: { shown: 0, refused: 0 }
+    }), false);
+  });
+
+  await test('减法模式：仅现场多条不触发', () => {
+    assert.strictEqual(shouldEnterSubtraction({
+      writes: [
+        { kind: 'scene', chars: 120, hour: 10 },
+        { kind: 'scene', chars: 80, hour: 15 },
+        { kind: 'scene', chars: 60, hour: 21 }
+      ],
+      prompts: { shown: 0, refused: 0 }
+    }), false);
+  });
+
+  await test('减法模式：解释比例达阈值触发', () => {
+    assert.strictEqual(shouldEnterSubtraction({
+      writes: [
+        { kind: 'scene', chars: 40, hour: 10 },
+        { kind: 'feeling', chars: 20, hour: 11 },
+        { kind: 'interpretation', chars: 90, hour: 12 }
+      ],
+      prompts: { shown: 0, refused: 0 }
+    }), true);
+  });
+
+  await test('减法模式：拒绝率达到阈值触发', () => {
+    assert.strictEqual(shouldEnterSubtraction({
+      writes: [],
+      prompts: { shown: 5, refused: 3 }
+    }), true);
+  });
+
+  await test('减法模式：夜间比例达阈值触发', () => {
+    assert.strictEqual(shouldEnterSubtraction({
+      writes: [
+        { kind: 'scene', chars: 30, hour: 23 },
+        { kind: 'scene', chars: 30, hour: 4 },
+        { kind: 'scene', chars: 30, hour: 10 },
+        { kind: 'scene', chars: 30, hour: 15 }
+      ],
+      prompts: { shown: 0, refused: 0 }
+    }), true);
+  });
+
+  await test('减法模式：三项均低于阈值不触发', () => {
+    const writes = [];
+    for (let i = 0; i < 49; i += 1) {
+      writes.push({ kind: 'scene', chars: 1, hour: 23 });
+    }
+    for (let i = 0; i < 51; i += 1) {
+      writes.push({ kind: 'scene', chars: 1, hour: 12 });
+    }
+    writes.push({ kind: 'interpretation', chars: 149, hour: 12 });
+    assert.strictEqual(shouldEnterSubtraction({
+      writes: writes,
+      prompts: { shown: 100, refused: 59 }
+    }), false);
   });
 
   if (failures.length > 0) {

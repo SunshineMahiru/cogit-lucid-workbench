@@ -18,6 +18,12 @@ export interface AppSettings {
   llmMonthlyBudget: number;
   /** Security level assigned to newly captured records */
   defaultLevel: SecurityLevel;
+  /** When true, meta-monitoring prompts are suppressed entirely */
+  monitorPaused: boolean;
+  /** When true, the app may auto-reduce its own demands (subtraction mode) */
+  subtractionEnabled: boolean;
+  /** Demo-only switch to force subtraction mode for the defense presentation */
+  subtractionDemo: boolean;
 }
 
 /** Upper bound accepted for the monthly budget, in yuan. */
@@ -31,7 +37,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   llmApiKey: '',
   llmModel: 'glm-4.7-flash',
   llmMonthlyBudget: 30,
-  defaultLevel: SecurityLevel.LOCAL_ONLY
+  defaultLevel: SecurityLevel.LOCAL_ONLY,
+  monitorPaused: false,
+  subtractionEnabled: true,
+  subtractionDemo: false
 };
 
 /** Returns a fresh copy of the defaults so callers cannot mutate the shared constant. */
@@ -43,7 +52,10 @@ export function defaultAppSettings(): AppSettings {
     llmApiKey: DEFAULT_SETTINGS.llmApiKey,
     llmModel: DEFAULT_SETTINGS.llmModel,
     llmMonthlyBudget: DEFAULT_SETTINGS.llmMonthlyBudget,
-    defaultLevel: DEFAULT_SETTINGS.defaultLevel
+    defaultLevel: DEFAULT_SETTINGS.defaultLevel,
+    monitorPaused: DEFAULT_SETTINGS.monitorPaused,
+    subtractionEnabled: DEFAULT_SETTINGS.subtractionEnabled,
+    subtractionDemo: DEFAULT_SETTINGS.subtractionDemo
   };
 }
 
@@ -63,7 +75,10 @@ export function sanitizeAppSettings(settings: AppSettings): AppSettings {
     llmApiKey: apiKey,
     llmModel: model.length > 0 ? model : DEFAULT_SETTINGS.llmModel,
     llmMonthlyBudget: Math.min(Math.max(budget, 0), MAX_MONTHLY_BUDGET),
-    defaultLevel: isSecurityLevel(settings.defaultLevel) ? settings.defaultLevel : DEFAULT_SETTINGS.defaultLevel
+    defaultLevel: isSecurityLevel(settings.defaultLevel) ? settings.defaultLevel : DEFAULT_SETTINGS.defaultLevel,
+    monitorPaused: settings.monitorPaused === true,
+    subtractionEnabled: settings.subtractionEnabled !== false,
+    subtractionDemo: settings.subtractionDemo === true
   };
 }
 

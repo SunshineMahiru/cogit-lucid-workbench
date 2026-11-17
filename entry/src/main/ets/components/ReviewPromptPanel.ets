@@ -28,6 +28,9 @@ const LOCAL_PROMPTS: ReviewPrompt[] = [
 export struct ReviewPromptPanel {
   @Param period: ReviewPeriod = ReviewPeriod.WEEK;
   @Event onDismiss: () => void = () => {};
+  @Event onRefuse: () => void = () => {};
+  @Local promptIndex: number = 0;
+  @Local refusedIds: string[] = [];
   @Local state: string = 'loading';
   @Local prompts: ReviewPrompt[] = [];
   @Local isRealDevice: boolean = false;
@@ -38,6 +41,27 @@ export struct ReviewPromptPanel {
     this.prepareRepository();
   }
 
+  private visiblePrompts(): ReviewPrompt[] {
+    return this.prompts.filter((prompt: ReviewPrompt) => !this.refusedIds.includes(prompt.id));
+  }
+
+  /** Refusing records the question id so it is never shown again, on any page. */
+  private async refuseCurrent(): Promise<void> {
+    const visible = this.visiblePrompts();
+    if (visible.length === 0) {
+      return;
+    }
+    const current = visible[this.promptIndex % visible.length];
+    this.refusedIds = this.refusedIds.concat([current.id]);
+    this.promptIndex = 0;
+    this.onRefuse();
+    const context = this.getUIContext().getHostContext();
+    if (context !== undefined) {
+      const store = await SettingsStore.open(context);
+      await store.saveRefusedPrompts(this.refusedIds);
+    }
+  }
+
   private async prepareRepository(): Promise<void> {
     const context = this.getUIContext().getHostContext();
     if (context !== undefined) {
@@ -45,6 +69,7 @@ export struct ReviewPromptPanel {
       try {
         const store = await SettingsStore.open(context);
         const settings = await store.load();
+        this.refusedIds = await store.loadRefusedPrompts();
         const base = mockBaseFrom(settings.llmBaseUrl);
         this.hasConfiguredHost = base.length > 0 && !isLoopbackBase(base);
         if (base.length > 0) {
@@ -162,13 +187,28 @@ export struct ReviewPromptPanel {
             }
             .width('100%')
           }
-          ForEach(this.prompts, (prompt: ReviewPrompt) => {
-            Text(`· ${prompt.text}`)
+          if (this.visiblePrompts().length > 0) {
+            Text(this.visiblePrompts()[this.promptIndex % this.visiblePrompts().length].text)
               .fontSize(AppTheme.font.bodyStrong)
-              .lineHeight(19)
+              .lineHeight(22)
               .fontColor(AppTheme.color.text)
               .width('100%')
-          }, (prompt: ReviewPrompt) => prompt.id)
+            Row({ space: 12 }) {
+              Text('拒绝回答')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textSecondary)
+                .onClick(() => {
+                  this.refuseCurrent();
+                })
+              Text('换一个')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.primary)
+                .onClick(() => {
+                  this.promptIndex += 1;
+                })
+            }
+            .width('100%')
+          }
         }
       }
       .width('100%')

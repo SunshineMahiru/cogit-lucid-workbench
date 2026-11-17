@@ -915,7 +915,10 @@ async function main() {
       llmApiKey: '',
       llmModel: 'deepseek-v4-flash',
       llmMonthlyBudget: MAX_MONTHLY_BUDGET,
-      defaultLevel: 'analyzable'
+      defaultLevel: 'analyzable',
+      monitorPaused: false,
+      subtractionEnabled: true,
+      subtractionDemo: false
     });
   });
 

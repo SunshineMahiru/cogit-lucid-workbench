@@ -29,6 +29,9 @@ import { RecentNotesCard } from './dashboard/RecentNotesCard';
 import { QuickNoteService } from '../note/QuickNoteService';
 import { NoteDepth, NoteDraft } from '../note/NoteDraft';
 import { SecurityLevel } from '../model/SecurityLevel';
+import { SettingsStore } from '../settings/SettingsStore';
+import { AppSettings, defaultAppSettings } from '../settings/AppSettings';
+import { shouldEnterSubtraction, WriteSample } from '../analysis/meta/SubtractionMode';
 
 /** Dashboard content: readings first, then module tiles and the two recent lists. */
 @ComponentV2
@@ -62,10 +65,15 @@ export struct DashboardView {
   @Local captureText: string = '';
   @Local capturing: boolean = false;
   @Local promptVisible: boolean = true;
+  @Local appSettings: AppSettings = defaultAppSettings();
+  @Local promptRefusals: number = 0;
+  @Local subtractionExited: boolean = false;
+  @Local sessionWrites: WriteSample[] = [];
   private reviewService: ReviewService | null = null;
   private refreshListener: (() => void) | null = null;
 
   async aboutToAppear(): Promise<void> {
+    this.loadSettings();
     if (this.refreshListener === null) {
       this.refreshListener = () => {
         this.refresh();
@@ -116,6 +124,7 @@ export struct DashboardView {
   }
 
   async refresh(): Promise<void> {
+    this.loadSettings();
     if (this.isPreview) {
       this.loadPreview();
       return;
@@ -228,6 +237,40 @@ export struct DashboardView {
     });
   }
 
+  private async loadSettings(): Promise<void> {
+    const context = this.getUIContext().getHostContext();
+    if (context === undefined) {
+      return;
+    }
+    const store = await SettingsStore.open(context);
+    this.appSettings = await store.load();
+  }
+
+  /** Recent writes as subtraction-mode samples; session captures carry their real kinds. */
+  private recentWrites(): WriteSample[] {
+    const fromList: WriteSample[] = this.recentNotes.map((note: NoteListItem): WriteSample => {
+      return { kind: 'scene', chars: note.summary.length, hour: new Date(note.timestamp).getHours() };
+    });
+    return this.sessionWrites.concat(fromList);
+  }
+
+  /** Subtraction mode: demo switch, or the end-side heuristic when enabled. */
+  private isSubtraction(): boolean {
+    if (this.subtractionExited) {
+      return false;
+    }
+    if (this.appSettings.subtractionDemo) {
+      return true;
+    }
+    if (!this.appSettings.subtractionEnabled) {
+      return false;
+    }
+    return shouldEnterSubtraction({
+      writes: this.recentWrites(),
+      prompts: { shown: this.promptRefusals + 1, refused: this.promptRefusals }
+    });
+  }
+
   /** Saving a single line completes the first layer's minimal form without leaving home. */
   private async saveCapture(): Promise<void> {
     const text = this.captureText.trim();
@@ -254,6 +297,13 @@ export struct DashboardView {
         timestamp: Date.now()
       };
       await service.save(draft);
+      const hour = new Date().getHours();
+      this.sessionWrites = this.sessionWrites.concat([
+        { kind: 'scene', chars: text.length, hour: hour }
+      ]);
+      // Writing a scene or feeling naturally exits subtraction mode.
+      this.subtractionExited = true;
+      this.promptRefusals = 0;
       this.captureText = '';
       this.refresh();
     } catch (error) {
@@ -651,16 +701,20 @@ export struct DashboardView {
               PlanHomeCard({ pathStack: this.pathStack })
                 .id('home_section_plan')
 
-              if (this.promptVisible) {
+              if (this.promptVisible && !this.appSettings.monitorPaused && !this.isSubtraction()) {
                 ReviewPromptPanel({
                   period: ReviewPeriod.WEEK,
                   onDismiss: () => {
                     this.promptVisible = false;
+                  },
+                  onRefuse: () => {
+                    this.promptRefusals += 1;
                   }
                 })
                   .id('home_section_review_prompt')
               }
 
+              if (!this.isSubtraction()) {
               Column() {
                 ModuleGridCard({
                   moduleItems: this.moduleItems,
@@ -678,6 +732,7 @@ export struct DashboardView {
                   this.onModuleOffset(offset);
                 }
               })
+              }
 
               Row() {
                 Text('示例数据看板（远端合成） ›')
