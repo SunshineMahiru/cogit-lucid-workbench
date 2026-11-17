@@ -48,24 +48,52 @@ export struct PlanMonthView {
           .width('100%')
       } else {
         ForEach(this.rows, (row: NodeProgress) => {
-          Row({ space: 8 }) {
-            Text(`第 ${row.weekIndex} 周`)
-              .fontSize(AppTheme.font.body)
-              .fontColor(AppTheme.color.text)
-              .width(60)
-            Text(`${row.startDate.slice(5)} – ${row.endDate.slice(5)}`)
-              .fontSize(AppTheme.font.caption)
-              .fontColor(AppTheme.color.textMuted)
+          Row({ space: AppTheme.spacing.s10 }) {
+            Column({ space: 2 }) {
+              Text(`第 ${row.weekIndex} 周`)
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.text)
+                .width('100%')
+              Text(`${row.startDate.slice(5)} – ${row.endDate.slice(5)}`)
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+            }
+            .width(88)
+            .alignItems(HorizontalAlign.Start)
+
+            Progress({
+              value: row.done,
+              total: row.total > 0 ? row.total : 1,
+              type: ProgressType.Linear
+            })
+              .height(6)
               .layoutWeight(1)
-            Text(row.openCarried > 0 ? `延续 ${row.openCarried}` : '')
-              .fontSize(AppTheme.font.caption)
-              .fontColor(AppTheme.color.warning)
+              .color(AppTheme.color.evPractice)
+              .backgroundColor(AppTheme.color.track)
+
             Text(`${row.done}/${row.total}`)
               .fontSize(AppTheme.font.caption)
               .fontColor(AppTheme.color.textSecondary)
+              .width(38)
+              .textAlign(TextAlign.End)
+
+            if (row.openCarried > 0) {
+              Text(`延续 ${row.openCarried}`)
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.warning)
+                .padding({
+                  left: AppTheme.spacing.s6,
+                  right: AppTheme.spacing.s6,
+                  top: 2,
+                  bottom: 2
+                })
+                .backgroundColor(AppTheme.color.warningSurface)
+                .borderRadius(AppTheme.radius.sm)
+            }
           }
           .width('100%')
-          .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+          .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
           .onClick(() => {
             this.onOpen(row.nodeId);
           })

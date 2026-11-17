@@ -1,3 +1,4 @@
+import { common } from '@kit.AbilityKit';
 import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
@@ -14,11 +15,19 @@ import { ItemDecision } from '../plan/PlanService';
 import { buildPlanReviewFacts, writePlanReviewDraft } from '../plan/PlanReviewDraft';
 import { planLinkModuleLabel } from '../plan/PlanLinkCatalog';
 import { NodeDays, NodeProgress, buildNodeProgress, nodeDays } from '../plan/PlanInsights';
+import { WeekAgendaGroup, WeekAgendaRow, buildWeekAgenda } from '../plan/WeekAgendaMapper';
+import { AgendaTone } from '../home/AgendaMapper';
+import { PredictionListItem, PredictionService } from '../prediction';
+import { PREVIEW_RELATION_ITEMS } from '../preview/PreviewData';
+import { previewStore } from '../preview/PreviewStore';
+import { RelationListItem, RelationService } from '../relation';
+import { ReviewHistoryItem, ReviewService } from '../review';
 import { PlanLinkPickerParams, PlanNodeParams } from '../navigation/RouteParams';
 import {
   NoteDetailParams,
   PlanReviewParams,
   PredictionDetailParams,
+  PredictionSettleParams,
   RelationDetailParams,
   ReviewDetailParams,
   StatusEditParams
@@ -61,6 +70,9 @@ export struct PlanNodePage {
   @Local isPreview: boolean = false;
   @Local closePanelVisible: boolean = false;
   @Local closeRows: CloseDecisionRow[] = [];
+  @Local weekPredictions: WeekAgendaRow[] = [];
+  @Local weekRelations: WeekAgendaRow[] = [];
+  @Local weekReviews: WeekAgendaRow[] = [];
   private nodeId: string = '';
   private service: PlanService | null = null;
   private navStack: NavPathStack | null = null;
@@ -86,6 +98,7 @@ export struct PlanNodePage {
       this.selectedProjectId = node.projectId ?? '';
       this.items = await service.listItems(nodeId);
       this.links = await service.listLinks(nodeId);
+      await this.loadWeekAgenda(hostContext, node);
     } catch (error) {
       this.loadPreview();
     } finally {
@@ -102,8 +115,39 @@ export struct PlanNodePage {
       this.selectedProjectId = this.node.projectId ?? '';
       this.items = planPreviewStore.listItems(this.nodeId);
       this.links = planPreviewStore.links(this.nodeId);
+      this.applyWeekAgenda(this.node, previewStore.listPredictions(null),
+        PREVIEW_RELATION_ITEMS, previewStore.reviewHistory());
     }
     this.isLoading = false;
+  }
+
+  private async loadWeekAgenda(context: common.Context, node: PlanNode): Promise<void> {
+    try {
+      const predictionService = await PredictionService.open(context);
+      const predictions = await predictionService.list(null);
+      const relationService = await RelationService.open(context);
+      const relations = await relationService.list(null);
+      const reviewService = await ReviewService.open(context);
+      const reviews = await reviewService.history(60);
+      this.applyWeekAgenda(node, predictions, relations, reviews);
+    } catch (error) {
+      this.weekPredictions = [];
+      this.weekRelations = [];
+      this.weekReviews = [];
+    }
+  }
+
+  private applyWeekAgenda(node: PlanNode, predictions: PredictionListItem[],
+    relations: RelationListItem[], reviews: ReviewHistoryItem[]): void {
+    const agenda = buildWeekAgenda({
+      node: node,
+      predictions: predictions,
+      relations: relations,
+      reviews: reviews
+    });
+    this.weekPredictions = agenda.predictions;
+    this.weekRelations = agenda.relations;
+    this.weekReviews = agenda.reviews;
   }
 
   private async addItem(): Promise<void> {
@@ -251,6 +295,10 @@ export struct PlanNodePage {
     this.selectedProjectId = node.projectId ?? '';
     this.items = await this.service.listItems(this.nodeId);
     this.links = await this.service.listLinks(this.nodeId);
+    const hostContext = this.getUIContext().getHostContext();
+    if (hostContext !== undefined) {
+      await this.loadWeekAgenda(hostContext, node);
+    }
   }
 
   private openClosePanel(): void {
@@ -350,6 +398,96 @@ export struct PlanNodePage {
       return { left: 0, total: 7, percent: 0 };
     }
     return nodeDays(this.node.startDate, this.node.endDate, todayString());
+  }
+
+  private openWeekRow(row: WeekAgendaRow): void {
+    if (this.navStack === null) {
+      return;
+    }
+    if (row.group === WeekAgendaGroup.PREDICTION) {
+      const params: PredictionSettleParams = { predictionId: row.targetId };
+      this.navStack.pushPathByName(ROUTES.PREDICTION_SETTLE, params);
+    } else if (row.group === WeekAgendaGroup.RELATION) {
+      const params: RelationDetailParams = { relationId: row.targetId };
+      this.navStack.pushPathByName(ROUTES.RELATION_DETAIL, params);
+    } else {
+      const params: ReviewDetailParams = { reviewId: row.targetId };
+      this.navStack.pushPathByName(ROUTES.REVIEW_DETAIL, params);
+    }
+  }
+
+  private toneColor(tone: AgendaTone): string {
+    if (tone === AgendaTone.TIME) {
+      return AppTheme.color.evTime;
+    }
+    if (tone === AgendaTone.BOOK) {
+      return AppTheme.color.evBook;
+    }
+    if (tone === AgendaTone.PUBLIC) {
+      return AppTheme.color.evPublic;
+    }
+    if (tone === AgendaTone.PRACTICE) {
+      return AppTheme.color.evPractice;
+    }
+    return AppTheme.color.evOther;
+  }
+
+  @Builder
+  agendaRow(row: WeekAgendaRow) {
+    Row({ space: AppTheme.spacing.s10 }) {
+      Circle()
+        .width(6)
+        .height(6)
+        .fill(this.toneColor(row.tone))
+      Column({ space: 2 }) {
+        Text(row.title)
+          .fontSize(AppTheme.font.bodyStrong)
+          .fontColor(AppTheme.color.text)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%')
+        Text(row.detail)
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%')
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+      SymbolGlyph($r('sys.symbol.chevron_forward'))
+        .fontSize(14)
+        .fontColor([AppTheme.color.textMuted])
+    }
+    .width('100%')
+    .constraintSize({ minHeight: 46 })
+    .onClick(() => {
+      this.openWeekRow(row);
+    })
+  }
+
+  @Builder
+  agendaGroup(title: string, rows: WeekAgendaRow[], emptyText: string) {
+    Column({ space: 2 }) {
+      Text(title)
+        .fontSize(AppTheme.font.caption)
+        .fontColor(AppTheme.color.textMuted)
+        .width('100%')
+        .padding({ top: AppTheme.spacing.s2 })
+      if (rows.length === 0) {
+        Text(emptyText)
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+          .width('100%')
+          .padding({ top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
+      } else {
+        ForEach(rows, (row: WeekAgendaRow) => {
+          this.agendaRow(row)
+        }, (row: WeekAgendaRow) => row.key)
+      }
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
   }
 
   @Builder
@@ -661,6 +799,35 @@ export struct PlanNodePage {
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
               }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+
+          SectionCard() {
+            Column({ space: 6 }) {
+              Row() {
+                Text('本周串联')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(AppTheme.color.text)
+                Blank()
+                Text(`共 ${this.weekPredictions.length + this.weekRelations.length + this.weekReviews.length} 条`)
+                  .fontSize(AppTheme.font.caption)
+                  .fontColor(AppTheme.color.textMuted)
+              }
+              .width('100%')
+
+              Text('把这一周要结算的判断、要回应的人和要写下的复盘放在同一段时间里。')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+
+              this.agendaGroup('要结算的预测', this.weekPredictions, '本周没有待结算的预测')
+              Divider().color(AppTheme.color.track)
+              this.agendaGroup('要回应的人', this.weekRelations, '本周没有待回应的人')
+              Divider().color(AppTheme.color.track)
+              this.agendaGroup('要复盘的记录', this.weekReviews, '本周没有要复盘的记录')
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)
