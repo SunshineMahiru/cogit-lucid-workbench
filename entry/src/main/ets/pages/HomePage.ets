@@ -5,7 +5,7 @@ import { AppDestination } from '../components/AppDestination';
 import { DashboardView } from '../views/DashboardView';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { HomeDataService } from '../data/HomeDataService';
-import { HomeSummary, NO_RATE_TEXT } from '../model/HomeModel';
+import { HomeSummary, formatHitRate } from '../model/HomeModel';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 import { appHealth, isDatabaseUnsupported } from '../app/AppHealth';
 import { consumeJsonIssues } from '../db/SafeJson';
@@ -145,8 +145,7 @@ export struct HomePage {
   }
 
   private summaryLine(): string {
-    const rate = this.summary.settledPredictions > 0 ?
-      `${Math.round(this.summary.hitRate * 100)}%` : NO_RATE_TEXT;
+    const rate = formatHitRate(this.summary.hitRate, this.summary.settledPredictions);
     return `总速记 ${this.summary.totalNotes} · 待结算 ${this.summary.pendingPredictions} · 命中率 ${rate}`;
   }
 
