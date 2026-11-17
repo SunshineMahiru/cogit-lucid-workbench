@@ -435,6 +435,7 @@ export class ReviewService {
       planItemId: draft.planItemId ?? '',
       outcome: (draft.outcome ?? '').trim(),
       reviewAt: (draft.reviewAt ?? '').trim(),
+      participationMode: (draft.participationMode ?? '').trim(),
       level: level,
       createdAt: createdAt
     };

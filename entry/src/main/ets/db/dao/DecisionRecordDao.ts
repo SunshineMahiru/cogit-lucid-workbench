@@ -28,6 +28,7 @@ export class DecisionRecordDao {
       [DECISION_RECORD_COLS.REVIEW_AT]: record.reviewAt ?? '',
       [DECISION_RECORD_COLS.DEPTH]: record.depth ?? '',
       [DECISION_RECORD_COLS.TIME_BUDGET]: record.timeBudget ?? 0,
+      [DECISION_RECORD_COLS.PARTICIPATION_MODE]: record.participationMode ?? '',
       [DECISION_RECORD_COLS.LEVEL]: record.level,
       [DECISION_RECORD_COLS.CREATED_AT]: record.createdAt
     };
@@ -104,6 +105,7 @@ export class DecisionRecordDao {
       reviewAt: readText(resultSet, DECISION_RECORD_COLS.REVIEW_AT),
       depth: readDepth(resultSet, DECISION_RECORD_COLS.DEPTH),
       timeBudget: readBudget(resultSet, DECISION_RECORD_COLS.TIME_BUDGET),
+      participationMode: readText(resultSet, DECISION_RECORD_COLS.PARTICIPATION_MODE),
       level: resultSet.getString(resultSet.getColumnIndex(DECISION_RECORD_COLS.LEVEL)) as SecurityLevel,
       createdAt: resultSet.getLong(resultSet.getColumnIndex(DECISION_RECORD_COLS.CREATED_AT))
     };

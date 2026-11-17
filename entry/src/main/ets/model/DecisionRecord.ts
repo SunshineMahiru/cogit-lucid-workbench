@@ -37,6 +37,8 @@ export interface DecisionRecord {
   depth?: WorkDepth;
   /** Session time budget in minutes; absent for old rows */
   timeBudget?: number;
+  /** How the other person may take part; joint practice only */
+  participationMode?: string;
   level: SecurityLevel;
   createdAt: number;
 }
@@ -51,4 +53,5 @@ export interface DecisionDraft {
   planItemId?: string;
   outcome?: string;
   reviewAt?: string;
+  participationMode?: string;
 }

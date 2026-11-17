@@ -292,6 +292,7 @@ export const MATERIAL_COLS = {
   SOURCE: 'source',
   SOURCE_STANCE: 'source_stance',
   INTERACTION_SOURCE: 'interaction_source',
+  CLAIM_EVIDENCE: 'claim_evidence',
   LEVEL: 'level',
   REVISION_OF: 'revision_of',
   DELETED: 'deleted',
@@ -346,6 +347,7 @@ export const DECISION_RECORD_COLS = {
   LEVEL: 'level',
   DEPTH: 'depth',
   TIME_BUDGET: 'time_budget',
+  PARTICIPATION_MODE: 'participation_mode',
   CREATED_AT: 'created_at'
 } as const;
 

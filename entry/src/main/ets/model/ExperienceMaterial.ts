@@ -33,6 +33,8 @@ export interface ExperienceMaterial {
   sourceStance: MaterialStance;
   /** How an interpersonal material reached the author; absent reads as unmarked */
   interactionSource?: InteractionSource;
+  /** Evidence beyond private experience, required to back a public claim; may stay empty */
+  claimEvidence?: string;
   level: SecurityLevel;
   /** Points at the material this one revises; empty for originals. */
   revisionOf: string;
