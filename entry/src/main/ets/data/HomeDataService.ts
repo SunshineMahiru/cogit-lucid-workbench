@@ -14,6 +14,7 @@ import { Plan } from '../model/Plan';
 import { PlanNode } from '../model/PlanNode';
 import { PlanNodeStatus, PlanStatus } from '../model/PlanStatus';
 import { Prediction } from '../model/Prediction';
+import { isNonBinaryOutcome, outcomeFromLegacy } from '../model/PredictionOutcome';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { StatusRecord } from '../model/StatusRecord';
@@ -115,8 +116,12 @@ export class HomeDataService {
     const pending = allPredictions.filter(p => p.status === PredictionStatus.PENDING);
     const settled = allPredictions.filter(p => p.status === PredictionStatus.SETTLED);
     const duePredictions = pending.filter(p => p.settlementDate.length > 0 && p.settlementDate <= today).length;
-    const revisionPredictions = settled.filter(p => p.outcome === 'partial' ||
-      p.outcome === 'insufficient' || p.outcome === 'undecidable').length;
+    // A failed prediction is the strongest invalidation signal; it joins the review queue.
+    const revisionPredictions = settled.filter(p => {
+      const stored = p.outcome ?? '';
+      const outcome = stored.length > 0 ? stored : outcomeFromLegacy(p.hit);
+      return isNonBinaryOutcome(outcome) || outcome === 'fail';
+    }).length;
     const binary = settled.filter(p => p.hit !== null);
     const hits = binary.filter(p => p.hit === true);
     const hitRate = binary.length > 0 ? Math.round(hits.length / binary.length * 100) : 0;

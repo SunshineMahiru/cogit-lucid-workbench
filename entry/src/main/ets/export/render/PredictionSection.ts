@@ -1,4 +1,5 @@
 import { Prediction } from '../../model/Prediction';
+import { outcomeFromLegacy } from '../../model/PredictionOutcome';
 import {
   EMPTY_FIELD,
   formatConfidence,
@@ -15,13 +16,15 @@ export function renderPredictionSection(predictions: Prediction[]): string {
   }
   const lines: string[] = ['## 预测', ''];
   for (const prediction of predictions) {
+    const stored = prediction.outcome ?? '';
+    const outcome = stored.length > 0 ? stored : outcomeFromLegacy(prediction.hit);
     lines.push(`### ${inlineText(prediction.target)}`);
     lines.push('');
     lines.push(`- 判断：${inlineText(prediction.judgment)}`);
     lines.push(`- 置信度：${formatConfidence(prediction.confidence)}`);
     lines.push(`- 结算日：${inlineText(prediction.settlementDate)}`);
     lines.push(`- 状态：${predictionStatusLabel(prediction.status)}`);
-    lines.push(`- 命中：${hitLabel(prediction.hit)}`);
+    lines.push(`- 结算结果：${hitLabel(outcome)}`);
     lines.push(`- 实际结果：${inlineText(prediction.actualResult)}`);
     lines.push(`- 理由：${inlineText(prediction.reason)}`);
     lines.push(`- 创建时间：${formatExportTime(prediction.createdAt)}`);

@@ -450,9 +450,12 @@ async function main() {
     assert.strictEqual(trustLevelLabel('transparent'), '透明');
     assert.strictEqual(predictionStatusLabel('pending'), '待结算');
     assert.strictEqual(predictionStatusLabel('settled'), '已结算');
-    assert.strictEqual(hitLabel(null), '未结算');
-    assert.strictEqual(hitLabel(true), '命中');
-    assert.strictEqual(hitLabel(false), '未命中');
+    assert.strictEqual(hitLabel(''), '未结算');
+    assert.strictEqual(hitLabel('hold'), '成立');
+    assert.strictEqual(hitLabel('fail'), '未成立');
+    assert.strictEqual(hitLabel('partial'), '部分成立');
+    assert.strictEqual(hitLabel('insufficient'), '证据不足');
+    assert.strictEqual(hitLabel('undecidable'), '无法判断');
     assert.strictEqual(formatConfidence(73.6), '74%');
     assert.strictEqual(formatConfidence(-5), '0%');
     assert.strictEqual(formatConfidence(140), '100%');
@@ -803,7 +806,7 @@ async function main() {
     assert.ok(markdown.includes('- 禁止推断：否，但本应用不推断动机与关系结局'));
     assert.ok(markdown.includes('- 对方怎样纠正了我的理解：他说那天只是累了'));
     assert.ok(markdown.includes('- 互动记录：—'));
-    assert.ok(markdown.includes('- 命中：未结算'));
+    assert.ok(markdown.includes('- 结算结果：未结算'));
     assert.ok(markdown.includes('- 实际结果：—'));
     assert.ok(markdown.includes('- 置信度：70%'));
   });

@@ -1,4 +1,5 @@
 import { PredictionStatus } from '../model/PredictionStatus';
+import { PredictionOutcome } from '../model/PredictionOutcome';
 
 /** Row model rendered by the prediction list. */
 export interface PredictionListItem {
@@ -11,6 +12,8 @@ export interface PredictionListItem {
   settlementDate: string;
   status: PredictionStatus;
   hit: boolean | null;
+  /** Settlement result; empty for records settled before outcomes existed */
+  outcome?: PredictionOutcome;
   actualResult: string;
   createdAt: number;
 }
@@ -19,7 +22,10 @@ export interface PredictionListItem {
 export interface PredictionSummary {
   total: number;
   pending: number;
+  /** Settled rows with a binary result; the hit rate denominator */
   settled: number;
+  /** Settled rows with partial, insufficient or undecidable results, shown apart */
+  nonBinarySettled?: number;
   hits: number;
   hitRate: number;
 }
@@ -39,7 +45,7 @@ export interface PredictionDetail {
   version: number;
   createdAtLabel: string;
   /** Settlement result; empty for records settled before outcomes existed */
-  outcome?: string;
+  outcome?: PredictionOutcome;
   /** Evidence source recorded beside the result */
   evidenceLevel?: string;
   /** Model card: where the prediction applies and what would falsify it */

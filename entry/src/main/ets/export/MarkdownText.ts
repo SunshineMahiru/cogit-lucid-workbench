@@ -1,4 +1,5 @@
 import { PredictionStatus } from '../model/PredictionStatus';
+import { outcomeLabel, PredictionOutcome } from '../model/PredictionOutcome';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
 
@@ -70,12 +71,9 @@ export function predictionStatusLabel(status: PredictionStatus): string {
   return status === PredictionStatus.SETTLED ? '已结算' : '待结算';
 }
 
-/** Chinese label for the settled hit flag. */
-export function hitLabel(hit: boolean | null): string {
-  if (hit === null) {
-    return '未结算';
-  }
-  return hit ? '命中' : '未命中';
+/** Chinese label for a settlement result; empty reads as not yet settled. */
+export function hitLabel(outcome: PredictionOutcome): string {
+  return outcomeLabel(outcome);
 }
 
 /** Formats a confidence value, clamped to the 0-100 range. */

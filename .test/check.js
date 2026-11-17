@@ -635,18 +635,53 @@ test('预测摘要统计待结算、已结算与命中率', () => {
     prediction({ status: 'settled', hit: true }),
     prediction({ status: 'settled', hit: false })
   ]);
-  assert.deepStrictEqual(summary, { total: 4, pending: 2, settled: 2, hits: 1, hitRate: 50 });
-  assert.deepStrictEqual(summarizePredictions([]), { total: 0, pending: 0, settled: 0, hits: 0, hitRate: 0 });
+  assert.deepStrictEqual(summary,
+    { total: 4, pending: 2, settled: 2, nonBinarySettled: 0, hits: 1, hitRate: 50 });
+  assert.deepStrictEqual(summarizePredictions([]),
+    { total: 0, pending: 0, settled: 0, nonBinarySettled: 0, hits: 0, hitRate: 0 });
 });
 
-test('预测标签区分待结算、命中与未命中', () => {
-  assert.strictEqual(predictionStatusLabel({ status: 'pending', hit: null }), '待结算');
-  assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: true }), '命中');
-  assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: false }), '未命中');
-  assert.strictEqual(predictionStatusText('pending', null), '待结算');
-  assert.strictEqual(predictionStatusText('settled', true), '命中');
-  assert.strictEqual(predictionHitText(null), '未结算');
-  assert.strictEqual(predictionHitText(false), '未命中');
+test('非二值结算不进二值分母，单列为已结算非二值', () => {
+  const summary = summarizePredictions([
+    prediction({ id: 'a', status: 'settled', outcome: 'hold', hit: true }),
+    prediction({ id: 'b', status: 'settled', outcome: 'fail', hit: false }),
+    prediction({ id: 'c', status: 'settled', outcome: 'partial', hit: null }),
+    prediction({ id: 'd', status: 'settled', outcome: 'insufficient', hit: null }),
+    prediction({ id: 'e', status: 'settled', outcome: 'undecidable', hit: null })
+  ]);
+  assert.strictEqual(summary.settled, 2);
+  assert.strictEqual(summary.nonBinarySettled, 3);
+  assert.strictEqual(summary.hits, 1);
+  assert.strictEqual(summary.hitRate, 50);
+});
+
+test('旧记录缺 outcome 时标签与分母按 hit 回退', () => {
+  const summary = summarizePredictions([
+    prediction({ id: 'a', status: 'settled', hit: true }),
+    prediction({ id: 'b', status: 'settled', hit: false }),
+    prediction({ id: 'c', status: 'settled', hit: null })
+  ]);
+  assert.strictEqual(summary.settled, 2);
+  assert.strictEqual(summary.nonBinarySettled, 0);
+  assert.strictEqual(summary.hitRate, 50);
+  assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: true }), '成立');
+  assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: false }), '未成立');
+  assert.strictEqual(predictionStatusText('settled', 'hold'), '成立');
+  assert.strictEqual(predictionHitText('fail'), '未成立');
+});
+
+test('预测标签按五档结算结果输出', () => {
+  assert.strictEqual(predictionStatusLabel({ status: 'pending', hit: null, outcome: '' }), '待结算');
+  assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: true, outcome: 'hold' }), '成立');
+  assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: false, outcome: 'fail' }), '未成立');
+  assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: null, outcome: 'partial' }), '部分成立');
+  assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: null, outcome: 'insufficient' }), '证据不足');
+  assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: null, outcome: 'undecidable' }), '无法判断');
+  assert.strictEqual(predictionStatusText('pending', ''), '待结算');
+  assert.strictEqual(predictionStatusText('settled', 'partial'), '部分成立');
+  assert.notStrictEqual(predictionStatusText('settled', 'partial'), '未命中');
+  assert.strictEqual(predictionHitText('insufficient'), '证据不足');
+  assert.notStrictEqual(predictionHitText('undecidable'), '未结算');
 });
 
 test('预测详情投影带创建时间与版本', () => {
@@ -908,6 +943,24 @@ test('已结算但缺命中结果只进总数，不进二值统计', () => {
   assert.strictEqual(stats.hits, 0);
   assert.strictEqual(stats.misses, 0);
   assert.strictEqual(stats.hitRate, 0);
+  assert.strictEqual(stats.excluded, 0);
+});
+
+test('统计分母只收二值结果，outcome 与 hit 冲突的行计入排除', () => {
+  const stats = buildPredictionStats([
+    prediction({ id: 'a', status: 'settled', outcome: 'hold', hit: true, settlementDate: '2026-10-01' }),
+    prediction({ id: 'b', status: 'settled', outcome: 'fail', hit: false, settlementDate: '2026-10-02' }),
+    prediction({ id: 'c', status: 'settled', outcome: 'partial', hit: null, settlementDate: '2026-10-03' }),
+    prediction({ id: 'd', status: 'settled', outcome: 'partial', hit: true, settlementDate: '2026-10-04' }),
+    prediction({ id: 'e', status: 'settled', outcome: 'hold', hit: null, settlementDate: '2026-10-05' })
+  ]);
+  assert.strictEqual(stats.settled, 5);
+  assert.strictEqual(stats.hits, 1);
+  assert.strictEqual(stats.misses, 1);
+  assert.strictEqual(stats.hitRate, 50);
+  assert.strictEqual(stats.excluded, 2);
+  assert.strictEqual(stats.outcomes.partial, 1);
+  assert.deepStrictEqual(stats.months.map((point) => point.settled), [2]);
 });
 
 test('预测草稿校验覆盖必填、置信度与日期', () => {

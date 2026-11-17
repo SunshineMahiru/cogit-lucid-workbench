@@ -910,6 +910,28 @@ async function main() {
     assert.deepStrictEqual(notes.map((note) => note.id), ['ev_local']);
   });
 
+  await test('首页待修订预测包含未成立与三类非二值', async () => {
+    reset();
+    const now = new Date(2026, 9, 27, 12, 0).getTime();
+    const predictionService = await PredictionService.open({});
+    const outcomes = ['hold', 'fail', 'partial', 'insufficient', 'undecidable'];
+    for (let index = 0; index < outcomes.length; index += 1) {
+      const created = await predictionService.create({
+        target: `待修订 ${index}`,
+        judgment: '达成',
+        confidence: 60,
+        reason: '',
+        falsification: '若未达成',
+        settlementDate: '2026-10-27'
+      }, now);
+      await predictionService.settle(created.id, '结果', outcomes[index], '', now);
+    }
+    const home = await HomeDataService.open({});
+    const summary = await home.loadSummary();
+    assert.strictEqual(summary.revisionPredictions, 4);
+    assert.strictEqual(summary.settledPredictions, 5);
+  });
+
   await test('整条改密级只收窄宽于记录的材料的级', async () => {
     reset();
     store.rows('experience_material').push(
@@ -1058,10 +1080,36 @@ async function main() {
     const stats = await predictionService.stats();
     assert.strictEqual(stats.settled, 1);
     assert.strictEqual(stats.hitRate, 100);
+    assert.strictEqual(stats.excluded, 0);
 
     await assert.rejects(async () => {
       await predictionService.settle(created.id, '再次结算', 'fail');
     });
+  });
+
+  await test('统计分母只收二值结算，非二值单列', async () => {
+    reset();
+    const now = new Date(2026, 9, 27, 12, 0).getTime();
+    const predictionService = await PredictionService.open({});
+    const outcomes = ['hold', 'fail', 'partial', 'insufficient', 'undecidable'];
+    for (let index = 0; index < outcomes.length; index += 1) {
+      const created = await predictionService.create({
+        target: `结算分母 ${index}`,
+        judgment: '达成',
+        confidence: 60,
+        reason: '',
+        falsification: '若未达成',
+        settlementDate: '2026-10-27'
+      }, now);
+      await predictionService.settle(created.id, '结果', outcomes[index], '', now);
+    }
+    const stats = await predictionService.stats();
+    assert.strictEqual(stats.settled, 5);
+    assert.strictEqual(stats.hits, 1);
+    assert.strictEqual(stats.misses, 1);
+    assert.strictEqual(stats.hitRate, 50);
+    assert.strictEqual(stats.outcomes.partial, 1);
+    assert.strictEqual(stats.excluded, 0);
   });
 
   await test('复盘保存后可查历史与锚点对照', async () => {

@@ -1,5 +1,5 @@
 import { Prediction } from '../model/Prediction';
-import { outcomeFromLegacy } from '../model/PredictionOutcome';
+import { isBinaryOutcome, outcomeFromLegacy } from '../model/PredictionOutcome';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { CalibrationReport } from '../analysis/calibration/CalibrationAnalyzer';
@@ -29,6 +29,8 @@ export interface PredictionStats {
   months: PredictionMonthPoint[];
   /** Confidence calibration over the same settled sample */
   calibration: CalibrationReport;
+  /** Settled rows dropped because the outcome and the hit flag disagree */
+  excluded?: number;
 }
 
 /** One counter per outcome value. */
@@ -45,24 +47,31 @@ export function buildPredictionStats(predictions: Prediction[], monthLimit: numb
   const samples: SettledSample[] = [];
   const outcomes: OutcomeCounts = { hold: 0, fail: 0, partial: 0, insufficient: 0, undecidable: 0 };
   let settledTotal = 0;
+  let excluded = 0;
   for (const prediction of predictions) {
     if (prediction.status !== PredictionStatus.SETTLED || prediction.level === SecurityLevel.SEALED) {
       continue;
     }
     settledTotal += 1;
-    const outcome = (prediction.outcome ?? '').length > 0 ?
-      prediction.outcome : outcomeFromLegacy(prediction.hit);
+    const stored = prediction.outcome ?? '';
+    const outcome = stored.length > 0 ? stored : outcomeFromLegacy(prediction.hit);
+    // A binary outcome needs the matching hit flag; a non-binary one must leave it empty.
+    const consistent = isBinaryOutcome(outcome) ?
+      prediction.hit === (outcome === 'hold') : prediction.hit === null;
+    if (!consistent) {
+      excluded += 1;
+      continue;
+    }
     if (outcome === 'hold' || outcome === 'fail' || outcome === 'partial' ||
       outcome === 'insufficient' || outcome === 'undecidable') {
       outcomes[outcome] += 1;
     }
-    // Partial, insufficient and undecidable leave hit null; they stay out of the binary rate.
-    if (prediction.hit === null) {
+    if (!isBinaryOutcome(outcome)) {
       continue;
     }
     const month = prediction.settlementDate.length >= 7 ?
       prediction.settlementDate.slice(0, 7) : '未知';
-    samples.push({ confidence: prediction.confidence, hit: prediction.hit === true, month: month });
+    samples.push({ confidence: prediction.confidence, hit: outcome === 'hold', month: month });
   }
 
   const metrics = buildPredictionMetrics(samples, monthLimit);
@@ -84,7 +93,8 @@ export function buildPredictionStats(predictions: Prediction[], monthLimit: numb
     hitRate: metrics.hitRate,
     outcomes: outcomes,
     months: months,
-    calibration: metrics.calibration
+    calibration: metrics.calibration,
+    excluded: excluded
   };
 }
 

@@ -6,7 +6,7 @@ import {
   todayDateString
 } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
-import { outcomeLabel } from '../model/PredictionOutcome';
+import { outcomeFromLegacy, PredictionOutcome } from '../model/PredictionOutcome';
 import { PredictionDetailParams, PredictionSettleParams, PredictionCreateParams, PlanAttachParams } from '../navigation/RouteParams';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
@@ -158,12 +158,15 @@ export struct PredictionDetailPage {
     return this.detail.hit === true ? AppTheme.color.success : AppTheme.color.danger;
   }
 
-  /** Outcome label when the record has one, otherwise the legacy hit/miss text. */
+  /** Stored outcome, or the hit flag for records settled before outcomes existed. */
+  private settledOutcome(item: PredictionDetail): PredictionOutcome {
+    const stored = item.outcome ?? '';
+    return stored.length > 0 ? stored : outcomeFromLegacy(item.hit);
+  }
+
+  /** Settlement label for the status tag, covering pending rows and all five outcomes. */
   private resultText(item: PredictionDetail): string {
-    if (item.outcome !== undefined && item.outcome.length > 0) {
-      return outcomeLabel(item.outcome);
-    }
-    return predictionStatusText(item.status, item.hit);
+    return predictionStatusText(item.status, this.settledOutcome(item));
   }
 
   private confidenceText(item: PredictionDetail): string {
@@ -270,7 +273,7 @@ export struct PredictionDetailPage {
         Scroll() {
           Column({ space: 12 }) {
             Row({ space: 8 }) {
-              Text(predictionStatusText(this.detail.status, this.detail.hit))
+              Text(predictionStatusText(this.detail.status, this.settledOutcome(this.detail)))
                 .fontSize(AppTheme.font.caption)
                 .fontColor(this.tagColor())
                 .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
@@ -327,7 +330,7 @@ export struct PredictionDetailPage {
                   PredictionInfoRow({ label: '证据来源', value: this.detail.evidenceLevel })
                 }
               } else {
-                PredictionInfoRow({ label: '命中', value: predictionHitText(this.detail.hit) })
+                PredictionInfoRow({ label: '结算结果', value: predictionHitText(this.settledOutcome(this.detail)) })
               }
               PredictionInfoRow({
                 label: '实际结果',

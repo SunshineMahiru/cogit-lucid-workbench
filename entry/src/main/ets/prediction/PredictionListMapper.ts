@@ -1,6 +1,7 @@
 import { Prediction } from '../model/Prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
+import { isBinaryOutcome, isNonBinaryOutcome, outcomeFromLegacy, outcomeLabel, PredictionOutcome } from '../model/PredictionOutcome';
 import { hitRatePercent } from '../analysis/metrics/Rates';
 import { formatDateTime } from '../analysis/time/DateTime';
 import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
@@ -15,6 +16,7 @@ export function toPredictionListItem(prediction: Prediction): PredictionListItem
     settlementDate: prediction.settlementDate,
     status: prediction.status,
     hit: prediction.hit,
+    outcome: prediction.outcome ?? '',
     actualResult: prediction.actualResult,
     createdAt: prediction.createdAt
   };
@@ -30,10 +32,12 @@ export function toPredictionListItems(predictions: Prediction[]): PredictionList
   return items;
 }
 
-/** Counts pending and settled rows plus the hit rate over settled rows. */
+/** Counts pending and settled rows; the hit rate covers binary settled rows only. */
 export function summarizePredictions(predictions: Prediction[]): PredictionSummary {
   let pending = 0;
   let hits = 0;
+  let binarySettled = 0;
+  let nonBinarySettled = 0;
   let total = 0;
   for (const prediction of predictions) {
     if (prediction.level === SecurityLevel.SEALED) {
@@ -42,34 +46,51 @@ export function summarizePredictions(predictions: Prediction[]): PredictionSumma
     total += 1;
     if (prediction.status === PredictionStatus.PENDING) {
       pending += 1;
-    } else if (prediction.hit === true) {
-      hits += 1;
+      continue;
+    }
+    const outcome = effectiveOutcome(prediction.outcome ?? '', prediction.hit);
+    if (isBinaryOutcome(outcome)) {
+      binarySettled += 1;
+      if (outcome === 'hold') {
+        hits += 1;
+      }
+    } else if (isNonBinaryOutcome(outcome)) {
+      nonBinarySettled += 1;
     }
   }
-  const settled = total - pending;
-  const hitRate = hitRatePercent(hits, settled);
-  return { total: total, pending: pending, settled: settled, hits: hits, hitRate: hitRate };
+  const hitRate = hitRatePercent(hits, binarySettled);
+  return {
+    total: total,
+    pending: pending,
+    settled: binarySettled,
+    nonBinarySettled: nonBinarySettled,
+    hits: hits,
+    hitRate: hitRate
+  };
 }
 
-/** Tag text shown on a prediction card. */
+/** Tag text shown on a prediction card; records without an outcome fall back to the hit flag. */
 export function predictionStatusLabel(item: PredictionListItem): string {
-  return predictionStatusText(item.status, item.hit);
+  return predictionStatusText(item.status, effectiveOutcome(item.outcome ?? '', item.hit));
 }
 
-/** Tag text for a status and hit pair, shared by the list and the detail page. */
-export function predictionStatusText(status: PredictionStatus, hit: boolean | null): string {
+/** Tag text for a status and settlement outcome pair, shared by the list and the detail page. */
+export function predictionStatusText(status: PredictionStatus, outcome: PredictionOutcome): string {
   if (status === PredictionStatus.PENDING) {
     return '待结算';
   }
-  return hit === true ? '命中' : '未命中';
+  return outcomeLabel(outcome);
 }
 
-/** Text for the settled flag, including the not-yet-settled case. */
-export function predictionHitText(hit: boolean | null): string {
-  if (hit === null) {
-    return '未结算';
+/**
+ * Text for the settlement result; the boolean form is the hit flag kept for rows
+ * written before outcomes existed.
+ */
+export function predictionHitText(outcome: boolean | null | string): string {
+  if (typeof outcome === 'string') {
+    return outcomeLabel(outcome);
   }
-  return hit ? '命中' : '未命中';
+  return legacyHitLabel(outcome);
 }
 
 /** Projects one prediction into the read-only detail model. */
@@ -96,6 +117,18 @@ export function toPredictionDetail(prediction: Prediction): PredictionDetail {
     preserved: prediction.preserved ?? '',
     repositioned: prediction.repositioned ?? ''
   };
+}
+
+/** Stored outcome, or the hit flag for records settled before outcomes existed. */
+function effectiveOutcome(outcome: PredictionOutcome, hit: boolean | null): PredictionOutcome {
+  return outcome.length > 0 ? outcome : outcomeFromLegacy(hit);
+}
+
+function legacyHitLabel(hit: boolean | null): string {
+  if (hit === null) {
+    return '未结算';
+  }
+  return hit ? '命中' : '未命中';
 }
 
 function compareRows(left: PredictionListItem, right: PredictionListItem): number {

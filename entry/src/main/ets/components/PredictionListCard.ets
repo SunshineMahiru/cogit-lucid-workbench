@@ -13,6 +13,7 @@ export struct PredictionListCard {
     settlementDate: '',
     status: PredictionStatus.PENDING,
     hit: null,
+    outcome: '',
     actualResult: '',
     createdAt: 0
   };
