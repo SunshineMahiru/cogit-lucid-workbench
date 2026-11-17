@@ -6,6 +6,30 @@ import { hitRatePercent } from '../analysis/metrics/Rates';
 import { formatDateTime } from '../analysis/time/DateTime';
 import { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
 
+/** Longest hypothesis excerpt shown on a list card, in characters. */
+export const PREDICTION_EXCERPT_LENGTH: number = 40;
+
+/** Tone of a result badge; the card maps it onto palette colours. */
+export type PredictionResultTone = 'success' | 'danger' | 'warning' | 'muted';
+
+/** Result badge text plus its tone, shown on the right of a settled row. */
+export interface PredictionResultLabel {
+  label: string;
+  tone: PredictionResultTone;
+}
+
+/** Quick filter above the list; due means open and the settlement date has arrived. */
+export type PredictionQuickFilter = 'all' | 'due' | 'revised';
+
+/** Collapses whitespace and cuts the judgment to a card-sized sentence. */
+export function predictionExcerpt(judgment: string): string {
+  const text = judgment.replace(/\s+/g, ' ').trim();
+  if (text.length <= PREDICTION_EXCERPT_LENGTH) {
+    return text;
+  }
+  return `${text.substring(0, PREDICTION_EXCERPT_LENGTH - 1)}…`;
+}
+
 /** Converts one prediction into a list row. */
 export function toPredictionListItem(prediction: Prediction): PredictionListItem {
   return {
@@ -19,7 +43,9 @@ export function toPredictionListItem(prediction: Prediction): PredictionListItem
     outcome: prediction.outcome ?? '',
     actualResult: prediction.actualResult,
     createdAt: prediction.createdAt,
+    revisedAt: prediction.createdAt,
     version: prediction.version,
+    hypothesisExcerpt: predictionExcerpt(prediction.judgment),
     termOnly: prediction.version > 1 && (prediction.explanatoryGain ?? '').trim().length === 0,
     level: prediction.level ?? SecurityLevel.LOCAL_ONLY
   };
@@ -88,6 +114,59 @@ export function predictionStatusText(status: PredictionStatus, outcome: Predicti
 /** Text for the settlement result, covering all five outcomes. */
 export function predictionHitText(outcome: PredictionOutcome): string {
   return outcomeLabel(outcome);
+}
+
+/** Lifecycle word for the title chip: open or settled. */
+export function predictionLifecycleLabel(status: PredictionStatus): string {
+  return status === PredictionStatus.PENDING ? '待结算' : '已结算';
+}
+
+/** Hit/miss badge for a settled row; pending rows read as 进行中. */
+export function predictionResultLabel(item: PredictionListItem): PredictionResultLabel {
+  if (item.status === PredictionStatus.PENDING) {
+    return { label: '进行中', tone: 'warning' };
+  }
+  const outcome = effectiveOutcome(item.outcome ?? '', item.hit);
+  if (outcome === 'hold') {
+    return { label: '命中', tone: 'success' };
+  }
+  if (outcome === 'fail') {
+    return { label: '未命中', tone: 'danger' };
+  }
+  if (outcome === 'partial') {
+    return { label: '部分命中', tone: 'warning' };
+  }
+  if (outcome === 'insufficient') {
+    return { label: '样本不足', tone: 'warning' };
+  }
+  if (outcome === 'undecidable') {
+    return { label: '不可判定', tone: 'muted' };
+  }
+  return { label: '未结算', tone: 'muted' };
+}
+
+/** True when the row matches a quick filter; due requires an open row past its settlement date. */
+export function matchesPredictionQuickFilter(item: PredictionListItem, quick: PredictionQuickFilter,
+  today: string): boolean {
+  if (quick === 'all') {
+    return true;
+  }
+  if (item.status !== PredictionStatus.PENDING) {
+    return false;
+  }
+  if (quick === 'due') {
+    return item.settlementDate.length > 0 && item.settlementDate <= today;
+  }
+  return item.version > 1;
+}
+
+/** Applies a quick filter to rows already fetched from the service. */
+export function filterPredictionItems(items: PredictionListItem[], quick: PredictionQuickFilter,
+  today: string): PredictionListItem[] {
+  if (quick === 'all') {
+    return items;
+  }
+  return items.filter((item: PredictionListItem) => matchesPredictionQuickFilter(item, quick, today));
 }
 
 /** Projects one prediction into the read-only detail model. */

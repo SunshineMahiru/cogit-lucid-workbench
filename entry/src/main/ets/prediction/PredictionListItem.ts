@@ -17,8 +17,12 @@ export interface PredictionListItem {
   outcome?: PredictionOutcome;
   actualResult: string;
   createdAt: number;
+  /** Time of the latest revision; equals createdAt while version is 1 */
+  revisedAt: number;
   /** Revision number, 1 for the first version */
   version: number;
+  /** Judgment cut to a glanceable length, shown under the target */
+  hypothesisExcerpt: string;
   /** A revision that adds terms without extra explanatory power */
   termOnly: boolean;
   /** Security level controlling aggregation and export */

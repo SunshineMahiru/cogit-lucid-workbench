@@ -1,15 +1,24 @@
 import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
-import { PredictionListItem, PredictionService, PredictionSummary } from '../prediction';
+import {
+  PredictionListItem,
+  PredictionQuickFilter,
+  PredictionService,
+  PredictionSummary,
+  filterPredictionItems,
+  todayDateString
+} from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { formatHitRate, hitRateCaption } from '../model/HomeModel';
 import { PredictionDetailParams, PredictionListParams, PredictionCreateParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
 import { PredictionListCard } from '../components/PredictionListCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
+import { TagChip } from '../components/TagChip';
 import { previewStore } from '../preview/PreviewStore';
 
 const PAGE_SIZE = 20;
+const QUICK_PAGE_SIZE = 1000;
 
 /** Prediction log: summary counts, status filters and the row list. */
 @ComponentV2
@@ -18,6 +27,7 @@ export struct PredictionListPage {
   @Local items: PredictionListItem[] = [];
   @Local summary: PredictionSummary = { total: 0, pending: 0, settled: 0, hits: 0, hitRate: 0 };
   @Local filter: PredictionStatus | null = null;
+  @Local quick: PredictionQuickFilter = 'all';
   @Local isLoading: boolean = true;
   @Local isLoadingMore: boolean = false;
   @Local hasMore: boolean = false;
@@ -47,7 +57,7 @@ export struct PredictionListPage {
 
   private loadPreview(): void {
     this.isPreview = true;
-    this.items = previewStore.listPredictions(this.filter);
+    this.items = this.applyQuick(previewStore.listPredictions(this.filter));
     this.listVersion += 1;
     this.summary = previewStore.predictionSummary();
     this.isLoading = false;
@@ -55,7 +65,7 @@ export struct PredictionListPage {
 
   async refresh(): Promise<void> {
     if (this.isPreview) {
-      this.items = previewStore.listPredictions(this.filter);
+      this.items = this.applyQuick(previewStore.listPredictions(this.filter));
       this.listVersion += 1;
       this.summary = previewStore.predictionSummary();
       this.isLoading = false;
@@ -66,9 +76,11 @@ export struct PredictionListPage {
     }
     this.isLoading = true;
     try {
-      this.items = await this.service.listPage(this.filter, PAGE_SIZE, 0);
+      const limit = this.quick === 'all' ? PAGE_SIZE : QUICK_PAGE_SIZE;
+      const rows = await this.service.listPage(this.filter, limit, 0);
+      this.items = this.applyQuick(rows);
       this.listVersion += 1;
-      this.hasMore = this.items.length >= PAGE_SIZE;
+      this.hasMore = this.quick === 'all' && rows.length >= PAGE_SIZE;
       this.summary = await this.service.summary();
     } catch (error) {
       this.getUIContext().getPromptAction().showToast({ message: '加载失败，请重试' });
@@ -96,7 +108,20 @@ export struct PredictionListPage {
 
   private selectFilter(status: PredictionStatus | null): void {
     this.filter = status;
+    this.quick = 'all';
     this.refresh();
+  }
+
+  private selectQuick(quick: PredictionQuickFilter): void {
+    this.quick = this.quick === quick ? 'all' : quick;
+    if (this.quick !== 'all') {
+      this.filter = PredictionStatus.PENDING;
+    }
+    this.refresh();
+  }
+
+  private applyQuick(items: PredictionListItem[]): PredictionListItem[] {
+    return filterPredictionItems(items, this.quick, todayDateString(Date.now()));
   }
 
   private openDetail(predictionId: string): void {
@@ -115,16 +140,29 @@ export struct PredictionListPage {
   }
 
   @Builder
-  filterChip(label: string, status: PredictionStatus | null) {
-    Text(label)
-      .fontSize(AppTheme.font.bodyStrong)
-      .fontColor(this.filter === status ? Color.White : AppTheme.color.textStrong)
-      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-      .backgroundColor(this.filter === status ? AppTheme.color.primary : AppTheme.color.chip)
-      .borderRadius(AppTheme.radius.lg)
-      .onClick(() => {
+  statusChip(label: string, status: PredictionStatus | null) {
+    TagChip({
+      label: label,
+      tone: AppTheme.color.primary,
+      surface: AppTheme.color.evPracticeSurface,
+      selected: this.filter === status && this.quick === 'all',
+      onTap: () => {
         this.selectFilter(status);
-      })
+      }
+    })
+  }
+
+  @Builder
+  quickChip(label: string, quick: PredictionQuickFilter, tone: ResourceColor, surface: ResourceColor) {
+    TagChip({
+      label: label,
+      tone: tone,
+      surface: surface,
+      selected: this.quick === quick,
+      onTap: () => {
+        this.selectQuick(quick);
+      }
+    })
   }
 
   @Builder
@@ -211,6 +249,7 @@ export struct PredictionListPage {
         if (context.pathInfo.param !== undefined) {
           const params = context.pathInfo.param as PredictionListParams;
           this.filter = params.status;
+          this.quick = 'all';
           if (this.service !== null) {
             this.refresh();
           }
@@ -232,10 +271,12 @@ export struct PredictionListPage {
         this.summaryCard()
 
         Scroll() {
-          Row({ space: 8 }) {
-            this.filterChip('全部', null)
-            this.filterChip('待结算', PredictionStatus.PENDING)
-            this.filterChip('已结算', PredictionStatus.SETTLED)
+          Row({ space: AppTheme.spacing.s8 }) {
+            this.statusChip('全部', null)
+            this.statusChip('待结算', PredictionStatus.PENDING)
+            this.statusChip('已结算', PredictionStatus.SETTLED)
+            this.quickChip('到期待结算', 'due', AppTheme.color.warning, AppTheme.color.warningSurface)
+            this.quickChip('待修订', 'revised', AppTheme.color.accentPurple, AppTheme.color.evOtherSurface)
           }
         }
         .scrollable(ScrollDirection.Horizontal)
@@ -304,6 +345,12 @@ export struct PredictionListPage {
   }
 
   private emptyTitle(): string {
+    if (this.quick === 'due') {
+      return '没有到期待结算的预测';
+    }
+    if (this.quick === 'revised') {
+      return '没有待修订的预测';
+    }
     if (this.filter === PredictionStatus.PENDING) {
       return '暂无待结算预测';
     }
@@ -314,6 +361,12 @@ export struct PredictionListPage {
   }
 
   private emptyHint(): string {
+    if (this.quick === 'due') {
+      return '到达结算日的判断会在这里等你';
+    }
+    if (this.quick === 'revised') {
+      return '修订过的判断会在这里列出';
+    }
     if (this.filter === PredictionStatus.PENDING) {
       return '到期的判断会在这里等你结算';
     }

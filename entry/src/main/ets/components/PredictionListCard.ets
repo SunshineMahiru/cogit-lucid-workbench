@@ -1,7 +1,16 @@
-import { PredictionListItem, predictionStatusLabel } from '../prediction';
+import {
+  PredictionListItem,
+  PredictionResultLabel,
+  PredictionResultTone,
+  predictionLifecycleLabel,
+  predictionResultLabel
+} from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { AppTheme } from '../theme/AppTheme';
+import { formatDate } from '../analysis/time/DateTime';
+import { SectionCard } from './SectionCard';
+import { TagChip } from './TagChip';
 
 /** Prediction row for the log list, covering both pending and settled states. */
 @ComponentV2
@@ -17,77 +26,117 @@ export struct PredictionListCard {
     outcome: '',
     actualResult: '',
     createdAt: 0,
+    revisedAt: 0,
     version: 1,
+    hypothesisExcerpt: '',
     termOnly: false,
     level: SecurityLevel.LOCAL_ONLY
   };
   @Event onTap: () => void = () => {};
 
-  private tagLabel(): string {
-    return predictionStatusLabel(this.item);
+  private isOpen(): boolean {
+    return this.item.status === PredictionStatus.PENDING;
   }
 
-  private tagColor(): string {
-    if (this.item.status === PredictionStatus.PENDING) {
+  private result(): PredictionResultLabel {
+    return predictionResultLabel(this.item);
+  }
+
+  private toneColor(tone: PredictionResultTone): ResourceColor {
+    if (tone === 'success') {
+      return AppTheme.color.success;
+    }
+    if (tone === 'danger') {
+      return AppTheme.color.danger;
+    }
+    if (tone === 'warning') {
       return AppTheme.color.warning;
     }
-    return this.item.hit === true ? AppTheme.color.success : AppTheme.color.danger;
+    return AppTheme.color.textMuted;
   }
 
-  private tagBackground(): string {
-    if (this.item.status === PredictionStatus.PENDING) {
+  private toneSurface(tone: PredictionResultTone): ResourceColor {
+    if (tone === 'success') {
+      return AppTheme.color.successSurface;
+    }
+    if (tone === 'danger') {
+      return AppTheme.color.dangerSurface;
+    }
+    if (tone === 'warning') {
       return AppTheme.color.warningSurface;
     }
-    return this.item.hit === true ? AppTheme.color.successSurface : AppTheme.color.dangerSurface;
+    return AppTheme.color.chip;
+  }
+
+  private excerpt(): string {
+    return this.item.hypothesisExcerpt.length > 0 ? this.item.hypothesisExcerpt : this.item.judgment;
+  }
+
+  private confidenceText(): string {
+    return this.item.confidence === null ? '置信度 未量化' : `置信度 ${this.item.confidence}%`;
+  }
+
+  private metaText(): string {
+    const due = this.item.settlementDate.length > 0 ? `期限 ${this.item.settlementDate.substring(5)}` : '期限 未定';
+    const revision = this.item.version > 1 ?
+      `修订 ${formatDate(this.item.revisedAt).substring(5)}` :
+      `创建 ${formatDate(this.item.revisedAt).substring(5)}`;
+    return `${this.confidenceText()} · ${due} · v${this.item.version} · ${revision}`;
   }
 
   build() {
-    Column({ space: 8 }) {
-      Row({ space: 6 }) {
-        Text(this.tagLabel())
-          .fontSize(AppTheme.font.caption)
-          .fontColor(this.tagColor())
-          .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
-          .backgroundColor(this.tagBackground())
-          .borderRadius(AppTheme.radius.sm)
-        Text(this.item.target)
-          .fontSize(AppTheme.font.subtitle)
-          .fontColor(AppTheme.color.text)
-          .layoutWeight(1)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(`${this.item.confidence}%`)
-          .fontSize(AppTheme.font.subtitle)
-          .fontColor(AppTheme.color.primary)
-          .margin({ left: AppTheme.spacing.s8 })
-      }
-      .width('100%')
+    Column() {
+      SectionCard() {
+        Column({ space: AppTheme.spacing.s8 }) {
+          Row({ space: AppTheme.spacing.s6 }) {
+            Text(this.item.target)
+              .fontSize(AppTheme.font.bodyStrong)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(AppTheme.color.text)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .layoutWeight(1)
+            TagChip({
+              label: predictionLifecycleLabel(this.item.status),
+              tone: this.isOpen() ? AppTheme.color.warning : AppTheme.color.textSecondary,
+              surface: this.isOpen() ? AppTheme.color.warningSurface : AppTheme.color.chip,
+              selected: true
+            })
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
 
-      Text(this.item.judgment)
-        .fontSize(AppTheme.font.bodyStrong)
-        .fontColor(AppTheme.color.textSecondaryStrong)
+          Text(this.excerpt())
+            .fontSize(AppTheme.font.body)
+            .fontColor(AppTheme.color.textSecondary)
+            .maxLines(2)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .width('100%')
+
+          Row({ space: AppTheme.spacing.s8 }) {
+            Text(this.metaText())
+              .fontSize(AppTheme.font.caption)
+              .fontColor(AppTheme.color.textMuted)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .layoutWeight(1)
+            if (!this.isOpen()) {
+              TagChip({
+                label: this.result().label,
+                tone: this.toneColor(this.result().tone),
+                surface: this.toneSurface(this.result().tone),
+                selected: true
+              })
+            }
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+        }
         .width('100%')
-        .maxLines(2)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-
-      Row() {
-        Text(this.item.status === PredictionStatus.PENDING ?
-          `结算日 ${this.item.settlementDate}` :
-          `实际 ${this.item.actualResult.length > 0 ? this.item.actualResult : '—'}`)
-          .fontSize(AppTheme.font.body)
-          .fontColor(AppTheme.color.textSecondary)
-        Blank()
-        Text(this.item.status === PredictionStatus.PENDING ? '置信度' : '已结算')
-          .fontSize(AppTheme.font.body)
-          .fontColor(AppTheme.color.textMuted)
+        .alignItems(HorizontalAlign.Start)
       }
-      .width('100%')
     }
     .width('100%')
-    .padding(AppTheme.spacing.s16)
-    .backgroundColor(AppTheme.color.surface)
-    .borderRadius(16)
-    .border({ width: 0.5, color: AppTheme.color.border })
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
     .onClick(() => {
       this.onTap();

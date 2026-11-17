@@ -1,4 +1,9 @@
 export type { PredictionDetail, PredictionListItem, PredictionSummary } from './PredictionListItem';
+export type {
+  PredictionQuickFilter,
+  PredictionResultLabel,
+  PredictionResultTone
+} from './PredictionListMapper';
 export type { PredictionMonthPoint, PredictionStats } from './PredictionStats';
 export { buildPredictionStats } from './PredictionStats';
 export type { PredictionDraft, PredictionDraftErrors } from './PredictionValidation';
@@ -12,7 +17,13 @@ export {
   validatePredictionDraft
 } from './PredictionValidation';
 export {
+  PREDICTION_EXCERPT_LENGTH,
+  filterPredictionItems,
+  matchesPredictionQuickFilter,
+  predictionExcerpt,
   predictionHitText,
+  predictionLifecycleLabel,
+  predictionResultLabel,
   predictionStatusLabel,
   predictionStatusText,
   summarizePredictions,

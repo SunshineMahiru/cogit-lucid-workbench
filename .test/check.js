@@ -10,7 +10,12 @@ const { NoteFieldKey } = require('./out2/note/NoteFieldKey');
 const { NOTE_TEMPLATES, findNoteTemplate } = require('./out2/note/templates');
 const { formatHitRate, formatNoteCount, hitRateCaption } = require('./out2/model/HomeModel');
 const {
+  filterPredictionItems,
+  matchesPredictionQuickFilter,
+  predictionExcerpt,
   predictionHitText,
+  predictionLifecycleLabel,
+  predictionResultLabel,
   predictionStatusLabel,
   predictionStatusText,
   summarizePredictions,
@@ -668,6 +673,56 @@ test('旧记录缺 outcome 时标签与分母按 hit 回退', () => {
   assert.strictEqual(predictionStatusLabel({ status: 'settled', hit: false }), '未成立');
   assert.strictEqual(predictionStatusText('settled', 'hold'), '成立');
   assert.strictEqual(predictionHitText('fail'), '未成立');
+});
+
+test('预测列表行带摘要、版本与最近修订时间', () => {
+  const row = toPredictionListItems([prediction({
+    id: 'revised',
+    judgment: `  日均睡眠\n7 小时  ${'甲'.repeat(40)}`,
+    version: 3,
+    createdAt: 1761000000000
+  })])[0];
+  assert.strictEqual(row.version, 3);
+  assert.strictEqual(row.revisedAt, 1761000000000);
+  assert.strictEqual(row.hypothesisExcerpt, predictionExcerpt(row.judgment));
+  assert.strictEqual(row.hypothesisExcerpt.length, 40);
+  assert.strictEqual(row.hypothesisExcerpt.endsWith('…'), true);
+  assert.strictEqual(predictionExcerpt('  日均睡眠\n7 小时  '), '日均睡眠 7 小时');
+});
+
+test('已结算结果标签给出命中与未命中', () => {
+  assert.deepStrictEqual(predictionResultLabel(prediction({ status: 'pending' })),
+    { label: '进行中', tone: 'warning' });
+  assert.deepStrictEqual(predictionResultLabel(prediction({ status: 'settled', hit: true, outcome: 'hold' })),
+    { label: '命中', tone: 'success' });
+  assert.deepStrictEqual(predictionResultLabel(prediction({ status: 'settled', hit: false, outcome: 'fail' })),
+    { label: '未命中', tone: 'danger' });
+  assert.deepStrictEqual(predictionResultLabel(prediction({ status: 'settled', hit: null, outcome: 'partial' })),
+    { label: '部分命中', tone: 'warning' });
+  assert.deepStrictEqual(predictionResultLabel(prediction({ status: 'settled', hit: null, outcome: 'insufficient' })),
+    { label: '样本不足', tone: 'warning' });
+  assert.deepStrictEqual(predictionResultLabel(prediction({ status: 'settled', hit: null, outcome: 'undecidable' })),
+    { label: '不可判定', tone: 'muted' });
+  assert.deepStrictEqual(predictionResultLabel(prediction({ status: 'settled', hit: null, outcome: '' })),
+    { label: '未结算', tone: 'muted' });
+  assert.strictEqual(predictionLifecycleLabel('pending'), '待结算');
+  assert.strictEqual(predictionLifecycleLabel('settled'), '已结算');
+});
+
+test('快捷过滤按到期日与修订版本挑出待办', () => {
+  const rows = [
+    prediction({ id: 'due', settlementDate: '2026-11-10' }),
+    prediction({ id: 'later', settlementDate: '2026-12-01' }),
+    prediction({ id: 'revised', settlementDate: '2026-12-01', version: 2 }),
+    prediction({ id: 'settled', status: 'settled', hit: true, settlementDate: '2026-11-01' })
+  ];
+  const today = '2026-11-17';
+  assert.deepStrictEqual(filterPredictionItems(rows, 'all', today).map((row) => row.id),
+    ['due', 'later', 'revised', 'settled']);
+  assert.deepStrictEqual(filterPredictionItems(rows, 'due', today).map((row) => row.id), ['due']);
+  assert.deepStrictEqual(filterPredictionItems(rows, 'revised', today).map((row) => row.id), ['revised']);
+  assert.strictEqual(matchesPredictionQuickFilter(rows[3], 'due', today), false);
+  assert.strictEqual(matchesPredictionQuickFilter(rows[0], 'due', today), true);
 });
 
 test('预测标签按五档结算结果输出', () => {
