@@ -636,6 +636,7 @@ export struct PredictionCreatePage {
         }
         .layoutWeight(1)
         .scrollBar(BarState.Off)
+        .align(Alignment.Top)
 
         Column() {
           Text(this.isSaving ? '保存中…' : (this.sourceId === null ? '保存这条预测' : '生成新版本'))

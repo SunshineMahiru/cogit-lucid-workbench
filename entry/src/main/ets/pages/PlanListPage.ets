@@ -377,7 +377,7 @@ export struct PlanListPage {
       Column() {
         NoteEmptyState({
           title: '还没有计划',
-          hint: '先把一个长期目标写下来，再按七个一天推进',
+          hint: '先把一个长期目标写下来，再按周节点推进',
           actionLabel: '新建目标',
           dashed: true,
           onAction: () => {

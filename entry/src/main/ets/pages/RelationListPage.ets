@@ -287,6 +287,7 @@ export struct RelationListPage {
           .width('100%')
           .layoutWeight(1)
           .scrollBar(BarState.Off)
+          .align(Alignment.Top)
           .padding({ left: AppTheme.spacing.page, right: AppTheme.spacing.page, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s16 })
         }
       }

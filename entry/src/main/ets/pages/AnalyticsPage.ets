@@ -693,6 +693,7 @@ export struct AnalyticsPage {
     }
     .width('100%')
     .scrollBar(BarState.Off)
+    .align(Alignment.Top)
   }
 
   build() {

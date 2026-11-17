@@ -707,6 +707,7 @@ export struct DashboardView {
           .width('100%')
           .layoutWeight(1)
           .scrollBar(BarState.Auto)
+          .align(Alignment.Top)
         }
         .width('100%')
         .layoutWeight(1)

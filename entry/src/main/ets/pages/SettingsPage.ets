@@ -1170,6 +1170,7 @@ export struct SettingsPage {
           }
           .layoutWeight(1)
           .scrollBar(BarState.Off)
+          .align(Alignment.Top)
 
           Column() {
             Text(this.isSaving ? '保存中…' : '保存设置')
