@@ -4,49 +4,87 @@
 
 ## 1. 色板（已锁定）
 
-28 个语义色里有 8 个改为解析系统令牌，随深浅色自动切换：`surface`、`text`、`textSecondary`、`textMuted`、`border`、`surfaceAlt`、`chip`、`track`。下表列的是其余 20 个仍用十六进制的语义色；深色模式由系统色负责，浅色值仅作对照。
+`ThemePalette` 共 32 个语义色。15 个引用系统令牌，深浅色由系统资源自动切换：
 
-| 语义 | 值 | 用途 |
+| 语义 | 系统令牌 | 用途 |
 |---|---|---|
-| page | `#F5F6F8` | 页面底色 |
-| surface | `#FFFFFF` | 卡片、输入框 |
-| primary | `#4A6FA5` | 主按钮、选中态 |
-| primaryDeep | `#185FA5` | 链接、强调文字 |
-| primaryDisabled | `#8FA6C4` | 禁用按钮 |
-| text | `#1F2329` | 主文字 |
-| textStrong | `#444441` | 次级标题 |
-| textSecondary | `#8A8F99` | 说明文字 |
-| textSecondaryStrong | `#5F5E5A` | 表单标签 |
-| textMuted | `#B0B4BE` | 时间、脚注 |
-| border | `#E0E0E0` | 默认描边 |
-| borderStrong | `#D3D1C7` | 虚线空态 |
-| borderSelected | `#B7CDE8` | 选中卡片描边 |
-| tint | `#E8EFF7` | 浅蓝标签底 |
-| chip | `#F1EFE8` | 未选中 chip |
-| surfaceAlt | `#F7F6F2` | 输入框底、浅色块 |
-| surfaceTint | `#F7F9FC` | 正文输入底 |
-| surfaceWarm | `#FFFDF5` | 锚点对照底 |
-| selectedSurface | `#F3F7FC` | 选中行底 |
-| track | `#EEF0F3` | 进度条轨道 |
-| success / surface | `#2E7D32` / `#E8F5E9` | 命中、允许 |
-| warning / surface | `#B0761E` / `#FFF4E0` | 待结算、受限 |
-| danger / surface | `#A32D2D` / `#FCEBEB` | 失败、禁分析 |
-| accentPurple | `#6B5B95` | 模块图标点缀 |
-| accentGold | `#E8A93C` | 模块图标点缀 |
+| page | `sys.color.background_primary` | 页面底色 |
+| surface | `sys.color.comp_background_list_card` | 卡片、输入框 |
+| text | `sys.color.font_primary` | 主文字 |
+| textStrong | `sys.color.font_primary` | 次级标题 |
+| textSecondary | `sys.color.font_secondary` | 说明文字 |
+| textSecondaryStrong | `sys.color.font_secondary` | 表单标签 |
+| textMuted | `sys.color.font_tertiary` | 时间、脚注 |
+| border | `sys.color.comp_divider` | 默认描边 |
+| borderStrong | `sys.color.comp_outline_color` | 虚线空态、星图连线 |
+| tint | `sys.color.comp_background_secondary` | 标签底、选中 chip |
+| surfaceAlt | `sys.color.comp_background_gray` | 输入框底、浅色块 |
+| surfaceTint | `sys.color.comp_background_tertiary` | 正文输入底 |
+| selectedSurface | `sys.color.interactive_select` | 选中行底 |
+| chip | `sys.color.comp_background_secondary` | 未选中 chip |
+| track | `sys.color.comp_background_gray` | 进度条轨道 |
+
+其余 17 个保留应用自定双套，由 `applyTheme` 按深浅切换：
+
+| 语义 | 浅色 | 深色 | 用途 |
+|---|---|---|---|
+| primary | `#4A6FA5` | `#8FB4E3` | 主按钮、选中态 |
+| primaryDeep | `#185FA5` | `#B8D3F0` | 链接、强调文字 |
+| borderSelected | `#B7CDE8` | `#4F6F91` | 选中卡片描边 |
+| surfaceWarm | `#FFFDF5` | `#2A2418` | 锚点对照底 |
+| primaryDisabled | `#8FA6C4` | `#586574` | 禁用按钮 |
+| accentPurple | `#6B5B95` | `#A99BD2` | 模块图标点缀 |
+| accentGold | `#E8A93C` | `#D8B25E` | 模块图标点缀 |
+| warning | `#B0761E` | `#E0A85C` | 待结算、受限 |
+| warningSurface | `#FFF4E0` | `#3A2C18` | 警示标签底 |
+| success | `#2E7D32` | `#78C98A` | 命中、允许 |
+| successSurface | `#E8F5E9` | `#1E3424` | 成功标签底 |
+| danger | `#A32D2D` | `#F08A8A` | 失败、禁分析 |
+| dangerSurface | `#FCEBEB` | `#3E2020` | 危险标签底 |
+| heatEmpty | `#EDEBE4` | `#23272C` | 热力图空格 |
+| heatLow | `#B7D3E8` | `#1F3A52` | 热力图低档 |
+| heatMid | `#6FA8CC` | `#2E6F9E` | 热力图中档 |
+| heatHigh | `#2E6F9E` | `#6FA8CC` | 热力图高档 |
+
+四个语义色保留自定的依据是白字压底或色块压底的对比度：
+
+- primary：白字压 `#4A6FA5` 为 5.11:1，白字压官方 `brand` `#007DFF` 为 3.91:1，低于正文要求的 4.5:1；
+- warning：官方 `alert` `#FF7500` 压 `warningSurface` `#FFF4E0` 约 2.5:1，低于 4.5:1；
+- danger：官方 `warning` `#FA2A2D` 压 `dangerSurface` `#FCEBEB` 约 3.4:1，低于 4.5:1；
+- borderSelected 与保留的 primary 配套，选中描边不会变成官方鲜蓝而与主色脱节。
+
+系统色板的语义槽少于本项目的 32 槽，由此产生四组合并，已在设计上接受：
+
+- `text` 与 `textStrong` 同为 `font_primary`；
+- `textSecondary` 与 `textSecondaryStrong` 同为 `font_secondary`；
+- `tint` 与 `chip` 同为 `comp_background_secondary`，选中与未选中 chip 靠文字色区分；
+- `surfaceAlt` 与 `track` 同为 `comp_background_gray`。
+
+`selectedSurface` 取 `interactive_select`，`borderSelected` 保留自定，两者来源不同，选中块的填充与描边不会同色而失去边界。
 
 ## 2. 字号
 
-七档字阶，定义在 `theme/AppTheme.ets` 的 `AppTheme.font`。新代码只引用令牌，不写字面字号。
+七档字阶，定义在 `theme/AppTheme.ets` 的 `AppTheme.font`，全部引用系统 fp 令牌。新代码只引用令牌，不写字面字号。
 
-| 令牌 | 字号 | 用途 |
-|---|---|---|
-| caption | 10 | 时间、口径、脚注 |
-| body | 11 | 说明、标签、次要正文 |
-| bodyStrong | 12 | 卡片正文、列表主文字 |
-| subtitle | 14 | 卡片标题、区块小标题 |
-| title | 16 | 页面内主标题、统计数值 |
-| headline | 20 | 强调数值、弹层标题 |
-| display | 28 | 首页品牌名、大号读数 |
+| 令牌 | 字号 | 系统令牌 | 字重 | 用途 |
+|---|---|---|---|---|
+| caption | 12 | `sys.float.Caption_L` | Medium | 时间、口径、脚注 |
+| body | 14 | `sys.float.Body_M` | Regular | 说明、标签、次要正文 |
+| bodyStrong | 16 | `sys.float.Body_L` | Medium | 卡片正文、列表主文字 |
+| subtitle | 18 | `sys.float.Subtitle_L` | Medium | 卡片标题、区块小标题 |
+| title | 20 | `sys.float.Title_S` | Bold | 页面内主标题、统计数值 |
+| headline | 24 | `sys.float.Title_M` | Bold | 强调数值、弹层标题、首页品牌名 |
+| display | 38 | `sys.float.Display_S` | Light | 大号读数 |
+
+`display` 只用于 `pages/StatusPage.ets:393` 与 `pages/PredictionStatsPage.ets:162` 两处大号读数；首页品牌名用 `headline`（`views/DashboardView.ets:303-304`）。
+
+## 2.1 字重
+
+`FONT_WEIGHT` 与字阶一一对应，取值来自 ArkUI `FontWeight` 枚举：caption Medium、body Regular、bodyStrong Medium、subtitle Medium、title Bold、headline Bold、display Light。枚举没有 `Light` 成员，display 取 `FontWeight.Lighter`。系统 `sys.float.font_weight_*` 的值是 0–8 的索引，不是 `fontWeight` 接受的取值，不引用。
+
+## 2.2 行高
+
+`LINE_HEIGHT` 与字阶一一对应，单位 vp：caption 18、body 22、bodyStrong 24、subtitle 28、title 30、headline 34、display 48。caption 到 title 取字号 1.5 倍向上取偶数，headline 取 1.42 倍，display 取 1.26 倍。平台只提供行间距增量令牌 `sys.float.ohos_id_text_line_space_s`（1.1vp）与 `_l`（1.4vp），没有绝对行高令牌，因此这一组是自定绝对值。
 
 ## 3. 圆角与间距
 
@@ -65,6 +103,8 @@
 
 图表图例色块写 0，与直角格子保持同形；头像用 `size / 2` 维持正圆。
 
+官方圆角为 card 8vp、button 20vp、dialog 16vp，现有 md 为 12vp，卡片与主按钮都与官方有差值；这一批不改圆角，差异留到 C2 批处理。
+
 间距九档 `AppTheme.spacing`，另保留四个语义别名：`page` 与 `card` 指向 s16，`section` 指向 s12，`gap` 指向 s8。
 
 | 令牌 | 值 |
@@ -80,7 +120,7 @@
 - 空态统一 `NoteEmptyState`，四态必须齐全；
 - 主按钮满宽 12 圆角，次按钮用 tint 底；
 - 不使用阴影、渐变、第三方图标库；
-- 速记的记录密级 chip、材料三组 chip、关联关系 chip 均为 `tint` 底 + `primaryDeep` 字，未选中为 `chip` 底 + 正文色，深色下对比度不低于 4.5:1；每个可选 chip 必须带稳定 `id`；其余页面的选中态仍为主色底白字，待后续统一；
+- 速记的记录密级 chip、材料三组 chip、关联关系 chip 均为 `tint` 底 + `primaryDeep` 字，未选中为 `chip` 底 + 正文色；两种底色同取官方 `comp_background_secondary`，靠文字色区分。实测浅色 chip 底 `#E6E6E6`，选中字 5.23:1、未选中字 12.6:1；深色 chip 底 `#191919`，选中字 11.4:1、未选中字 14.4:1，深浅两态都不低于 4.5:1；每个可选 chip 必须带稳定 `id`；其余页面的选中态仍为主色底白字，待后续统一；
 - 速记编辑的深度 chip 固定 `note_depth_quick` / `note_depth_normal` / `note_depth_deep`，类型 chip 固定 `quick_kind_scene` / `quick_kind_feeling` / `quick_kind_body` / `quick_kind_existing_action` / `quick_kind_interpretation` / `quick_kind_none`；
 - 快速档只渲染正文、类型 chip 与保存条：类别、模板字段、标签、分类补充、关联关系与记录密级都不渲染，切回普通或深入后恢复显示；
 - 草稿恢复面板只在存在未处理草稿时出现，占满内容区，两颗按钮固定 `note_draft_resume` / `note_draft_discard`；选「继续上次草稿」回填后进入表单，选「重新开始」得到空白表单；
@@ -105,8 +145,10 @@
 
 ## 5. 已知偏差
 
-- 页面与组件里只剩一处字面量：`PageBackground` 的 `DARK_SCRIM`（18% 黑遮罩），它是叠加层不是语义色。热力图的四档色阶已收进 `AppTheme.color.heatEmpty` 到 `heatHigh`，深浅两套各有取值——深色下空格接近卡片底色，不再是浅色阶；
+- 字面宽高共 202 处（`.width` 77 处、`.height` 125 处），分布在 190 行；三处固定尺寸已核对：`views/dashboard/ModuleGridCard.ets:38` 的 height 266、`components/RelationGraph.ets:5-6` 的 320×260、`pages/NoteListPage.ets:274` 的 bottom 80。`PageBackground` 的 `DARK_SCRIM`（18% 黑遮罩）是叠加层不是语义色，保留字面量；热力图的四档色阶收在 `AppTheme.color.heatEmpty` 到 `heatHigh`，深浅两套各有取值；
 - 页面背景使用按模块分组的本机图片；选择后先转 PNG，再选择单个页面组或全部应用，透明度 5%–40% 可调；启动时会迁移旧格式，设置页可手动“修复旧背景”；暂无预览裁剪和原图压缩。
+- 浅色下 `page`（`background_primary`）与 `surface`（`comp_background_list_card`）都解析为白色，卡片与页面缺少底色差，只能靠间距与内容分组区分；深色下两者分别为黑与 10% 白，层次正常。
+- 字号升到 12/14/16/18 后，`WelcomeCard` 的步骤列与底部隐私行在小屏上重叠（首屏说明卡），该组件不在本批授权范围，待后续调整。
 - 已跟随系统深色（启动时读取语义令牌）；应用内手动主题切换未做。
 - 模块网格与读数卡已改为主题令牌字符徽章，并补 `accessibilityText`；不再依赖 emoji 字体。
 
@@ -163,3 +205,13 @@
 | 删除撤销条 | `pages/NoteDetailPage.ets` | 删除后 5 秒内可撤销，超时清正文 | 已上线，真机未验 |
 
 冻结规则不变：新增组件只服务材料阅读与校正，不用于装饰、不承载评分或成就；封存内容在任何组件中不得以正文形式出现。
+
+## 9. 令牌迁移运行时验证（2026-11-17）
+
+模拟器 Mate 70 Pro，HarmonyOS 7.0.0（26.0.0），API 26。
+
+- `getColorSync` 传 `Resource` 对象返回 `0xFFFFFFFF`，因为 `$r('sys.color.*')` 返回的对象带的是应用自己的 `bundleName`，系统 id 查不到；改为 `getColorSync(color.id)` 后返回正确值（深色 `background_primary` 为 `0xFF000000`）。三处调用点统一走 `resolveColorHex`。
+- 背景应用页的空上下文分支取固定占位文案「对比度待背景就绪后计算」，上下文就绪后显示结论；浅色读数 13.8:1 满足 4.5:1，深色 13.6:1 满足 5:1。
+- 关系星图三条连线可见，`strokeStyle` 解析成功；关系信任徽章底色正常。
+- 字号放大后固定尺寸未裁切：22vp 勾选框、徽章、`ModuleGridCard` 的 266、`StatusPage` 与 `PredictionStatsPage` 的 display 读数。
+- 深浅两套截图已留（首页、设置、页面背景、关系列表与星图、状态、预测统计、速记编辑）。

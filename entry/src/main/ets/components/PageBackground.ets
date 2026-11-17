@@ -5,7 +5,7 @@ import {
   unsubscribePageBackground
 } from '../settings/PageBackgroundBus';
 import { PageBackgroundService } from '../settings/PageBackgroundService';
-import { AppTheme, isDarkMode, withAlpha } from '../theme/AppTheme';
+import { AppTheme, isDarkMode, resolveColorHex, withAlpha } from '../theme/AppTheme';
 import { fileUri } from '@kit.CoreFileKit';
 
 /** What a group renders with; kept in memory so switching groups does not wait for storage. */
@@ -95,12 +95,20 @@ export struct PageBackground {
     }
   }
 
+  private surfaceColor(): ResourceColor {
+    const hex = resolveColorHex(AppTheme.color.page, this.getUIContext().getHostContext());
+    if (hex.length === 0) {
+      return AppTheme.color.page;
+    }
+    return withAlpha(hex, this.surfaceAlpha);
+  }
+
   build() {
     Stack() {
       Column()
         .width('100%')
         .height('100%')
-        .backgroundColor(withAlpha(AppTheme.color.page, this.surfaceAlpha))
+        .backgroundColor(this.surfaceColor())
         .hitTestBehavior(HitTestMode.None)
       if (this.imagePath.length > 0) {
         Image(fileUri.getUriFromPath(this.imagePath))

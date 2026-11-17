@@ -1,6 +1,6 @@
 import { RelationListItem } from '../relation';
 import { TrustLevel } from '../model/TrustLevel';
-import { AppTheme } from '../theme/AppTheme';
+import { AppTheme, resolveColorHex } from '../theme/AppTheme';
 
 const WIDTH = 320;
 const HEIGHT = 260;
@@ -19,7 +19,11 @@ export struct RelationGraph {
   private drawEdges(): void {
     const context = this.graphContext;
     context.clearRect(0, 0, WIDTH, HEIGHT);
-    context.strokeStyle = AppTheme.color.borderStrong;
+    const stroke = resolveColorHex(AppTheme.color.borderStrong, this.getUIContext().getHostContext());
+    if (stroke.length === 0) {
+      return;
+    }
+    context.strokeStyle = stroke;
     context.lineWidth = 1;
     const total = Math.min(this.items.length, MAX_NODES);
     for (let index = 0; index < total; index += 1) {

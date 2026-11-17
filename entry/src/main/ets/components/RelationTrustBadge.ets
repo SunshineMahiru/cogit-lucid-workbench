@@ -17,7 +17,7 @@ export struct RelationTrustBadge {
     return AppTheme.color.primaryDeep;
   }
 
-  private surfaceColor(): string {
+  private surfaceColor(): ResourceColor {
     if (this.level === TrustLevel.TRANSPARENT) {
       return AppTheme.color.successSurface;
     }

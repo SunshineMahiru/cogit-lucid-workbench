@@ -1,4 +1,4 @@
-import { AppTheme } from '../theme/AppTheme';
+import { AppTheme, isDarkMode, resolveColorHex } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { ImageSourceSheet } from '../components/ImageSourceSheet';
@@ -10,7 +10,7 @@ import {
   PageBackgroundService
 } from '../settings/PageBackgroundService';
 import { PageBackgroundStore } from '../settings/PageBackgroundStore';
-import { contrastHint } from '../theme/Contrast';
+import { contrastHint, DARK_BODY_CONTRAST, MIN_BODY_CONTRAST } from '../theme/Contrast';
 
 /** Lets the user send one staged image to a single page group, several groups, or all of them. */
 @ComponentV2
@@ -324,6 +324,16 @@ export struct BackgroundApplyPage {
       }
     }
     return total;
+  }
+
+  private contrastLine(): string {
+    const textHex = resolveColorHex(AppTheme.color.textStrong, this.hostContext);
+    const pageHex = resolveColorHex(AppTheme.color.page, this.hostContext);
+    if (textHex.length === 0 || pageHex.length === 0) {
+      return '对比度待背景就绪后计算';
+    }
+    const threshold = isDarkMode() ? DARK_BODY_CONTRAST : MIN_BODY_CONTRAST;
+    return contrastHint(textHex, pageHex, 1 - this.imageOpacity, threshold);
   }
 
   @Builder
@@ -668,7 +678,7 @@ export struct BackgroundApplyPage {
                     .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textSecondary)
                     .width('100%')
-                  Text(contrastHint(AppTheme.color.textStrong, AppTheme.color.page, 1 - this.imageOpacity))
+                  Text(this.contrastLine())
                     .id('background_contrast_hint')
                     .fontSize(AppTheme.font.caption)
                     .lineHeight(15)

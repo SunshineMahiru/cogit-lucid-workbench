@@ -1,22 +1,24 @@
+import { common } from '@kit.AbilityKit';
+
 /** Semantic colour set shared by pages and components. */
 export interface ThemePalette {
-  page: string;
+  page: ResourceColor;
   surface: ResourceColor;
   primary: string;
   primaryDeep: string;
   text: ResourceColor;
-  textStrong: string;
+  textStrong: ResourceColor;
   textSecondary: ResourceColor;
-  textSecondaryStrong: string;
+  textSecondaryStrong: ResourceColor;
   textMuted: ResourceColor;
   border: ResourceColor;
-  borderStrong: string;
+  borderStrong: ResourceColor;
   borderSelected: string;
-  tint: string;
+  tint: ResourceColor;
   surfaceAlt: ResourceColor;
-  surfaceTint: string;
+  surfaceTint: ResourceColor;
   surfaceWarm: string;
-  selectedSurface: string;
+  selectedSurface: ResourceColor;
   chip: ResourceColor;
   track: ResourceColor;
   primaryDisabled: string;
@@ -36,17 +38,10 @@ export interface ThemePalette {
 
 /** Colour fields that stay on the app palette and follow applyTheme. */
 interface RetainedPalette {
-  page: string;
   primary: string;
   primaryDeep: string;
-  textStrong: string;
-  textSecondaryStrong: string;
-  borderStrong: string;
   borderSelected: string;
-  tint: string;
-  surfaceTint: string;
   surfaceWarm: string;
-  selectedSurface: string;
   primaryDisabled: string;
   accentPurple: string;
   accentGold: string;
@@ -89,8 +84,30 @@ export interface SpacingTokens {
   gap: number;
 }
 
-/** Type scale, in fp. */
+/** Type scale, resolved from system fp resources. */
 export interface FontTokens {
+  caption: Resource;
+  body: Resource;
+  bodyStrong: Resource;
+  subtitle: Resource;
+  title: Resource;
+  headline: Resource;
+  display: Resource;
+}
+
+/** Font weights paired one-to-one with the type scale. */
+export interface FontWeightTokens {
+  caption: FontWeight;
+  body: FontWeight;
+  bodyStrong: FontWeight;
+  subtitle: FontWeight;
+  title: FontWeight;
+  headline: FontWeight;
+  display: FontWeight;
+}
+
+/** Absolute line heights in vp, paired one-to-one with the type scale. */
+export interface LineHeightTokens {
   caption: number;
   body: number;
   bodyStrong: number;
@@ -109,17 +126,10 @@ export interface AppTokens {
 }
 
 const LIGHT: RetainedPalette = {
-  page: '#F5F6F8',
   primary: '#4A6FA5',
   primaryDeep: '#185FA5',
-  textStrong: '#444441',
-  textSecondaryStrong: '#5F5E5A',
-  borderStrong: '#D3D1C7',
   borderSelected: '#B7CDE8',
-  tint: '#E8EFF7',
-  surfaceTint: '#F7F9FC',
   surfaceWarm: '#FFFDF5',
-  selectedSurface: '#F3F7FC',
   primaryDisabled: '#8FA6C4',
   accentPurple: '#6B5B95',
   accentGold: '#E8A93C',
@@ -136,17 +146,10 @@ const LIGHT: RetainedPalette = {
 };
 
 const DARK: RetainedPalette = {
-  page: '#121417',
   primary: '#8FB4E3',
   primaryDeep: '#B8D3F0',
-  textStrong: '#D5D8DC',
-  textSecondaryStrong: '#C3C8CF',
-  borderStrong: '#4A525C',
   borderSelected: '#4F6F91',
-  tint: '#25384D',
-  surfaceTint: '#1F242A',
   surfaceWarm: '#2A2418',
-  selectedSurface: '#1E2B3A',
   primaryDisabled: '#586574',
   accentPurple: '#A99BD2',
   accentGold: '#D8B25E',
@@ -198,37 +201,95 @@ const SPACING: SpacingTokens = {
 };
 
 const FONT: FontTokens = {
-  caption: 10,
-  body: 11,
-  bodyStrong: 12,
-  subtitle: 14,
-  title: 16,
-  headline: 20,
-  display: 28
+  caption: $r('sys.float.Caption_L'),
+  body: $r('sys.float.Body_M'),
+  bodyStrong: $r('sys.float.Body_L'),
+  subtitle: $r('sys.float.Subtitle_L'),
+  title: $r('sys.float.Title_S'),
+  headline: $r('sys.float.Title_M'),
+  display: $r('sys.float.Display_S')
 };
 
-/** Builds the palette once; mapped fields resolve through system resources. */
+export const FONT_WEIGHT: FontWeightTokens = {
+  caption: FontWeight.Medium,
+  body: FontWeight.Regular,
+  bodyStrong: FontWeight.Medium,
+  subtitle: FontWeight.Medium,
+  title: FontWeight.Bold,
+  headline: FontWeight.Bold,
+  display: FontWeight.Lighter
+};
+
+/**
+ * Absolute line heights in vp. Caption through title are the font size times 1.5 rounded up to
+ * the next even number, headline times 1.42, display times 1.26. The platform only ships
+ * incremental line-space tokens (ohos_id_text_line_space_s 1.1vp, _l 1.4vp), so these stay local.
+ */
+export const LINE_HEIGHT: LineHeightTokens = {
+  caption: 18,
+  body: 22,
+  bodyStrong: 24,
+  subtitle: 28,
+  title: 30,
+  headline: 34,
+  display: 48
+};
+
+/** Formats a 32-bit ARGB value as a six-digit #RRGGBB string, dropping alpha. */
+function argbToHex(value: number): string {
+  let text = (value >>> 0).toString(16).toUpperCase();
+  while (text.length < 8) {
+    text = `0${text}`;
+  }
+  return `#${text.substring(2)}`;
+}
+
+/**
+ * Resolves a palette colour to a six-digit #RRGGBB string for Canvas strokes and alpha blending.
+ * Returns an empty string when the context is absent or the resource cannot be resolved; callers
+ * own the fallback.
+ */
+export function resolveColorHex(color: ResourceColor, context: common.Context | undefined | null): string {
+  if (typeof color === 'string') {
+    const body = color.startsWith('#') ? color.substring(1) : color;
+    const rgb = body.length === 8 ? body.substring(2) : body;
+    return rgb.length === 6 ? `#${rgb.toUpperCase()}` : '';
+  }
+  if (typeof color === 'number') {
+    return argbToHex(color);
+  }
+  if (context === undefined || context === null) {
+    return '';
+  }
+  try {
+    return argbToHex(context.resourceManager.getColorSync(color.id));
+  } catch (error) {
+    return '';
+  }
+}
+
+/** Builds the palette once; system-backed fields stay fixed, retained fields follow applyTheme. */
 function createColor(): ThemePalette {
   return {
-    page: LIGHT.page,
-    surface: $r('sys.color.ohos_id_color_card_bg'),
+    page: $r('sys.color.background_primary'),
+    surface: $r('sys.color.comp_background_list_card'),
     primary: LIGHT.primary,
     primaryDeep: LIGHT.primaryDeep,
-    text: $r('sys.color.ohos_id_color_text_primary'),
-    textStrong: LIGHT.textStrong,
-    textSecondary: $r('sys.color.ohos_id_color_text_secondary'),
-    textSecondaryStrong: LIGHT.textSecondaryStrong,
-    textMuted: $r('sys.color.ohos_id_color_text_tertiary'),
-    border: $r('sys.color.ohos_id_color_list_separator'),
-    borderStrong: LIGHT.borderStrong,
+    text: $r('sys.color.font_primary'),
+    textStrong: $r('sys.color.font_primary'),
+    textSecondary: $r('sys.color.font_secondary'),
+    textSecondaryStrong: $r('sys.color.font_secondary'),
+    textMuted: $r('sys.color.font_tertiary'),
+    border: $r('sys.color.comp_divider'),
+    borderStrong: $r('sys.color.comp_outline_color'),
     borderSelected: LIGHT.borderSelected,
-    tint: LIGHT.tint,
-    surfaceAlt: $r('sys.color.ohos_id_color_sub_background'),
-    surfaceTint: LIGHT.surfaceTint,
+    tint: $r('sys.color.comp_background_secondary'),
+    surfaceAlt: $r('sys.color.comp_background_gray'),
+    surfaceTint: $r('sys.color.comp_background_tertiary'),
     surfaceWarm: LIGHT.surfaceWarm,
-    selectedSurface: LIGHT.selectedSurface,
-    chip: $r('sys.color.ohos_id_color_button_normal'),
-    track: $r('sys.color.ohos_id_color_button_normal'),
+    selectedSurface: $r('sys.color.interactive_select'),
+    chip: $r('sys.color.comp_background_secondary'),
+    track: $r('sys.color.comp_background_gray'),
     primaryDisabled: LIGHT.primaryDisabled,
     accentPurple: LIGHT.accentPurple,
     accentGold: LIGHT.accentGold,
@@ -278,17 +339,10 @@ export function applyTheme(dark: boolean): void {
   darkMode = dark;
   const source: RetainedPalette = dark ? DARK : LIGHT;
   const target: ThemePalette = AppTheme.color;
-  target.page = source.page;
   target.primary = source.primary;
   target.primaryDeep = source.primaryDeep;
-  target.textStrong = source.textStrong;
-  target.textSecondaryStrong = source.textSecondaryStrong;
-  target.borderStrong = source.borderStrong;
   target.borderSelected = source.borderSelected;
-  target.tint = source.tint;
-  target.surfaceTint = source.surfaceTint;
   target.surfaceWarm = source.surfaceWarm;
-  target.selectedSurface = source.selectedSurface;
   target.primaryDisabled = source.primaryDisabled;
   target.accentPurple = source.accentPurple;
   target.accentGold = source.accentGold;
@@ -297,9 +351,9 @@ export function applyTheme(dark: boolean): void {
   target.success = source.success;
   target.successSurface = source.successSurface;
   target.danger = source.danger;
+  target.dangerSurface = source.dangerSurface;
   target.heatEmpty = source.heatEmpty;
   target.heatLow = source.heatLow;
   target.heatMid = source.heatMid;
   target.heatHigh = source.heatHigh;
-  target.dangerSurface = source.dangerSurface;
 }
