@@ -22,6 +22,7 @@ export struct PlanEditPage {
   @Local timeBudgetText: string = '';
   @Local doneStandard: string = '';
   @Local impact: string = '';
+  @Local planMoreOpen: boolean = false;
   @Local errorText: string = '';
   @Local isSaving: boolean = false;
   @Local isDirty: boolean = false;
@@ -69,6 +70,7 @@ export struct PlanEditPage {
     this.timeBudgetText = plan.timeBudget !== undefined && plan.timeBudget > 0 ? String(plan.timeBudget) : '';
     this.doneStandard = plan.doneStandard ?? '';
     this.impact = plan.impact ?? '';
+    this.planMoreOpen = (this.doneStandard.length + this.impact.length) > 0;
   }
 
   private budgetValue(): number {
@@ -250,31 +252,49 @@ export struct PlanEditPage {
                 this.goal = value;
                 this.isDirty = true;
               })
-            Text('完成标准')
-              .fontSize(AppTheme.font.body)
-              .fontColor(AppTheme.color.textSecondary)
-              .width('100%')
-            TextArea({ text: this.doneStandard, placeholder: '看到什么就算完成（可空）' })
-              .id('plan_done_standard')
-              .height(72)
-              .maxLength(200)
-              .backgroundColor(AppTheme.color.surfaceAlt)
-              .onChange((value: string) => {
-                this.doneStandard = value;
-                this.isDirty = true;
-              })
-            Text('影响对象')
-              .fontSize(AppTheme.font.body)
-              .fontColor(AppTheme.color.textSecondary)
-              .width('100%')
-            TextInput({ text: this.impact, placeholder: '这件事影响谁或什么（可空）' })
-              .id('plan_impact')
-              .maxLength(120)
-              .backgroundColor(AppTheme.color.surfaceAlt)
-              .onChange((value: string) => {
-                this.impact = value;
-                this.isDirty = true;
-              })
+            Row() {
+              Text(this.planMoreOpen ? '收起完成标准与影响对象' : '完成标准与影响对象（可选）')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.primary)
+                .layoutWeight(1)
+              SymbolGlyph($r('sys.symbol.chevron_down'))
+                .fontSize(14)
+                .fontColor([AppTheme.color.primary])
+                .rotate({ angle: this.planMoreOpen ? 180 : 0 })
+            }
+            .id('plan_more_toggle')
+            .width('100%')
+            .height(40)
+            .onClick(() => {
+              this.planMoreOpen = !this.planMoreOpen;
+            })
+            if (this.planMoreOpen) {
+              Text('完成标准')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.textSecondary)
+                .width('100%')
+              TextArea({ text: this.doneStandard, placeholder: '看到什么就算完成（可空）' })
+                .id('plan_done_standard')
+                .height(72)
+                .maxLength(200)
+                .backgroundColor(AppTheme.color.surfaceAlt)
+                .onChange((value: string) => {
+                  this.doneStandard = value;
+                  this.isDirty = true;
+                })
+              Text('影响对象')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.textSecondary)
+                .width('100%')
+              TextInput({ text: this.impact, placeholder: '这件事影响谁或什么（可空）' })
+                .id('plan_impact')
+                .maxLength(120)
+                .backgroundColor(AppTheme.color.surfaceAlt)
+                .onChange((value: string) => {
+                  this.impact = value;
+                  this.isDirty = true;
+                })
+            }
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
