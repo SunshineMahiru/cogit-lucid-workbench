@@ -79,8 +79,31 @@ function appendEvidence(lines: string[], reviewId: string, items: EvidenceItem[]
   }
   lines.push('- 证据：');
   for (const item of rows) {
-    lines.push(`  - ${evidenceEffectText(item.effect)}：${fieldText(item.note)}`);
+    lines.push(`  - ${evidenceSourceText(item.sourceType)} · ${evidenceEffectText(item.effect)}：${fieldText(item.note)}`);
   }
+}
+
+/** Six evidence sources keep their distinct strength in export; none implies universal proof. */
+function evidenceSourceText(source: string): string {
+  if (source === 'practice') {
+    return '现场与行动';
+  }
+  if (source === 'other_person') {
+    return '他者叙述';
+  }
+  if (source === 'body') {
+    return '身体反馈';
+  }
+  if (source === 'time') {
+    return '长期结果';
+  }
+  if (source === 'book') {
+    return '书本理论';
+  }
+  if (source === 'public') {
+    return '公共资料';
+  }
+  return '自我观察';
 }
 
 function appendCosts(lines: string[], reviewId: string, notes: CostNote[]): void {
