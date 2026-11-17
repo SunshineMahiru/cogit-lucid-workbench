@@ -18,7 +18,7 @@ export struct SectionCard {
     .width('100%')
     .padding(this.contentPadding)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(16)
+    .borderRadius(AppTheme.radius.lg)
     .border({ width: 0.5, color: AppTheme.color.border })
     .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ y: 12 }))
       .animation({ curve: curves.springMotion(0.35, 0.9) }))

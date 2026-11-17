@@ -34,6 +34,18 @@ export interface ThemePalette {
   heatLow: string;
   heatMid: string;
   heatHigh: string;
+  evPractice: string;
+  evPracticeSurface: string;
+  evOther: string;
+  evOtherSurface: string;
+  evBody: string;
+  evBodySurface: string;
+  evTime: string;
+  evTimeSurface: string;
+  evBook: string;
+  evBookSurface: string;
+  evPublic: string;
+  evPublicSurface: string;
 }
 
 /** Colour fields that stay on the app palette and follow applyTheme. */
@@ -55,6 +67,18 @@ interface RetainedPalette {
   heatLow: string;
   heatMid: string;
   heatHigh: string;
+  evPractice: string;
+  evPracticeSurface: string;
+  evOther: string;
+  evOtherSurface: string;
+  evBody: string;
+  evBodySurface: string;
+  evTime: string;
+  evTimeSurface: string;
+  evBook: string;
+  evBookSurface: string;
+  evPublic: string;
+  evPublicSurface: string;
 }
 
 /** Corner radius tokens, in vp. */
@@ -142,7 +166,19 @@ const LIGHT: RetainedPalette = {
   heatEmpty: '#EDEBE4',
   heatLow: '#B7D3E8',
   heatMid: '#6FA8CC',
-  heatHigh: '#2E6F9E'
+  heatHigh: '#2E6F9E',
+  evPractice: '#2E6F9E',
+  evPracticeSurface: '#E8F1F8',
+  evOther: '#6B5B95',
+  evOtherSurface: '#EFECF6',
+  evBody: '#B0563B',
+  evBodySurface: '#F8ECE7',
+  evTime: '#4C7A3F',
+  evTimeSurface: '#ECF3E9',
+  evBook: '#8A6D3B',
+  evBookSurface: '#F5EFE3',
+  evPublic: '#5B7083',
+  evPublicSurface: '#ECEFF2'
 };
 
 const DARK: RetainedPalette = {
@@ -162,7 +198,19 @@ const DARK: RetainedPalette = {
   heatEmpty: '#23272C',
   heatLow: '#1F3A52',
   heatMid: '#2E6F9E',
-  heatHigh: '#6FA8CC'
+  heatHigh: '#6FA8CC',
+  evPractice: '#8FB4E3',
+  evPracticeSurface: '#1F3A52',
+  evOther: '#A99BD2',
+  evOtherSurface: '#2A2438',
+  evBody: '#E09A85',
+  evBodySurface: '#3A241C',
+  evTime: '#78C98A',
+  evTimeSurface: '#1E3424',
+  evBook: '#D8B25E',
+  evBookSurface: '#3A2C18',
+  evPublic: '#A9BAC9',
+  evPublicSurface: '#23272C'
 };
 
 const RADIUS: RadiusTokens = {
@@ -302,6 +350,18 @@ function createColor(): ThemePalette {
     heatLow: LIGHT.heatLow,
     heatMid: LIGHT.heatMid,
     heatHigh: LIGHT.heatHigh,
+    evPractice: LIGHT.evPractice,
+    evPracticeSurface: LIGHT.evPracticeSurface,
+    evOther: LIGHT.evOther,
+    evOtherSurface: LIGHT.evOtherSurface,
+    evBody: LIGHT.evBody,
+    evBodySurface: LIGHT.evBodySurface,
+    evTime: LIGHT.evTime,
+    evTimeSurface: LIGHT.evTimeSurface,
+    evBook: LIGHT.evBook,
+    evBookSurface: LIGHT.evBookSurface,
+    evPublic: LIGHT.evPublic,
+    evPublicSurface: LIGHT.evPublicSurface,
     dangerSurface: LIGHT.dangerSurface
   };
 }
@@ -356,4 +416,16 @@ export function applyTheme(dark: boolean): void {
   target.heatLow = source.heatLow;
   target.heatMid = source.heatMid;
   target.heatHigh = source.heatHigh;
+  target.evPractice = source.evPractice;
+  target.evPracticeSurface = source.evPracticeSurface;
+  target.evOther = source.evOther;
+  target.evOtherSurface = source.evOtherSurface;
+  target.evBody = source.evBody;
+  target.evBodySurface = source.evBodySurface;
+  target.evTime = source.evTime;
+  target.evTimeSurface = source.evTimeSurface;
+  target.evBook = source.evBook;
+  target.evBookSurface = source.evBookSurface;
+  target.evPublic = source.evPublic;
+  target.evPublicSurface = source.evPublicSurface;
 }
