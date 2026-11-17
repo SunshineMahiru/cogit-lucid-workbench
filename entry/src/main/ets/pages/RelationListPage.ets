@@ -3,6 +3,7 @@ import { AppDestination } from '../components/AppDestination';
 import { SectionCard } from '../components/SectionCard';
 import { RelationCard } from '../components/RelationCard';
 import { NoteEmptyState } from '../components/NoteEmptyState';
+import { TagChip } from '../components/TagChip';
 import { RelationListItem, RelationService, trustLevelText } from '../relation';
 import { TrustLevel } from '../model/TrustLevel';
 import { RelationDetailParams, RelationEditParams } from '../navigation/RouteParams';
@@ -123,46 +124,22 @@ export struct RelationListPage {
 
   @Builder
   filterChip(label: string, level: TrustLevel | null) {
-    Text(label)
-      .fontSize(AppTheme.font.bodyStrong)
-      .fontColor(this.filter === level ? Color.White : AppTheme.color.text)
-      .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-      .backgroundColor(this.filter === level ? AppTheme.color.primary : AppTheme.color.chip)
-      .borderRadius(AppTheme.radius.lg)
-      .onClick(() => {
+    TagChip({
+      label: label,
+      tone: AppTheme.color.primary,
+      surface: AppTheme.color.tint,
+      selected: this.filter === level,
+      onTap: () => {
         this.selectFilter(level);
-      })
-  }
-
-  @Builder
-  graphMenu() {
-    Row({ space: 2 }) {
-      Text('＋')
-        .fontSize(AppTheme.font.headline)
-        .fontColor(AppTheme.color.primary)
-        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s4 })
-        .onClick(() => {
-          this.openEditor();
-        })
-      Text('图谱')
-        .fontSize(AppTheme.font.subtitle)
-        .fontColor(AppTheme.color.primary)
-        .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s16 })
-        .onClick(() => {
-          if (this.navStack !== null) {
-            this.navStack.pushPathByName(ROUTES.RELATION_GRAPH, null);
-          }
-        })
-    }
-    .height(56)
-    .alignItems(VerticalAlign.Center)
+      }
+    })
   }
 
   @Builder
   headerCard() {
     SectionCard() {
-      Column({ space: 4 }) {
-        Row() {
+      Column({ space: AppTheme.spacing.s6 }) {
+        Row({ space: AppTheme.spacing.s8 }) {
           Text('关系层')
             .fontSize(AppTheme.font.title)
             .fontWeight(FontWeight.Medium)
@@ -171,13 +148,21 @@ export struct RelationListPage {
           Text(`${this.items.length} 人`)
             .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.textSecondary)
+          Text('＋ 新建')
+            .fontSize(AppTheme.font.bodyStrong)
+            .fontColor(AppTheme.color.primary)
+            .padding({ left: AppTheme.spacing.s8 })
+            .accessibilityText('新建关系')
+            .onClick(() => {
+              this.openEditor();
+            })
         }
         .width('100%')
 
-        Row({ space: 8 }) {
-          Text('记录你愿意长期观察的关系。列表用化名，信任层级决定复盘时能谈到哪一层。')
+        Row({ space: AppTheme.spacing.s8 }) {
+          Text('他者叙述是纠正的来源：先记下对方怎样纠正你，再补一条自己的回应。')
             .fontSize(AppTheme.font.body)
-            .lineHeight(17)
+            .lineHeight(18)
             .fontColor(AppTheme.color.textSecondary)
             .layoutWeight(1)
           Text(this.showHelp ? '收起' : '怎么用')
@@ -190,18 +175,18 @@ export struct RelationListPage {
         .width('100%')
 
         if (this.showHelp) {
-          Column({ space: 4 }) {
-            Text('1. 新建：给关系起一个化名，再选友好、真诚或透明。')
+          Column({ space: AppTheme.spacing.s4 }) {
+            Text('1. 新建：起一个化名，再选友好、真诚或透明。')
               .fontSize(AppTheme.font.caption)
               .lineHeight(16)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
-            Text('2. 说明：备注写清分析边界，不写隐私细节。')
+            Text('2. 记录：把对方明确说过的话或一次纠正写进互动记录。')
               .fontSize(AppTheme.font.caption)
               .lineHeight(16)
               .fontColor(AppTheme.color.textSecondary)
               .width('100%')
-            Text('3. 维护：在详情页追加互动记录，复盘时回看变化。')
+            Text('3. 回应：读完后补一条本人观察，待回应数归零。')
               .fontSize(AppTheme.font.caption)
               .lineHeight(16)
               .fontColor(AppTheme.color.textSecondary)
@@ -223,9 +208,6 @@ export struct RelationListPage {
       title: '关系层',
       content: () => {
         this.relationListBody();
-      },
-      menus: () => {
-        this.graphMenu();
       },
       onDestinationReady: (context: NavDestinationContext) => {
         this.navStack = context.pathStack;
@@ -276,7 +258,7 @@ export struct RelationListPage {
           Column() {
             NoteEmptyState({
               title: this.filter === null ? '还没有关系记录' : `没有${trustLevelText(this.filter)}层级的关系`,
-              hint: '关系用于复盘时判断可分析边界；示例数据仅用于演示',
+              hint: '先记下一个人的化名，再把他者的纠正写进详情页',
               actionLabel: this.isSeeding ? '载入中…' : '载入示例关系',
               dashed: true,
               onAction: () => {

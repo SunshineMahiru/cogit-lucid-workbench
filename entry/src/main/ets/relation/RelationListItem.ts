@@ -2,6 +2,19 @@ import { InteractionLog } from '../model/Relation';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
 
+/** Record kinds a relation may point back to. */
+export type LinkedRecordKind = 'note' | 'prediction' | 'review';
+
+/** One record that cites this relation and can be opened by id. */
+export interface LinkedRecord {
+  kind: LinkedRecordKind;
+  /** Destination record id; empty when the row cannot be opened */
+  id: string;
+  /** Module label shown before the title, e.g. 速记 / 决策 / 复盘 */
+  label: string;
+  title: string;
+}
+
 /** Row model rendered by the relation list. */
 export interface RelationListItem {
   id: string;
@@ -23,6 +36,8 @@ export interface RelationListItem {
   correctionAt?: number;
   /** 1 when a correction still has no own-response entry after it */
   pendingCorrections?: number;
+  /** Latest correction trimmed to at most 40 characters */
+  latestCorrectionExcerpt?: string;
 }
 
 /** Detail model with the full interaction log. */
@@ -37,4 +52,6 @@ export interface RelationDetail extends RelationListItem {
   linkedEvents: string[];
   /** Titles of decisions that reference this relation */
   linkedDecisions: string[];
+  /** Openable records that cite this relation */
+  linkedRecords: LinkedRecord[];
 }

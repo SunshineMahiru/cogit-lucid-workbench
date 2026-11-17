@@ -739,9 +739,13 @@ async function main() {
     assert.strictEqual(await relationService.seedDemoRelations(), 3);
     const items = await relationService.list(null);
     assert.strictEqual(items.length, 3);
-    assert.strictEqual(items[0].trustLevel, 'transparent');
+    assert.strictEqual(items[0].name, '示例·甲');
+    assert.strictEqual(items[0].pendingCorrections, 1);
+    const transparent = items.find((item) => item.trustLevel === 'transparent');
+    assert.ok(transparent !== undefined);
+    assert.strictEqual(transparent.pendingCorrections, 0);
     assert.strictEqual(await relationService.seedDemoRelations(), 0);
-    const detail = await relationService.find(items[0].id);
+    const detail = await relationService.find(transparent.id);
     assert.ok(detail !== null);
     assert.strictEqual(detail.interactionCount, 1);
   });

@@ -6,6 +6,7 @@ import { NoteEmptyState } from '../components/NoteEmptyState';
 import {
   RelationDetail,
   RelationService,
+  LinkedRecord,
   formatInteractionTime,
   trustLevelText,
   disclosureBoundaryOf,
@@ -21,7 +22,14 @@ import { CitationScope, InteractionLog, InteractionSource } from '../model/Relat
 import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
 import { securityLevelText } from '../note';
-import { RelationDetailParams, RelationEditParams, PlanAttachParams } from '../navigation/RouteParams';
+import {
+  RelationDetailParams,
+  RelationEditParams,
+  PlanAttachParams,
+  NoteDetailParams,
+  PredictionDetailParams,
+  ReviewDetailParams
+} from '../navigation/RouteParams';
 import { PlanLinkModule } from '../model/PlanLinkModule';
 import { ROUTES } from '../navigation/Routes';
 import { findPreviewRelation } from '../preview/PreviewData';
@@ -43,8 +51,10 @@ export struct RelationDetailPage {
     interactionLog: [],
     correction: '',
     correctionAt: 0,
+    latestCorrectionExcerpt: '',
     linkedEvents: [],
-    linkedDecisions: []
+    linkedDecisions: [],
+    linkedRecords: []
   };
   @Local isLoading: boolean = true;
   @Local missing: boolean = false;
@@ -58,6 +68,8 @@ export struct RelationDetailPage {
   @Local newCitation: CitationScope = 'hidden';
   @Local newAllowContext: boolean = false;
   @Local isAdding: boolean = false;
+  @Local responseInput: string = '';
+  @Local isResponding: boolean = false;
   private navStack: NavPathStack | null = null;
   private service: RelationService | null = null;
   private hasShownOnce: boolean = false;
@@ -145,6 +157,41 @@ export struct RelationDetailPage {
     this.navStack.pushPathByName(ROUTES.PLAN_ATTACH, params);
   }
 
+  private previewAppendInteraction(text: string, source: InteractionSource, citation: CitationScope,
+    allowContext: boolean): void {
+    const now = Date.now();
+    const entry: InteractionLog = {
+      timestamp: now,
+      content: text,
+      source: source,
+      citation: citation,
+      allowContext: allowContext
+    };
+    const log: InteractionLog[] = [entry].concat(this.detail.interactionLog);
+    const answered = source === 'observation' && this.detail.correction.length > 0 &&
+      now > this.detail.correctionAt;
+    this.detail = {
+      id: this.detail.id,
+      name: this.detail.name,
+      trustLevel: this.detail.trustLevel,
+      interactionCount: log.length,
+      lastInteractionLabel: formatInteractionTime(now),
+      lastInteractionAt: now,
+      rawMaterialTest: false,
+      forbidAnalysis: this.detail.forbidAnalysis,
+      level: this.detail.level,
+      notes: this.detail.notes,
+      interactionLog: log,
+      correction: this.detail.correction,
+      correctionAt: this.detail.correctionAt,
+      pendingCorrections: answered ? 0 : (this.detail.pendingCorrections ?? 0),
+      latestCorrectionExcerpt: this.detail.latestCorrectionExcerpt ?? '',
+      linkedEvents: this.detail.linkedEvents,
+      linkedDecisions: this.detail.linkedDecisions,
+      linkedRecords: this.detail.linkedRecords
+    };
+  }
+
   private async addInteraction(): Promise<void> {
     const text = this.newInteraction.trim();
     if (text.length === 0 || this.isAdding) {
@@ -153,32 +200,7 @@ export struct RelationDetailPage {
     this.isAdding = true;
     try {
       if (this.isPreview) {
-        const now = Date.now();
-        const entry: InteractionLog = {
-          timestamp: now,
-          content: text,
-          source: this.newSource,
-          citation: this.newCitation,
-          allowContext: this.newAllowContext
-        };
-        const log: InteractionLog[] = [entry].concat(this.detail.interactionLog);
-        this.detail = {
-          id: this.detail.id,
-          name: this.detail.name,
-          trustLevel: this.detail.trustLevel,
-          interactionCount: log.length,
-          lastInteractionLabel: formatInteractionTime(now),
-          lastInteractionAt: now,
-          rawMaterialTest: false,
-          forbidAnalysis: this.detail.forbidAnalysis,
-          level: this.detail.level,
-          notes: this.detail.notes,
-          interactionLog: log,
-          correction: this.detail.correction,
-          correctionAt: this.detail.correctionAt,
-          linkedEvents: this.detail.linkedEvents,
-          linkedDecisions: this.detail.linkedDecisions
-        };
+        this.previewAppendInteraction(text, this.newSource, this.newCitation, this.newAllowContext);
       } else if (this.service !== null) {
         this.detail = await this.service.addInteraction(this.detail.id, text,
           this.newSource, this.newCitation, this.newAllowContext);
@@ -191,6 +213,44 @@ export struct RelationDetailPage {
       this.getUIContext().getPromptAction().showToast({ message: '互动记录保存失败，请重试' });
     } finally {
       this.isAdding = false;
+    }
+  }
+
+  /** Logs the author's own observation after a correction, which clears the pending badge. */
+  private async saveResponse(): Promise<void> {
+    const text = this.responseInput.trim();
+    if (text.length === 0 || this.isResponding) {
+      return;
+    }
+    this.isResponding = true;
+    try {
+      if (this.isPreview) {
+        this.previewAppendInteraction(text, 'observation', 'hidden', false);
+      } else if (this.service !== null) {
+        this.detail = await this.service.addInteraction(this.detail.id, text, 'observation', 'hidden', false);
+      }
+      this.responseInput = '';
+      this.getUIContext().getPromptAction().showToast({ message: '已记录回应' });
+    } catch (error) {
+      this.getUIContext().getPromptAction().showToast({ message: '回应保存失败，请重试' });
+    } finally {
+      this.isResponding = false;
+    }
+  }
+
+  private openLinkedRecord(record: LinkedRecord): void {
+    if (this.navStack === null || record.id.length === 0) {
+      return;
+    }
+    if (record.kind === 'note') {
+      const params: NoteDetailParams = { noteId: record.id };
+      this.navStack.pushPathByName(ROUTES.NOTE_DETAIL, params);
+    } else if (record.kind === 'prediction') {
+      const params: PredictionDetailParams = { predictionId: record.id };
+      this.navStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params);
+    } else {
+      const params: ReviewDetailParams = { reviewId: record.id };
+      this.navStack.pushPathByName(ROUTES.REVIEW_DETAIL, params);
     }
   }
 
@@ -439,16 +499,57 @@ export struct RelationDetailPage {
 
             if (this.detail.correction.length > 0) {
               SectionCard() {
-                Column({ space: 5 }) {
-                  Text('对方怎样纠正了我的理解')
-                    .fontSize(AppTheme.font.body)
-                    .fontColor(AppTheme.color.textSecondary)
-                    .width('100%')
+                Column({ space: AppTheme.spacing.s6 }) {
+                  Row({ space: AppTheme.spacing.s6 }) {
+                    Text('对方怎样纠正了我的理解')
+                      .fontSize(AppTheme.font.body)
+                      .fontColor(AppTheme.color.textSecondary)
+                      .layoutWeight(1)
+                    if ((this.detail.pendingCorrections ?? 0) > 0) {
+                      Text('待回应')
+                        .fontSize(AppTheme.font.caption)
+                        .fontColor(AppTheme.color.warning)
+                        .padding({
+                          left: AppTheme.spacing.s6,
+                          right: AppTheme.spacing.s6,
+                          top: AppTheme.spacing.s2,
+                          bottom: AppTheme.spacing.s2
+                        })
+                        .backgroundColor(AppTheme.color.warningSurface)
+                        .borderRadius(AppTheme.radius.sm)
+                    }
+                  }
+                  .width('100%')
+
                   Text(this.detail.correction)
                     .fontSize(AppTheme.font.bodyStrong)
                     .lineHeight(20)
                     .fontColor(AppTheme.color.text)
                     .width('100%')
+                  Text((this.detail.pendingCorrections ?? 0) > 0 ?
+                    '读完后补一条自己的观察，列表里的待回应数会归零。' : '最近一次纠正已经回应过，可以继续补充观察。')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(15)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  Row({ space: AppTheme.spacing.s8 }) {
+                    TextInput({ text: this.responseInput, placeholder: '写下你修正后的观察' })
+                      .id('relation_response_input')
+                      .maxLength(200)
+                      .layoutWeight(1)
+                      .backgroundColor(AppTheme.color.surfaceAlt)
+                      .onChange((value: string) => {
+                        this.responseInput = value;
+                      })
+                    Text(this.isResponding ? '保存中' : '回应')
+                      .id('relation_response_save')
+                      .fontSize(AppTheme.font.bodyStrong)
+                      .fontColor(AppTheme.color.primary)
+                      .onClick(() => {
+                        this.saveResponse();
+                      })
+                  }
+                  .width('100%')
                 }
                 .width('100%')
                 .alignItems(HorizontalAlign.Start)
@@ -456,31 +557,37 @@ export struct RelationDetailPage {
             }
 
             SectionCard() {
-              Column({ space: 5 }) {
+              Column({ space: AppTheme.spacing.s6 }) {
                 Text('关联记录')
                   .fontSize(AppTheme.font.body)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
-                if (this.detail.linkedEvents.length === 0 && this.detail.linkedDecisions.length === 0) {
-                  Text('暂无速记或决策引用这条关系')
+                if (this.detail.linkedRecords.length === 0) {
+                  Text('暂无速记、决策或复盘引用这条关系')
                     .fontSize(AppTheme.font.body)
                     .fontColor(AppTheme.color.textMuted)
                     .width('100%')
                 } else {
-                  ForEach(this.detail.linkedEvents, (title: string, index: number) => {
-                    Text(`速记 · ${title}`)
-                      .fontSize(AppTheme.font.bodyStrong)
-                      .lineHeight(19)
-                      .fontColor(AppTheme.color.text)
-                      .width('100%')
-                  }, (title: string, index: number) => `ev_${index}_${title}`)
-                  ForEach(this.detail.linkedDecisions, (title: string, index: number) => {
-                    Text(`决策 · ${title}`)
-                      .fontSize(AppTheme.font.bodyStrong)
-                      .lineHeight(19)
-                      .fontColor(AppTheme.color.text)
-                      .width('100%')
-                  }, (title: string, index: number) => `dc_${index}_${title}`)
+                  ForEach(this.detail.linkedRecords, (record: LinkedRecord, index: number) => {
+                    Row({ space: AppTheme.spacing.s8 }) {
+                      Text(`${record.label} · ${record.title}`)
+                        .fontSize(AppTheme.font.bodyStrong)
+                        .lineHeight(19)
+                        .fontColor(record.id.length > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
+                        .layoutWeight(1)
+                        .maxLines(1)
+                        .textOverflow({ overflow: TextOverflow.Ellipsis })
+                      if (record.id.length > 0) {
+                        SymbolGlyph($r('sys.symbol.chevron_forward'))
+                          .fontSize(14)
+                          .fontColor([AppTheme.color.textMuted])
+                      }
+                    }
+                    .width('100%')
+                    .onClick(() => {
+                      this.openLinkedRecord(record);
+                    })
+                  }, (record: LinkedRecord, index: number) => `lr_${index}_${record.kind}_${record.id}`)
                 }
               }
               .width('100%')

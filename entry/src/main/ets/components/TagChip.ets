@@ -4,8 +4,8 @@ import { AppTheme } from '../theme/AppTheme';
 @ComponentV2
 export struct TagChip {
   @Param label: string = '';
-  @Param tone: string = AppTheme.color.primary;
-  @Param surface: string = AppTheme.color.evPracticeSurface;
+  @Param tone: ResourceColor = AppTheme.color.primary;
+  @Param surface: ResourceColor = AppTheme.color.evPracticeSurface;
   @Param selected: boolean = false;
   @Event onTap: () => void = () => {
   };

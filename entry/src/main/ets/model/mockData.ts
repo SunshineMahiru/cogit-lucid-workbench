@@ -46,32 +46,37 @@ export const MOCK_DECISIONS: Decision[] = [
 export const MOCK_RELATIONS: Relation[] = [
   {
     id: 'rl_demo_1',
-    name: '朋友 A',
+    name: '示例·甲',
     trustLevel: TrustLevel.SINCERE,
     interactionLog: [
       { timestamp: 1760000000000, content: '一次关于近期状态的长谈。' }
     ],
     rawMaterialTest: true,
     forbidAnalysis: false,
+    correction: '对方说我把一次迟到理解成不重视，其实那天路上出了状况。',
+    correctionAt: 1760003000000,
     level: SecurityLevel.LOCAL_ONLY,
     notes: '示例关系，用于演示信任分层。'
   },
   {
     id: 'rl_demo_2',
-    name: '同事 B',
+    name: '导师·示例',
     trustLevel: TrustLevel.FRIENDLY,
     interactionLog: [
       { timestamp: 1759900000000, content: '项目协作中的一次交接。' },
-      { timestamp: 1759950000000, content: '会后同步了进度。' }
+      { timestamp: 1759950000000, content: '会后同步了进度。' },
+      { timestamp: 1760004000000, content: '我把反馈里的边界写清楚后又被确认了一次。', source: 'observation' }
     ],
     rawMaterialTest: false,
     forbidAnalysis: false,
+    correction: '导师提醒我把反馈当成评价，其实只是希望我把边界写清楚。',
+    correctionAt: 1760002000000,
     level: SecurityLevel.LOCAL_ONLY,
     notes: '示例关系，仅用于演示友好层级。'
   },
   {
     id: 'rl_demo_3',
-    name: '家人 C',
+    name: '同学·示例',
     trustLevel: TrustLevel.TRANSPARENT,
     interactionLog: [
       { timestamp: 1759800000000, content: '聊到最近的作息调整。' }

@@ -30,20 +30,25 @@ export function toRelationListItem(relation: Relation): RelationListItem {
     notes: relation.notes,
     correction: relation.correction ?? '',
     correctionAt: relation.correctionAt ?? 0,
-    pendingCorrections: pendingCorrectionsOf(relation)
+    pendingCorrections: pendingCorrectionsOf(relation),
+    latestCorrectionExcerpt: correctionExcerptOf(relation)
   };
 }
 
-/** Projects a batch: closer tiers first, then the most recently active. */
+/** Projects a batch: unanswered corrections first, then the freshest correction and interaction. */
 export function toRelationListItems(relations: Relation[]): RelationListItem[] {
   const items: RelationListItem[] = [];
   for (const relation of relations) {
     items.push(toRelationListItem(relation));
   }
   items.sort((left: RelationListItem, right: RelationListItem) => {
-    const rankDiff = trustRank(right.trustLevel) - trustRank(left.trustLevel);
-    if (rankDiff !== 0) {
-      return rankDiff;
+    const pendingDiff = (right.pendingCorrections ?? 0) - (left.pendingCorrections ?? 0);
+    if (pendingDiff !== 0) {
+      return pendingDiff;
+    }
+    const correctionDiff = (right.correctionAt ?? 0) - (left.correctionAt ?? 0);
+    if (correctionDiff !== 0) {
+      return correctionDiff;
     }
     return right.lastInteractionAt - left.lastInteractionAt;
   });
@@ -86,9 +91,17 @@ export function toRelationDetail(relation: Relation): RelationDetail {
     correction: relation.correction ?? '',
     correctionAt: relation.correctionAt ?? 0,
     pendingCorrections: pendingCorrectionsOf(relation),
+    latestCorrectionExcerpt: correctionExcerptOf(relation),
     linkedEvents: [],
-    linkedDecisions: []
+    linkedDecisions: [],
+    linkedRecords: []
   };
+}
+
+/** Trims a correction and keeps it within 40 characters for the list row. */
+function correctionExcerptOf(relation: Relation): string {
+  const text = (relation.correction ?? '').trim();
+  return text.length <= 40 ? text : text.substring(0, 40);
 }
 
 /** A correction stays pending until the author logs an own observation after it. */
@@ -121,16 +134,6 @@ function latestInteraction(logs: InteractionLog[]): InteractionLog | null {
     }
   }
   return latest;
-}
-
-function trustRank(level: TrustLevel): number {
-  if (level === TrustLevel.TRANSPARENT) {
-    return 3;
-  }
-  if (level === TrustLevel.SINCERE) {
-    return 2;
-  }
-  return 1;
 }
 
 function pad2(value: number): string {

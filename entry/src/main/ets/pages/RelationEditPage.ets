@@ -223,7 +223,7 @@ export struct RelationEditPage {
                   .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
-                TextInput({ text: this.name, placeholder: '例如：朋友 A' })
+                TextInput({ text: this.name, placeholder: '例如：示例·甲' })
                   .maxLength(40)
                   .backgroundColor(AppTheme.color.surfaceAlt)
                   .onChange((value: string) => {

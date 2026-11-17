@@ -1,4 +1,4 @@
-export type { RelationDetail, RelationListItem } from './RelationListItem';
+export type { LinkedRecord, LinkedRecordKind, RelationDetail, RelationListItem } from './RelationListItem';
 export {
   filterRelationItems,
   formatInteractionTime,

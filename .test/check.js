@@ -716,21 +716,36 @@ test('月复盘范围覆盖整月', () => {
   assert.strictEqual(range.label, '2026-10-01 ~ 2026-10-31');
 });
 
-test('关系按信任层级与最近互动排序', () => {
+test('关系按待回应、纠正时间与最近互动排序', () => {
   const items = toRelationListItems([
     relation({ id: 'friendly', trustLevel: 'friendly', interactionLog: [{ timestamp: 300, content: 'a' }] }),
     relation({ id: 'transparent', trustLevel: 'transparent', interactionLog: [{ timestamp: 100, content: 'b' }] }),
     relation({ id: 'sincere_new', trustLevel: 'sincere', interactionLog: [{ timestamp: 400, content: 'c' }] }),
-    relation({ id: 'sincere_old', trustLevel: 'sincere', interactionLog: [{ timestamp: 200, content: 'd' }] })
+    relation({ id: 'sincere_old', trustLevel: 'sincere', interactionLog: [{ timestamp: 200, content: 'd' }] }),
+    relation({
+      id: 'pending', trustLevel: 'friendly',
+      interactionLog: [{ timestamp: 50, content: 'e' }],
+      correction: '对方纠正了我的理解', correctionAt: 60
+    })
   ]);
   assert.deepStrictEqual(items.map((item) => item.id), [
-    'transparent',
+    'pending',
     'sincere_new',
+    'friendly',
     'sincere_old',
-    'friendly'
+    'transparent'
   ]);
+  assert.strictEqual(items[0].pendingCorrections, 1);
+  assert.strictEqual(items[0].latestCorrectionExcerpt, '对方纠正了我的理解');
   assert.strictEqual(items[0].interactionCount, 1);
   assert.ok(items[0].lastInteractionLabel.includes('1970'));
+
+  const answered = toRelationListItems([relation({
+    id: 'answered',
+    interactionLog: [{ timestamp: 70, content: '我的观察', source: 'observation' }],
+    correction: '对方纠正了我的理解', correctionAt: 60
+  })]);
+  assert.strictEqual(answered[0].pendingCorrections, 0);
 });
 
 test('关系筛选与详情日志倒序', () => {

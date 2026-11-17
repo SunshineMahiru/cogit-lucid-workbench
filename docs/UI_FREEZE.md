@@ -16,7 +16,7 @@
 | textSecondaryStrong | `sys.color.font_secondary` | 表单标签 |
 | textMuted | `sys.color.font_tertiary` | 时间、脚注 |
 | border | `sys.color.comp_divider` | 默认描边 |
-| borderStrong | `sys.color.comp_outline_color` | 虚线空态、星图连线 |
+| borderStrong | `sys.color.comp_outline_color` | 虚线空态 |
 | tint | `sys.color.comp_background_secondary` | 标签底、选中 chip |
 | surfaceAlt | `sys.color.comp_background_gray` | 输入框底、浅色块 |
 | surfaceTint | `sys.color.comp_background_tertiary` | 正文输入底 |
@@ -145,7 +145,7 @@
 
 ## 5. 已知偏差
 
-- 字面宽高共 202 处（`.width` 77 处、`.height` 125 处），分布在 190 行；三处固定尺寸已核对：`views/dashboard/ModuleGridCard.ets:38` 的 height 266、`components/RelationGraph.ets:5-6` 的 320×260、`pages/NoteListPage.ets:274` 的 bottom 80。`PageBackground` 的 `DARK_SCRIM`（18% 黑遮罩）是叠加层不是语义色，保留字面量；热力图的四档色阶收在 `AppTheme.color.heatEmpty` 到 `heatHigh`，深浅两套各有取值；
+- 字面宽高共 202 处（`.width` 77 处、`.height` 125 处），分布在 190 行；两处固定尺寸已核对：`views/dashboard/ModuleGridCard.ets:38` 的 height 266、`pages/NoteListPage.ets:274` 的 bottom 80。`PageBackground` 的 `DARK_SCRIM`（18% 黑遮罩）是叠加层不是语义色，保留字面量；热力图的四档色阶收在 `AppTheme.color.heatEmpty` 到 `heatHigh`，深浅两套各有取值；
 - 页面背景使用按模块分组的本机图片；选择后先转 PNG，再选择单个页面组或全部应用，透明度 5%–40% 可调；启动时会迁移旧格式，设置页可手动“修复旧背景”；暂无预览裁剪和原图压缩。
 - 浅色下 `page`（`background_primary`）与 `surface`（`comp_background_list_card`）都解析为白色，卡片与页面缺少底色差，只能靠间距与内容分组区分；深色下两者分别为黑与 10% 白，层次正常。
 - 字号升到 12/14/16/18 后，`WelcomeCard` 的步骤列与底部隐私行在小屏上重叠（首屏说明卡），该组件不在本批授权范围，待后续调整。
@@ -158,7 +158,7 @@
 2. 速记：三档深度切换、草稿恢复两分支、最近标签点击、模板切换、正文/字段、关联关系 chips、材料三组 chip、详情材料区、保存返回；
 3. 预测：新建表单、日期输入、到期/已结算详情、统计趋势与环图；
 4. 复盘：六区切换（旧四步只读）、锚点勾选与选择理由、Agent 面板、历史与详情；
-5. 关系：筛选、详情关联记录、星图节点不重叠；
+5. 关系：筛选、纠正摘录与待回应徽标、详情回应输入、关联记录跳转；
 6. 状态：最近读数、七次汇总、历史；
 7. 设置：三档 provider、Key 输入、预算记账、导出结果；
 8. 全局：加载/空/失败三态、键盘遮挡、返回栈。

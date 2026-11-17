@@ -66,8 +66,7 @@ export function backgroundKeyForRoute(route: string): string {
   if (route === 'anchor') {
     return 'anchor';
   }
-  if (route === 'relation' || route === 'relation_detail' || route === 'relation_edit' ||
-    route === 'relation_graph') {
+  if (route === 'relation' || route === 'relation_detail' || route === 'relation_edit') {
     return 'relation';
   }
   if (route === 'status' || route === 'status_history' || route === 'status_edit') {

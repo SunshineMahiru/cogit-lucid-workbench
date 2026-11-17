@@ -1,6 +1,8 @@
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { MOCK_RELATIONS } from '../model/mockData';
+import { Decision } from '../model/Decision';
+import { Event } from '../model/Event';
 import { InteractionLog, CitationScope, InteractionSource, Relation } from '../model/Relation';
 import { SecurityLevel } from '../model/SecurityLevel';
 import { TrustLevel } from '../model/TrustLevel';
@@ -10,7 +12,8 @@ import { DecisionDao } from '../db/dao/DecisionDao';
 import { EventDao } from '../db/dao/EventDao';
 import { RelationDao } from '../db/dao/RelationDao';
 import { ReviewMaterialDao } from '../db/dao/ReviewMaterialDao';
-import { RelationDetail, RelationListItem } from './RelationListItem';
+import { ReviewResultDao } from '../db/dao/ReviewResultDao';
+import { RelationDetail, RelationListItem, LinkedRecord } from './RelationListItem';
 import { filterRelationItems, toRelationDetail, toRelationListItems } from './RelationListMapper';
 
 /** Read access to relations plus an explicit demo seed; editing lands in 6.4. */export class RelationService {
@@ -18,12 +21,14 @@ import { filterRelationItems, toRelationDetail, toRelationListItems } from './Re
   private eventDao: EventDao;
   private decisionDao: DecisionDao;
   private reviewMaterialDao: ReviewMaterialDao;
+  private reviewResultDao: ReviewResultDao;
 
   private constructor(store: relationalStore.RdbStore) {
     this.relationDao = new RelationDao(store);
     this.eventDao = new EventDao(store);
     this.decisionDao = new DecisionDao(store);
     this.reviewMaterialDao = new ReviewMaterialDao(store);
+    this.reviewResultDao = new ReviewResultDao(store);
   }
 
   /** Opens the database and returns a service bound to it. */
@@ -47,13 +52,41 @@ import { filterRelationItems, toRelationDetail, toRelationListItems } from './Re
     const detail = toRelationDetail(relation);
     const events = await this.eventDao.queryAll();
     const decisions = await this.decisionDao.queryAll();
-    detail.linkedEvents = events
-      .filter((event) => event.relatedRelationIds.includes(id))
-      .map((event) => event.title);
-    detail.linkedDecisions = decisions
-      .filter((decision) => decision.relatedRelationIds.includes(id))
-      .map((decision) => decision.title);
+    const relatedEvents = events.filter((event) => event.relatedRelationIds.includes(id));
+    const relatedDecisions = decisions.filter((decision) => decision.relatedRelationIds.includes(id));
+    detail.linkedEvents = relatedEvents.map((event) => event.title);
+    detail.linkedDecisions = relatedDecisions.map((decision) => decision.title);
+    detail.linkedRecords = await this.linkedRecordsOf(id, events, relatedEvents, relatedDecisions);
     return detail;
+  }
+
+  /** Collects openable notes, decisions (through their source note) and reviews citing this relation. */
+  private async linkedRecordsOf(id: string, events: Event[], relatedEvents: Event[],
+    relatedDecisions: Decision[]): Promise<LinkedRecord[]> {
+    const records: LinkedRecord[] = [];
+    for (const event of relatedEvents) {
+      records.push({ kind: 'note', id: event.id, label: '速记', title: event.title });
+    }
+    for (const decision of relatedDecisions) {
+      let noteId = '';
+      for (const eventId of decision.relatedEventIds) {
+        if (events.some((event: Event) => event.id === eventId)) {
+          noteId = eventId;
+          break;
+        }
+      }
+      records.push({ kind: 'note', id: noteId, label: '决策', title: decision.title });
+    }
+    const snapshots = await this.reviewMaterialDao.queryByMaterial(`relation:${id}`);
+    if (snapshots.length > 0) {
+      const reviews = await this.reviewResultDao.queryRecent(200);
+      for (const review of reviews) {
+        if (snapshots.some((snapshot) => snapshot.reviewId === review.id)) {
+          records.push({ kind: 'review', id: review.id, label: '复盘', title: review.rangeLabel });
+        }
+      }
+    }
+    return records;
   }
 
   /** Creates or updates one relation profile and returns its detail. */
