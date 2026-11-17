@@ -34,12 +34,12 @@
 ## 3. 当前验证
 
 - tsc：0 错
-- check：115
+- check：118
 - service：110
 - export：40
 - agent：16
 - privacy：15
-- 合计：296
+- 合计：299
 - `assembleHap`：通过
 - `PreviewBuild`：通过
 - arkts：仅 2 个改前既有的 BuildProfile 模块解析错误，无新增错误

@@ -99,8 +99,13 @@ export const MOCK_PREDICTIONS: Prediction[] = [
     status: PredictionStatus.PENDING,
     actualResult: '',
     hit: null,
-    version: 1,
-    createdAt: 1760000200000
+    version: 2,
+    revisionReason: '把睡眠时长换成可核对的日均值',
+    invalidated: '原先只看入睡时间',
+    preserved: '晚间安排不变',
+    repositioned: '判定口径改为日均睡眠',
+    explanatoryGain: '新的口径能说明周末补觉为何拉高均值',
+    createdAt: new Date(2026, 9, 20, 9, 0).getTime()
   },
   {
     id: 'pr_demo_2',

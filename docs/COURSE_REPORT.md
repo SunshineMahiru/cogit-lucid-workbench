@@ -46,7 +46,7 @@
 
 ## 七、代码规范与文档（10 分）
 
-- 英文标识符、中文注释；analysis/ 纯函数层只 import model/，服务层负责 IO，283→296 条断言全绿。
+- 英文标识符、中文注释；analysis/ 纯函数层只 import model/，服务层负责 IO，299 条断言全绿。
 - 文档：PROJECT.md/AGENTS.md/README 双语/UI_FREEZE.md/MANUAL_CHECKS.md/COURSE_CHECK.md 同步。
 
 ## 八、数据迁移与隐私（加分叙述）
@@ -58,7 +58,7 @@
 
 ## 九、测试与验证
 
-- 单元/服务/导出/隐私/agent/plan 六组断言 296 条全绿；tsc 0 错；assembleHap/PreviewBuild 通过。
+- 单元/服务/导出/隐私/agent/plan 六组断言 299 条全绿；tsc 0 错；assembleHap/PreviewBuild 通过。
 - 不变量测试：现场不可改、无失效条件拒存、空白不推断、拒绝不可洗白、旧版本只读、termOnly 真假分支、减法阈值真假分支、模板密级矩阵。
 - 减法模式有效性用作者自身对照检验，不宣称疗效、不做量表。
 

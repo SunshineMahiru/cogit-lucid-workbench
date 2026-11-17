@@ -55,7 +55,7 @@ export function backgroundKeyForRoute(route: string): string {
   if (route === 'note_edit' || route === 'note_list' || route === 'note_detail') {
     return 'note';
   }
-  if (route === 'prediction_list' || route === 'prediction_detail' || route === 'prediction_stats' ||
+  if (route === 'prediction_list' || route === 'prediction_detail' ||
     route === 'prediction_create' || route === 'prediction_settle') {
     return 'prediction';
   }

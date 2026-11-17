@@ -174,7 +174,7 @@ export struct PredictionListPage {
         .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8 })
         .onClick(() => {
           if (this.navStack !== null) {
-            this.navStack.pushPathByName(ROUTES.PREDICTION_STATS, null);
+            this.navStack.pushPathByName(ROUTES.ANALYTICS, null);
           }
         })
       Text('＋')
