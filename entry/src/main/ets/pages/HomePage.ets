@@ -5,17 +5,15 @@ import { AppDestination } from '../components/AppDestination';
 import { DashboardView } from '../views/DashboardView';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { HomeDataService } from '../data/HomeDataService';
-import { HomeSummary, formatHitRate } from '../model/HomeModel';
+import { HomeSummary } from '../model/HomeModel';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 import { appHealth, isDatabaseUnsupported } from '../app/AppHealth';
 import { consumeJsonIssues } from '../db/SafeJson';
 import { DbHelper } from '../db/DbHelper';
 import { DebugFaults } from '../app/DebugFaults';
 import { previewStore } from '../preview/PreviewStore';
-import { ROUTES } from '../navigation/Routes';
-import { NoteEditParams, PredictionListParams } from '../navigation/RouteParams';
 
-/** Launch page: identity band, four quick entries and the dashboard content. */
+/** Launch page: a compact identity band above the writing surface and the trace stream. */
 @ComponentV2
 export struct HomePage {
   @Require @Param pathStack: NavPathStack;
@@ -30,7 +28,6 @@ export struct HomePage {
   @Local encryptionNotice: string = '';
   @Local dbBlocked: boolean = false;
   @Local dbMessage: string = '';
-  @Local moduleOffset: number = 0;
   private scroller: Scroller = new Scroller();
   private service: HomeDataService | null = null;
   private loadToken: number = 0;
@@ -118,159 +115,6 @@ export struct HomePage {
     }
   }
 
-  private openRecordNow(): void {
-    const params: NoteEditParams = { templateId: null };
-    this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params, () => {
-      this.load();
-    });
-  }
-
-  private openTodo(): void {
-    const params: PredictionListParams = { status: null };
-    this.pathStack.pushPathByName(ROUTES.PREDICTION_LIST, params, () => {
-      this.load();
-    });
-  }
-
-  private openReviewHistory(): void {
-    this.pathStack.pushPathByName(ROUTES.REVIEW_HISTORY, null, () => {
-      this.load();
-    });
-  }
-
-  private openPlan(): void {
-    this.pathStack.pushPathByName(ROUTES.PLAN, null, () => {
-      this.load();
-    });
-  }
-
-  private summaryLine(): string {
-    const rate = formatHitRate(this.summary.hitRate, this.summary.settledPredictions);
-    return `总速记 ${this.summary.totalNotes} · 待结算 ${this.summary.pendingPredictions} · 命中率 ${rate}`;
-  }
-
-  private todoDue(): number {
-    return this.summary.duePredictions ?? 0;
-  }
-
-  private todoRevision(): number {
-    return this.summary.revisionPredictions ?? 0;
-  }
-
-  private todoClosed(): number {
-    return this.summary.closedNodeReviews ?? 0;
-  }
-
-  private todoDecisions(): number {
-    return this.summary.pendingDecisions ?? 0;
-  }
-
-  private todoTotal(): number {
-    return this.todoDue() + this.todoRevision() + this.todoClosed() + this.todoDecisions();
-  }
-
-  /** Scrolls the dashboard scroll area down to the module grid. */
-  private scrollToModules(): void {
-    this.scroller.scrollTo({
-      xOffset: 0,
-      yOffset: this.moduleOffset,
-      animation: { duration: 300, curve: Curve.EaseInOut }
-    });
-  }
-
-  @Builder
-  quickEntry(label: string, entryId: string, onTap: () => void) {
-    Text(label)
-      .id(entryId)
-      .fontSize(AppTheme.font.body)
-      .fontColor(AppTheme.color.primary)
-      .textAlign(TextAlign.Center)
-      .maxLines(1)
-      .textOverflow({ overflow: TextOverflow.Ellipsis })
-      .layoutWeight(1)
-      .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
-      .backgroundColor(AppTheme.color.surface)
-      .borderRadius(AppTheme.radius.md)
-      .onClick(() => {
-        onTap();
-      })
-  }
-
-  @Builder
-  todoRow(entryId: string, label: string, count: number, note: string, divider: boolean, onTap: () => void) {
-    Column() {
-      Row() {
-        Text(`${label} ${count} 条`)
-          .fontSize(AppTheme.font.bodyStrong)
-          .fontColor(count > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
-          .layoutWeight(1)
-        if (note.length > 0) {
-          Text(note)
-            .fontSize(AppTheme.font.caption)
-            .fontColor(AppTheme.color.textMuted)
-        }
-      }
-      .id(entryId)
-      .width('100%')
-      .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
-      .enabled(count > 0)
-      .onClick(() => {
-        if (count > 0) {
-          onTap();
-        }
-      })
-      if (divider) {
-        Divider()
-          .strokeWidth(0.5)
-          .color(AppTheme.color.border)
-      }
-    }
-    .width('100%')
-  }
-
-  @Builder
-  todoCard() {
-    Column() {
-      Text(this.summaryLine())
-        .id('home_todo_summary')
-        .fontSize(AppTheme.font.caption)
-        .fontColor(AppTheme.color.textMuted)
-        .width('100%')
-        .padding({ bottom: AppTheme.spacing.s4 })
-      Column() {
-        if (this.todoTotal() === 0) {
-          Text('此刻没有需要回看的项目')
-            .id('home_todo_empty')
-            .fontSize(AppTheme.font.body)
-            .fontColor(AppTheme.color.textMuted)
-            .width('100%')
-            .textAlign(TextAlign.Center)
-            .padding({ top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })
-        } else {
-          this.todoRow('home_todo_due', '到期预测', this.todoDue(), '', true, () => {
-            this.openTodo();
-          })
-          this.todoRow('home_todo_revision', '待修订模型', this.todoRevision(), '暂不区分', true, () => {
-            this.openTodo();
-          })
-          this.todoRow('home_todo_closed', '已结束周节点', this.todoClosed(), '', true, () => {
-            this.openReviewHistory();
-          })
-          this.todoRow('home_todo_decisions', '待回看决定', this.todoDecisions(), '', false, () => {
-            this.openReviewHistory();
-          })
-        }
-      }
-      .id('home_todo_card')
-      .width('100%')
-      .backgroundColor(AppTheme.color.surface)
-      .borderRadius(AppTheme.radius.md)
-      .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
-    }
-    .width('100%')
-    .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20 })
-  }
-
   build() {
     AppDestination({
       route: 'home',
@@ -294,72 +138,50 @@ export struct HomePage {
       this.blockedBody()
     } else {
       Column() {
-      ProfileHeader({
-        pathStack: this.pathStack
-      })
-      if (this.loadFailed) {
-        Text('首页数据读取失败，点此重试')
-          .fontSize(AppTheme.font.body)
-          .fontColor(AppTheme.color.danger)
-          .width('100%')
-          .textAlign(TextAlign.Center)
-          .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
-          .onClick(() => {
-            this.load();
+        ProfileHeader({
+          pathStack: this.pathStack
+        })
+        if (this.loadFailed) {
+          Text('首页数据读取失败，点此重试')
+            .fontSize(AppTheme.font.body)
+            .fontColor(AppTheme.color.danger)
+            .width('100%')
+            .textAlign(TextAlign.Center)
+            .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+            .onClick(() => {
+              this.load();
+            })
+        } else if (this.isPreview) {
+          Text('演示数据 · 数据库不可用')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textMuted)
+            .width('100%')
+            .textAlign(TextAlign.Center)
+            .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
+        } else if (this.encryptionNotice.length > 0) {
+          Text(this.encryptionNotice)
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.danger)
+            .width('100%')
+            .textAlign(TextAlign.Center)
+            .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
+        } else if (this.dataNotice.length > 0) {
+          Text(this.dataNotice)
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.warning)
+            .width('100%')
+            .textAlign(TextAlign.Center)
+            .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
+        }
+        Column() {
+          DashboardView({
+            pathStack: this.pathStack,
+            showTitleBar: false,
+            scroller: this.scroller
           })
-      } else if (this.isPreview) {
-        Text('演示数据 · 数据库不可用')
-          .fontSize(AppTheme.font.caption)
-          .fontColor(AppTheme.color.textMuted)
-          .width('100%')
-          .textAlign(TextAlign.Center)
-          .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
-      } else if (this.encryptionNotice.length > 0) {
-        Text(this.encryptionNotice)
-          .fontSize(AppTheme.font.caption)
-          .fontColor(AppTheme.color.danger)
-          .width('100%')
-          .textAlign(TextAlign.Center)
-          .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
-      } else if (this.dataNotice.length > 0) {
-        Text(this.dataNotice)
-          .fontSize(AppTheme.font.caption)
-          .fontColor(AppTheme.color.warning)
-          .width('100%')
-          .textAlign(TextAlign.Center)
-          .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s2 })
-      }
-      Row({ space: 8 }) {
-        this.quickEntry('记录此刻', 'home_record_now', () => {
-          this.openRecordNow();
-        })
-        this.quickEntry('待校正', 'home_todo', () => {
-          this.openTodo();
-        })
-        this.quickEntry('当前计划', 'home_plan_entry_top', () => {
-          this.openPlan();
-        })
-        this.quickEntry('全部模块', 'home_modules_all', () => {
-          this.scrollToModules();
-        })
-      }
-      .width('100%')
-      .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s4 })
-
-      this.todoCard()
-
-      Column() {
-        DashboardView({
-          pathStack: this.pathStack,
-          showTitleBar: false,
-          scroller: this.scroller,
-          onModuleOffset: (offsetY: number) => {
-            this.moduleOffset = offsetY;
-          }
-        })
-      }
-      .width('100%')
-      .layoutWeight(1)
+        }
+        .width('100%')
+        .layoutWeight(1)
       }
       .width('100%')
       .height('100%')
@@ -375,7 +197,7 @@ export struct HomePage {
         .fontColor(AppTheme.color.text)
       Text('记录仍保存在本机。可以先重试；一直失败时请重启应用。备份与导出需要数据库打开后才能使用。')
         .fontSize(AppTheme.font.bodyStrong)
-        .lineHeight(19)
+        .lineHeight(24)
         .fontColor(AppTheme.color.textSecondary)
         .textAlign(TextAlign.Center)
       if (this.dbMessage.length > 0) {
@@ -393,7 +215,7 @@ export struct HomePage {
         .textAlign(TextAlign.Center)
         .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
         .backgroundColor(AppTheme.color.primary)
-        .borderRadius(AppTheme.radius.md)
+        .borderRadius(20)
         .onClick(() => {
           this.retryDatabase();
         })

@@ -1,6 +1,7 @@
 import { AppTheme } from '../theme/AppTheme';
+import { curves } from '@kit.ArkUI';
 
-/** White rounded container; keeps surface, padding and radius in one place. */
+/** Rounded container; keeps surface, padding, radius and entrance motion in one place. */
 @ComponentV2
 export struct SectionCard {
   @BuilderParam content: () => void = this.emptyContent;
@@ -17,6 +18,9 @@ export struct SectionCard {
     .width('100%')
     .padding(this.contentPadding)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(AppTheme.radius.md)
+    .borderRadius(16)
+    .border({ width: 0.5, color: AppTheme.color.border })
+    .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ y: 12 }))
+      .animation({ curve: curves.springMotion(0.35, 0.9) }))
   }
 }

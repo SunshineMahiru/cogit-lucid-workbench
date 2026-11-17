@@ -25,9 +25,9 @@ export struct ModuleCard {
           .fontWeight(FontWeight.Medium)
           .fontColor(AppTheme.color.text)
         Blank()
-        Text('›')
-          .fontSize(AppTheme.font.subtitle)
-          .fontColor(AppTheme.color.textMuted)
+        SymbolGlyph($r('sys.symbol.chevron_forward'))
+          .fontSize(14)
+          .fontColor([AppTheme.color.textMuted])
       }
       .width('100%')
 
@@ -40,12 +40,13 @@ export struct ModuleCard {
         .textAlign(TextAlign.Start)
     }
     .width('100%')
-    .height(82)
-    .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
+    .constraintSize({ minHeight: 82 })
+    .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
     .alignItems(HorizontalAlign.Start)
     .justifyContent(FlexAlign.Center)
     .backgroundColor(AppTheme.color.surfaceTint)
-    .borderRadius(AppTheme.radius.md)
+    .borderRadius(16)
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
     .accessibilityText(`${this.title}，${this.summary}`)
     .onClick(() => {
       this.onTap();

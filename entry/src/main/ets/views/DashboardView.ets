@@ -7,6 +7,7 @@ import {
   formatNoteCount,
   todayLabel
 } from '../model/HomeModel';
+import { curves } from '@kit.ArkUI';
 import { HomeDataService } from '../data/HomeDataService';
 import { PredictionCard } from '../components/PredictionCard';
 import { ReadingCard } from '../components/ReadingCard';
@@ -53,7 +54,8 @@ export struct DashboardView {
   @Local loadFailed: boolean = false;
   @Local isPreview: boolean = false;
   @Local showWelcome: boolean = false;
-  @Local readingsVisible: boolean = true;
+  @Local readingsVisible: boolean = false;
+  @Local todoExpanded: boolean = false;
   @Local promptVisible: boolean = true;
   private reviewService: ReviewService | null = null;
   private refreshListener: (() => void) | null = null;
@@ -263,6 +265,120 @@ export struct DashboardView {
     });
   }
 
+  private todoTotal(): number {
+    return (this.summary.duePredictions ?? 0) + (this.summary.revisionPredictions ?? 0) +
+      (this.summary.closedNodeReviews ?? 0) + (this.summary.pendingDecisions ?? 0);
+  }
+
+  /** The writable surface that opens the app: one tap to leave a trace. */
+  @Builder
+  writeHero() {
+    Column({ space: 10 }) {
+      Row({ space: 10 }) {
+        SymbolGlyph($r('sys.symbol.plus'))
+          .fontSize(22)
+          .fontColor([AppTheme.color.primary])
+        Text('此刻，留下什么')
+          .fontSize(AppTheme.font.title)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(AppTheme.color.text)
+          .layoutWeight(1)
+        Text(this.summary.todayNotes > 0 ? `今天 ${this.summary.todayNotes} 条` : '还没有记录')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.textMuted)
+      }
+      .width('100%')
+
+      Text('一句现场、一种感受、一个身体信号都可以。不必解释。')
+        .fontSize(AppTheme.font.body)
+        .fontColor(AppTheme.color.textSecondary)
+        .width('100%')
+    }
+    .id('home_write_hero')
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+    .padding(AppTheme.spacing.s20)
+    .backgroundColor(AppTheme.color.surface)
+    .borderRadius(16)
+    .border({ width: 1, color: AppTheme.color.borderSelected })
+    .onClick(() => {
+      this.openNoteEditor();
+    })
+    .transition(TransitionEffect.OPACITY.combine(TransitionEffect.translate({ y: 16 }))
+      .animation({ curve: curves.springMotion(0.35, 0.9) }))
+  }
+
+  /** A single quiet line for pending corrections; expands only on demand. */
+  @Builder
+  quietTodo() {
+    Column() {
+      Row({ space: 8 }) {
+        SymbolGlyph($r('sys.symbol.chevron_forward'))
+          .fontSize(14)
+          .fontColor([this.todoTotal() > 0 ? AppTheme.color.warning : AppTheme.color.textMuted])
+          .rotate({ angle: this.todoExpanded ? 90 : 0 })
+        Text(this.todoTotal() > 0 ? `待校正 ${this.todoTotal()} 项` : '此刻没有需要回看的项目')
+          .fontSize(AppTheme.font.body)
+          .fontColor(this.todoTotal() > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
+          .layoutWeight(1)
+      }
+      .id('home_todo_quiet')
+      .width('100%')
+      .height(44)
+      .onClick(() => {
+        this.todoExpanded = !this.todoExpanded;
+      })
+
+      if (this.todoExpanded && this.todoTotal() > 0) {
+        Column({ space: 2 }) {
+          this.todoLine('到期预测', this.summary.duePredictions ?? 0, () => {
+            this.openPredictionList();
+          })
+          this.todoLine('待修订模型', this.summary.revisionPredictions ?? 0, () => {
+            this.openPredictionList();
+          })
+          this.todoLine('已结束周节点', this.summary.closedNodeReviews ?? 0, () => {
+            this.guardedPush(ROUTES.REVIEW_HISTORY, null, () => {
+              this.refresh();
+            });
+          })
+          this.todoLine('待回看决定', this.summary.pendingDecisions ?? 0, () => {
+            this.guardedPush(ROUTES.REVIEW_HISTORY, null, () => {
+              this.refresh();
+            });
+          })
+        }
+        .width('100%')
+        .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
+      }
+    }
+    .width('100%')
+    .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16 })
+    .backgroundColor(AppTheme.color.surface)
+    .borderRadius(16)
+  }
+
+  @Builder
+  todoLine(label: string, count: number, onTap: () => void) {
+    Row() {
+      Text(`${label} ${count} 条`)
+        .fontSize(AppTheme.font.body)
+        .fontColor(count > 0 ? AppTheme.color.text : AppTheme.color.textMuted)
+        .layoutWeight(1)
+      SymbolGlyph($r('sys.symbol.chevron_forward'))
+        .fontSize(12)
+        .fontColor([AppTheme.color.textMuted])
+    }
+    .width('100%')
+    .height(40)
+    .enabled(count > 0)
+    .onClick(() => {
+      if (count > 0) {
+        onTap();
+      }
+    })
+  }
+
   @Builder
   loadingView() {
     Column({ space: 12 }) {
@@ -380,6 +496,25 @@ export struct DashboardView {
                   }
                 })
               }
+
+              this.writeHero()
+
+              RecentNotesCard({
+                notes: this.recentNotes,
+                dataVersion: this.dataVersion,
+                onOpenAll: () => {
+                  this.openNoteList();
+                },
+                onNoteTap: () => {
+                  this.openNoteList();
+                },
+                onWrite: () => {
+                  this.openNoteEditor();
+                }
+              })
+                .id('home_section_recent_notes')
+
+              this.quietTodo()
 
               // Body readings
               Column({ space: 6 }) {
@@ -509,18 +644,6 @@ export struct DashboardView {
               .width('100%')
               .justifyContent(FlexAlign.End)
               .padding({ top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
-
-              RecentNotesCard({
-                notes: this.recentNotes,
-                dataVersion: this.dataVersion,
-                onOpenAll: () => {
-                  this.openNoteList();
-                },
-                onNoteTap: () => {
-                  this.openNoteList();
-                }
-              })
-                .id('home_section_recent_notes')
 
               // Pending predictions
               Column({ space: 10 }) {
