@@ -39,6 +39,7 @@ signing/
 # Local environment; never commit secrets
 .env
 .env.*
+deveco.jsonc
 
 # Install packages kept outside build/
 *.hap
