@@ -29,6 +29,10 @@ export interface Plan {
   doneStandard?: string;
   /** Who or what the goal affects */
   impact?: string;
+  /** Who the goal serves */
+  beneficiary?: string;
+  /** Who bears the cost of the goal */
+  costBearer?: string;
   /** Milliseconds */
   createdAt: number;
 }

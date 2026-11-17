@@ -398,6 +398,23 @@ export class DbHelper {
       } catch (error) {
       }
     }
+    // DB 22: the method-track columns. Determinate negation gains its missing-source and
+    // extra-explanatory-power fields; joint practice gains a participation mode; plans gain
+    // beneficiary and cost bearer; public-claim materials gain an evidence slot.
+    const methodMigrations: string[] = [
+      `ALTER TABLE prediction ADD COLUMN missing TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE prediction ADD COLUMN explanatory_gain TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE decision_record ADD COLUMN participation_mode TEXT`,
+      `ALTER TABLE plan ADD COLUMN beneficiary TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE plan ADD COLUMN cost_bearer TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE experience_material ADD COLUMN claim_evidence TEXT NOT NULL DEFAULT ''`
+    ];
+    for (const sql of methodMigrations) {
+      try {
+        await store.executeSql(sql);
+      } catch (error) {
+      }
+    }
     // Event revisions arrived later; rows written before keep an empty origin and version 1.
     const eventRevisionMigrations: string[] = [
       `ALTER TABLE event ADD COLUMN revision_of TEXT NOT NULL DEFAULT ''`,

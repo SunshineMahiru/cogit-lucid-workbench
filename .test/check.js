@@ -1497,13 +1497,19 @@ test('复盘一等结果与锚点三问已接线', () => {
   assert.ok(form.includes("if (this.standing !== 'decided' || this.decisionType === null)"));
 });
 
-test('数据库版本为 21 且包含新增列', () => {
+test('数据库版本为 22 且包含新增列', () => {
   const source = fs.readFileSync(DB_CONFIG_FILE, 'utf8');
-  assert.ok(/export const DB_VERSION\s*=\s*21;/.test(source), 'DB_VERSION 不是 21');
+  assert.ok(/export const DB_VERSION\s*=\s*22;/.test(source), 'DB_VERSION 不是 22');
   const schema = fs.readFileSync(SCHEMA_FILE, 'utf8');
   assert.ok(schema.includes('removed_count INTEGER NOT NULL DEFAULT 0'));
   assert.ok(schema.includes('depth TEXT'));
   assert.ok(schema.includes('time_budget INTEGER'));
+  assert.ok(schema.includes('missing TEXT NOT NULL DEFAULT'));
+  assert.ok(schema.includes('explanatory_gain TEXT NOT NULL DEFAULT'));
+  assert.ok(schema.includes('participation_mode TEXT'));
+  assert.ok(schema.includes('beneficiary TEXT NOT NULL DEFAULT'));
+  assert.ok(schema.includes('cost_bearer TEXT NOT NULL DEFAULT'));
+  assert.ok(schema.includes('claim_evidence TEXT NOT NULL DEFAULT'));
 });
 
 if (failures.length > 0) {

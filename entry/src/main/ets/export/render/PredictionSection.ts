@@ -29,6 +29,36 @@ export function renderPredictionSection(predictions: Prediction[]): string {
     lines.push(`- 理由：${inlineText(prediction.reason)}`);
     lines.push(`- 创建时间：${formatExportTime(prediction.createdAt)}`);
     lines.push(`- 版本：v${prediction.version}`);
+    if ((prediction.scope ?? '').length > 0) {
+      lines.push(`- 适用范围：${inlineText(prediction.scope ?? '')}`);
+    }
+    if ((prediction.falsification ?? '').length > 0) {
+      lines.push(`- 失效条件：${inlineText(prediction.falsification ?? '')}`);
+    }
+    if ((prediction.unknowns ?? '').length > 0) {
+      lines.push(`- 未知项：${inlineText(prediction.unknowns ?? '')}`);
+    }
+    if ((prediction.evidenceLevel ?? '').length > 0) {
+      lines.push(`- 证据来源：${inlineText(prediction.evidenceLevel ?? '')}`);
+    }
+    if ((prediction.revisionReason ?? '').length > 0) {
+      lines.push(`- 修订原因：${inlineText(prediction.revisionReason ?? '')}`);
+    }
+    if ((prediction.invalidated ?? '').length > 0) {
+      lines.push(`- 取消：${inlineText(prediction.invalidated ?? '')}`);
+    }
+    if ((prediction.preserved ?? '').length > 0) {
+      lines.push(`- 保存：${inlineText(prediction.preserved ?? '')}`);
+    }
+    if ((prediction.repositioned ?? '').length > 0) {
+      lines.push(`- 重新定位：${inlineText(prediction.repositioned ?? '')}`);
+    }
+    if ((prediction.missing ?? '').length > 0) {
+      lines.push(`- 失效来源：${inlineText(prediction.missing ?? '')}`);
+    }
+    if ((prediction.explanatoryGain ?? '').length > 0) {
+      lines.push(`- 新增解释力：${inlineText(prediction.explanatoryGain ?? '')}`);
+    }
     lines.push('');
   }
   return lines.join('\n').trim();

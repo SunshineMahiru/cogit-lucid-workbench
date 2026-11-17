@@ -138,6 +138,8 @@ export const PREDICTION_COLS = {
   PRESERVED: 'preserved',
   REPOSITIONED: 'repositioned',
   EVIDENCE_LEVEL: 'evidence_level',
+  MISSING: 'missing',
+  EXPLANATORY_GAIN: 'explanatory_gain',
   CREATED_AT: 'created_at'
 } as const;
 
@@ -213,6 +215,8 @@ export const PLAN_COLS = {
   TIME_BUDGET: 'time_budget',
   DONE_STANDARD: 'done_standard',
   IMPACT: 'impact',
+  BENEFICIARY: 'beneficiary',
+  COST_BEARER: 'cost_bearer',
   CREATED_AT: 'created_at'
 } as const;
 

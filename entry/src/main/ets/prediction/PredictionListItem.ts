@@ -57,4 +57,6 @@ export interface PredictionDetail {
   invalidated?: string;
   preserved?: string;
   repositioned?: string;
+  missing?: string;
+  explanatoryGain?: string;
 }

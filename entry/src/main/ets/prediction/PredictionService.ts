@@ -167,4 +167,6 @@ function fillFromDraft(prediction: Prediction, draft: PredictionDraft): void {
   prediction.invalidated = (draft.invalidated ?? '').trim();
   prediction.preserved = (draft.preserved ?? '').trim();
   prediction.repositioned = (draft.repositioned ?? '').trim();
+  prediction.missing = (draft.missing ?? '').trim();
+  prediction.explanatoryGain = (draft.explanatoryGain ?? '').trim();
 }

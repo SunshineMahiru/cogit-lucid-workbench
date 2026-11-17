@@ -21,6 +21,10 @@ export interface PredictionDraft {
   invalidated?: string;
   preserved?: string;
   repositioned?: string;
+  /** Determinate negation: the missed relation, variable, body condition or response */
+  missing?: string;
+  /** Determinate negation: the extra explanatory power of the new frame */
+  explanatoryGain?: string;
 }
 
 /** Field-level messages; empty strings mean valid. */

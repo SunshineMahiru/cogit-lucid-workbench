@@ -46,6 +46,8 @@ export class PredictionDao {
       [PREDICTION_COLS.PRESERVED]: prediction.preserved ?? '',
       [PREDICTION_COLS.REPOSITIONED]: prediction.repositioned ?? '',
       [PREDICTION_COLS.EVIDENCE_LEVEL]: prediction.evidenceLevel ?? '',
+      [PREDICTION_COLS.MISSING]: prediction.missing ?? '',
+      [PREDICTION_COLS.EXPLANATORY_GAIN]: prediction.explanatoryGain ?? '',
       [PREDICTION_COLS.CREATED_AT]: prediction.createdAt
     };
     return this.store.insert(DB_TABLES.PREDICTION, values);
@@ -176,6 +178,8 @@ export class PredictionDao {
       preserved: PredictionDao.readText(resultSet, PREDICTION_COLS.PRESERVED),
       repositioned: PredictionDao.readText(resultSet, PREDICTION_COLS.REPOSITIONED),
       evidenceLevel: PredictionDao.readText(resultSet, PREDICTION_COLS.EVIDENCE_LEVEL),
+      missing: PredictionDao.readText(resultSet, PREDICTION_COLS.MISSING),
+      explanatoryGain: PredictionDao.readText(resultSet, PREDICTION_COLS.EXPLANATORY_GAIN),
       createdAt: resultSet.getLong(resultSet.getColumnIndex(PREDICTION_COLS.CREATED_AT))
     };
   }

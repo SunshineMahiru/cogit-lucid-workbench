@@ -67,6 +67,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     preserved TEXT NOT NULL DEFAULT '',
     repositioned TEXT NOT NULL DEFAULT '',
     evidence_level TEXT NOT NULL DEFAULT '',
+    missing TEXT NOT NULL DEFAULT '',
+    explanatory_gain TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.ANCHOR} (
@@ -150,6 +152,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     level TEXT NOT NULL DEFAULT 'local_only',
     depth TEXT,
     time_budget INTEGER,
+    participation_mode TEXT,
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN} (
@@ -168,6 +171,8 @@ export const TABLE_CREATE_SQLS: string[] = [
     time_budget INTEGER NOT NULL DEFAULT 0,
     done_standard TEXT NOT NULL DEFAULT '',
     impact TEXT NOT NULL DEFAULT '',
+    beneficiary TEXT NOT NULL DEFAULT '',
+    cost_bearer TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
   )`,
   `CREATE TABLE IF NOT EXISTS ${DB_TABLES.PLAN_PROJECT} (
@@ -230,6 +235,7 @@ export const TABLE_CREATE_SQLS: string[] = [
     source TEXT NOT NULL DEFAULT 'direct',
     source_stance TEXT NOT NULL DEFAULT '',
     interaction_source TEXT NOT NULL DEFAULT '',
+    claim_evidence TEXT NOT NULL DEFAULT '',
     level TEXT NOT NULL DEFAULT 'local_only',
     revision_of TEXT NOT NULL DEFAULT '',
     deleted INTEGER NOT NULL DEFAULT 0,

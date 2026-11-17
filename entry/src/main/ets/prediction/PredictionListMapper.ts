@@ -82,15 +82,9 @@ export function predictionStatusText(status: PredictionStatus, outcome: Predicti
   return outcomeLabel(outcome);
 }
 
-/**
- * Text for the settlement result; the boolean form is the hit flag kept for rows
- * written before outcomes existed.
- */
-export function predictionHitText(outcome: boolean | null | string): string {
-  if (typeof outcome === 'string') {
-    return outcomeLabel(outcome);
-  }
-  return legacyHitLabel(outcome);
+/** Text for the settlement result, covering all five outcomes. */
+export function predictionHitText(outcome: PredictionOutcome): string {
+  return outcomeLabel(outcome);
 }
 
 /** Projects one prediction into the read-only detail model. */
@@ -115,20 +109,15 @@ export function toPredictionDetail(prediction: Prediction): PredictionDetail {
     revisionReason: prediction.revisionReason ?? '',
     invalidated: prediction.invalidated ?? '',
     preserved: prediction.preserved ?? '',
-    repositioned: prediction.repositioned ?? ''
+    repositioned: prediction.repositioned ?? '',
+    missing: prediction.missing ?? '',
+    explanatoryGain: prediction.explanatoryGain ?? ''
   };
 }
 
 /** Stored outcome, or the hit flag for records settled before outcomes existed. */
 function effectiveOutcome(outcome: PredictionOutcome, hit: boolean | null): PredictionOutcome {
   return outcome.length > 0 ? outcome : outcomeFromLegacy(hit);
-}
-
-function legacyHitLabel(hit: boolean | null): string {
-  if (hit === null) {
-    return '未结算';
-  }
-  return hit ? '命中' : '未命中';
 }
 
 function compareRows(left: PredictionListItem, right: PredictionListItem): number {

@@ -43,6 +43,8 @@ export class PlanDao {
       [PLAN_COLS.TIME_BUDGET]: plan.timeBudget ?? 0,
       [PLAN_COLS.DONE_STANDARD]: plan.doneStandard ?? '',
       [PLAN_COLS.IMPACT]: plan.impact ?? '',
+      [PLAN_COLS.BENEFICIARY]: plan.beneficiary ?? '',
+      [PLAN_COLS.COST_BEARER]: plan.costBearer ?? '',
       [PLAN_COLS.CREATED_AT]: plan.createdAt
     };
     return this.store.insert(DB_TABLES.PLAN, values);
@@ -76,7 +78,9 @@ export class PlanDao {
       [PLAN_COLS.DEPTH]: plan.depth ?? 'normal',
       [PLAN_COLS.TIME_BUDGET]: plan.timeBudget ?? 0,
       [PLAN_COLS.DONE_STANDARD]: plan.doneStandard ?? '',
-      [PLAN_COLS.IMPACT]: plan.impact ?? ''
+      [PLAN_COLS.IMPACT]: plan.impact ?? '',
+      [PLAN_COLS.BENEFICIARY]: plan.beneficiary ?? '',
+      [PLAN_COLS.COST_BEARER]: plan.costBearer ?? ''
     };
     const predicates = new relationalStore.RdbPredicates(DB_TABLES.PLAN);
     predicates.equalTo(PLAN_COLS.ID, plan.id);
@@ -375,6 +379,8 @@ export class PlanDao {
       timeBudget: resultSet.getLong(resultSet.getColumnIndex(PLAN_COLS.TIME_BUDGET)),
       doneStandard: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.DONE_STANDARD)),
       impact: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.IMPACT)),
+      beneficiary: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.BENEFICIARY)),
+      costBearer: resultSet.getString(resultSet.getColumnIndex(PLAN_COLS.COST_BEARER)),
       createdAt: resultSet.getLong(resultSet.getColumnIndex(PLAN_COLS.CREATED_AT))
     };
     if (projectId.length > 0) {

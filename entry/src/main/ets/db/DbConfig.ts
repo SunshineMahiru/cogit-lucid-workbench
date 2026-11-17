@@ -1,7 +1,7 @@
 import { relationalStore } from '@kit.ArkData';
 
 /** Schema version applied to the store after it is opened. */
-export const DB_VERSION = 21;
+export const DB_VERSION = 22;
 
 /** Store configuration for the relational database. */
 export const DB_CONFIG: relationalStore.StoreConfig = {

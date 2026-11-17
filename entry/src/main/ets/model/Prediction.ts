@@ -37,6 +37,10 @@ export interface Prediction {
   repositioned?: string;
   /** Evidence source recorded beside the actual result */
   evidenceLevel?: string;
+  /** Determinate negation: which relation, variable, body condition or response was missed */
+  missing?: string;
+  /** Determinate negation: what the new frame explains that the old one could not */
+  explanatoryGain?: string;
   /** Security level controlling aggregation and export; absent values are local-only */
   level?: SecurityLevel;
   /** Commit timestamp in milliseconds */

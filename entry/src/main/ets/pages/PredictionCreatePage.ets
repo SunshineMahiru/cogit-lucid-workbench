@@ -45,6 +45,8 @@ export struct PredictionCreatePage {
   @Local invalidated: string = '';
   @Local preserved: string = '';
   @Local repositioned: string = '';
+  @Local missing: string = '';
+  @Local explanatoryGain: string = '';
   @Local revisionError: string = '';
   @Local falsificationError: string = '';
   @Local modelCardOpen: boolean = false;
@@ -127,6 +129,8 @@ export struct PredictionCreatePage {
       draft.invalidated = this.invalidated;
       draft.preserved = this.preserved;
       draft.repositioned = this.repositioned;
+      draft.missing = this.missing;
+      draft.explanatoryGain = this.explanatoryGain;
     }
     const errors = validatePredictionDraft(draft);
     this.errors = errors;
@@ -583,6 +587,36 @@ export struct PredictionCreatePage {
                     .onChange((value: string) => {
                       this.repositioned = value;
                       this.revisionError = '';
+                      this.isDirty = true;
+                    })
+                }
+                Column({ space: 6 }) {
+                  Text('失效来源')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  TextArea({ placeholder: '忽略了哪项关系、变量、身体条件或对方回应', text: this.missing })
+                    .id('prediction_missing')
+                    .height(56)
+                    .maxLength(MAX_REASON_LENGTH)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.missing = value;
+                      this.isDirty = true;
+                    })
+                }
+                Column({ space: 6 }) {
+                  Text('新增解释力')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  TextArea({ placeholder: '新框架能同时解释旧框架何时有效、为何后来失效吗', text: this.explanatoryGain })
+                    .id('prediction_explanatory_gain')
+                    .height(56)
+                    .maxLength(MAX_REASON_LENGTH)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.explanatoryGain = value;
                       this.isDirty = true;
                     })
                 }
