@@ -29,6 +29,7 @@ export struct StatusEditPage {
   @Local capacity: CapacityJudgment = '';
   @Local functionGain: string = '';
   @Local costPaid: string = '';
+  @Local statusMoreOpen: boolean = false;
   @Local unknownReadings: string = '';
   @Local hasExisting: boolean = false;
   @Local correctedAt: number = 0;
@@ -86,6 +87,9 @@ export struct StatusEditPage {
     this.capacity = record.capacity ?? '';
     this.functionGain = record.functionGain ?? '';
     this.costPaid = record.costPaid ?? '';
+    this.statusMoreOpen = this.bodySignals.length > 0 || this.functionState.length > 0
+      || this.emotion.length > 0 || this.environment.length > 0
+      || this.functionGain.length > 0 || this.costPaid.length > 0 || this.note.length > 0;
   }
 
   private buildDraft(): StatusDraft {
@@ -545,33 +549,6 @@ export struct StatusEditPage {
             }
 
             SectionCard() {
-              Column({ space: 10 }) {
-                Text('身体与当下')
-                  .fontSize(AppTheme.font.bodyStrong)
-                  .fontColor(AppTheme.color.text)
-                  .width('100%')
-                this.textField('身体信号', '例如 头痛、胃部不适、眼睛发干', this.bodySignals, 2, (value: string) => {
-                  this.bodySignals = value;
-                  this.isDirty = true;
-                })
-                this.textField('当下功能', '例如 能读十分钟，无法连续工作', this.functionState, 2, (value: string) => {
-                  this.functionState = value;
-                  this.isDirty = true;
-                })
-                this.textField('情绪感受', '例如 烦躁、心里发紧', this.emotion, 2, (value: string) => {
-                  this.emotion = value;
-                  this.isDirty = true;
-                })
-                this.textField('环境因素', '例如 房间闷热、连续开会', this.environment, 2, (value: string) => {
-                  this.environment = value;
-                  this.isDirty = true;
-                })
-              }
-              .width('100%')
-              .alignItems(HorizontalAlign.Start)
-            }
-
-            SectionCard() {
               Column({ space: 8 }) {
                 Text('你怎么判断今天的承受能力')
                   .fontSize(AppTheme.font.bodyStrong)
@@ -592,46 +569,95 @@ export struct StatusEditPage {
               .alignItems(HorizontalAlign.Start)
             }
 
-            SectionCard() {
-              Column({ space: 8 }) {
-                Text('这次高负荷的成对记录')
-                  .fontSize(AppTheme.font.bodyStrong)
-                  .fontColor(AppTheme.color.text)
-                  .width('100%')
-                Text('同一件事带来的功能和付出的代价分开写，避免只记住其中一面。')
-                  .fontSize(AppTheme.font.caption)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-                this.textField('带来了什么功能', '例如 赶完了报告、维持了课程进度', this.functionGain, 2, (value: string) => {
-                  this.functionGain = value;
-                  this.isDirty = true;
-                })
-                this.textField('付出了什么成本', '例如 两天注意力涣散、错过锻炼', this.costPaid, 2, (value: string) => {
-                  this.costPaid = value;
-                  this.isDirty = true;
-                })
-              }
-              .width('100%')
-              .alignItems(HorizontalAlign.Start)
+            Row() {
+              Text(this.statusMoreOpen ? '收起' : '更多（可选）')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.primary)
+                .layoutWeight(1)
+              SymbolGlyph($r('sys.symbol.chevron_down'))
+                .fontSize(14)
+                .fontColor([AppTheme.color.primary])
+                .rotate({ angle: this.statusMoreOpen ? 180 : 0 })
             }
+            .id('status_more_toggle')
+            .width('100%')
+            .height(40)
+            .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12 })
+            .backgroundColor(AppTheme.color.surface)
+            .borderRadius(AppTheme.radius.md)
+            .onClick(() => {
+              this.statusMoreOpen = !this.statusMoreOpen;
+            })
 
-            SectionCard() {
-              Column({ space: 6 }) {
-                Text('自由备注')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textSecondary)
-                  .width('100%')
-                TextArea({ text: this.note, placeholder: '可写一句当天状态' })
-                  .height(80)
-                  .maxLength(200)
-                  .backgroundColor(AppTheme.color.surfaceAlt)
-                  .onChange((value: string) => {
-                    this.note = value;
+            if (this.statusMoreOpen) {
+              SectionCard() {
+                Column({ space: 10 }) {
+                  Text('身体与当下')
+                    .fontSize(AppTheme.font.bodyStrong)
+                    .fontColor(AppTheme.color.text)
+                    .width('100%')
+                  this.textField('身体信号', '例如 头痛、胃部不适、眼睛发干', this.bodySignals, 2, (value: string) => {
+                    this.bodySignals = value;
                     this.isDirty = true;
                   })
+                  this.textField('当下功能', '例如 能读十分钟，无法连续工作', this.functionState, 2, (value: string) => {
+                    this.functionState = value;
+                    this.isDirty = true;
+                  })
+                  this.textField('情绪感受', '例如 烦躁、心里发紧', this.emotion, 2, (value: string) => {
+                    this.emotion = value;
+                    this.isDirty = true;
+                  })
+                  this.textField('环境因素', '例如 房间闷热、连续开会', this.environment, 2, (value: string) => {
+                    this.environment = value;
+                    this.isDirty = true;
+                  })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
               }
-              .width('100%')
-              .alignItems(HorizontalAlign.Start)
+
+              SectionCard() {
+                Column({ space: 8 }) {
+                  Text('这次高负荷的成对记录')
+                    .fontSize(AppTheme.font.bodyStrong)
+                    .fontColor(AppTheme.color.text)
+                    .width('100%')
+                  Text('同一件事带来的功能和付出的代价分开写，避免只记住其中一面。')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  this.textField('带来了什么功能', '例如 赶完了报告、维持了课程进度', this.functionGain, 2, (value: string) => {
+                    this.functionGain = value;
+                    this.isDirty = true;
+                  })
+                  this.textField('付出了什么成本', '例如 两天注意力涣散、错过锻炼', this.costPaid, 2, (value: string) => {
+                    this.costPaid = value;
+                    this.isDirty = true;
+                  })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
+
+              SectionCard() {
+                Column({ space: 6 }) {
+                  Text('自由备注')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  TextArea({ text: this.note, placeholder: '可写一句当天状态' })
+                    .height(80)
+                    .maxLength(200)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.note = value;
+                      this.isDirty = true;
+                    })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
             }
 
             if (this.errorText.length > 0) {

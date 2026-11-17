@@ -26,6 +26,7 @@ export struct AnchorPage {
   @Local reviseContext: string = '';
   @Local reviseReason: string = '';
   @Local reviseError: string = '';
+  @Local anchorMoreOpen: boolean = false;
   @Local isRevising: boolean = false;
   @Local retireVisible: boolean = false;
   @Local isRetiring: boolean = false;
@@ -157,6 +158,7 @@ export struct AnchorPage {
     this.reviseContext = anchor.context ?? '';
     this.reviseReason = '';
     this.reviseError = '';
+    this.anchorMoreOpen = this.reviseContext.length > 0;
     this.reviseVisible = true;
   }
 
@@ -323,12 +325,6 @@ export struct AnchorPage {
           this.reviseText = value;
           this.reviseError = '';
         })
-      TextInput({ text: this.reviseContext, placeholder: '适用情境（可空）' })
-        .id('anchor_revise_context')
-        .backgroundColor(AppTheme.color.surfaceAlt)
-        .onChange((value: string) => {
-          this.reviseContext = value;
-        })
       TextArea({ text: this.reviseReason, placeholder: '修订原因（必填）' })
         .id('anchor_revise_reason')
         .height(56)
@@ -338,6 +334,30 @@ export struct AnchorPage {
           this.reviseReason = value;
           this.reviseError = '';
         })
+      Row() {
+        Text(this.anchorMoreOpen ? '收起' : '更多（可选）')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.primary)
+          .layoutWeight(1)
+        SymbolGlyph($r('sys.symbol.chevron_down'))
+          .fontSize(14)
+          .fontColor([AppTheme.color.primary])
+          .rotate({ angle: this.anchorMoreOpen ? 180 : 0 })
+      }
+      .id('anchor_more_toggle')
+      .width('100%')
+      .height(40)
+      .onClick(() => {
+        this.anchorMoreOpen = !this.anchorMoreOpen;
+      })
+      if (this.anchorMoreOpen) {
+        TextInput({ text: this.reviseContext, placeholder: '适用情境（可空）' })
+          .id('anchor_revise_context')
+          .backgroundColor(AppTheme.color.surfaceAlt)
+          .onChange((value: string) => {
+            this.reviseContext = value;
+          })
+      }
       if (this.reviseError.length > 0) {
         Text(this.reviseError)
           .fontSize(AppTheme.font.caption)

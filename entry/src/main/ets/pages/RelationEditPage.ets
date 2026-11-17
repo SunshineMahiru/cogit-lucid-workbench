@@ -17,6 +17,7 @@ export struct RelationEditPage {
   @Local forbidAnalysis: boolean = false;
   @Local correction: string = '';
   @Local level: SecurityLevel = SecurityLevel.LOCAL_ONLY;
+  @Local relationMoreOpen: boolean = false;
   @Local isLoading: boolean = true;
   @Local isSaving: boolean = false;
   @Local isDirty: boolean = false;
@@ -50,6 +51,8 @@ export struct RelationEditPage {
         this.forbidAnalysis = detail.forbidAnalysis;
         this.correction = detail.correction;
         this.level = detail.level;
+        this.relationMoreOpen = this.notes.length > 0 || this.correction.length > 0
+          || this.forbidAnalysis || this.level !== SecurityLevel.LOCAL_ONLY;
       } else {
         this.errorText = '关系记录不存在';
       }
@@ -253,93 +256,115 @@ export struct RelationEditPage {
               .alignItems(HorizontalAlign.Start)
             }
 
-            SectionCard() {
-              Column({ space: 8 }) {
-                Text('默认密级')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textSecondary)
-                  .width('100%')
-                Text('本地：只在设备上；可分析：切到模型档后可进入上下文；封存：不进入汇总与导出。')
-                  .fontSize(AppTheme.font.caption)
-                  .lineHeight(15)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-                Row({ space: 8 }) {
-                  this.levelChip(SecurityLevel.LOCAL_ONLY)
-                  this.levelChip(SecurityLevel.ANALYZABLE)
-                  this.levelChip(SecurityLevel.SEALED)
+            Row() {
+              Text(this.relationMoreOpen ? '收起' : '更多（可选）')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.primary)
+                .layoutWeight(1)
+              SymbolGlyph($r('sys.symbol.chevron_down'))
+                .fontSize(14)
+                .fontColor([AppTheme.color.primary])
+                .rotate({ angle: this.relationMoreOpen ? 180 : 0 })
+            }
+            .id('relation_more_toggle')
+            .width('100%')
+            .height(40)
+            .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12 })
+            .backgroundColor(AppTheme.color.surface)
+            .borderRadius(AppTheme.radius.md)
+            .onClick(() => {
+              this.relationMoreOpen = !this.relationMoreOpen;
+            })
+
+            if (this.relationMoreOpen) {
+              SectionCard() {
+                Column({ space: 8 }) {
+                  Text('默认密级')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Text('本地：只在设备上；可分析：切到模型档后可进入上下文；封存：不进入汇总与导出。')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(15)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  Row({ space: 8 }) {
+                    this.levelChip(SecurityLevel.LOCAL_ONLY)
+                    this.levelChip(SecurityLevel.ANALYZABLE)
+                    this.levelChip(SecurityLevel.SEALED)
+                  }
                 }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
               }
-              .width('100%')
-              .alignItems(HorizontalAlign.Start)
-            }
 
-            SectionCard() {
-              Column({ space: 8 }) {
-                Text('披露与引用边界')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textSecondary)
-                  .width('100%')
-                Text('本应用不推断对方动机、人格或关系结局。对方的话与自己的推测分开记录，引用范围按每条互动单独设置。')
-                  .fontSize(AppTheme.font.caption)
-                  .lineHeight(15)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-                this.flagChip('禁止任何动机推断', this.forbidAnalysis, () => {
-                  this.forbidAnalysis = !this.forbidAnalysis;
-                  this.isDirty = true;
-                })
-              }
-              .width('100%')
-              .alignItems(HorizontalAlign.Start)
-            }
-
-            SectionCard() {
-              Column({ space: 6 }) {
-                Text('对方怎样纠正了我的理解')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textSecondary)
-                  .width('100%')
-                Text('只写对方明确说过的内容；这条会参与模型修订，不写猜测。')
-                  .fontSize(AppTheme.font.caption)
-                  .lineHeight(15)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-                TextArea({ text: this.correction, placeholder: '例如：他说那天只是累了，不是对我不满' })
-                  .height(90)
-                  .maxLength(200)
-                  .backgroundColor(AppTheme.color.surfaceAlt)
-                  .id('relation_correction')
-                  .onChange((value: string) => {
-                    this.correction = value;
+              SectionCard() {
+                Column({ space: 8 }) {
+                  Text('披露与引用边界')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Text('本应用不推断对方动机、人格或关系结局。对方的话与自己的推测分开记录，引用范围按每条互动单独设置。')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(15)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  this.flagChip('禁止任何动机推断', this.forbidAnalysis, () => {
+                    this.forbidAnalysis = !this.forbidAnalysis;
                     this.isDirty = true;
                   })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
               }
-              .width('100%')
-              .alignItems(HorizontalAlign.Start)
-            }
 
-            SectionCard() {
-              Column({ space: 6 }) {
-                Text('关系备注')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textSecondary)
-                  .width('100%')
-                Text('只写与复盘边界有关的信息，不写隐私细节。')
-                  .fontSize(AppTheme.font.caption)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-                TextArea({ text: this.notes, placeholder: '只写与复盘边界有关的信息' })
-                  .height(100)
-                  .maxLength(200)
-                  .backgroundColor(AppTheme.color.surfaceAlt)
-                  .onChange((value: string) => {
-                    this.notes = value;
-                    this.isDirty = true;
-                  })
+              SectionCard() {
+                Column({ space: 6 }) {
+                  Text('对方怎样纠正了我的理解')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Text('只写对方明确说过的内容；这条会参与模型修订，不写猜测。')
+                    .fontSize(AppTheme.font.caption)
+                    .lineHeight(15)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  TextArea({ text: this.correction, placeholder: '例如：他说那天只是累了，不是对我不满' })
+                    .height(90)
+                    .maxLength(200)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .id('relation_correction')
+                    .onChange((value: string) => {
+                      this.correction = value;
+                      this.isDirty = true;
+                    })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
               }
-              .width('100%')
-              .alignItems(HorizontalAlign.Start)
+
+              SectionCard() {
+                Column({ space: 6 }) {
+                  Text('关系备注')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                    .width('100%')
+                  Text('只写与复盘边界有关的信息，不写隐私细节。')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  TextArea({ text: this.notes, placeholder: '只写与复盘边界有关的信息' })
+                    .height(100)
+                    .maxLength(200)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.notes = value;
+                      this.isDirty = true;
+                    })
+                }
+                .width('100%')
+                .alignItems(HorizontalAlign.Start)
+              }
             }
 
             if (this.errorText.length > 0) {
