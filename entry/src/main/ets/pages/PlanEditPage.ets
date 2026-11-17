@@ -23,6 +23,8 @@ export struct PlanEditPage {
   @Local doneStandard: string = '';
   @Local impact: string = '';
   @Local planMoreOpen: boolean = false;
+  @Local beneficiary: string = '';
+  @Local costBearer: string = '';
   @Local errorText: string = '';
   @Local isSaving: boolean = false;
   @Local isDirty: boolean = false;
@@ -70,7 +72,9 @@ export struct PlanEditPage {
     this.timeBudgetText = plan.timeBudget !== undefined && plan.timeBudget > 0 ? String(plan.timeBudget) : '';
     this.doneStandard = plan.doneStandard ?? '';
     this.impact = plan.impact ?? '';
-    this.planMoreOpen = (this.doneStandard.length + this.impact.length) > 0;
+    this.beneficiary = plan.beneficiary ?? '';
+    this.costBearer = plan.costBearer ?? '';
+    this.planMoreOpen = (this.doneStandard.length + this.impact.length + this.beneficiary.length + this.costBearer.length) > 0;
   }
 
   private budgetValue(): number {
@@ -97,6 +101,8 @@ export struct PlanEditPage {
         const created = planPreviewStore.create(this.title, monday, target, this.depth, this.budgetValue());
         created.doneStandard = this.doneStandard.trim();
         created.impact = this.impact.trim();
+        created.beneficiary = this.beneficiary.trim();
+        created.costBearer = this.costBearer.trim();
       } else {
         const plan = planPreviewStore.find(this.planId);
         if (plan !== null) {
@@ -108,6 +114,8 @@ export struct PlanEditPage {
           plan.timeBudget = this.budgetValue();
           plan.doneStandard = this.doneStandard.trim();
           plan.impact = this.impact.trim();
+    plan.beneficiary = this.beneficiary.trim();
+    plan.costBearer = this.costBearer.trim();
           planPreviewStore.update(plan);
         }
       }
@@ -141,6 +149,8 @@ export struct PlanEditPage {
       this.depth, this.budgetValue());
     plan.doneStandard = this.doneStandard.trim();
     plan.impact = this.impact.trim();
+    plan.beneficiary = this.beneficiary.trim();
+    plan.costBearer = this.costBearer.trim();
     await service.updatePlan(plan);
   }
 
@@ -159,6 +169,8 @@ export struct PlanEditPage {
     plan.timeBudget = this.budgetValue();
     plan.doneStandard = this.doneStandard.trim();
     plan.impact = this.impact.trim();
+    plan.beneficiary = this.beneficiary.trim();
+    plan.costBearer = this.costBearer.trim();
     await service.updatePlan(plan);
   }
 
@@ -292,6 +304,30 @@ export struct PlanEditPage {
                 .backgroundColor(AppTheme.color.surfaceAlt)
                 .onChange((value: string) => {
                   this.impact = value;
+                  this.isDirty = true;
+                })
+              Text('服务谁')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.textSecondary)
+                .width('100%')
+              TextInput({ text: this.beneficiary, placeholder: '这个目标服务谁（可空）' })
+                .id('plan_beneficiary')
+                .maxLength(120)
+                .backgroundColor(AppTheme.color.surfaceAlt)
+                .onChange((value: string) => {
+                  this.beneficiary = value;
+                  this.isDirty = true;
+                })
+              Text('成本由谁承担')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.textSecondary)
+                .width('100%')
+              TextInput({ text: this.costBearer, placeholder: '代价落在谁身上（可空）' })
+                .id('plan_cost_bearer')
+                .maxLength(120)
+                .backgroundColor(AppTheme.color.surfaceAlt)
+                .onChange((value: string) => {
+                  this.costBearer = value;
                   this.isDirty = true;
                 })
             }

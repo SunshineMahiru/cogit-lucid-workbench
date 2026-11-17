@@ -98,6 +98,7 @@ export struct ReviewForm {
   @Local decisionRelationId: string = '';
   @Local decisionOutcome: string = '';
   @Local decisionReviewAt: string = '';
+  @Local decisionParticipation: string = '';
   @Local motivation: MotivationKind | '' = '';
   @Local depth: WorkDepth = 'normal';
   @Local timeBudgetText: string = '';
@@ -179,6 +180,7 @@ export struct ReviewForm {
             this.decisionRelationId = decisionDraft.relationId ?? '';
             this.decisionOutcome = decisionDraft.outcome ?? '';
             this.decisionReviewAt = decisionDraft.reviewAt ?? '';
+            this.decisionParticipation = decisionDraft.participationMode ?? '';
             this.planItemId = decisionDraft.planItemId ?? '';
           }
           this.motivation = draft.payload.motivation ?? '';
@@ -239,7 +241,8 @@ export struct ReviewForm {
       relationId: this.decisionRelationId,
       planItemId: this.planItemId,
       outcome: this.decisionOutcome,
-      reviewAt: this.decisionReviewAt
+      reviewAt: this.decisionReviewAt,
+      participationMode: this.decisionParticipation
     };
   }
 
@@ -265,6 +268,7 @@ export struct ReviewForm {
     if (type !== 'joint') {
       this.decisionRelationId = '';
       this.decisionOutcome = '';
+      this.decisionParticipation = '';
     }
     if (type !== 'joint' && type !== 'switch') {
       this.decisionReviewAt = '';
@@ -1321,6 +1325,21 @@ export struct ReviewForm {
             .border({ width: 0.5, color: AppTheme.color.border })
             .onChange((value: string) => {
               this.updateDecisionOutcome(value);
+            })
+          Text('对方可接受参与方式')
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textSecondary)
+            .width('100%')
+          TextInput({ text: this.decisionParticipation, placeholder: '对方愿意以什么方式参与（可空）' })
+            .id('review_decision_participation')
+            .fontSize(AppTheme.font.bodyStrong)
+            .padding(AppTheme.spacing.s10)
+            .backgroundColor(AppTheme.color.surface)
+            .borderRadius(AppTheme.radius.sm)
+            .border({ width: 0.5, color: AppTheme.color.border })
+            .onChange((value: string) => {
+              this.decisionParticipation = value;
+              this.persistDraft();
             })
         }
 

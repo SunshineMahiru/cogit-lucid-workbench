@@ -195,6 +195,7 @@ export class QuickNoteService {
         source: item.source ?? 'direct',
         sourceStance: item.stance ?? '',
         interactionSource: item.interactionSource ?? '',
+        claimEvidence: item.claimEvidence ?? '',
         level: clampMaterialLevel(item.level, level),
         revisionOf: '',
         deleted: false,

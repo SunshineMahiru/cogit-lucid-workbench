@@ -72,6 +72,7 @@ export struct NoteEditPage {
   @Local quickSource: MaterialSource = 'direct';
   @Local quickForm: MaterialForm = 'first_person';
   @Local quickMetaOpen: boolean = false;
+  @Local quickClaimEvidence: string = '';
   /** True once a reopened note filled the quick source and form from its material */
   private quickMetaRestored: boolean = false;
   /** Interpersonal source chosen for this draft; empty means unmarked */
@@ -384,7 +385,8 @@ export struct NoteEditPage {
       kind: this.quickKind,
       text: text,
       source: this.quickSource,
-      form: this.quickForm
+      form: this.quickForm,
+      claimEvidence: this.quickForm === 'public_claim' ? this.quickClaimEvidence : ''
     };
     items.push(item);
   }
@@ -858,6 +860,7 @@ export struct NoteEditPage {
     this.quickSource = 'direct';
     this.quickForm = 'first_person';
     this.quickMetaOpen = false;
+    this.quickClaimEvidence = '';
     this.quickMetaRestored = false;
     this.materialScene = '';
     this.materialFeeling = '';
@@ -897,6 +900,7 @@ export struct NoteEditPage {
     if (!this.quickMetaRestored && this.isQuickKind(material.kind)) {
       this.quickSource = material.source;
       this.quickForm = material.form;
+      this.quickClaimEvidence = material.claimEvidence ?? '';
       this.quickMetaRestored = true;
     }
     // Stored rows may predate the record being narrowed, so apply the same rule as clampMetas:
@@ -1292,6 +1296,22 @@ if (this.isQuick()) {
                     }, (option: MetaOption) => formKey(option.value))
                   }
                   .width('100%')
+                  if (this.quickForm === 'public_claim') {
+                    Text('公共主张需要超出私人经验的资料；可留空，不阻塞保存')
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.warning)
+                      .width('100%')
+                    TextInput({ text: this.quickClaimEvidence, placeholder: '支撑这条主张的资料或证据（可空）' })
+                      .id('note_claim_evidence')
+                      .fontSize(AppTheme.font.bodyStrong)
+                      .padding(AppTheme.spacing.s10)
+                      .backgroundColor(AppTheme.color.surface)
+                      .borderRadius(AppTheme.radius.sm)
+                      .border({ width: 0.5, color: AppTheme.color.border })
+                      .onChange((value: string) => {
+                        this.quickClaimEvidence = value;
+                      })
+                  }
                 }
               }
               .width('100%')

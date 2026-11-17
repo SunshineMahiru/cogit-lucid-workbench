@@ -33,6 +33,8 @@ export interface NoteMaterialDraft {
   stance?: MaterialStance;
   /** How an interpersonal material reached the author; empty reads as unmarked */
   interactionSource?: InteractionSource;
+  /** Evidence beyond private experience backing a public claim; may stay empty */
+  claimEvidence?: string;
 }
 
 /** Editable state of one quick note before it is persisted. */
