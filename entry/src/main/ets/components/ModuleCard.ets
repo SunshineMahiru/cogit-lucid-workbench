@@ -1,53 +1,55 @@
 import { AppTheme } from '../theme/AppTheme';
+import { SectionCard } from './SectionCard';
 
-/** A dashboard tile summarising one module with a live count. */
+/** A compact status card in the home module rail. */
 @ComponentV2
 export struct ModuleCard {
-  @Param icon: string = '';
+  @Param icon: Resource = $r('sys.symbol.house');
   @Param title: string = '';
-  @Param summary: string = '';
-  @Event onTap: () => void = () => {};
+  /** Headline count, already formatted */
+  @Param value: string = '';
+  @Param caption: string = '';
+  @Param tone: string = AppTheme.color.primary;
+  @Event onTap: () => void = () => {
+  };
 
   build() {
-    Column({ space: 6 }) {
-      Row({ space: 8 }) {
-        Text(this.icon)
-          .fontSize(AppTheme.font.bodyStrong)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(AppTheme.color.primaryDeep)
-          .width(24)
-          .height(24)
-          .textAlign(TextAlign.Center)
-          .backgroundColor(AppTheme.color.tint)
-          .borderRadius(AppTheme.radius.sm)
-        Text(this.title)
-          .fontSize(AppTheme.font.subtitle)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(AppTheme.color.text)
-        Blank()
-        SymbolGlyph($r('sys.symbol.chevron_forward'))
-          .fontSize(14)
-          .fontColor([AppTheme.color.textMuted])
-      }
-      .width('100%')
+    Column() {
+      SectionCard({ contentPadding: AppTheme.spacing.s12 }) {
+        Column({ space: AppTheme.spacing.s4 }) {
+          Row({ space: AppTheme.spacing.s6 }) {
+            SymbolGlyph(this.icon)
+              .fontSize(16)
+              .fontColor([this.tone])
+            Text(this.title)
+              .fontSize(AppTheme.font.body)
+              .fontColor(AppTheme.color.textSecondary)
+          }
+          .width('100%')
 
-      Text(this.summary)
-        .fontSize(AppTheme.font.body)
-        .fontColor(AppTheme.color.textSecondary)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(this.value)
+            .fontSize(AppTheme.font.title)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.tone)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .width('100%')
+
+          Text(this.caption)
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textMuted)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .width('100%')
+        }
         .width('100%')
-        .textAlign(TextAlign.Start)
+        .alignItems(HorizontalAlign.Start)
+        .constraintSize({ minHeight: 76 })
+      }
     }
     .width('100%')
-    .constraintSize({ minHeight: 82 })
-    .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
-    .alignItems(HorizontalAlign.Start)
-    .justifyContent(FlexAlign.Center)
-    .backgroundColor(AppTheme.color.surfaceTint)
-    .borderRadius(16)
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
-    .accessibilityText(`${this.title}，${this.summary}`)
+    .accessibilityText(`${this.title}，${this.value}，${this.caption}`)
     .onClick(() => {
       this.onTap();
     })

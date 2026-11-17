@@ -36,14 +36,6 @@ export interface HomeSummary {
   pendingDecisions?: number;
 }
 
-/** A dashboard tile: the route it opens plus its live summary line. */
-export interface HomeModule {
-  route: string;
-  icon: string;
-  title: string;
-  summary: string;
-}
-
 /** Placeholder shown when a rate has no settled records behind it. */
 export const NO_RATE_TEXT = '—';
 
@@ -66,5 +58,5 @@ const WEEK_LABELS: string[] = ['日', '一', '二', '三', '四', '五', '六'];
 
 export function todayLabel(): string {
   const now = new Date();
-  return `${now.getMonth() + 1} 月 ${now.getDate()} 日 · 周${WEEK_LABELS[now.getDay()]}`;
+  return `今天 · ${now.getMonth() + 1}月${now.getDate()}日 周${WEEK_LABELS[now.getDay()]}`;
 }

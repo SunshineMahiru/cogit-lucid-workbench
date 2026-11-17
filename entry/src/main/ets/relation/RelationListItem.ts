@@ -17,6 +17,12 @@ export interface RelationListItem {
   forbidAnalysis: boolean;
   level: SecurityLevel;
   notes: string;
+  /** Latest correction from the other person */
+  correction?: string;
+  /** Epoch milliseconds of the latest correction; zero when never corrected */
+  correctionAt?: number;
+  /** 1 when a correction still has no own-response entry after it */
+  pendingCorrections?: number;
 }
 
 /** Detail model with the full interaction log. */

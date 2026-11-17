@@ -27,7 +27,10 @@ export function toRelationListItem(relation: Relation): RelationListItem {
     rawMaterialTest: relation.rawMaterialTest,
     forbidAnalysis: relation.forbidAnalysis,
     level: relation.level,
-    notes: relation.notes
+    notes: relation.notes,
+    correction: relation.correction ?? '',
+    correctionAt: relation.correctionAt ?? 0,
+    pendingCorrections: pendingCorrectionsOf(relation)
   };
 }
 
@@ -82,9 +85,25 @@ export function toRelationDetail(relation: Relation): RelationDetail {
     interactionLog: logs,
     correction: relation.correction ?? '',
     correctionAt: relation.correctionAt ?? 0,
+    pendingCorrections: pendingCorrectionsOf(relation),
     linkedEvents: [],
     linkedDecisions: []
   };
+}
+
+/** A correction stays pending until the author logs an own observation after it. */
+function pendingCorrectionsOf(relation: Relation): number {
+  const correction = (relation.correction ?? '').trim();
+  if (correction.length === 0) {
+    return 0;
+  }
+  const correctionAt = relation.correctionAt ?? 0;
+  for (const log of relation.interactionLog) {
+    if (log.timestamp > correctionAt && (log.source ?? 'observation') === 'observation') {
+      return 0;
+    }
+  }
+  return 1;
 }
 
 /** Formats a log timestamp as YYYY-MM-DD HH:mm. */

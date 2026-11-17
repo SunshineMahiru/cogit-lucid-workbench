@@ -1,5 +1,6 @@
 import { PredictionStatus } from '../model/PredictionStatus';
 import { PredictionOutcome } from '../model/PredictionOutcome';
+import { SecurityLevel } from '../model/SecurityLevel';
 
 /** Row model rendered by the prediction list. */
 export interface PredictionListItem {
@@ -16,6 +17,12 @@ export interface PredictionListItem {
   outcome?: PredictionOutcome;
   actualResult: string;
   createdAt: number;
+  /** Revision number, 1 for the first version */
+  version: number;
+  /** A revision that adds terms without extra explanatory power */
+  termOnly: boolean;
+  /** Security level controlling aggregation and export */
+  level: SecurityLevel;
 }
 
 /** Counts shown above the prediction list. */

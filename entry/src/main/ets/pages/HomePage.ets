@@ -1,4 +1,4 @@
-import { AppTheme } from '../theme/AppTheme';
+import { AppTheme, LINE_HEIGHT } from '../theme/AppTheme';
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { AppDestination } from '../components/AppDestination';
@@ -6,6 +6,8 @@ import { DashboardView } from '../views/DashboardView';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { HomeDataService } from '../data/HomeDataService';
 import { HomeSummary } from '../model/HomeModel';
+import { ROUTES } from '../navigation/Routes';
+import { PredictionListParams } from '../navigation/RouteParams';
 import { subscribeHomeRefresh, unsubscribeHomeRefresh } from '../app/HomeRefreshBus';
 import { appHealth, isDatabaseUnsupported } from '../app/AppHealth';
 import { consumeJsonIssues } from '../db/SafeJson';
@@ -32,6 +34,7 @@ export struct HomePage {
   private service: HomeDataService | null = null;
   private loadToken: number = 0;
   private listener: (() => void) | null = null;
+  private lastNavAt: number = 0;
 
   aboutToAppear(): void {
     if (this.listener === null) {
@@ -115,6 +118,65 @@ export struct HomePage {
     }
   }
 
+  private navTo(name: string, param: Object | null): void {
+    const now = Date.now();
+    if (now - this.lastNavAt < 600) {
+      return;
+    }
+    this.lastNavAt = now;
+    this.pathStack.pushPathByName(name, param);
+  }
+
+  private openPredictionList(): void {
+    const params: PredictionListParams = { status: null };
+    this.navTo(ROUTES.PREDICTION_LIST, params);
+  }
+
+  @Builder
+  navItem(label: string, icon: Resource, selected: boolean, onTap: () => void) {
+    Column({ space: AppTheme.spacing.s2 }) {
+      SymbolGlyph(icon)
+        .fontSize(22)
+        .fontColor([selected ? AppTheme.color.primary : AppTheme.color.textMuted])
+      Text(label)
+        .fontSize(AppTheme.font.caption)
+        .fontColor(selected ? AppTheme.color.primary : AppTheme.color.textMuted)
+    }
+    .layoutWeight(1)
+    .height(56)
+    .justifyContent(FlexAlign.Center)
+    .accessibilityText(label)
+    .onClick(() => {
+      onTap();
+    })
+  }
+
+  @Builder
+  bottomNav() {
+    Row() {
+      this.navItem('工作台', $r('sys.symbol.house'), true, () => {
+        this.scroller.scrollEdge(Edge.Top);
+      })
+      this.navItem('计划', $r('sys.symbol.calendar'), false, () => {
+        this.navTo(ROUTES.PLAN, null);
+      })
+      this.navItem('预测', $r('sys.symbol.scope'), false, () => {
+        this.openPredictionList();
+      })
+      this.navItem('关系', $r('sys.symbol.person_2'), false, () => {
+        this.navTo(ROUTES.RELATION, null);
+      })
+      this.navItem('看板', $r('sys.symbol.diagnostic_analytics'), false, () => {
+        this.navTo(ROUTES.ANALYTICS, null);
+      })
+    }
+    .width('100%')
+    .height(60)
+    .backgroundColor(AppTheme.color.surface)
+    .border({ width: { top: 0.5 }, color: AppTheme.color.border })
+    .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8 })
+  }
+
   build() {
     AppDestination({
       route: 'home',
@@ -176,12 +238,13 @@ export struct HomePage {
         Column() {
           DashboardView({
             pathStack: this.pathStack,
-            showTitleBar: false,
             scroller: this.scroller
           })
         }
         .width('100%')
         .layoutWeight(1)
+
+        this.bottomNav()
       }
       .width('100%')
       .height('100%')
@@ -190,14 +253,14 @@ export struct HomePage {
 
   @Builder
   blockedBody() {
-    Column({ space: 14 }) {
+    Column({ space: AppTheme.spacing.s12 }) {
       Text('数据库打不开')
         .fontSize(AppTheme.font.headline)
         .fontWeight(FontWeight.Bold)
         .fontColor(AppTheme.color.text)
       Text('记录仍保存在本机。可以先重试；一直失败时请重启应用。备份与导出需要数据库打开后才能使用。')
         .fontSize(AppTheme.font.bodyStrong)
-        .lineHeight(24)
+        .lineHeight(LINE_HEIGHT.bodyStrong)
         .fontColor(AppTheme.color.textSecondary)
         .textAlign(TextAlign.Center)
       if (this.dbMessage.length > 0) {
@@ -215,7 +278,7 @@ export struct HomePage {
         .textAlign(TextAlign.Center)
         .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
         .backgroundColor(AppTheme.color.primary)
-        .borderRadius(20)
+        .borderRadius(AppTheme.radius.lg)
         .onClick(() => {
           this.retryDatabase();
         })

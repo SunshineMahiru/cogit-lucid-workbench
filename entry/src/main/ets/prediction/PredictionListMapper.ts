@@ -18,7 +18,10 @@ export function toPredictionListItem(prediction: Prediction): PredictionListItem
     hit: prediction.hit,
     outcome: prediction.outcome ?? '',
     actualResult: prediction.actualResult,
-    createdAt: prediction.createdAt
+    createdAt: prediction.createdAt,
+    version: prediction.version,
+    termOnly: prediction.version > 1 && (prediction.explanatoryGain ?? '').trim().length === 0,
+    level: prediction.level ?? SecurityLevel.LOCAL_ONLY
   };
 }
 

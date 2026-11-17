@@ -1350,12 +1350,21 @@ test('建表语句包含迁移新增的列', () => {
   }
 });
 
-test('首页待校正保留四行与待回看', () => {
+test('首页以今日议程聚合五类对象', () => {
   const source = fs.readFileSync('entry/src/main/ets/views/DashboardView.ets', 'utf8');
-  const rows = source.split('this.todoLine(').length - 1;
-  assert.strictEqual(rows, 4, `待校正行数为 ${rows}，应为 4`);
-  assert.ok(source.includes('home_todo_quiet'));
-  assert.ok(source.includes('待回看决定'));
+  const mapper = fs.readFileSync('entry/src/main/ets/home/AgendaMapper.ts', 'utf8');
+  const agenda = fs.readFileSync('entry/src/main/ets/views/dashboard/AgendaCard.ets', 'utf8');
+  const home = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
+  assert.ok(source.includes('AgendaCard'));
+  assert.ok(source.includes('buildAgenda'));
+  assert.strictEqual(source.includes('home_todo_quiet'), false);
+  assert.strictEqual(source.includes('ModuleGridCard'), false);
+  assert.ok(agenda.includes('今日实践台'));
+  for (const kind of ['PLAN_NODE', 'PREDICTION_SETTLE', 'RELATION_REPLY', 'PREDICTION_OPEN', 'NOTE_TODAY']) {
+    assert.ok(mapper.includes(kind), `议程缺少来源 ${kind}`);
+  }
+  assert.ok(home.includes('bottomNav'));
+  assert.ok(home.includes('ROUTES.PLAN'));
 });
 
 test('首页读数可关闭且复盘提示可忽略', () => {

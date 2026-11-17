@@ -1,5 +1,6 @@
 import { PredictionListItem, predictionStatusLabel } from '../prediction';
 import { PredictionStatus } from '../model/PredictionStatus';
+import { SecurityLevel } from '../model/SecurityLevel';
 import { AppTheme } from '../theme/AppTheme';
 
 /** Prediction row for the log list, covering both pending and settled states. */
@@ -15,7 +16,10 @@ export struct PredictionListCard {
     hit: null,
     outcome: '',
     actualResult: '',
-    createdAt: 0
+    createdAt: 0,
+    version: 1,
+    termOnly: false,
+    level: SecurityLevel.LOCAL_ONLY
   };
   @Event onTap: () => void = () => {};
 
