@@ -47,6 +47,8 @@ export struct PredictionCreatePage {
   @Local repositioned: string = '';
   @Local revisionError: string = '';
   @Local falsificationError: string = '';
+  @Local modelCardOpen: boolean = false;
+  @Local moreOpen: boolean = false;
   private navStack: NavPathStack | null = null;
 
   aboutToAppear(): void {
@@ -86,6 +88,8 @@ export struct PredictionCreatePage {
     this.unknowns = detail.unknowns ?? '';
     this.evidenceLevel = detail.evidenceLevel ?? '';
     this.reason = detail.reason;
+    this.modelCardOpen = (this.scope.length + this.unknowns.length + this.evidenceLevel.length) > 0;
+    this.moreOpen = detail.confidence !== null || this.reason.trim().length > 0;
     this.sourceVersion = detail.version;
   }
 
@@ -316,7 +320,7 @@ export struct PredictionCreatePage {
                     this.judgment = value;
                     this.isDirty = true;
                   })
-                Text('需要同时包含数量与期限，结算时才有依据')
+                Text('数量与期限可选；写清到期时点，结算时更容易核对')
                   .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
                   .width('100%')
@@ -328,23 +332,6 @@ export struct PredictionCreatePage {
 
             SectionCard() {
               Column({ space: 6 }) {
-                Text('模型卡（可选）')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textSecondary)
-                  .width('100%')
-                Text('适用范围')
-                  .fontSize(AppTheme.font.caption)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-                TextArea({ placeholder: '这条预测在什么时间、场景或人群内成立', text: this.scope })
-                  .id('prediction_scope')
-                  .height(56)
-                  .maxLength(MAX_REASON_LENGTH)
-                  .backgroundColor(AppTheme.color.surfaceAlt)
-                  .onChange((value: string) => {
-                    this.scope = value;
-                    this.isDirty = true;
-                  })
                 Text('失效条件（必填）')
                   .fontSize(AppTheme.font.caption)
                   .fontColor(AppTheme.color.textMuted)
@@ -360,37 +347,86 @@ export struct PredictionCreatePage {
                     this.isDirty = true;
                   })
                 this.fieldError(this.falsificationError)
-                Text('未知项')
-                  .fontSize(AppTheme.font.caption)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-                TextArea({ placeholder: '现在还拿不准、可能影响判断的因素', text: this.unknowns })
-                  .id('prediction_unknowns')
-                  .height(56)
-                  .maxLength(MAX_REASON_LENGTH)
-                  .backgroundColor(AppTheme.color.surfaceAlt)
-                  .onChange((value: string) => {
-                    this.unknowns = value;
-                    this.isDirty = true;
-                  })
-                Text('证据来源')
-                  .fontSize(AppTheme.font.caption)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-                TextArea({ placeholder: '这条判断依据什么材料或经验', text: this.evidenceLevel })
-                  .id('prediction_evidence_level')
-                  .height(56)
-                  .maxLength(MAX_REASON_LENGTH)
-                  .backgroundColor(AppTheme.color.surfaceAlt)
-                  .onChange((value: string) => {
-                    this.evidenceLevel = value;
-                    this.isDirty = true;
-                  })
+                Row() {
+                  Text(this.modelCardOpen ? '收起范围、未知项与证据来源' : '展开模型卡：范围、未知项、证据来源')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.primary)
+                    .layoutWeight(1)
+                  SymbolGlyph($r('sys.symbol.chevron_down'))
+                    .fontSize(14)
+                    .fontColor([AppTheme.color.primary])
+                    .rotate({ angle: this.modelCardOpen ? 180 : 0 })
+                }
+                .id('prediction_modelcard_toggle')
+                .width('100%')
+                .height(40)
+                .onClick(() => {
+                  this.modelCardOpen = !this.modelCardOpen;
+                })
+                if (this.modelCardOpen) {
+                  Text('适用范围')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  TextArea({ placeholder: '这条预测在什么时间、场景或人群内成立', text: this.scope })
+                    .id('prediction_scope')
+                    .height(56)
+                    .maxLength(MAX_REASON_LENGTH)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.scope = value;
+                      this.isDirty = true;
+                    })
+                  Text('未知项')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  TextArea({ placeholder: '现在还拿不准、可能影响判断的因素', text: this.unknowns })
+                    .id('prediction_unknowns')
+                    .height(56)
+                    .maxLength(MAX_REASON_LENGTH)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.unknowns = value;
+                      this.isDirty = true;
+                    })
+                  Text('证据来源')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.textMuted)
+                    .width('100%')
+                  TextArea({ placeholder: '这条判断依据什么材料或经验', text: this.evidenceLevel })
+                    .id('prediction_evidence_level')
+                    .height(56)
+                    .maxLength(MAX_REASON_LENGTH)
+                    .backgroundColor(AppTheme.color.surfaceAlt)
+                    .onChange((value: string) => {
+                      this.evidenceLevel = value;
+                      this.isDirty = true;
+                    })
+                }
               }
               .width('100%')
               .alignItems(HorizontalAlign.Start)
             }
 
+            Row() {
+              Text(this.moreOpen ? '收起置信度、期限与理由' : '更多条件：置信度、期限、理由（可选）')
+                .fontSize(AppTheme.font.body)
+                .fontColor(AppTheme.color.primary)
+                .layoutWeight(1)
+              SymbolGlyph($r('sys.symbol.chevron_down'))
+                .fontSize(14)
+                .fontColor([AppTheme.color.primary])
+                .rotate({ angle: this.moreOpen ? 180 : 0 })
+            }
+            .id('prediction_more_toggle')
+            .width('100%')
+            .height(40)
+            .onClick(() => {
+              this.moreOpen = !this.moreOpen;
+            })
+
+            if (this.moreOpen) {
             SectionCard() {
               Column({ space: 8 }) {
                 Row() {
@@ -469,6 +505,7 @@ export struct PredictionCreatePage {
               }
               .width('100%')
               .alignItems(HorizontalAlign.Start)
+            }
             }
 
             if (this.sourceId !== null) {
