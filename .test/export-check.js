@@ -426,6 +426,17 @@ function emptyBundle() {
   };
 }
 
+test('仅术语增加的修订在导出中标记且不计入重建', () => {
+  const termOnly = renderExportDocument(bundle({
+    predictions: [prediction({ version: 2, explanatoryGain: '', preserved: '' })]
+  }));
+  assert.ok(termOnly.includes('- 修订评估：仅术语增加，不计入重建'));
+  const rebuilt = renderExportDocument(bundle({
+    predictions: [prediction({ version: 2, explanatoryGain: '新框架同时解释旧框架何时有效与为何失效', preserved: '旧框架在睡眠充足时仍成立' })]
+  }));
+  assert.ok(!rebuilt.includes('仅术语增加'));
+});
+
 async function main() {
   await test('时间与文件名格式化', () => {
     assert.strictEqual(formatExportTime(NOW), '2026-10-27 08:05');

@@ -176,7 +176,8 @@ export struct PredictionDetailPage {
   /** True when at least one model-card field carries text. */
   private hasModelCard(): boolean {
     return this.isFilled(this.detail.scope) || this.isFilled(this.detail.falsification) ||
-      this.isFilled(this.detail.unknowns) || this.isFilled(this.detail.evidenceLevel);
+      this.isFilled(this.detail.unknowns) || this.isFilled(this.detail.evidenceLevel) ||
+      this.detail.version > 1 || this.detail.termOnly === true;
   }
 
   private isFilled(value: string | undefined): boolean {
@@ -303,19 +304,40 @@ export struct PredictionDetailPage {
 
             if (this.hasModelCard()) {
               Column({ space: 8 }) {
-                Text('模型卡')
+                Text('假设卡')
                   .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
+                if (this.detail.termOnly === true) {
+                  Text('仅术语增加，不计入重建：未说明新框架的额外解释力')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.warning)
+                    .width('100%')
+                }
+                if (this.detail.version > 1 && (this.detail.preserved ?? '').trim().length === 0) {
+                  Text('未填「旧框架在什么条件下仍然成立」')
+                    .fontSize(AppTheme.font.caption)
+                    .fontColor(AppTheme.color.warning)
+                    .width('100%')
+                }
                 this.modelCardRow('适用范围', this.detail.scope)
                 this.modelCardRow('失效条件', this.detail.falsification)
                 this.modelCardRow('未知项', this.detail.unknowns)
                 this.modelCardRow('证据来源', this.detail.evidenceLevel)
+                if (this.detail.version > 1) {
+                  this.modelCardRow('修订原因', this.detail.revisionReason)
+                  this.modelCardRow('取消', this.detail.invalidated)
+                  this.modelCardRow('保存', this.detail.preserved)
+                  this.modelCardRow('重新定位', this.detail.repositioned)
+                  this.modelCardRow('失效来源', this.detail.missing)
+                  this.modelCardRow('新增解释力', this.detail.explanatoryGain)
+                }
               }
               .width('100%')
               .padding(AppTheme.spacing.s16)
               .backgroundColor(AppTheme.color.surface)
-              .borderRadius(AppTheme.radius.md)
+              .borderRadius(16)
+              .border({ width: 0.5, color: AppTheme.color.border })
               .alignItems(HorizontalAlign.Start)
             }
 

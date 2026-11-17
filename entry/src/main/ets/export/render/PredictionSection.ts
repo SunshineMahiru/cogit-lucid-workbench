@@ -59,6 +59,10 @@ export function renderPredictionSection(predictions: Prediction[]): string {
     if ((prediction.explanatoryGain ?? '').length > 0) {
       lines.push(`- 新增解释力：${inlineText(prediction.explanatoryGain ?? '')}`);
     }
+    if (prediction.version > 1 &&
+      ((prediction.preserved ?? '').trim().length === 0 || (prediction.explanatoryGain ?? '').trim().length === 0)) {
+      lines.push('- 修订评估：仅术语增加，不计入重建');
+    }
     lines.push('');
   }
   return lines.join('\n').trim();

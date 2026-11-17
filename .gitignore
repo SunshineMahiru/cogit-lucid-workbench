@@ -13,6 +13,7 @@ node_modules/
 !.test/export-check.js
 !.test/agent-check.js
 !.test/plan-check.js
+!.test/privacy-check.js
 entry/.test/
 *.log
 *-log.txt

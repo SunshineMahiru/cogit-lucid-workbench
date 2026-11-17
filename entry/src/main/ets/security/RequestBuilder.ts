@@ -35,9 +35,8 @@ export function filterConfirmedInput(raw: ContradictionInput, keepIds: string[])
 /** The single outbound model request path: decides which material may leave this device. */
 export function buildAnalysisInput(raw: ContradictionInput, provider: LlmProvider): BuildResult {
   const dropped: DroppedItem[] = [];
-  if (provider === 'template') {
-    return { input: raw, dropped };
-  }
+  const allowed = (level: SecurityLevel): boolean =>
+    provider === 'template' ? level !== SecurityLevel.SEALED : level === SecurityLevel.ANALYZABLE;
   if (raw.relationForbidsAnalysis === true) {
     dropped.push({ kind: 'relation', reason: '关系已禁止分析' });
     return {
@@ -63,16 +62,33 @@ export function buildAnalysisInput(raw: ContradictionInput, provider: LlmProvide
         kind: 'relation',
         reason: relationId.length === 0 ? '关系材料未绑定关系' : '关系材料未填写分析边界'
       });
+      if (provider !== 'template') {
+        return {
+          input: {
+            facts: '',
+            interpretation: '',
+            anchors: [],
+            factsLevel: SecurityLevel.LOCAL_ONLY,
+            interpretationLevel: SecurityLevel.LOCAL_ONLY,
+            relationForbidsAnalysis: false,
+            relationInvolved: true,
+            relationId: relationId,
+            relationBoundary: ''
+          },
+          dropped
+        };
+      }
+      // Offline template keeps facts for local organizing but drops the unconfirmed relation context.
       return {
         input: {
-          facts: '',
-          interpretation: '',
-          anchors: [],
-          factsLevel: SecurityLevel.LOCAL_ONLY,
-          interpretationLevel: SecurityLevel.LOCAL_ONLY,
+          facts: allowed(raw.factsLevel) ? raw.facts : '',
+          interpretation: allowed(raw.interpretationLevel) ? raw.interpretation : '',
+          anchors: raw.anchors.filter((anchor) => allowed(anchor.level ?? SecurityLevel.LOCAL_ONLY)),
+          factsLevel: raw.factsLevel,
+          interpretationLevel: raw.interpretationLevel,
           relationForbidsAnalysis: false,
-          relationInvolved: true,
-          relationId: relationId,
+          relationInvolved: false,
+          relationId: '',
           relationBoundary: ''
         },
         dropped
@@ -81,23 +97,23 @@ export function buildAnalysisInput(raw: ContradictionInput, provider: LlmProvide
   }
   let facts = raw.facts;
   let interpretation = raw.interpretation;
-  if (raw.factsLevel !== SecurityLevel.ANALYZABLE) {
+  if (!allowed(raw.factsLevel)) {
     facts = '';
     if (raw.facts.length > 0) {
-      dropped.push({ kind: 'facts', reason: '现场内容不是可分析级' });
+      dropped.push({ kind: 'facts', reason: provider === 'template' ? '封存内容不进入分析' : '现场内容不是可分析级' });
     }
   }
-  if (raw.interpretationLevel !== SecurityLevel.ANALYZABLE) {
+  if (!allowed(raw.interpretationLevel)) {
     interpretation = '';
     if (raw.interpretation.length > 0) {
-      dropped.push({ kind: 'interpretation', reason: '解释内容不是可分析级' });
+      dropped.push({ kind: 'interpretation', reason: provider === 'template' ? '封存内容不进入分析' : '解释内容不是可分析级' });
     }
   }
   const anchors = raw.anchors.filter((anchor) => {
-    if (anchor.level === SecurityLevel.ANALYZABLE) {
+    if (allowed(anchor.level ?? SecurityLevel.LOCAL_ONLY)) {
       return true;
     }
-    dropped.push({ kind: 'anchor', id: anchor.id, reason: '锚点不是可分析级' });
+    dropped.push({ kind: 'anchor', id: anchor.id, reason: provider === 'template' ? '封存锚点不进入分析' : '锚点不是可分析级' });
     return false;
   });
   return {

@@ -59,4 +59,6 @@ export interface PredictionDetail {
   repositioned?: string;
   missing?: string;
   explanatoryGain?: string;
+  /** A revision that adds terms without extra explanatory power; not counted as rebuild */
+  termOnly?: boolean;
 }

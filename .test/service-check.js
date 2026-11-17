@@ -1888,6 +1888,9 @@ async function main() {
       revisionReason: '置信度再抬高'
     }, now + 2000);
     assert.strictEqual(again.version, 3);
+    assert.strictEqual(again.termOnly, true);
+    assert.strictEqual(again.status, 'pending');
+    assert.strictEqual(again.actualResult, '');
     assert.strictEqual(lastRow('prediction').root_id, created.id);
 
     const versions = await predictionService.versions(created.id);
@@ -1904,6 +1907,105 @@ async function main() {
         settlementDate: '2026-11-03'
       }, now + 3000);
     });
+  });
+
+  await test('填齐保留项与新增解释力的修订不计为仅术语增加', async () => {
+    reset();
+    const predictionService = await PredictionService.open({});
+    const now = new Date(2026, 9, 27, 12, 0).getTime();
+    const created = await predictionService.create({
+      target: '本周作息',
+      judgment: '本周日均睡眠达到 7 小时',
+      confidence: 70,
+      reason: '初版',
+      falsification: '若日均睡眠低于 6 小时',
+      settlementDate: '2026-11-03'
+    }, now);
+
+    const revised = await predictionService.revise(created.id, {
+      target: '本周作息',
+      judgment: '本周日均睡眠达到 7 小时，且起床时间稳定',
+      confidence: 75,
+      reason: '补充理由',
+      falsification: '若日均睡眠低于 6 小时，或起床时间波动超过一小时',
+      settlementDate: '2026-11-03',
+      revisionReason: '初版漏掉起床时间这个变量',
+      invalidated: '只看睡眠时长就够',
+      preserved: '睡眠时长仍然影响状态',
+      repositioned: '把起床时间放进同一判断',
+      missing: '起床时间的稳定性',
+      explanatoryGain: '能解释睡眠够但状态仍差的日子'
+    }, now + 1000);
+    assert.strictEqual(revised.termOnly, false);
+    assert.strictEqual(revised.preserved, '睡眠时长仍然影响状态');
+    assert.strictEqual(revised.explanatoryGain, '能解释睡眠够但状态仍差的日子');
+  });
+
+  await test('无失效条件的命题不能存为假设', async () => {
+    reset();
+    const predictionService = await PredictionService.open({});
+    const now = new Date(2026, 9, 27, 12, 0).getTime();
+    await assert.rejects(async () => {
+      await predictionService.create({
+        target: '下周例会',
+        judgment: '会推迟到周四',
+        confidence: 60,
+        reason: '',
+        falsification: '',
+        settlementDate: '2026-11-03'
+      }, now);
+    });
+
+    const created = await predictionService.create({
+      target: '下周例会',
+      judgment: '会推迟到周四',
+      confidence: 60,
+      reason: '',
+      falsification: '若按时在周二召开',
+      settlementDate: '2026-11-03'
+    }, now);
+    assert.strictEqual(created.version, 1);
+    assert.strictEqual(created.falsification, '若按时在周二召开');
+  });
+
+  await test('旧版本结果不可被新版本改写', async () => {
+    reset();
+    const predictionService = await PredictionService.open({});
+    const now = new Date(2026, 9, 27, 12, 0).getTime();
+    const created = await predictionService.create({
+      target: '本周作息',
+      judgment: '本周日均睡眠达到 7 小时',
+      confidence: 65,
+      reason: '初版',
+      falsification: '若日均睡眠低于 6 小时',
+      settlementDate: '2026-10-27'
+    }, now);
+    const settled = await predictionService.settle(created.id, '日均 7.2 小时', 'hold', 'self', now);
+    assert.ok(settled !== null);
+    const before = (await predictionService.versions(created.id))[0];
+
+    await predictionService.revise(created.id, {
+      target: '本周作息',
+      judgment: '本周日均睡眠达到 7 小时，且起床时间稳定',
+      confidence: 80,
+      reason: '结算后重写判断',
+      falsification: '若日均睡眠低于 6 小时，或起床时间波动超过一小时',
+      settlementDate: '2026-11-03',
+      revisionReason: '结算结果推翻了原判断',
+      preserved: '睡眠时长仍然影响状态',
+      explanatoryGain: '能解释睡眠够但状态仍差的日子'
+    }, now + 1000);
+
+    const after = (await predictionService.versions(created.id))[0];
+    assert.strictEqual(after.version, 1);
+    assert.strictEqual(after.judgment, before.judgment);
+    assert.strictEqual(after.confidence, before.confidence);
+    assert.strictEqual(after.actualResult, before.actualResult);
+    assert.strictEqual(after.hit, before.hit);
+    assert.strictEqual(after.judgment, '本周日均睡眠达到 7 小时');
+    assert.strictEqual(after.confidence, 65);
+    assert.strictEqual(after.actualResult, '日均 7.2 小时');
+    assert.strictEqual(after.hit, true);
   });
 
   await test('复盘窗口统计非空样本的计数与命中率', async () => {

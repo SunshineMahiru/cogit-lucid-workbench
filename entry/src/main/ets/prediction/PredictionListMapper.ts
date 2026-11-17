@@ -111,7 +111,8 @@ export function toPredictionDetail(prediction: Prediction): PredictionDetail {
     preserved: prediction.preserved ?? '',
     repositioned: prediction.repositioned ?? '',
     missing: prediction.missing ?? '',
-    explanatoryGain: prediction.explanatoryGain ?? ''
+    explanatoryGain: prediction.explanatoryGain ?? '',
+    termOnly: prediction.version > 1 && (prediction.explanatoryGain ?? '').trim().length === 0
   };
 }
 
