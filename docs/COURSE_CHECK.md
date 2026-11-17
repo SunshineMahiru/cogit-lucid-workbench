@@ -34,13 +34,19 @@
 ## 3. 当前验证
 
 - tsc：0 错
-- check：104
-- service：92
-- export：35
+- check：115
+- service：110
+- export：40
 - agent：16
-- privacy：12
-- 合计：259
+- privacy：15
+- 合计：296
 - `assembleHap`：通过
+- `PreviewBuild`：通过
+- arkts：仅 2 个改前既有的 BuildProfile 模块解析错误，无新增错误
+
+模拟器演示截图（Previewer 走查的代理证据，存 `.workbuddy/auto/shots/`）：
+home-v4（书写主卡＋痕迹流）、note-v2（三栏并置）、review-v3（区导航轨＋常驻保存）。
+Previewer 13 场景仍需在 IDE 内逐页走查截全，文件名与场景号对应。
 
 ## 4. 人工待办
 
