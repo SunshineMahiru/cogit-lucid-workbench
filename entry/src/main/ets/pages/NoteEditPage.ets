@@ -73,6 +73,9 @@ export struct NoteEditPage {
   @Local quickForm: MaterialForm = 'first_person';
   @Local quickMetaOpen: boolean = false;
   @Local quickClaimEvidence: string = '';
+  @Local quickFeeling: string = '';
+  @Local quickInterpretation: string = '';
+  @Local quickInterpOpen: boolean = false;
   /** True once a reopened note filled the quick source and form from its material */
   private quickMetaRestored: boolean = false;
   /** Interpersonal source chosen for this draft; empty means unmarked */
@@ -375,20 +378,25 @@ export struct NoteEditPage {
     }
   }
 
-  /** Quick capture also writes the body once, under the kind picked on the single chip row. */
+  /** Quick capture writes scene always, feeling and interpretation only when filled. */
   private pushQuickMaterial(items: NoteMaterialDraft[]): void {
     const text = this.draft.content.trim();
-    if (text.length === 0 || this.quickKind.length === 0) {
+    if (text.length === 0) {
       return;
     }
-    const item: NoteMaterialDraft = {
-      kind: this.quickKind,
+    items.push({
+      kind: 'scene',
       text: text,
       source: this.quickSource,
       form: this.quickForm,
       claimEvidence: this.quickForm === 'public_claim' ? this.quickClaimEvidence : ''
-    };
-    items.push(item);
+    });
+    if (this.quickFeeling.trim().length > 0) {
+      items.push({ kind: 'feeling', text: this.quickFeeling.trim(), source: this.quickSource, form: 'first_person' });
+    }
+    if (this.quickInterpOpen && this.quickInterpretation.trim().length > 0) {
+      items.push({ kind: 'interpretation', text: this.quickInterpretation.trim(), source: this.quickSource, form: this.quickForm });
+    }
   }
 
   private pushMaterial(items: NoteMaterialDraft[], kind: string, value: string): void {
@@ -861,6 +869,9 @@ export struct NoteEditPage {
     this.quickForm = 'first_person';
     this.quickMetaOpen = false;
     this.quickClaimEvidence = '';
+    this.quickFeeling = '';
+    this.quickInterpretation = '';
+    this.quickInterpOpen = false;
     this.quickMetaRestored = false;
     this.materialScene = '';
     this.materialFeeling = '';
@@ -882,6 +893,7 @@ export struct NoteEditPage {
       this.materialScene = material.text;
     } else if (material.kind === 'feeling') {
       this.materialFeeling = material.text;
+      this.quickFeeling = material.text;
     } else if (material.kind === 'body') {
       this.materialBody = material.text;
     } else if (material.kind === 'existing_action') {
@@ -889,6 +901,8 @@ export struct NoteEditPage {
     } else if (material.kind === 'interpretation') {
       this.materialInterpretation = material.text;
       this.showInterpretation = true;
+      this.quickInterpretation = material.text;
+      this.quickInterpOpen = true;
     } else {
       return;
     }
@@ -1218,13 +1232,13 @@ export struct NoteEditPage {
 
             Column({ space: 6 }) {
               Row({ space: 4 }) {
-                Text(!this.isQuick() && this.draft.templateId !== null ? '正文（可选）' : '正文 *')
+                Text(this.isQuick() ? '现场 *' : (!this.isQuick() && this.draft.templateId !== null ? '正文（可选）' : '正文 *'))
                   .fontSize(AppTheme.font.bodyStrong)
                   .fontColor(AppTheme.color.textSecondaryStrong)
               }
               .width('100%')
 
-              TextArea({ text: this.draft.content, placeholder: '先记一句…' })
+              TextArea({ text: this.draft.content, placeholder: this.isQuick() ? '此刻发生了什么' : '先记一句…' })
                 .fontSize(AppTheme.font.bodyStrong)
                 .height(88)
                 .padding(AppTheme.spacing.s10)
@@ -1247,19 +1261,55 @@ export struct NoteEditPage {
 
 if (this.isQuick()) {
               Column({ space: 6 }) {
-                Text('这条主要是什么')
-                  .fontSize(AppTheme.font.bodyStrong)
-                  .fontColor(AppTheme.color.textSecondaryStrong)
+                Text('感受（可选）')
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.textSecondary)
                   .width('100%')
-                Flex({ wrap: FlexWrap.Wrap }) {
-                  this.quickKindChip('scene', '现场', 'quick_kind_scene')
-                  this.quickKindChip('feeling', '感受', 'quick_kind_feeling')
-                  this.quickKindChip('body', '身体', 'quick_kind_body')
-                  this.quickKindChip('existing_action', '已做', 'quick_kind_existing_action')
-                  this.quickKindChip('interpretation', '解释', 'quick_kind_interpretation')
-                  this.quickKindChip('', '暂不分类', 'quick_kind_none')
+                TextArea({ text: this.quickFeeling, placeholder: '当时的情绪与体验（可空）' })
+                  .id('note_quick_feeling')
+                  .fontSize(AppTheme.font.bodyStrong)
+                  .height(56)
+                  .padding(AppTheme.spacing.s10)
+                  .backgroundColor(AppTheme.color.surfaceTint)
+                  .borderRadius(AppTheme.radius.md)
+                  .border({ width: 0.5, color: AppTheme.color.border })
+                  .onChange((value: string) => {
+                    this.quickFeeling = value;
+                  })
+              }
+              .width('100%')
+              .alignItems(HorizontalAlign.Start)
+
+              Column({ space: 6 }) {
+                Row() {
+                  Text(this.quickInterpOpen ? '解释（收起）' : '解释（可选，展开）')
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.primary)
+                    .layoutWeight(1)
+                  SymbolGlyph($r('sys.symbol.chevron_down'))
+                    .fontSize(14)
+                    .fontColor([AppTheme.color.primary])
+                    .rotate({ angle: this.quickInterpOpen ? 180 : 0 })
                 }
+                .id('note_quick_interp_toggle')
                 .width('100%')
+                .height(40)
+                .onClick(() => {
+                  this.quickInterpOpen = !this.quickInterpOpen;
+                })
+                if (this.quickInterpOpen) {
+                  TextArea({ text: this.quickInterpretation, placeholder: '我怎样理解这件事（可空）' })
+                    .id('note_quick_interpretation')
+                    .fontSize(AppTheme.font.bodyStrong)
+                    .height(56)
+                    .padding(AppTheme.spacing.s10)
+                    .backgroundColor(AppTheme.color.surfaceTint)
+                    .borderRadius(AppTheme.radius.md)
+                    .border({ width: 0.5, color: AppTheme.color.border })
+                    .onChange((value: string) => {
+                      this.quickInterpretation = value;
+                    })
+                }
               }
               .width('100%')
               .alignItems(HorizontalAlign.Start)

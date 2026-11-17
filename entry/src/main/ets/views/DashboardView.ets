@@ -341,6 +341,7 @@ export struct DashboardView {
         SymbolGlyph($r('sys.symbol.chevron_forward'))
           .fontSize(14)
           .fontColor([AppTheme.color.textSecondary])
+          .id('home_open_editor')
           .onClick(() => {
             this.openNoteEditor();
           })
