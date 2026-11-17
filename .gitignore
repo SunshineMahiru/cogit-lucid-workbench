@@ -77,6 +77,13 @@ AGENTS.md
 docs/PROJECT.md
 docs/REMAINING_TASKS.md
 docs/signing.local.json
+# Internal design and course process documents; never commit
+docs/COURSE_CHECK.md
+docs/COURSE_REPORT.md
+docs/UI_FREEZE.md
+docs/PLAN-20261116.md
+docs/MANUAL_CHECKS.md
+docs/DEMO.md
 .workbuddy/
 spec/
 .deveco/
