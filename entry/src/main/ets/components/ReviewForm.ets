@@ -745,37 +745,52 @@ export struct ReviewForm {
     .alignItems(HorizontalAlign.Center)
   }
 
+  private zoneFilled(index: number): boolean {
+    const payload = this.currentPayload();
+    const texts: string[] = [payload.scene, payload.model, payload.relation, payload.evidence, payload.cost, payload.revision];
+    if (texts[index].trim().length > 0) {
+      return true;
+    }
+    if (index === 0) {
+      return this.selectedMaterialIds.length > 0;
+    }
+    if (index === 3) {
+      return this.evidenceDrafts.length > 0;
+    }
+    if (index === 4) {
+      return this.costDrafts.length > 0;
+    }
+    return false;
+  }
+
   @Builder
   zoneTabs() {
-    Flex({ wrap: FlexWrap.Wrap }) {
-      ForEach(ZONE_LABELS, (label: string, index: number) => {
-        Row({ space: 4 }) {
-          Text(String(index + 1))
-            .fontSize(AppTheme.font.caption)
-            .fontColor(index === this.step ? Color.White : AppTheme.color.textSecondary)
-            .width(18)
-            .height(18)
-            .textAlign(TextAlign.Center)
-            .lineHeight(18)
-            .backgroundColor(index === this.step ? AppTheme.color.primary : AppTheme.color.tint)
-            .borderRadius(AppTheme.radius.sm)
-          Text(label)
-            .fontSize(AppTheme.font.caption)
-            .fontColor(index === this.step ? AppTheme.color.text : AppTheme.color.textSecondary)
-        }
-        .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8, top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-        .margin({ right: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
-        .backgroundColor(index === this.step ? AppTheme.color.selectedSurface : AppTheme.color.surfaceAlt)
-        .borderRadius(AppTheme.radius.sm)
-        .border({
-          width: index === this.step ? 1 : 0,
-          color: AppTheme.color.borderSelected
-        })
-        .onClick(() => {
-          this.step = index;
-        })
-      }, (label: string) => label)
+    Scroll() {
+      Row({ space: 8 }) {
+        ForEach(ZONE_LABELS, (label: string, index: number) => {
+          Row({ space: 6 }) {
+            Circle()
+              .width(6)
+              .height(6)
+              .fill(this.zoneFilled(index) ? AppTheme.color.primary : AppTheme.color.border)
+            Text(label)
+              .fontSize(AppTheme.font.body)
+              .fontWeight(index === this.step ? FontWeight.Medium : FontWeight.Regular)
+              .fontColor(index === this.step ? AppTheme.color.text : AppTheme.color.textSecondary)
+          }
+          .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+          .backgroundColor(index === this.step ? AppTheme.color.tint : Color.Transparent)
+          .borderRadius(20)
+          .border({ width: index === this.step ? 1 : 0, color: AppTheme.color.borderSelected })
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.96 })
+          .onClick(() => {
+            this.step = index;
+          })
+        }, (label: string) => label)
+      }
     }
+    .scrollable(ScrollDirection.Horizontal)
+    .scrollBar(BarState.Off)
     .width('100%')
   }
 
@@ -1644,35 +1659,17 @@ export struct ReviewForm {
         .align(Alignment.Top)
 
         Row({ space: 12 }) {
-          if (this.step > 0) {
-            Text('上一区')
-              .fontSize(AppTheme.font.subtitle)
-              .fontColor(AppTheme.color.textSecondaryStrong)
-              .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
-              .backgroundColor(AppTheme.color.chip)
-              .borderRadius(20)
-              .onClick(() => {
-                this.step -= 1;
-              })
-          }
-          Blank()
-          if (this.step < LAST_ZONE) {
-            Text('下一区')
-              .fontSize(AppTheme.font.subtitle)
-              .fontColor(AppTheme.color.primary)
-              .padding({ left: AppTheme.spacing.s20, right: AppTheme.spacing.s20, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
-              .backgroundColor(AppTheme.color.tint)
-              .borderRadius(20)
-              .onClick(() => {
-                this.step += 1;
-              })
-          }
+          Text(`${this.step + 1} / ${LAST_ZONE + 1}`)
+            .fontSize(AppTheme.font.caption)
+            .fontColor(AppTheme.color.textMuted)
           Text('保存复盘')
             .id('review_save')
             .fontSize(AppTheme.font.subtitle)
             .fontWeight(FontWeight.Medium)
             .fontColor(Color.White)
-            .padding({ left: AppTheme.spacing.s24, right: AppTheme.spacing.s24, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
+            .textAlign(TextAlign.Center)
+            .layoutWeight(1)
+            .padding({ top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
             .backgroundColor(this.isSaving ? AppTheme.color.primaryDisabled : AppTheme.color.primary)
             .borderRadius(20)
             .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })

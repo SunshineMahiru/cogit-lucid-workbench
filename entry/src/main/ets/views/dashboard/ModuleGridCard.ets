@@ -35,11 +35,11 @@ export struct ModuleGridCard {
       .columnsGap(10)
       .rowsGap(10)
       .width('100%')
-      .height(266)
     }
     .width('100%')
     .padding(AppTheme.spacing.s16)
     .backgroundColor(AppTheme.color.surface)
-    .borderRadius(AppTheme.radius.lg)
+    .borderRadius(16)
+    .border({ width: 0.5, color: AppTheme.color.border })
   }
 }
