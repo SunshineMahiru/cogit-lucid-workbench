@@ -1576,6 +1576,18 @@ test('复盘一等结果与锚点三问已接线', () => {
   assert.ok(form.includes("if (this.standing !== 'decided' || this.decisionType === null)"));
 });
 
+test('复盘一屏连续六区与侧边跳转已接线', () => {
+  const form = fs.readFileSync('entry/src/main/ets/components/ReviewForm.ets', 'utf8');
+  assert.ok(form.includes('this.zoneSection(0)'));
+  assert.ok(form.includes('this.zoneSection(LAST_ZONE)'));
+  assert.ok(form.includes('this.zoneRail()'));
+  assert.ok(form.includes('evidenceStyle(ZONE_SOURCES[index]).color'));
+  assert.ok(form.includes('.id(`zone_${index}`)'));
+  assert.ok(form.includes('.id(`review_rail_${index}`)'));
+  assert.strictEqual(form.includes('zoneTabs'), false);
+  assert.strictEqual(form.includes('this.step'), false);
+});
+
 test('数据库版本为 22 且包含新增列', () => {
   const source = fs.readFileSync(DB_CONFIG_FILE, 'utf8');
   assert.ok(/export const DB_VERSION\s*=\s*22;/.test(source), 'DB_VERSION 不是 22');

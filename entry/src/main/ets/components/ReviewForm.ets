@@ -13,6 +13,9 @@ import { isPlanDate } from '../plan/PlanValidation';
 import { PlanService } from '../plan/PlanService';
 import { RelationListItem } from '../relation/RelationListItem';
 import { RelationService } from '../relation/RelationService';
+import { evidenceStyle } from '../theme/EvidenceLanguage';
+import { EvidenceChip } from './EvidenceChip';
+import { SectionCard } from './SectionCard';
 import { MaterialPicker } from './MaterialPicker';
 import { ReviewPromptPanel } from './ReviewPromptPanel';
 import { ReviewAgentPanel } from './ReviewAgentPanel';
@@ -55,8 +58,11 @@ const ZONE_PLACEHOLDERS: string[] = [
   '例如：晚上十点后不再安排需要集中注意力的事。'
 ];
 const LAST_ZONE: number = 5;
+/** Dominant evidence source per zone; drives the chip colour shared with prediction and relation. */
+const ZONE_SOURCES: EvidenceSource[] = ['practice', 'book', 'other_person', 'public', 'body', 'time'];
+const ZONE_SHORT_LABELS: string[] = ['现场', '模型', '关系', '校正', '成本', '修订'];
 
-/** Six-zone review form for one period; each tab owns its own draft. */
+/** Six-zone review form for one period, written as one continuous page; each tab owns its own draft. */
 @ComponentV2
 export struct ReviewForm {
   @Param period: ReviewPeriod = ReviewPeriod.WEEK;
@@ -71,7 +77,9 @@ export struct ReviewForm {
   @Local evidenceRevision: number = 0;
   @Local costDrafts: CostDraft[] = [];
   @Local costRevision: number = 0;
-  @Local step: number = 0;
+  @Local activeZone: number = 0;
+  @Local zoneOffsets: number[] = [0, 0, 0, 0, 0, 0];
+  private scroller: Scroller = new Scroller();
   @Local promptVisible: boolean = true;
   @Local monitorPaused: boolean = false;
   @Local subtractionDemo: boolean = false;
@@ -367,40 +375,79 @@ export struct ReviewForm {
     this.isLoading = false;
   }
 
-  private currentText(): string {
-    if (this.step === 0) {
+  private zoneText(index: number): string {
+    if (index === 0) {
       return this.zoneScene;
     }
-    if (this.step === 1) {
+    if (index === 1) {
       return this.zoneModel;
     }
-    if (this.step === 2) {
+    if (index === 2) {
       return this.zoneRelation;
     }
-    if (this.step === 3) {
+    if (index === 3) {
       return this.zoneEvidence;
     }
-    if (this.step === 4) {
+    if (index === 4) {
       return this.zoneCost;
     }
     return this.zoneRevision;
   }
 
-  private updateCurrent(value: string): void {
-    if (this.step === 0) {
+  private updateZone(index: number, value: string): void {
+    if (index === 0) {
       this.zoneScene = value;
-    } else if (this.step === 1) {
+    } else if (index === 1) {
       this.zoneModel = value;
-    } else if (this.step === 2) {
+    } else if (index === 2) {
       this.zoneRelation = value;
-    } else if (this.step === 3) {
+    } else if (index === 3) {
       this.zoneEvidence = value;
-    } else if (this.step === 4) {
+    } else if (index === 4) {
       this.zoneCost = value;
     } else {
       this.zoneRevision = value;
     }
     this.persistDraft();
+  }
+
+  /** Scrolls the continuous page to the zone whose top offset was measured at layout time. */
+  private scrollToZone(index: number): void {
+    this.activeZone = index;
+    if (this.zoneOffsets[LAST_ZONE] <= 0) {
+      return;
+    }
+    this.scroller.scrollTo({
+      xOffset: 0,
+      yOffset: this.zoneOffsets[index],
+      animation: { duration: 240, curve: Curve.EaseOut }
+    });
+  }
+
+  private setZoneOffset(index: number, offset: number): void {
+    if (offset < 0 || Math.abs(this.zoneOffsets[index] - offset) < 0.5) {
+      return;
+    }
+    const next: number[] = this.zoneOffsets.slice();
+    next[index] = offset;
+    this.zoneOffsets = next;
+  }
+
+  /** Highlights the last zone whose top has reached a small lead-in band above the viewport top. */
+  private syncActiveZone(offset: number): void {
+    if (this.zoneOffsets[LAST_ZONE] <= 0) {
+      return;
+    }
+    const line = offset + 96;
+    let zone = 0;
+    for (let index = 0; index <= LAST_ZONE; index += 1) {
+      if (this.zoneOffsets[index] <= line) {
+        zone = index;
+      }
+    }
+    if (zone !== this.activeZone) {
+      this.activeZone = zone;
+    }
   }
 
   private appendRelation(text: string): void {
@@ -668,12 +715,12 @@ export struct ReviewForm {
     }
     const decisionError = this.decisionError();
     if (decisionError.length > 0) {
-      this.step = LAST_ZONE;
+      this.scrollToZone(LAST_ZONE);
       this.getUIContext().getPromptAction().showToast({ message: decisionError });
       return;
     }
     if (!hasAnyZone(this.currentPayload()) && this.selectedMaterialIds.length === 0) {
-      this.step = 0;
+      this.scrollToZone(0);
       this.getUIContext().getPromptAction().showToast({ message: '先写一句现场，或引用一条材料' });
       return;
     }
@@ -705,7 +752,7 @@ export struct ReviewForm {
   }
 
   private restart(): void {
-    this.step = 0;
+    this.activeZone = 0;
     this.facts = '';
     this.interpretation = '';
     this.contradiction = '';
@@ -775,34 +822,240 @@ export struct ReviewForm {
   }
 
   @Builder
-  zoneTabs() {
-    Scroll() {
-      Row({ space: 8 }) {
-        ForEach(ZONE_LABELS, (label: string, index: number) => {
-          Row({ space: 6 }) {
-            Circle()
-              .width(6)
-              .height(6)
-              .fill(this.zoneFilled(index) ? AppTheme.color.primary : AppTheme.color.border)
-            Text(label)
-              .fontSize(AppTheme.font.body)
-              .fontWeight(index === this.step ? FontWeight.Medium : FontWeight.Regular)
-              .fontColor(index === this.step ? AppTheme.color.text : AppTheme.color.textSecondary)
+  zoneHeader(index: number) {
+    Row({ space: AppTheme.spacing.s8 }) {
+      Stack() {
+        Circle()
+          .width(20)
+          .height(20)
+          .fill(evidenceStyle(ZONE_SOURCES[index]).color)
+        Text(`${index + 1}`)
+          .fontSize(AppTheme.font.caption)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(Color.White)
+      }
+      .width(20)
+      .height(20)
+      Text(ZONE_LABELS[index])
+        .fontSize(AppTheme.font.bodyStrong)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(AppTheme.color.text)
+        .layoutWeight(1)
+      EvidenceChip({ source: ZONE_SOURCES[index] })
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
+  }
+
+  /** Fixed right-hand jump rail; the dot keeps the evidence colour, opacity marks filled zones. */
+  @Builder
+  zoneRail() {
+    Column({ space: AppTheme.spacing.s6 }) {
+      ForEach(ZONE_LABELS, (label: string, index: number) => {
+        Column({ space: AppTheme.spacing.s2 }) {
+          Circle()
+            .width(8)
+            .height(8)
+            .fill(evidenceStyle(ZONE_SOURCES[index]).color)
+            .opacity(this.zoneFilled(index) ? 1 : 0.3)
+          Text(ZONE_SHORT_LABELS[index])
+            .fontSize(AppTheme.font.caption)
+            .fontColor(index === this.activeZone ? AppTheme.color.text : AppTheme.color.textSecondary)
+            .maxLines(1)
+        }
+        .width(40)
+        .padding({ top: AppTheme.spacing.s6, bottom: AppTheme.spacing.s6 })
+        .backgroundColor(index === this.activeZone ? AppTheme.color.tint : Color.Transparent)
+        .borderRadius(AppTheme.radius.sm)
+        .border({ width: index === this.activeZone ? 1 : 0, color: AppTheme.color.borderSelected })
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.96 })
+        .id(`review_rail_${index}`)
+        .onClick(() => {
+          this.scrollToZone(index);
+        })
+      }, (label: string) => label)
+    }
+    .width(48)
+    .padding({ top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
+    .alignItems(HorizontalAlign.Center)
+  }
+
+  @Builder
+  zoneSection(index: number) {
+    Column() {
+      SectionCard({ contentPadding: AppTheme.spacing.s16 }) {
+        Column({ space: AppTheme.spacing.s10 }) {
+          this.zoneHeader(index)
+          Text(ZONE_HINTS[index])
+            .fontSize(AppTheme.font.body)
+            .lineHeight(20)
+            .fontColor(AppTheme.color.textSecondary)
+            .width('100%')
+
+          if (index === 0 && this.promptVisible && !this.monitorPaused && !this.subtractionDemo) {
+            ReviewPromptPanel({
+              period: this.period,
+              onDismiss: () => {
+                this.promptVisible = false;
+              }
+            })
           }
-          .padding({ left: AppTheme.spacing.s12, right: AppTheme.spacing.s12, top: AppTheme.spacing.s8, bottom: AppTheme.spacing.s8 })
-          .backgroundColor(index === this.step ? AppTheme.color.tint : Color.Transparent)
-          .borderRadius(20)
-          .border({ width: index === this.step ? 1 : 0, color: AppTheme.color.borderSelected })
-          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.96 })
-          .onClick(() => {
-            this.step = index;
-          })
-        }, (label: string) => label)
+
+          TextArea({ text: this.zoneText(index), placeholder: ZONE_PLACEHOLDERS[index] })
+            .fontSize(AppTheme.font.bodyStrong)
+            .height(140)
+            .padding(AppTheme.spacing.s12)
+            .backgroundColor(AppTheme.color.surface)
+            .borderRadius(AppTheme.radius.md)
+            .border({ width: 0.5, color: AppTheme.color.border })
+            .onChange((value: string) => {
+              this.updateZone(index, value);
+            })
+
+          if (index === 0) {
+            MaterialPicker({
+              materials: this.materials,
+              selectedIds: this.selectedMaterialIds,
+              onToggle: (id: string) => {
+                this.toggleMaterial(id);
+              }
+            })
+          }
+
+          if (index === 2) {
+            if (this.anchors.length > 0) {
+              Column({ space: 8 }) {
+                Text('对照锚点 · 点击选择本次真正用到的')
+                  .fontSize(AppTheme.font.body)
+                  .fontColor(AppTheme.color.textSecondary)
+                  .width('100%')
+                ForEach(this.anchors, (anchor: Anchor) => {
+                  Column({ space: 4 }) {
+                    Row() {
+                      Text(anchor.text)
+                        .fontSize(AppTheme.font.bodyStrong)
+                        .lineHeight(20)
+                        .fontColor(AppTheme.color.text)
+                        .layoutWeight(1)
+                      if (this.isAnchorSelected(anchor.id)) {
+                        Text('已对照')
+                          .fontSize(AppTheme.font.caption)
+                          .fontColor(AppTheme.color.primary)
+                          .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
+                          .backgroundColor(AppTheme.color.tint)
+                          .borderRadius(AppTheme.radius.sm)
+                      }
+                    }
+                    .width('100%')
+                    Text(anchor.source)
+                      .fontSize(AppTheme.font.caption)
+                      .fontColor(AppTheme.color.textMuted)
+                      .width('100%')
+                    if (this.isAnchorSelected(anchor.id)) {
+                      TextInput({ text: this.reasonOf(anchor.id), placeholder: '为什么选这条锚点（可空）' })
+                        .id(`review_anchor_reason_${anchor.id}`)
+                        .fontSize(AppTheme.font.caption)
+                        .padding(AppTheme.spacing.s8)
+                        .backgroundColor(AppTheme.color.surface)
+                        .borderRadius(AppTheme.radius.sm)
+                        .onChange((value: string) => {
+                          this.updateAnchorReason(anchor.id, value);
+                        })
+                      TextInput({ text: this.supportsOf(anchor.id), placeholder: '支持什么（可空）' })
+                        .id(`review_anchor_supports_${anchor.id}`)
+                        .fontSize(AppTheme.font.caption)
+                        .padding(AppTheme.spacing.s8)
+                        .backgroundColor(AppTheme.color.surface)
+                        .borderRadius(AppTheme.radius.sm)
+                        .onChange((value: string) => {
+                          this.updateAnchorField(anchor.id, 'supports', value);
+                        })
+                      TextInput({ text: this.limitsOf(anchor.id), placeholder: '限制什么（可空）' })
+                        .id(`review_anchor_limits_${anchor.id}`)
+                        .fontSize(AppTheme.font.caption)
+                        .padding(AppTheme.spacing.s8)
+                        .backgroundColor(AppTheme.color.surface)
+                        .borderRadius(AppTheme.radius.sm)
+                        .onChange((value: string) => {
+                          this.updateAnchorField(anchor.id, 'limits', value);
+                        })
+                      TextInput({ text: this.notApplicableOf(anchor.id), placeholder: '何处不适用（可空）' })
+                        .id(`review_anchor_not_applicable_${anchor.id}`)
+                        .fontSize(AppTheme.font.caption)
+                        .padding(AppTheme.spacing.s8)
+                        .backgroundColor(AppTheme.color.surface)
+                        .borderRadius(AppTheme.radius.sm)
+                        .onChange((value: string) => {
+                          this.updateAnchorField(anchor.id, 'notApplicable', value);
+                        })
+                    }
+                  }
+                  .width('100%')
+                  .padding(AppTheme.spacing.s10)
+                  .backgroundColor(this.isAnchorSelected(anchor.id) ? AppTheme.color.selectedSurface : AppTheme.color.surfaceWarm)
+                  .borderRadius(AppTheme.radius.sm)
+                  .border({
+                    width: this.isAnchorSelected(anchor.id) ? 1 : 0,
+                    color: AppTheme.color.borderSelected
+                  })
+                  .onClick(() => {
+                    this.toggleAnchor(anchor.id);
+                  })
+                }, (anchor: Anchor) => `${anchor.id}_${this.isAnchorSelected(anchor.id) ? 1 : 0}`)
+              }
+              .width('100%')
+              .padding(AppTheme.spacing.s16)
+              .backgroundColor(AppTheme.color.surfaceWarm)
+              .borderRadius(AppTheme.radius.md)
+              .alignItems(HorizontalAlign.Start)
+            }
+
+            ReviewAgentPanel({
+              facts: this.zoneScene,
+              interpretation: this.zoneModel,
+              anchors: this.anchors,
+              relationForbidsAnalysis: this.relationForbids(),
+              relationInvolvedByMaterial: this.hasRelationMaterial(),
+              relationIdHint: this.relationHintId(),
+              maxLevel: this.relationMaxLevel(),
+              onInsert: (text: string) => {
+                this.appendRelation(text);
+              }
+            })
+          }
+
+          if (index === 3) {
+            this.evidenceEditor()
+          }
+
+          if (index === 4) {
+            this.costEditor()
+            this.motivationEditor()
+          }
+
+          if (index === LAST_ZONE) {
+            this.standingEditor()
+            if (this.standing === 'decided') {
+              this.decisionEditor()
+            } else {
+              Text('本次不形成决定，决定区不会写入；仍可补充现场、模型或修订。')
+                .fontSize(AppTheme.font.caption)
+                .fontColor(AppTheme.color.textMuted)
+                .width('100%')
+            }
+            this.decisionPicker()
+          }
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
       }
     }
-    .scrollable(ScrollDirection.Horizontal)
-    .scrollBar(BarState.Off)
     .width('100%')
+    .id(`zone_${index}`)
+    .onAreaChange((oldValue: Area, newValue: Area) => {
+      const top = newValue.position.y;
+      this.setZoneOffset(index, typeof top === 'number' ? top : 0);
+    })
   }
 
   @Builder
@@ -1482,215 +1735,64 @@ export struct ReviewForm {
         .justifyContent(FlexAlign.Center)
         .padding(AppTheme.spacing.s24)
       } else {
-        Scroll() {
-          Column({ space: 12 }) {
-            Column({ space: 8 }) {
-              Row() {
-                Text(this.period === ReviewPeriod.WEEK ? '本周' : '本月')
-                  .fontSize(AppTheme.font.bodyStrong)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(AppTheme.color.text)
-                Blank()
-                Text(this.stats.rangeLabel)
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textSecondary)
-              }
-              .width('100%')
-
-              Row() {
-                this.statItem(String(this.stats.noteCount), '速记')
-                this.statItem(String(this.stats.decisionCount), '决策')
-                this.statItem(String(this.stats.settledPredictions), '已结算')
-                this.statItem(formatHitRate(this.stats.hitRate, this.stats.settledPredictions), '命中率')
-              }
-              .width('100%')
-            }
-            .width('100%')
-            .padding(AppTheme.spacing.s16)
-            .backgroundColor(AppTheme.color.surface)
-            .borderRadius(AppTheme.radius.md)
-
-            this.depthEditor()
-
-            this.zoneTabs()
-
-            if (this.step === 0 && this.promptVisible && !this.monitorPaused && !this.subtractionDemo) {
-              ReviewPromptPanel({
-                period: this.period,
-                onDismiss: () => {
-                  this.promptVisible = false;
-                }
-              })
-            }
-
-            Text(`${this.step + 1}. ${ZONE_LABELS[this.step]}`)
-              .fontSize(AppTheme.font.title)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(AppTheme.color.text)
-              .width('100%')
-            Text(ZONE_HINTS[this.step])
-              .fontSize(AppTheme.font.bodyStrong)
-              .lineHeight(18)
-              .fontColor(AppTheme.color.textSecondary)
-              .width('100%')
-
-            if (this.step === 2 && this.anchors.length > 0) {
+        Row() {
+          Scroll(this.scroller) {
+            Column({ space: 12 }) {
               Column({ space: 8 }) {
-                Text('对照锚点 · 点击选择本次真正用到的')
-                  .fontSize(AppTheme.font.body)
-                  .fontColor(AppTheme.color.textSecondary)
-                  .width('100%')
-                ForEach(this.anchors, (anchor: Anchor) => {
-                  Column({ space: 4 }) {
-                    Row() {
-                      Text(anchor.text)
-                        .fontSize(AppTheme.font.bodyStrong)
-                        .lineHeight(20)
-                        .fontColor(AppTheme.color.text)
-                        .layoutWeight(1)
-                      if (this.isAnchorSelected(anchor.id)) {
-                        Text('已对照')
-                          .fontSize(AppTheme.font.caption)
-                          .fontColor(AppTheme.color.primary)
-                          .padding({ left: AppTheme.spacing.s6, right: AppTheme.spacing.s6, top: AppTheme.spacing.s2, bottom: AppTheme.spacing.s2 })
-                          .backgroundColor(AppTheme.color.tint)
-                          .borderRadius(AppTheme.radius.sm)
-                      }
-                    }
-                    .width('100%')
-                    Text(anchor.source)
-                      .fontSize(AppTheme.font.caption)
-                      .fontColor(AppTheme.color.textMuted)
-                      .width('100%')
-                    if (this.isAnchorSelected(anchor.id)) {
-                      TextInput({ text: this.reasonOf(anchor.id), placeholder: '为什么选这条锚点（可空）' })
-                        .id(`review_anchor_reason_${anchor.id}`)
-                        .fontSize(AppTheme.font.caption)
-                        .padding(AppTheme.spacing.s8)
-                        .backgroundColor(AppTheme.color.surface)
-                        .borderRadius(AppTheme.radius.sm)
-                        .onClick(() => {
-                        })
-                        .onChange((value: string) => {
-                          this.updateAnchorReason(anchor.id, value);
-                        })
-                      TextInput({ text: this.supportsOf(anchor.id), placeholder: '支持什么（可空）' })
-                        .id(`review_anchor_supports_${anchor.id}`)
-                        .fontSize(AppTheme.font.caption)
-                        .padding(AppTheme.spacing.s8)
-                        .backgroundColor(AppTheme.color.surface)
-                        .borderRadius(AppTheme.radius.sm)
-                        .onChange((value: string) => {
-                          this.updateAnchorField(anchor.id, 'supports', value);
-                        })
-                      TextInput({ text: this.limitsOf(anchor.id), placeholder: '限制什么（可空）' })
-                        .id(`review_anchor_limits_${anchor.id}`)
-                        .fontSize(AppTheme.font.caption)
-                        .padding(AppTheme.spacing.s8)
-                        .backgroundColor(AppTheme.color.surface)
-                        .borderRadius(AppTheme.radius.sm)
-                        .onChange((value: string) => {
-                          this.updateAnchorField(anchor.id, 'limits', value);
-                        })
-                      TextInput({ text: this.notApplicableOf(anchor.id), placeholder: '何处不适用（可空）' })
-                        .id(`review_anchor_not_applicable_${anchor.id}`)
-                        .fontSize(AppTheme.font.caption)
-                        .padding(AppTheme.spacing.s8)
-                        .backgroundColor(AppTheme.color.surface)
-                        .borderRadius(AppTheme.radius.sm)
-                        .onChange((value: string) => {
-                          this.updateAnchorField(anchor.id, 'notApplicable', value);
-                        })
-                    }
-                  }
-                  .width('100%')
-                  .padding(AppTheme.spacing.s10)
-                  .backgroundColor(this.isAnchorSelected(anchor.id) ? AppTheme.color.selectedSurface : AppTheme.color.surfaceWarm)
-                  .borderRadius(AppTheme.radius.sm)
-                  .border({
-                    width: this.isAnchorSelected(anchor.id) ? 1 : 0,
-                    color: AppTheme.color.borderSelected
-                  })
-                  .onClick(() => {
-                    this.toggleAnchor(anchor.id);
-                  })
-                }, (anchor: Anchor) => `${anchor.id}_${this.isAnchorSelected(anchor.id) ? 1 : 0}`)
+                Row() {
+                  Text(this.period === ReviewPeriod.WEEK ? '本周' : '本月')
+                    .fontSize(AppTheme.font.bodyStrong)
+                    .fontWeight(FontWeight.Medium)
+                    .fontColor(AppTheme.color.text)
+                  Blank()
+                  Text(this.stats.rangeLabel)
+                    .fontSize(AppTheme.font.body)
+                    .fontColor(AppTheme.color.textSecondary)
+                }
+                .width('100%')
+
+                Row() {
+                  this.statItem(String(this.stats.noteCount), '速记')
+                  this.statItem(String(this.stats.decisionCount), '决策')
+                  this.statItem(String(this.stats.settledPredictions), '已结算')
+                  this.statItem(formatHitRate(this.stats.hitRate, this.stats.settledPredictions), '命中率')
+                }
+                .width('100%')
               }
               .width('100%')
               .padding(AppTheme.spacing.s16)
-              .backgroundColor(AppTheme.color.surfaceWarm)
-              .borderRadius(AppTheme.radius.md)
-              .alignItems(HorizontalAlign.Start)
-            }
-
-            if (this.step === 2) {
-              ReviewAgentPanel({
-                facts: this.zoneScene,
-                interpretation: this.zoneModel,
-                anchors: this.anchors,
-                relationForbidsAnalysis: this.relationForbids(),
-                relationInvolvedByMaterial: this.hasRelationMaterial(),
-                relationIdHint: this.relationHintId(),
-                maxLevel: this.relationMaxLevel(),
-                onInsert: (text: string) => {
-                  this.appendRelation(text);
-                }
-              })
-            }
-
-            if (this.step === LAST_ZONE) {
-              this.standingEditor()
-              if (this.standing === 'decided') {
-                this.decisionEditor()
-              } else {
-                Text('本次不形成决定，决定区不会写入；仍可补充现场、模型或修订。')
-                  .fontSize(AppTheme.font.caption)
-                  .fontColor(AppTheme.color.textMuted)
-                  .width('100%')
-              }
-              this.decisionPicker()
-            }
-
-            TextArea({ text: this.currentText(), placeholder: ZONE_PLACEHOLDERS[this.step] })
-              .fontSize(AppTheme.font.bodyStrong)
-              .height(180)
-              .padding(AppTheme.spacing.s12)
               .backgroundColor(AppTheme.color.surface)
               .borderRadius(AppTheme.radius.md)
-              .border({ width: 0.5, color: AppTheme.color.border })
-              .onChange((value: string) => {
-                this.updateCurrent(value);
-              })
 
-            if (this.step === 3) {
-              this.evidenceEditor()
-            }
+              this.depthEditor()
 
-            if (this.step === 4) {
-              this.costEditor()
-              this.motivationEditor()
+              this.zoneSection(0)
+              this.zoneSection(1)
+              this.zoneSection(2)
+              this.zoneSection(3)
+              this.zoneSection(4)
+              this.zoneSection(LAST_ZONE)
             }
-
-            if (this.step === 0) {
-              MaterialPicker({
-                materials: this.materials,
-                selectedIds: this.selectedMaterialIds,
-                onToggle: (id: string) => {
-                  this.toggleMaterial(id);
-                }
-              })
-            }
+            .width('100%')
+            .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s8, top: AppTheme.spacing.s16, bottom: AppTheme.spacing.s16 })
+            .alignItems(HorizontalAlign.Start)
           }
-          .width('100%')
-          .padding(AppTheme.spacing.s16)
-          .alignItems(HorizontalAlign.Start)
+          .layoutWeight(1)
+          .height('100%')
+          .scrollBar(BarState.Off)
+          .align(Alignment.Top)
+          .onDidScroll(() => {
+            this.syncActiveZone(this.scroller.currentOffset().yOffset);
+          })
+
+          this.zoneRail()
         }
+        .width('100%')
         .layoutWeight(1)
-        .scrollBar(BarState.Off)
-        .align(Alignment.Top)
+        .alignItems(VerticalAlign.Top)
 
         Row({ space: 12 }) {
-          Text(`${this.step + 1} / ${LAST_ZONE + 1}`)
+          Text(`${this.activeZone + 1} / ${LAST_ZONE + 1}`)
             .fontSize(AppTheme.font.caption)
             .fontColor(AppTheme.color.textMuted)
           Text('保存复盘')
