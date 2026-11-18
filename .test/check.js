@@ -1421,10 +1421,11 @@ test('建表语句包含迁移新增的列', () => {
 });
 
 test('首页以今日议程聚合五类对象', () => {
-  const source = fs.readFileSync('entry/src/main/ets/views/DashboardView.ets', 'utf8');
+  const source = fs.readFileSync('entry/src/main/ets/views/WorkbenchView.ets', 'utf8');
   const mapper = fs.readFileSync('entry/src/main/ets/home/AgendaMapper.ts', 'utf8');
   const agenda = fs.readFileSync('entry/src/main/ets/views/dashboard/AgendaCard.ets', 'utf8');
-  const home = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
+  const shell = fs.readFileSync('entry/src/main/ets/pages/WorkbenchShell.ets', 'utf8');
+  const drawer = fs.readFileSync('entry/src/main/ets/views/DrawerView.ets', 'utf8');
   assert.ok(source.includes('AgendaCard'));
   assert.ok(source.includes('buildAgenda'));
   assert.strictEqual(source.includes('home_todo_quiet'), false);
@@ -1433,21 +1434,21 @@ test('首页以今日议程聚合五类对象', () => {
   for (const kind of ['PLAN_NODE', 'PREDICTION_SETTLE', 'RELATION_REPLY', 'PREDICTION_OPEN', 'NOTE_TODAY']) {
     assert.ok(mapper.includes(kind), `议程缺少来源 ${kind}`);
   }
-  assert.ok(home.includes('bottomNav'));
-  assert.ok(home.includes('ROUTES.PLAN'));
+  assert.ok(shell.includes('TabContent'));
+  assert.ok(shell.includes('TAB_ITEMS'));
+  assert.ok(drawer.includes('ROUTES.PLAN'));
 });
 
 test('首页读数可关闭且复盘提示可忽略', () => {
-  const dashboard = fs.readFileSync('entry/src/main/ets/views/DashboardView.ets', 'utf8');
-  assert.ok(dashboard.includes('home_readings_toggle'));
-  assert.ok(dashboard.includes('readingsVisible'));
+  const dashboard = fs.readFileSync('entry/src/main/ets/views/WorkbenchView.ets', 'utf8');
+  assert.ok(dashboard.includes('readingsBlock'));
   assert.ok(dashboard.includes('promptVisible'));
   const prompt = fs.readFileSync('entry/src/main/ets/components/ReviewPromptPanel.ets', 'utf8');
   assert.ok(prompt.includes('onDismiss'));
 });
 
 test('身份区头像缩到 48', () => {
-  const source = fs.readFileSync('entry/src/main/ets/components/ProfileHeader.ets', 'utf8');
+  const source = fs.readFileSync('entry/src/main/ets/components/IdentityCard.ets', 'utf8');
   assert.ok(source.includes('this.avatar(48)'));
 });
 
@@ -1496,12 +1497,12 @@ test('涉及他人时要求关系与分析边界', () => {
 });
 
 test('首屏以书写主卡承载汇总', () => {
-  const home = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
-  const dashboard = fs.readFileSync('entry/src/main/ets/views/DashboardView.ets', 'utf8');
-  assert.ok(dashboard.includes('home_write_hero'));
-  assert.ok(dashboard.includes('home_capture_input'));
+  const home = fs.readFileSync('entry/src/main/ets/views/WorkbenchView.ets', 'utf8');
+  const capture = fs.readFileSync('entry/src/main/ets/components/QuickCaptureBar.ets', 'utf8');
+  assert.ok(home.includes('QuickCaptureBar'));
+  assert.ok(capture.includes('quick_capture_input'));
   assert.strictEqual(home.includes('总速记'), false);
-  assert.strictEqual(dashboard.includes('总速记'), false);
+  assert.strictEqual(capture.includes('总速记'), false);
 });
 
 test('关系材料接线到禁分析与关系前置', () => {
@@ -1532,7 +1533,7 @@ test('安全副本可逐份删除并提示恢复后果', () => {
 });
 
 test('首页不再计算连续记录天数', () => {
-  const home = fs.readFileSync('entry/src/main/ets/pages/HomePage.ets', 'utf8');
+  const home = fs.readFileSync('entry/src/main/ets/views/WorkbenchView.ets', 'utf8');
   const data = fs.readFileSync('entry/src/main/ets/data/HomeDataService.ts', 'utf8');
   const preview = fs.readFileSync('entry/src/main/ets/preview/PreviewStore.ts', 'utf8');
   assert.strictEqual(home.includes('streakDays'), false);
@@ -1552,7 +1553,7 @@ test('公共分享副本默认剥离锚点理由', () => {
 
 test('历史筛选与统计口径已接线', () => {
   const history = fs.readFileSync('entry/src/main/ets/pages/ReviewHistoryPage.ets', 'utf8');
-  const analytics = fs.readFileSync('entry/src/main/ets/pages/AnalyticsPage.ets', 'utf8');
+  const analytics = fs.readFileSync('entry/src/main/ets/views/AnalyticsView.ets', 'utf8');
   assert.ok(history.includes('history_material_with'));
   assert.ok(history.includes('history_evidence_without'));
   assert.ok(history.includes('item.materialCount ?? 0'));
