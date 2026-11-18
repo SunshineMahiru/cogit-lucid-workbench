@@ -1,7 +1,9 @@
 import { applyTheme } from '../theme/AppTheme';
 import { resourceManager } from '@kit.LocalizationKit';
-import { HomePage } from './HomePage';
+import { WorkbenchShell } from './WorkbenchShell';
 import { ROUTES } from '../navigation/Routes';
+import { TabKey, tabIndex } from '../navigation/TabItems';
+import { activeTab, requestActiveTabRefresh, requestTabRefresh, setActiveTab } from '../app/TabRefreshBus';
 import { PlaceholderPage } from './PlaceholderPage';
 import { NoteEditPage } from './NoteEditPage';
 import { NoteListPage } from './NoteListPage';
@@ -34,13 +36,15 @@ import { IdentityEditPage } from './IdentityEditPage';
 import { BackgroundApplyPage } from './BackgroundApplyPage';
 import { PageBackgroundService } from '../settings/PageBackgroundService';
 
+/** Entry page: Navigation owns the stack, the tab shell is its root content. */
 @Entry
 @ComponentV2
 struct Index {
   @Local pathStack: NavPathStack = new NavPathStack();
+  /** Selected main tab; owned here so the back press can return to the workbench. */
+  @Local activeIndex: number = 0;
 
   aboutToAppear(): void {
-    this.pathStack.pushPathByName(ROUTES.HOME, null, false);
     try {
       const context = this.getUIContext().getHostContext();
       if (context !== undefined) {
@@ -51,6 +55,29 @@ struct Index {
       }
     } catch (error) {
     }
+    setActiveTab(TabKey.WORKBENCH);
+  }
+
+  /** Returning to the foreground refreshes the tab that is on screen. */
+  onPageShow(): void {
+    requestActiveTabRefresh();
+  }
+
+  /**
+   * Back inside a pushed page is left to the system. With an empty stack, a tab other than the
+   * workbench is consumed here and returns there; on the workbench the system exits as before.
+   */
+  onBackPress(): boolean {
+    if (this.pathStack.size() > 0) {
+      return false;
+    }
+    if (activeTab() !== TabKey.WORKBENCH) {
+      setActiveTab(TabKey.WORKBENCH);
+      this.activeIndex = tabIndex(TabKey.WORKBENCH);
+      requestTabRefresh(TabKey.WORKBENCH);
+      return true;
+    }
+    return false;
   }
 
   @Builder
@@ -60,9 +87,7 @@ struct Index {
 
   @Builder
   pageContent(name: string) {
-    if (name === ROUTES.HOME) {
-      HomePage({ pathStack: this.pathStack })
-    } else if (name === ROUTES.NOTE_EDIT) {
+    if (name === ROUTES.NOTE_EDIT) {
       NoteEditPage()
     } else if (name === ROUTES.NOTE_LIST) {
       NoteListPage()
@@ -128,16 +153,25 @@ struct Index {
   build() {
     Stack() {
       Navigation(this.pathStack) {
-        Stack() {
-        }
-        .width('100%')
-        .height('100%')
+        WorkbenchShell({
+          pathStack: this.pathStack,
+          activeIndex: this.activeIndex,
+          onActiveChange: (index: number) => {
+            this.activeIndex = index;
+          }
+        })
       }
       .width('100%')
       .height('100%')
       .hideTitleBar(true)
       .mode(NavigationMode.Stack)
       .navDestination(this.pageMap)
+      .onNavBarStateChange((isVisible: boolean) => {
+        // Returning from a pushed page re-shows the tab shell; the active tab reloads its data.
+        if (isVisible) {
+          requestActiveTabRefresh();
+        }
+      })
       .backgroundColor(Color.Transparent)
     }
     .width('100%')
