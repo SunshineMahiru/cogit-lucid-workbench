@@ -1,168 +1,30 @@
 import { AppTheme } from '../theme/AppTheme';
 import { AppDestination } from '../components/AppDestination';
-import {
-  PredictionListItem,
-  PredictionQuickFilter,
-  PredictionService,
-  PredictionSummary,
-  filterPredictionItems,
-  todayDateString
-} from '../prediction';
+import { PredictionLogView } from '../views/PredictionLogView';
+import { PredictionListParams } from '../navigation/RouteParams';
 import { PredictionStatus } from '../model/PredictionStatus';
-import { formatHitRate, hitRateCaption } from '../model/HomeModel';
-import { PredictionDetailParams, PredictionListParams, PredictionCreateParams } from '../navigation/RouteParams';
 import { ROUTES } from '../navigation/Routes';
-import { PredictionListCard } from '../components/PredictionListCard';
-import { NoteEmptyState } from '../components/NoteEmptyState';
-import { TagChip } from '../components/TagChip';
-import { previewStore } from '../preview/PreviewStore';
 
-const PAGE_SIZE = 20;
-const QUICK_PAGE_SIZE = 1000;
-
-/** Prediction log: summary counts, status filters and the row list. */
+/**
+ * Prediction log route: a thin wrapper around PredictionLogView. The title bar, the create entry
+ * and the statistics entry stay here; statistics now scrolls to the dashboard inside the same list
+ * instead of opening the standalone dashboard page.
+ */
 @ComponentV2
 export struct PredictionListPage {
-  @Local service: PredictionService | null = null;
-  @Local items: PredictionListItem[] = [];
-  @Local summary: PredictionSummary = { total: 0, pending: 0, settled: 0, hits: 0, hitRate: 0 };
-  @Local filter: PredictionStatus | null = null;
-  @Local quick: PredictionQuickFilter = 'all';
-  @Local isLoading: boolean = true;
-  @Local isLoadingMore: boolean = false;
-  @Local hasMore: boolean = false;
-  @Local isPreview: boolean = false;
-  @Local listVersion: number = 0;
-  private navStack: NavPathStack | null = null;
+  @Local navStack: NavPathStack | null = null;
+  @Local refreshToken: number = 0;
+  @Local scrollToken: number = 0;
+  @Local initialFilter: PredictionStatus | null = null;
   private hasShownOnce: boolean = false;
 
-  aboutToAppear(): void {
-    this.openService();
-  }
-
-  private async openService(): Promise<void> {
-    const hostContext = this.getUIContext().getHostContext();
-    if (hostContext === undefined) {
-      this.loadPreview();
-      return;
-    }
-    try {
-      this.service = await PredictionService.open(hostContext);
-      await this.refresh();
-    } catch (error) {
-      this.loadPreview();
-      this.getUIContext().getPromptAction().showToast({ message: '加载失败，已切换到演示数据' });
-    }
-  }
-
-  private loadPreview(): void {
-    this.isPreview = true;
-    this.items = this.applyQuick(previewStore.listPredictions(this.filter));
-    this.listVersion += 1;
-    this.summary = previewStore.predictionSummary();
-    this.isLoading = false;
-  }
-
-  async refresh(): Promise<void> {
-    if (this.isPreview) {
-      this.items = this.applyQuick(previewStore.listPredictions(this.filter));
-      this.listVersion += 1;
-      this.summary = previewStore.predictionSummary();
-      this.isLoading = false;
-      return;
-    }
-    if (this.service === null) {
-      return;
-    }
-    this.isLoading = true;
-    try {
-      const limit = this.quick === 'all' ? PAGE_SIZE : QUICK_PAGE_SIZE;
-      const rows = await this.service.listPage(this.filter, limit, 0);
-      this.items = this.applyQuick(rows);
-      this.listVersion += 1;
-      this.hasMore = this.quick === 'all' && rows.length >= PAGE_SIZE;
-      this.summary = await this.service.summary();
-    } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: '加载失败，请重试' });
-    } finally {
-      this.isLoading = false;
-    }
-  }
-
-  private async loadMore(): Promise<void> {
-    if (this.service === null || this.isLoadingMore || !this.hasMore) {
-      return;
-    }
-    this.isLoadingMore = true;
-    try {
-      const next = await this.service.listPage(this.filter, PAGE_SIZE, this.items.length);
-      this.items = this.items.concat(next);
-      this.listVersion += 1;
-      this.hasMore = next.length >= PAGE_SIZE;
-    } catch (error) {
-      this.getUIContext().getPromptAction().showToast({ message: '加载更多失败，请重试' });
-    } finally {
-      this.isLoadingMore = false;
-    }
-  }
-
-  private selectFilter(status: PredictionStatus | null): void {
-    this.filter = status;
-    this.quick = 'all';
-    this.refresh();
-  }
-
-  private selectQuick(quick: PredictionQuickFilter): void {
-    this.quick = this.quick === quick ? 'all' : quick;
-    if (this.quick !== 'all') {
-      this.filter = PredictionStatus.PENDING;
-    }
-    this.refresh();
-  }
-
-  private applyQuick(items: PredictionListItem[]): PredictionListItem[] {
-    return filterPredictionItems(items, this.quick, todayDateString(Date.now()));
-  }
-
-  private openDetail(predictionId: string): void {
+  private openCreate(): void {
     if (this.navStack === null) {
       return;
     }
-    const params: PredictionDetailParams = { predictionId: predictionId };
-    this.navStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params);
-  }
-
-  private openCreate(): void {
-    if (this.navStack !== null) {
-      const params: PredictionCreateParams = { sourcePredictionId: null };
-      this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, params);
-    }
-  }
-
-  @Builder
-  statusChip(label: string, status: PredictionStatus | null) {
-    TagChip({
-      label: label,
-      tone: AppTheme.color.primary,
-      surface: AppTheme.color.evPracticeSurface,
-      selected: this.filter === status && this.quick === 'all',
-      onTap: () => {
-        this.selectFilter(status);
-      }
-    })
-  }
-
-  @Builder
-  quickChip(label: string, quick: PredictionQuickFilter, tone: ResourceColor, surface: ResourceColor) {
-    TagChip({
-      label: label,
-      tone: tone,
-      surface: surface,
-      selected: this.quick === quick,
-      onTap: () => {
-        this.selectQuick(quick);
-      }
-    })
+    this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, { sourcePredictionId: null }, () => {
+      this.refreshToken += 1;
+    });
   }
 
   @Builder
@@ -172,15 +34,15 @@ export struct PredictionListPage {
         .fontSize(AppTheme.font.subtitle)
         .fontColor(AppTheme.color.primary)
         .padding({ left: AppTheme.spacing.s8, right: AppTheme.spacing.s8 })
+        .accessibilityText('跳到页内数据看板')
         .onClick(() => {
-          if (this.navStack !== null) {
-            this.navStack.pushPathByName(ROUTES.ANALYTICS, null);
-          }
+          this.scrollToken += 1;
         })
       Text('＋')
         .fontSize(AppTheme.font.headline)
         .fontColor(AppTheme.color.primary)
         .padding({ left: AppTheme.spacing.s4, right: AppTheme.spacing.s16 })
+        .accessibilityText('新建预测')
         .onClick(() => {
           this.openCreate();
         })
@@ -190,48 +52,17 @@ export struct PredictionListPage {
   }
 
   @Builder
-  summaryCard() {
-    Row() {
-      Column({ space: 4 }) {
-        Text(formatHitRate(this.summary.hitRate, this.summary.settled))
-          .fontSize(AppTheme.font.title)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(AppTheme.color.primary)
-        Text(hitRateCaption(this.summary.settled))
-          .fontSize(AppTheme.font.body)
-          .fontColor(AppTheme.color.textSecondary)
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Center)
-
-      Column({ space: 4 }) {
-        Text(String(this.summary.pending))
-          .fontSize(AppTheme.font.title)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(AppTheme.color.text)
-        Text('待结算')
-          .fontSize(AppTheme.font.body)
-          .fontColor(AppTheme.color.textSecondary)
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Center)
-
-      Column({ space: 4 }) {
-        Text(String(this.summary.settled))
-          .fontSize(AppTheme.font.title)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(AppTheme.color.text)
-        Text('已结算')
-          .fontSize(AppTheme.font.body)
-          .fontColor(AppTheme.color.textSecondary)
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Center)
+  listBody() {
+    if (this.navStack !== null) {
+      PredictionLogView({
+        pathStack: this.navStack,
+        refreshToken: this.refreshToken,
+        scrollToStatsToken: this.scrollToken,
+        initialFilter: this.initialFilter,
+        collapsibleNotes: true,
+        showDashboard: true
+      })
     }
-    .width('100%')
-    .padding(AppTheme.spacing.s16)
-    .backgroundColor(AppTheme.color.surface)
-    .borderRadius(AppTheme.radius.lg)
   }
 
   build() {
@@ -248,132 +79,16 @@ export struct PredictionListPage {
         this.navStack = context.pathStack;
         if (context.pathInfo.param !== undefined) {
           const params = context.pathInfo.param as PredictionListParams;
-          this.filter = params.status;
-          this.quick = 'all';
-          if (this.service !== null) {
-            this.refresh();
-          }
+          this.initialFilter = params.status;
         }
       },
       onDestinationShown: () => {
         if (this.hasShownOnce) {
-          this.refresh();
+          this.refreshToken += 1;
         } else {
           this.hasShownOnce = true;
         }
       }
     })
-  }
-
-  @Builder
-  listBody() {
-      Column({ space: 10 }) {
-        this.summaryCard()
-
-        Scroll() {
-          Row({ space: AppTheme.spacing.s8 }) {
-            this.statusChip('全部', null)
-            this.statusChip('待结算', PredictionStatus.PENDING)
-            this.statusChip('已结算', PredictionStatus.SETTLED)
-            this.quickChip('到期待结算', 'due', AppTheme.color.warning, AppTheme.color.warningSurface)
-            this.quickChip('待修订', 'revised', AppTheme.color.accentPurple, AppTheme.color.evOtherSurface)
-          }
-        }
-        .scrollable(ScrollDirection.Horizontal)
-        .scrollBar(BarState.Off)
-        .width('100%')
-
-        if (this.isLoading) {
-          Column() {
-            LoadingProgress()
-              .width(32)
-              .height(32)
-              .color(AppTheme.color.primary)
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
-        } else if (this.items.length === 0) {
-          Column() {
-            NoteEmptyState({
-              title: this.emptyTitle(),
-              hint: this.emptyHint(),
-              actionLabel: '',
-              onAction: () => {
-              }
-            })
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
-        } else {
-          List({ space: 8 }) {
-            ForEach(this.items, (item: PredictionListItem) => {
-              ListItem() {
-                PredictionListCard({
-                  item: item,
-                  onTap: () => {
-                    this.openDetail(item.id);
-                  }
-                })
-              }
-            }, (item: PredictionListItem) => `${item.id}_${this.listVersion}`)
-            if (this.hasMore) {
-              ListItem() {
-                Text(this.isLoadingMore ? '加载中…' : '加载更多')
-                  .fontSize(AppTheme.font.bodyStrong)
-                  .fontColor(AppTheme.color.primary)
-                  .width('100%')
-                  .textAlign(TextAlign.Center)
-                  .padding({ top: AppTheme.spacing.s10, bottom: AppTheme.spacing.s10 })
-                  .onClick(() => {
-                    this.loadMore();
-                  })
-                  .accessibilityText(this.isLoadingMore ? '正在加载更多预测' : '加载更多预测')
-              }
-            }
-          }
-          .width('100%')
-          .layoutWeight(1)
-          .scrollBar(BarState.Off)
-          .align(Alignment.Top)
-        }
-      }
-      .width('100%')
-      .height('100%')
-      .padding({ left: AppTheme.spacing.s16, right: AppTheme.spacing.s16, top: AppTheme.spacing.s12, bottom: AppTheme.spacing.s12 })
-      .backgroundColor(Color.Transparent)
-  }
-
-  private emptyTitle(): string {
-    if (this.quick === 'due') {
-      return '没有到期待结算的预测';
-    }
-    if (this.quick === 'revised') {
-      return '没有待修订的预测';
-    }
-    if (this.filter === PredictionStatus.PENDING) {
-      return '暂无待结算预测';
-    }
-    if (this.filter === PredictionStatus.SETTLED) {
-      return '暂无已结算预测';
-    }
-    return '还没有预测记录';
-  }
-
-  private emptyHint(): string {
-    if (this.quick === 'due') {
-      return '到达结算日的判断会在这里等你';
-    }
-    if (this.quick === 'revised') {
-      return '修订过的判断会在这里列出';
-    }
-    if (this.filter === PredictionStatus.PENDING) {
-      return '到期的判断会在这里等你结算';
-    }
-    if (this.filter === PredictionStatus.SETTLED) {
-      return '结算后的判断会保留在这里';
-    }
-    return '点右上角「＋」创建一条';
   }
 }
