@@ -16,6 +16,8 @@ export struct ChartSection {
   /** Hides the explanation, verdict and footnote of each card behind its notes toggle. */
   @Param collapsible: boolean = false;
   @Param initiallyExpanded: boolean = false;
+  /** Stable suffix for the notes toggle id; several cards share one screen. */
+  @Param sectionId: string = 'default';
   @BuilderParam content: () => void = this.emptyContent;
   @Local expanded: boolean = false;
 
@@ -73,7 +75,7 @@ export struct ChartSection {
           Row() {
             Blank()
             Text(this.expanded ? '收起' : '说明')
-              .id('chart_section_toggle')
+              .id(`chart_section_toggle_${this.sectionId}`)
               .fontSize(AppTheme.font.body)
               .fontColor(AppTheme.color.primary)
               .padding({ left: AppTheme.spacing.s8, top: AppTheme.spacing.s4, bottom: AppTheme.spacing.s4 })

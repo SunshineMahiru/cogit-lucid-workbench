@@ -43,6 +43,8 @@ export struct AnalyticsView {
   @Param refreshToken: number = 0;
   /** Hides the explanation, verdict and footnote of each card behind a notes toggle. */
   @Param collapsibleNotes: boolean = true;
+  /** Prefix for element ids so the tab copy and the pushed page copy never collide. */
+  @Param idPrefix: string = 'analytics';
   @Local report: LocalStatsReport | null = null;
   @Local isLoading: boolean = true;
   @Local errorText: string = '';
@@ -55,6 +57,7 @@ export struct AnalyticsView {
   @Local remoteLoading: boolean = false;
   @Local remoteError: string = '';
   private repository: RemoteStatsRepository = new RemoteStatsRepository();
+  private loadToken: number = 0;
 
   aboutToAppear(): void {
     this.load();
@@ -80,7 +83,10 @@ export struct AnalyticsView {
   }
 
   private async load(): Promise<void> {
-    this.isLoading = true;
+    const token = ++this.loadToken;
+    // Only the first read blanks the cards; later refreshes update them in place so the cards,
+    // their expanded state and the scroll position survive a tab switch.
+    this.isLoading = this.report === null;
     this.errorText = '';
     const context = this.getUIContext().getHostContext();
     if (context === undefined) {
@@ -92,6 +98,9 @@ export struct AnalyticsView {
     }
     try {
       const loaded = await loadLocalStats(context);
+      if (token !== this.loadToken) {
+        return;
+      }
       this.hasReal = loaded.hasRecords;
       if (loaded.hasRecords) {
         this.report = loaded;
@@ -103,6 +112,9 @@ export struct AnalyticsView {
         this.usingDemo = false;
       }
     } catch (error) {
+      if (token !== this.loadToken) {
+        return;
+      }
       this.errorText = error instanceof Error ? error.message : '本机数据读取失败';
       if (this.demoEnabled) {
         this.showDemo();
@@ -111,7 +123,9 @@ export struct AnalyticsView {
         this.usingDemo = false;
       }
     } finally {
-      this.isLoading = false;
+      if (token === this.loadToken) {
+        this.isLoading = false;
+      }
     }
   }
 
@@ -321,7 +335,7 @@ export struct AnalyticsView {
       .alignItems(HorizontalAlign.Start)
 
       Text('刷新')
-        .id('analytics_refresh')
+        .id(`${this.idPrefix}_refresh`)
         .fontSize(AppTheme.font.body)
         .fontColor(AppTheme.color.primary)
         .onClick(() => {
@@ -364,7 +378,7 @@ export struct AnalyticsView {
       .alignItems(HorizontalAlign.Start)
 
       Toggle({ type: ToggleType.Switch, isOn: this.demoEnabled })
-        .id('analytics_demo_toggle')
+        .id(`${this.idPrefix}_demo_toggle`)
         .onChange((isOn: boolean) => {
           this.setDemoEnabled(isOn);
         })
@@ -391,7 +405,7 @@ export struct AnalyticsView {
           .fontSize(AppTheme.font.caption)
           .fontColor(AppTheme.color.textMuted)
         Text('重试')
-          .id('analytics_retry')
+          .id(`${this.idPrefix}_retry`)
           .fontSize(AppTheme.font.body)
           .fontColor(AppTheme.color.primary)
           .onClick(() => {
@@ -452,6 +466,7 @@ export struct AnalyticsView {
   metricCards(report: LocalStatsReport) {
     ChartSection({
       title: '校准与命中率',
+      sectionId: 'calibration',
       hint: '我是否过度自信？横轴为提交时的信心，纵轴为实际命中率；斜线为理想校准。',
       verdict: report.calibration.verdict,
       footer: `已结算 ${report.settled} 条，其中可判断 ${report.binarySettled} 条，命中率 ${report.hitRate}%；` +
@@ -490,6 +505,7 @@ export struct AnalyticsView {
 
     ChartSection({
       title: '命中率分档',
+      sectionId: 'buckets',
       hint: '我的判断在哪些条件下更准？按期限与提交信心分档，样本不足只标注数量。',
       verdict: `${report.horizon.verdict}；${report.confidence.verdict}`,
       footer: this.bucketFooter(report),
@@ -535,6 +551,7 @@ export struct AnalyticsView {
 
     ChartSection({
       title: '解释比例趋势',
+      sectionId: 'ratio',
       hint: '我是否在用解释代替现场？每月的解释字数除以现场与感受字数，100 表示两者相当。',
       verdict: report.interpretation.verdict,
       footer: '口径：只统计现场、感受、解释三类材料；封存材料不参与。月份按材料记录日期归月。',
@@ -557,6 +574,7 @@ export struct AnalyticsView {
 
     ChartSection({
       title: '证据来源分布',
+      sectionId: 'evidence',
       hint: '我的证据秩序是否偏食？六类证据来源的占比。',
       verdict: report.evidence.verdict,
       footer: '口径：统计复盘与预测上记录的证据条目；封存证据不参与。',
@@ -575,6 +593,7 @@ export struct AnalyticsView {
 
     ChartSection({
       title: '纠正回应率',
+      sectionId: 'correction',
       hint: '我是否回应了他者纠正？他者纠正后，是否留下自己的观察。',
       verdict: report.correction.verdict,
       footer: '口径：一份纠正记录在纠正时间之后出现我自己的观察，才算已回应；未回应的按待回应显示。',
@@ -596,6 +615,7 @@ export struct AnalyticsView {
 
     ChartSection({
       title: '修订质量',
+      sectionId: 'revision',
       hint: '我的重建是否只有术语？修订中仅增加术语、没有写新增解释力的比例。',
       verdict: report.revision.verdict,
       footer: '口径：版本大于 1 的预测记为一次修订；未填写新增解释力的修订归为仅术语增加。',
@@ -633,7 +653,7 @@ export struct AnalyticsView {
           .alignItems(HorizontalAlign.Start)
 
           Text(this.remoteOpen ? '收起' : '展开')
-            .id('analytics_remote_toggle')
+            .id(`${this.idPrefix}_remote_toggle`)
             .fontSize(AppTheme.font.body)
             .fontColor(AppTheme.color.primary)
             .onClick(() => {
@@ -697,7 +717,7 @@ export struct AnalyticsView {
         this.demoToggle()
       }
       this.stateCard()
-      if (this.report !== null && !this.isLoading) {
+      if (this.report !== null) {
         this.metricCards(this.report)
       }
       this.remoteSection()
