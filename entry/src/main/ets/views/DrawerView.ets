@@ -1,4 +1,5 @@
 import { AppTheme } from '../theme/AppTheme';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { TabHeader } from '../components/TabHeader';
 import { SectionCard } from '../components/SectionCard';
 import { ReadingCard } from '../components/ReadingCard';
@@ -6,6 +7,7 @@ import { HomeSnapshotService } from '../data/HomeSnapshotService';
 import { HomeSnapshot } from '../model/HomeSnapshot';
 import { BodyReading, formatHitRate } from '../model/HomeModel';
 import { TabKey } from '../navigation/TabItems';
+import { isDatabaseUnsupported } from '../app/AppHealth';
 import {
   activeTab,
   subscribeTabRefresh,
@@ -66,6 +68,7 @@ export struct DrawerView {
   private snapshotService: HomeSnapshotService | null = null;
   private tabListener: (() => void) | null = null;
   private lastPushAt: number = 0;
+  private loadToken: number = 0;
 
   aboutToAppear(): void {
     if (this.tabListener === null) {
@@ -93,16 +96,29 @@ export struct DrawerView {
       this.loadPreview();
       return;
     }
+    const token = ++this.loadToken;
     try {
       if (this.snapshotService === null) {
         this.snapshotService = await HomeSnapshotService.open(context);
       }
       const snapshot: HomeSnapshot = await this.snapshotService.load();
+      if (token !== this.loadToken) {
+        return;
+      }
       this.applySnapshot(snapshot);
       this.failed = snapshot.partial;
     } catch (error) {
-      this.loadPreview();
-      this.failed = false;
+      if (token !== this.loadToken) {
+        return;
+      }
+      const failure = error as BusinessError;
+      if (isDatabaseUnsupported(failure.code ?? 0)) {
+        this.loadPreview();
+        return;
+      }
+      // A real read failure keeps the placeholders and offers a retry instead of demo numbers.
+      this.failed = true;
+      this.loaded = true;
     }
   }
 
@@ -120,10 +136,11 @@ export struct DrawerView {
 
   private applySnapshot(snapshot: HomeSnapshot): void {
     this.readings = snapshot.readings.length > 0 ? snapshot.readings : emptyReadings();
-    this.hitRateText = formatHitRate(snapshot.summary.hitRate, snapshot.summary.settledPredictions);
-    this.pendingText = String(snapshot.summary.pendingPredictions);
-    this.replyText = String(snapshot.agendaReply);
-    this.openNodeText = String(snapshot.planOpenCount);
+    this.hitRateText = snapshot.summaryAvailable ?
+      formatHitRate(snapshot.summary.hitRate, snapshot.summary.settledPredictions) : NO_VALUE;
+    this.pendingText = snapshot.summaryAvailable ? String(snapshot.summary.pendingPredictions) : NO_VALUE;
+    this.replyText = snapshot.agendaAvailable ? String(snapshot.agendaReply) : NO_VALUE;
+    this.openNodeText = snapshot.agendaAvailable ? String(snapshot.planOpenCount) : NO_VALUE;
     this.loaded = true;
   }
 
