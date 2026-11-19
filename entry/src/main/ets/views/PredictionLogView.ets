@@ -44,12 +44,12 @@ export struct PredictionLogView {
   @Local filter: PredictionStatus | null = null;
   @Local quick: PredictionQuickFilter = 'all';
   @Local isLoading: boolean = true;
+  /** True after the first successful load; later refreshes keep the rows on screen. */
+  @Local hasLoaded: boolean = false;
   @Local isLoadingMore: boolean = false;
   @Local hasMore: boolean = false;
   @Local isPreview: boolean = false;
   @Local listVersion: number = 0;
-  /** Bumped on every list reload so the embedded dashboard refreshes with the rows. */
-  @Local analyticsToken: number = 0;
   private scroller: Scroller = new Scroller();
   private loadToken: number = 0;
 
@@ -96,7 +96,7 @@ export struct PredictionLogView {
     this.listVersion += 1;
     this.summary = previewStore.predictionSummary();
     this.isLoading = false;
-    this.analyticsToken += 1;
+    this.hasLoaded = true;
   }
 
   async refresh(): Promise<void> {
@@ -105,6 +105,7 @@ export struct PredictionLogView {
       this.listVersion += 1;
       this.summary = previewStore.predictionSummary();
       this.isLoading = false;
+      this.hasLoaded = true;
       return;
     }
     if (this.service === null) {
@@ -121,8 +122,12 @@ export struct PredictionLogView {
       this.items = this.applyQuick(rows);
       this.listVersion += 1;
       this.hasMore = this.quick === 'all' && rows.length >= PAGE_SIZE;
-      this.summary = await this.service.summary();
-      this.analyticsToken += 1;
+      const summary: PredictionSummary = await this.service.summary();
+      if (token !== this.loadToken) {
+        return;
+      }
+      this.summary = summary;
+      this.hasLoaded = true;
     } catch (error) {
       if (token !== this.loadToken) {
         return;
@@ -139,9 +144,15 @@ export struct PredictionLogView {
     if (this.service === null || this.isLoadingMore || !this.hasMore) {
       return;
     }
+    const token = this.loadToken;
+    const filter = this.filter;
     this.isLoadingMore = true;
     try {
-      const next = await this.service.listPage(this.filter, PAGE_SIZE, this.items.length);
+      const next = await this.service.listPage(filter, PAGE_SIZE, this.items.length);
+      // A refresh or filter change while paging must not append the old page.
+      if (token !== this.loadToken || filter !== this.filter) {
+        return;
+      }
       this.items = this.items.concat(next);
       this.listVersion += 1;
       this.hasMore = next.length >= PAGE_SIZE;
@@ -330,7 +341,7 @@ export struct PredictionLogView {
         this.filterRow()
       }
 
-      if (this.isLoading) {
+      if (this.isLoading && !this.hasLoaded) {
         ListItem() {
           Column() {
             LoadingProgress()
@@ -349,6 +360,7 @@ export struct PredictionLogView {
               title: this.emptyTitle(),
               hint: this.emptyHint(),
               actionLabel: '',
+              markPageEmpty: !this.showDashboard,
               onAction: () => {
               }
             })
@@ -391,8 +403,9 @@ export struct PredictionLogView {
         }
         ListItem() {
           AnalyticsView({
-            refreshToken: this.refreshToken + this.analyticsToken,
-            collapsibleNotes: this.collapsibleNotes
+            refreshToken: this.refreshToken,
+            collapsibleNotes: this.collapsibleNotes,
+            idPrefix: 'prediction_analytics'
           })
         }
       }
