@@ -14,11 +14,17 @@ export struct NoteListPage {
   @Local refreshToken: number = 0;
   @Local initialFilter: string = '';
   private hasShownOnce: boolean = false;
+  private lastPushAt: number = 0;
 
   private openEditor(): void {
     if (this.navStack === null) {
       return;
     }
+    const now = Date.now();
+    if (now - this.lastPushAt < 600) {
+      return;
+    }
+    this.lastPushAt = now;
     this.navStack.pushPathByName(ROUTES.NOTE_EDIT, { templateId: null }, () => {
       this.refreshToken += 1;
     });

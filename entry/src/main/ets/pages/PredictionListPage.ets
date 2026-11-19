@@ -17,11 +17,17 @@ export struct PredictionListPage {
   @Local scrollToken: number = 0;
   @Local initialFilter: PredictionStatus | null = null;
   private hasShownOnce: boolean = false;
+  private lastPushAt: number = 0;
 
   private openCreate(): void {
     if (this.navStack === null) {
       return;
     }
+    const now = Date.now();
+    if (now - this.lastPushAt < 600) {
+      return;
+    }
+    this.lastPushAt = now;
     this.navStack.pushPathByName(ROUTES.PREDICTION_CREATE, { sourcePredictionId: null }, () => {
       this.refreshToken += 1;
     });
