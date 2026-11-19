@@ -87,6 +87,7 @@ export struct HomeQuickMenuPanel {
         }
         .width('100%')
         .height('22%')
+        .constraintSize({ minHeight: 132 })
         .backgroundColor(AppTheme.color.surface)
         .borderRadius({ topLeft: AppTheme.radius.lg, topRight: AppTheme.radius.lg })
         .border({ width: { top: 0.5 }, color: AppTheme.color.border })
