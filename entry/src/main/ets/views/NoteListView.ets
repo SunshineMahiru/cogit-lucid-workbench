@@ -27,6 +27,8 @@ export struct NoteListView {
   @Local filter: string = '';
   @Local search: string = '';
   @Local isLoading: boolean = true;
+  /** True after the first successful load; later refreshes keep the list on screen. */
+  @Local hasLoaded: boolean = false;
   @Local isLoadingMore: boolean = false;
   @Local hasMore: boolean = false;
   @Local isPreview: boolean = false;
@@ -69,6 +71,7 @@ export struct NoteListView {
     this.items = previewStore.listNotes(this.filter);
     this.listVersion += 1;
     this.isLoading = false;
+    this.hasLoaded = true;
   }
 
   async refresh(): Promise<void> {
@@ -76,6 +79,7 @@ export struct NoteListView {
       this.items = previewStore.listNotes(this.filter);
       this.listVersion += 1;
       this.isLoading = false;
+      this.hasLoaded = true;
       return;
     }
     if (this.service === null) {
@@ -93,6 +97,7 @@ export struct NoteListView {
       this.items = rows;
       this.listVersion += 1;
       this.hasMore = rows.length === PAGE_SIZE;
+      this.hasLoaded = true;
     } catch (error) {
       if (token !== this.loadToken) {
         return;
@@ -109,11 +114,17 @@ export struct NoteListView {
     if (this.service === null || this.isLoadingMore || !this.hasMore) {
       return;
     }
+    const token = this.loadToken;
+    const filter = this.filter;
     this.isLoadingMore = true;
     try {
-      const next: NoteListItem[] = this.filter.length === 0 ?
+      const next: NoteListItem[] = filter.length === 0 ?
         await this.service.listRecentPage(PAGE_SIZE, this.items.length) :
-        await this.service.listByTypePage(this.filter, PAGE_SIZE, this.items.length);
+        await this.service.listByTypePage(filter, PAGE_SIZE, this.items.length);
+      // A refresh or filter change while paging must not append the old page.
+      if (token !== this.loadToken || filter !== this.filter) {
+        return;
+      }
       this.items = this.items.concat(next);
       this.listVersion += 1;
       this.hasMore = next.length === PAGE_SIZE;
@@ -197,7 +208,7 @@ export struct NoteListView {
         .scrollBar(BarState.Off)
         .width('100%')
 
-        if (this.isLoading) {
+        if (this.isLoading && !this.hasLoaded) {
           Column() {
             LoadingProgress()
               .width(32)
