@@ -25,6 +25,7 @@ export struct PageBackground {
   @Local imageOpacity: number = 0.1;
   @Local surfaceAlpha: number = 1;
   private listener: (() => void) | null = null;
+  private loadToken: number = 0;
   private static readonly EMPTY_FACTOR: number = 0.55;
   private static readonly DARK_IMAGE_FACTOR: number = 0.7;
   private static readonly DARK_SCRIM: string = '#2E000000';
@@ -70,7 +71,9 @@ export struct PageBackground {
   }
 
   private async load(force: boolean): Promise<void> {
-    if (!force && surfaceCache.has(this.route)) {
+    const key = this.route;
+    const token = ++this.loadToken;
+    if (!force && surfaceCache.has(key)) {
       this.applyCached();
       return;
     }
@@ -81,17 +84,26 @@ export struct PageBackground {
     }
     try {
       const store = await PageBackgroundStore.open(context);
-      const resolved = await store.resolve(this.route);
+      const resolved = await store.resolve(key);
       const path = await PageBackgroundService.prepareDisplayImage(resolved, context);
+      // A fast group switch must not let the previous group's picture land on the new one.
+      if (token !== this.loadToken || key !== this.route) {
+        return;
+      }
       const snapshot: SurfaceSnapshot = {
         path: path,
         imageOpacity: this.imageStrength(await store.getOpacity()),
-        surfaceAlpha: await store.resolveAlpha(this.route)
+        surfaceAlpha: await store.resolveAlpha(key)
       };
-      surfaceCache.set(this.route, snapshot);
+      if (token !== this.loadToken || key !== this.route) {
+        return;
+      }
+      surfaceCache.set(key, snapshot);
       this.applySnapshot(snapshot);
     } catch (error) {
-      this.imagePath = '';
+      if (token === this.loadToken && key === this.route) {
+        this.imagePath = '';
+      }
     }
   }
 
