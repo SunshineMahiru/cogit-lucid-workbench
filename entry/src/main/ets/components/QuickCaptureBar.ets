@@ -14,6 +14,9 @@ import { previewStore } from '../preview/PreviewStore';
 export struct QuickCaptureBar {
   @Param placeholder: string = '此刻发生了什么';
   @Param hint: string = '';
+  /** Element ids; hosts sharing the screen pass distinct values. */
+  @Param inputId: string = 'quick_capture_input';
+  @Param saveId: string = 'quick_capture_save';
   @Event onSaved: () => void = () => {
   };
   @Local captureText: string = '';
@@ -61,7 +64,7 @@ export struct QuickCaptureBar {
     SectionCard({ contentPadding: AppTheme.spacing.s12 }) {
       Column({ space: AppTheme.spacing.s6 }) {
         TextInput({ text: this.captureText, placeholder: this.placeholder })
-          .id('quick_capture_input')
+          .id(this.inputId)
           .fontSize(AppTheme.font.bodyStrong)
           .height(44)
           .backgroundColor(Color.Transparent)
@@ -79,7 +82,7 @@ export struct QuickCaptureBar {
             .layoutWeight(1)
 
           Text(this.saving ? '保存中' : '保存')
-            .id('quick_capture_save')
+            .id(this.saveId)
             .fontSize(AppTheme.font.body)
             .fontColor(Color.White)
             .padding({

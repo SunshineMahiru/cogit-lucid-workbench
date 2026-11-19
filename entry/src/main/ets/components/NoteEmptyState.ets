@@ -8,14 +8,23 @@ export struct NoteEmptyState {
   @Param hint: string = '';
   @Param actionLabel: string = '';
   @Param dashed: boolean = false;
+  /** False when the page still shows real content next to this state, e.g. an embedded dashboard. */
+  @Param markPageEmpty: boolean = true;
   @Event onAction: () => void = () => {};
+  private markedEmpty: boolean = false;
 
   aboutToAppear(): void {
-    setPageEmpty(true);
+    if (this.markPageEmpty) {
+      this.markedEmpty = true;
+      setPageEmpty(true);
+    }
   }
 
   aboutToDisappear(): void {
-    setPageEmpty(false);
+    if (this.markedEmpty) {
+      this.markedEmpty = false;
+      setPageEmpty(false);
+    }
   }
 
   build() {

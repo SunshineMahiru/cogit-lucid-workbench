@@ -84,6 +84,8 @@ export struct LogsView {
 
       Column() {
         QuickCaptureBar({
+          inputId: 'logs_capture_input',
+          saveId: 'logs_capture_save',
           placeholder: '此刻发生了什么',
           hint: '一句现场、一种感受、一个身体信号都可以。不必解释。',
           onSaved: () => {
