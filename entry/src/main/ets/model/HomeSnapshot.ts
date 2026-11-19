@@ -13,9 +13,11 @@ export interface HomeSnapshot {
   recentNotes: NoteListItem[];
   /** Existing home summary; field shapes stay unchanged */
   summary: HomeSummary;
+  /** False when the summary read failed; callers show placeholders instead of zeroes */
+  summaryAvailable: boolean;
   /** Today's actionable rows */
   agenda: AgendaItem[];
-  /** Plan items, pending predictions and open hypotheses */
+  /** Number of actionable rows, pending predictions and open hypotheses combined */
   agendaPending: number;
   /** Corrections that still have no own response */
   agendaReply: number;
@@ -23,6 +25,8 @@ export interface HomeSnapshot {
   planOpenCount: number;
   /** Every node of the active plans */
   planNodeCount: number;
+  /** False when plans, predictions or relations could not be read for the agenda */
+  agendaAvailable: boolean;
   /** True when at least one source failed; the view keeps what it got and offers a retry */
   partial: boolean;
 }

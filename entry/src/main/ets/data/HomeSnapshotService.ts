@@ -10,7 +10,9 @@ import { PlanNode } from '../model/PlanNode';
 import { PlanNodeStatus, PlanStatus } from '../model/PlanStatus';
 import { PlanService } from '../plan';
 import { PredictionService } from '../prediction';
+import { PredictionListItem } from '../prediction/PredictionListItem';
 import { RelationService } from '../relation';
+import { RelationListItem } from '../relation/RelationListItem';
 
 /** All-zero summary used before the first read and when the summary read fails. */
 function emptySummary(): HomeSummary {
@@ -57,11 +59,13 @@ export class HomeSnapshotService {
       readings: [],
       recentNotes: [],
       summary: emptySummary(),
+      summaryAvailable: false,
       agenda: [],
       agendaPending: 0,
       agendaReply: 0,
       planOpenCount: 0,
       planNodeCount: 0,
+      agendaAvailable: false,
       partial: false
     };
 
@@ -79,6 +83,7 @@ export class HomeSnapshotService {
     }
     try {
       snapshot.summary = await this.home.loadSummary();
+      snapshot.summaryAvailable = true;
     } catch (error) {
       snapshot.partial = true;
     }
@@ -89,11 +94,16 @@ export class HomeSnapshotService {
 
   /** Plans, predictions and relations feed the agenda and the two node counters. */
   private async loadAgenda(snapshot: HomeSnapshot): Promise<void> {
+    const plans: Plan[] = [];
+    const nodes: PlanNode[] = [];
+    const items: PlanItem[] = [];
+    let plansOk: boolean = true;
     try {
       const planService = await PlanService.open(this.context);
-      const plans: Plan[] = await planService.listPlans();
-      const nodes: PlanNode[] = [];
-      const items: PlanItem[] = [];
+      const allPlans: Plan[] = await planService.listPlans();
+      for (const plan of allPlans) {
+        plans.push(plan);
+      }
       for (const plan of plans) {
         if (plan.status !== PlanStatus.ACTIVE) {
           continue;
@@ -107,10 +117,34 @@ export class HomeSnapshotService {
           }
         }
       }
+      snapshot.planNodeCount = nodes.length;
+      snapshot.planOpenCount = nodes.filter((node: PlanNode) => node.status === PlanNodeStatus.OPEN).length;
+    } catch (error) {
+      plansOk = false;
+      snapshot.partial = true;
+    }
+
+    let predictions: PredictionListItem[] = [];
+    let predictionsOk: boolean = true;
+    try {
       const predictionService = await PredictionService.open(this.context);
-      const predictions = await predictionService.list(null);
+      predictions = await predictionService.list(null);
+    } catch (error) {
+      predictionsOk = false;
+      snapshot.partial = true;
+    }
+
+    let relations: RelationListItem[] = [];
+    let relationsOk: boolean = true;
+    try {
       const relationService = await RelationService.open(this.context);
-      const relations = await relationService.list(null);
+      relations = await relationService.list(null);
+    } catch (error) {
+      relationsOk = false;
+      snapshot.partial = true;
+    }
+
+    try {
       const result = buildAgenda({
         plans: plans,
         nodes: nodes,
@@ -122,9 +156,9 @@ export class HomeSnapshotService {
       snapshot.agenda = result.items;
       snapshot.agendaPending = result.pendingCount;
       snapshot.agendaReply = result.replyCount;
-      snapshot.planNodeCount = nodes.length;
-      snapshot.planOpenCount = nodes.filter((node: PlanNode) => node.status === PlanNodeStatus.OPEN).length;
+      snapshot.agendaAvailable = plansOk && predictionsOk && relationsOk;
     } catch (error) {
+      snapshot.agendaAvailable = false;
       snapshot.partial = true;
     }
   }
