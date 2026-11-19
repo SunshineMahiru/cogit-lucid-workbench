@@ -3,7 +3,8 @@ import { resourceManager } from '@kit.LocalizationKit';
 import { WorkbenchShell } from './WorkbenchShell';
 import { ROUTES } from '../navigation/Routes';
 import { TabKey, tabIndex } from '../navigation/TabItems';
-import { activeTab, requestActiveTabRefresh, requestTabRefresh, setActiveTab } from '../app/TabRefreshBus';
+import { activeTab, requestActiveTabRefresh, setActiveTab } from '../app/TabRefreshBus';
+import { runBackHandler } from '../app/BackGuard';
 import { PlaceholderPage } from './PlaceholderPage';
 import { NoteEditPage } from './NoteEditPage';
 import { NoteListPage } from './NoteListPage';
@@ -71,10 +72,12 @@ struct Index {
     if (this.pathStack.size() > 0) {
       return false;
     }
+    if (runBackHandler()) {
+      return true;
+    }
     if (activeTab() !== TabKey.WORKBENCH) {
       setActiveTab(TabKey.WORKBENCH);
       this.activeIndex = tabIndex(TabKey.WORKBENCH);
-      requestTabRefresh(TabKey.WORKBENCH);
       return true;
     }
     return false;

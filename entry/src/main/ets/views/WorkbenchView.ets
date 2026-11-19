@@ -16,6 +16,7 @@ import {
   unsubscribeTabRefresh
 } from '../app/TabRefreshBus';
 import { notifyHomeRefresh } from '../app/HomeRefreshBus';
+import { setBackHandler } from '../app/BackGuard';
 import { ROUTES } from '../navigation/Routes';
 import {
   NoteDetailParams,
@@ -93,6 +94,8 @@ export struct WorkbenchView {
   @Local dataVersion: number = 0;
   @Local isLoading: boolean = true;
   @Local loadFailed: boolean = false;
+  /** True when only part of the snapshot loaded; the banner stays softer than a hard failure. */
+  @Local dataPartial: boolean = false;
   @Local isPreview: boolean = false;
   @Local dbBlocked: boolean = false;
   @Local dbMessage: string = '';
@@ -107,6 +110,7 @@ export struct WorkbenchView {
   private layoutStore: HomeLayoutStore | null = null;
   private clockTimer: number = -1;
   private tabListener: (() => void) | null = null;
+  private backHandler: (() => boolean) | null = null;
   private lastPushAt: number = 0;
   private loadToken: number = 0;
 
@@ -121,6 +125,12 @@ export struct WorkbenchView {
       };
       subscribeTabRefresh(TabKey.WORKBENCH, this.tabListener);
     }
+    if (this.backHandler === null) {
+      this.backHandler = () => {
+        return this.handleBack();
+      };
+      setBackHandler(this.backHandler);
+    }
     this.openSnapshot();
   }
 
@@ -128,6 +138,10 @@ export struct WorkbenchView {
     if (this.tabListener !== null) {
       unsubscribeTabRefresh(TabKey.WORKBENCH, this.tabListener);
       this.tabListener = null;
+    }
+    if (this.backHandler !== null) {
+      setBackHandler(null);
+      this.backHandler = null;
     }
     if (this.clockTimer >= 0) {
       clearInterval(this.clockTimer);
@@ -156,8 +170,27 @@ export struct WorkbenchView {
     }
     // A panel left open while another tab was shown does not reappear on return.
     this.panelVisible = false;
+    this.sortMode = false;
+    // Settings can change while this tab is hidden; reload so subtraction and monitor rules follow.
+    this.loadSettings();
     this.updateClock();
     this.refresh();
+  }
+
+  /** Page-level back: close the panel or leave sort mode before the app exits. */
+  private handleBack(): boolean {
+    if (activeTab() !== TabKey.WORKBENCH) {
+      return false;
+    }
+    if (this.panelVisible) {
+      this.setPanel(false);
+      return true;
+    }
+    if (this.sortMode) {
+      this.exitSortMode();
+      return true;
+    }
+    return false;
   }
 
   private async loadLayout(): Promise<void> {
@@ -251,6 +284,7 @@ export struct WorkbenchView {
     this.dataVersion += 1;
     this.isLoading = false;
     this.loadFailed = false;
+    this.dataPartial = false;
     this.dbBlocked = false;
   }
 
@@ -274,7 +308,8 @@ export struct WorkbenchView {
         return;
       }
       this.applySnapshot(snapshot);
-      this.loadFailed = snapshot.partial;
+      this.loadFailed = false;
+      this.dataPartial = snapshot.partial;
       this.dataNotice = consumeJsonIssues() > 0 ? '部分记录格式异常，已跳过' : '';
       const context = this.getUIContext().getHostContext();
       this.encryptionNotice = context !== undefined &&
@@ -520,6 +555,7 @@ export struct WorkbenchView {
   private async resetOrder(): Promise<void> {
     if (this.layoutStore === null) {
       this.order = normalizeBlockOrder([]);
+      this.persistOrder();
       return;
     }
     this.order = await this.layoutStore.reset();
@@ -539,7 +575,8 @@ export struct WorkbenchView {
     }
     HomeLayoutStore.open(context).then((store: HomeLayoutStore) => {
       this.layoutStore = store;
-      store.save(order).catch(() => {
+      // Read the current order, not the snapshot taken before the store opened.
+      store.save(this.order).catch(() => {
       });
     }).catch(() => {
     });
@@ -867,6 +904,26 @@ export struct WorkbenchView {
           top: AppTheme.spacing.s6,
           bottom: AppTheme.spacing.s2
         })
+    } else if (this.dataPartial) {
+      Row({ space: AppTheme.spacing.s8 }) {
+        Text('部分数据未读取，已展示可用内容')
+          .fontSize(AppTheme.font.caption)
+          .fontColor(AppTheme.color.warning)
+          .layoutWeight(1)
+        Text('重试')
+          .fontSize(AppTheme.font.body)
+          .fontColor(AppTheme.color.primary)
+          .onClick(() => {
+            this.refresh();
+          })
+      }
+      .width('100%')
+      .padding({
+        left: AppTheme.spacing.s20,
+        right: AppTheme.spacing.s20,
+        top: AppTheme.spacing.s6,
+        bottom: AppTheme.spacing.s2
+      })
     } else if (this.dataNotice.length > 0) {
       Text(this.dataNotice)
         .fontSize(AppTheme.font.caption)
