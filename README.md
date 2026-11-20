@@ -31,15 +31,15 @@ Three choices set it apart from a journal:
 
 The interface is Chinese only. The in-app name lives in `entry/src/main/ets/theme/AppIdentity.ts`, the launcher label in `AppScope/resources/base/element/string.json`.
 
-The home page opens with the identity band (avatar, nickname, signature, custom title) and four quick entries: record now, todo, current plan, and all modules. The todo card carries total notes, pending settlements, and hit rate at its top. Readings, the weekly card, the plan card, and the six-module grid follow; the `示例数据看板（远端合成）` entry sits after the grid.
+The app opens on a five-tab shell: `工作台`, `日志`, `预测`, `抽屉`, and `我的`. The bottom bar stays visible, a tap swaps the content without a slide, and record pages push over it. `工作台` shows the date and time, one-line capture, then the agenda, recent notes, module status, readings and review prompt as reorderable blocks; one top-right button opens the layout panel. `日志` carries quick capture and the note list, `预测` carries the prediction log with the analytics cards at the bottom, `抽屉` holds every module entry and the readings, and `我的` holds the identity card and the settings entries.
 
 ## Project status
 
-The build covers six record modules — notes, predictions and settlement, six-zone reviews with an optional agent, relations, anchors, and status readings — plus plans that organise them: a goal, optional projects, seven-day nodes, and a checklist. Reviews record one main decision with reason, optional action, commitment, relation, and look-back date; old four-step reviews stay read-only. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over line, and a split of linked records by module. Settings carry page backgrounds and surface opacity, Markdown export writes the chosen record set, backup and restore hand a `.cogitbackup` file to the system save dialog, and the analytics dashboard renders a remote sample payload with twelve months of detail.
+The build covers six record modules — notes, predictions and settlement, six-zone reviews with an optional agent, relations, anchors, and status readings — plus plans that organise them: a goal, optional projects, seven-day nodes, and a checklist. Reviews record one main decision with reason, optional action, commitment, relation, and look-back date; old four-step reviews stay read-only. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over line, and a split of linked records by module. Settings carry page backgrounds and surface opacity, Markdown export writes the chosen record set, backup and restore hand a `.cogitbackup` file to the system save dialog, and the analytics cards compute local statistics; an optional collapsed reference can load the synthetic remote sample.
 
-Records live in an encrypted `relationalStore` database (nineteen tables). If the store cannot be opened on a device, the home page shows a blocking view with retry and exit instead of writing plaintext; only runs without `relationalStore` — the DevEco Previewer reports code 801 — fall back to the in-memory demo data, and the counters are labelled as demo content.
+Records live in an encrypted `relationalStore` database (nineteen tables). If the store cannot be opened on a device, the workbench shows a blocking view with retry and exit instead of writing plaintext; only runs without `relationalStore` — the DevEco Previewer reports code 801 — fall back to the in-memory demo data, and the counters are labelled as demo content.
 
-The app is one module, targets `targetSdkVersion` 26.0.0 with a minimum of 6.1.1 (API 24), declares `phone` as the only device type, and ships a light and a dark palette that follow the system colour mode. The device suite has seven cases; the local check scripts cover the pure functions and services, and both are described under Tests. Known limits: the interface is Chinese only, the analytics page reads the remote sample file rather than local records, and model modes need your own endpoint and key.
+The app is one module, targets and requires API 26 (`targetSdkVersion` and `compatibleSdkVersion` 26.0.0), declares `phone` as the only device type, and ships a light and a dark palette that follow the system colour mode. The device suite has ten cases; the local check scripts cover the pure functions and services, and both are described under Tests. Known limits: the interface is Chinese only, the optional remote reference is synthetic, and model modes need your own endpoint and key.
 
 ## Highlights
 
@@ -47,17 +47,20 @@ The app is one module, targets `targetSdkVersion` 26.0.0 with a minimum of 6.1.1
 |---|---|
 | Frozen prediction log | Target, judgment, confidence 0-100, reason, and a settlement date written once; settlement fills the outcome and marks hit or miss. |
 | Hit-rate statistics | Overall rate, a six-month monthly trend, and a hit/miss donut, drawn with `@ohos/mpchart`. |
-| Analytics dashboard | Ten charts over one remote payload: calibration curve, monthly hit rate, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. A month picker selects one of twelve months, and every chart reads that month's detail. The page renders the remote sample and does not read local records. |
-| Encrypted local store | All nineteen tables live in an encrypted `relationalStore` database. If the store cannot be opened, the home page shows a blocking view with retry and exit instead of writing plaintext. |
-| Previewer demo mode | Only where `relationalStore` is missing — the DevEco Previewer reports code 801 — the home page reads the in-memory preview store and labels the counters as demo data. |
-| Four-step review | Facts, interpretation, contradiction, action. The contradiction step ticks value anchors and uses them to test the explanation. |
+| Analytics cards | Six local cards answer the review questions: calibration and hit rate, horizon and confidence buckets, explanation-to-scene ratio, evidence sources, correction response, and revision quality. Each card's explanation, verdict and footnote stay collapsed behind `说明`; an optional remote reference chart is collapsed at the bottom. |
+| Five-tab shell | `工作台`, `日志`, `预测`, `抽屉`, `我的` share one persistent bottom bar; switching replaces the content without a slide, and record pages cover the bar and return to the tab that opened them. |
+| Sortable workbench | Six blocks on `工作台` — quick capture, agenda, recent notes, module status, readings, review prompt — can be long-pressed and dragged into a new order, which is stored on the device. |
+| Logs, drawer and mine | `日志` carries quick capture plus the note list; `抽屉` holds every module entry and the readings; `我的` carries the identity card and the settings and background entries. |
+| Encrypted local store | All nineteen tables live in an encrypted `relationalStore` database. If the store cannot be opened, the workbench shows a blocking view with retry and exit instead of writing plaintext. |
+| Previewer demo mode | Only where `relationalStore` is missing — the DevEco Previewer reports code 801 — the workbench, drawer and analytics cards read the in-memory preview store and label the values as demo data. |
+| Six-zone review | Scene and existing action, current model, relation and main contradiction, multi-source correction, cost and motivation, adjustment and revision. Any zone or a referenced material allows saving; anchors are ticked in the correction zone. Old four-step reviews stay read-only. |
 | Plan ladder | A goal, an optional project group, seven-day nodes, and a checklist. Only one goal is primary; closing a node carries unfinished items into the next week and writes a review draft. The goal page adds a deadline ring, a one-square-per-week rhythm strip, week and month views, a carry-over rate line, and a link split by module. |
 | Two-way record links | A plan node picks records from any of the six modules, and every record detail page can attach itself to a plan node. |
 | Three-tier trust | Each relation carries a friendly, sincere, or transparent tier and renders as a star graph centred on you. |
 | Threshold readings | Sleep below 6.5 hours, zero exercise, or one late-night alert raises a flag on the status panel. |
 | Markdown export | Eight record groups render into one Markdown file, written to the sandbox first and then handed to the system save dialog; plan links to sealed records print a placeholder instead of their titles. |
 | Backup and restore | Rows, identity, settings and background pictures travel in one `.cogitbackup`; sealed records stay on the device, the current database is copied aside before a restore, and the API key never enters the bundle. |
-| Home identity band | Avatar, nickname, signature, and a hand-written title sit above four quick entries: record now, todo, current plan, and all modules; the todo card carries total notes, pending settlements, and hit rate. |
+| Mine identity card | Avatar, nickname, signature, and a hand-written title sit in `我的`, with entries for the identity editor, settings, and page backgrounds. |
 | Backgrounds and page opacity | One default picture or one per module, from the gallery, the camera, or the file picker. Picture strength runs 4-30% and the page surface itself takes 0-60% transparency, so the setting works with or without a picture. |
 
 ## Architecture
@@ -71,7 +74,7 @@ flowchart TB
   end
   subgraph core["Domain · Data · Analysis"]
     domain["Domain<br/>note · prediction · review · anchor<br/>relation · status · plan"]
-    data["Data<br/>dashboard aggregate, cross-entity reads"]
+    data["Data<br/>workbench and drawer aggregate, cross-entity reads"]
     analysis["Analysis<br/>contradiction · calibration · trust · status rules"]
     domain --> data --> analysis
   end
@@ -86,27 +89,28 @@ flowchart TB
 ```
 
 - ArkTS pages with state management V2 (`@ComponentV2`, `@Local`, `@Param`); entity models and services in plain TypeScript.
-- Navigation with `NavPathStack`; 32 route names live in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`. The tree holds 34 page files and 33 reusable components.
+- Navigation with `NavPathStack`; 30 route names live in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`. The tree holds 32 page files and 44 reusable components.
+- `pages/WorkbenchShell.ets` owns the shell: `Navigation` wraps `Tabs`, the five `TabContent` blocks switch without animation, and a back guard lets the workbench close its panel or sort mode before the app exits.
 - `relationalStore` is the single source of truth and is encrypted; `Preferences` keeps non-secret options, the model key sits in the system asset service, and `fileIo` writes the Markdown export.
 - `@ohos/mpchart` 3.1.0-rc.0 is the only runtime dependency. Icons come from system glyphs rather than an icon pack.
 - `components/charts/` wraps mpchart for lines, bars, and pies, and draws the heatmaps on Canvas. `network/RemoteStatsRepository` reads the analytics JSON from Gitee first, then GitHub.
 - `preview/` supplies in-memory demo data so pages render in the DevEco Previewer; no page reads it while the database is available.
-- `profile/` handles the home identity: nickname, signature and title are three text fields stored through Preferences alongside the avatar path, while the avatar image runs a separate 320 px square pipeline.
+- `profile/` backs the identity card in `我的`: nickname, signature and title are three text fields stored through Preferences alongside the avatar path, while the avatar image runs a separate 320 px square pipeline.
 
 ## Usage Example
 
-The home page opens with the identity band and four quick entries; today's readings, a weekly settlement or onboarding card, the plan card, and the grid of six modules follow below, with the sample-data dashboard entry after the grid. `编辑` and `设置` sit on the right of the identity band.
+`工作台` opens with the date and time, one small button on the right, one-line capture, and the six sortable blocks. `日志` opens quick capture and the note list, `预测` opens the prediction log and ends with the analytics cards, and `抽屉` lists every module entry together with the readings. `我的` opens the identity card and the settings entries.
 
-<img src="./docs/images/debug/home.jpeg" width="300" alt="Upper half of the home page: the identity band, four quick entries, the readings card, the weekly settlement card marked reviewed and the plan card">
+In the steps below, `日志`, `预测`, `抽屉` and `我的` refer to the bottom-bar tabs; record detail pages open over the bar and return to the tab that opened them.
 
 ### Set your identity
 
-1. Tap `编辑` on the identity band.
+1. Open `我的` and tap `编辑` on the identity card.
 2. Pick an avatar from the gallery, the camera, or the file picker; the picture is centre-cropped to a 320 px square and stored in the app sandbox.
 3. Fill in a nickname (up to 12 characters), a signature (24), and a title (8).
-4. Tap `保存`. The band updates at once and keeps the values after a restart.
+4. Tap `保存`. The card updates at once and keeps the values after a restart.
 
-Expected result: the header shows the new avatar and text; an empty nickname or title falls back to `记录者` and `未命名`.
+Expected result: the card shows the new avatar and text; an empty nickname or title falls back to `记录者` and `未命名`.
 
 ### Keep one prediction
 
@@ -118,26 +122,27 @@ Expected result: the header shows the new avatar and text; an empty nickname or 
 
 Expected result: after two or three settled predictions the statistics page draws a trend line and a donut around the rate. With nothing settled yet, the rate shows a dash rather than 0 percent, and the sample count is stated next to it.
 
-### Open the analytics dashboard
+### Read the analytics cards
 
-1. On the home page, scroll past the module grid and tap `示例数据看板（远端合成）`.
-2. The page requests `stats-12m.json` from `docs/mock/` in the public repository and draws ten charts: monthly hit rate, calibration curve, outcome split, confidence distribution, horizon buckets, sleep trend, sleep-vs-hit rate, interaction counts, coverage heatmap, and activity heatmap. It does not read local records.
-3. Pick a month chip; the header and every chart switch to that month's detail. Tap `刷新` to request the payload again.
-4. If both the Gitee and GitHub requests fail, the page keeps the error message and a retry action.
+1. Open `预测` and scroll to `数据看板` below the prediction list.
+2. Six cards compute from the device: calibration and hit rate, horizon and confidence buckets, explanation-to-scene ratio, evidence sources, correction response, and revision quality.
+3. Tap `说明` on a card to show its explanation, verdict and footnote; tap it again to collapse the text.
+4. The optional `远端参考` block at the bottom loads the synthetic remote sample into one collapsed chart for comparison; it does not feed the six local cards.
 
-Expected result: the header states the remote data timestamp and the selected month. The calibration line sits against a 45-degree reference; choosing another month changes calibration, outcomes, readings and both heatmaps; the two heatmaps label weekdays and columns.
+Expected result: with no local records the cards fall back to built-in synthetic samples and label them as such; writing a note, prediction, relation or evidence switches them to local data. A card whose samples are below the floor states the count instead of drawing a misleading trend.
 
 ### Run one review
 
 1. Open the review module (`复盘`) and pick the week or month tab. Each tab keeps its own draft.
-2. Work through the four steps: facts, interpretation, contradiction, action. Facts and action are required.
-3. In the contradiction step, tick the value anchors that apply and check the explanation against them.
-4. Optionally open the agent panel to generate contradiction candidates. Template mode is offline; mock and model modes call an endpoint.
-5. Save. The period shows as complete and the session is kept in review history.
+2. Work through the six zones: scene and existing action, current model, relation and main contradiction, multi-source correction, cost and motivation, adjustment and revision.
+3. Fill any zone, or reference at least one material, to enable saving; an entirely blank review is not saved.
+4. In the correction zone, tick the value anchors that apply and check the explanation against them.
+5. Optionally open the agent panel to generate contradiction candidates. Template mode is offline; mock and model modes call an endpoint.
+6. Save. The period shows as complete and the session is kept in review history.
 
 ### Plan one week
 
-1. The plan card sits under the weekly settlement card. With no goal, tap `新建`; afterwards `查看 ›` opens the current goal.
+1. Open `抽屉` → `计划`. With no goal, tap `新建`; afterwards `查看 ›` opens the current goal.
 2. Give the goal a title and a start date; the start date snaps to the Monday of that week. The end date is optional: leave it empty to track weeks only, or set a date later than that Monday to get a countdown.
 3. Open this week's node and add checklist items; tap an item to mark it done. The node header shows how many days are left and a three-part bar for done, carried over, and new items.
 4. Optionally create a project inside the goal and assign the node to it. A project can be renamed or deleted; deleting it returns its nodes to ungrouped and keeps every item.
@@ -161,15 +166,10 @@ Settings (`设置`) writes the whole record set to `cogit-export-YYYYMMDD-HHMM.m
 
 ## Screens
 
-Captured on a Mate 70 Pro emulator from the current build, in dark mode. Every record in them is synthetic.
+Captured on a Mate 70 Pro emulator in dark mode; every record is synthetic. The screenshots predate the five-tab shell, so only the record pages that still look the same are shown here.
 
-| Home | Analytics, current month |
-|---|---|
-| <img src="./docs/images/debug/home.jpeg" width="300" alt="Home page with the identity band, four quick entries, the todo card summary, the readings card, the weekly settlement marked reviewed, the current goal 验收计划1109 at week 1, and this period's prompts"> | <img src="./docs/images/debug/analytics-month.jpeg" width="300" alt="Top of the analytics dashboard: remote payload timestamp, month chips with the current month highlighted, the monthly hit-rate line and the calibration curve"> |
-| **Analytics, mid-page** | **Analytics, lower section** |
-| <img src="./docs/images/debug/analytics-mid.jpeg" width="300" alt="Middle of the analytics dashboard: the outcome donut at 38 percent and the confidence distribution bars"> | <img src="./docs/images/debug/analytics-bottom.jpeg" width="300" alt="Lower part of the dashboard: interaction bars and the reading coverage heatmap with weekday labels and a light-to-dark legend"> |
 | **Goal detail** | **Review detail** |
-| <img src="./docs/images/debug/plan-detail.jpeg" width="300" alt="Goal detail reporting one week advanced, a single week node at 0 of 1, the week strip for 11-09 to 11-15 and the carry-rate card waiting for three weeks of data"> | <img src="./docs/images/debug/review-saved.jpeg" width="300" alt="Review detail marked finished and read-only, showing the four steps and the anchor comparison, which was left empty"> |
+| <img src="./docs/images/debug/plan-detail.jpeg" width="300" alt="Goal detail reporting one week advanced, a single week node at 0 of 1, the week strip for 11-09 to 11-15 and the carry-rate card waiting for three weeks of data"> | <img src="./docs/images/debug/review-saved.jpeg" width="300" alt="Review detail marked finished and read-only, showing the six zones and the anchor comparison, which was left empty"> |
 | **Anchors** | **Relation graph** |
 | <img src="./docs/images/debug/anchor.jpeg" width="300" alt="Value anchors page holding two sample sentences in the north-star bank, an input to add one, and a button to run a review against them"> | <img src="./docs/images/debug/relation-graph.jpeg" width="300" alt="Relation graph centred on me, with three contacts coloured by trust tier and a note explaining the edges"> |
 | **Settings, model mode** | **Markdown export** |
@@ -179,7 +179,7 @@ Captured on a Mate 70 Pro emulator from the current build, in dark mode. Every r
 
 ### Requirements
 
-- DevEco Studio with the HarmonyOS SDK that contains API 26 (`targetSdkVersion` 26.0.0); the app runs from 6.1.1 (API 24) upward.
+- DevEco Studio with the HarmonyOS SDK that contains API 26 (`targetSdkVersion` and `compatibleSdkVersion` 26.0.0).
 - A HarmonyOS phone emulator or a phone. `deviceTypes` declares `phone` only.
 - Node.js only if you want the local mock server. The hvigor command below uses the Node.js bundled with DevEco Studio.
 
@@ -209,13 +209,13 @@ Point `DEVECO_SDK_HOME`, `NODE_HOME`, and `JAVA_HOME` at the DevEco toolchain fi
 1. Open the project in DevEco Studio and wait for Sync to finish.
 2. Start a phone emulator or connect a phone.
 3. Select the `entry` module and run. DevEco signs with the debug certificate when automatic signing is on; otherwise add `signing/signing.local.json` first (see Signing).
-4. Tap `＋ 速记` in the bottom right, write one line, and save. The `速记` tile in the module grid opens the same editor; it just sits below the fold.
-5. The note appears under recent notes, and the counters move off zero.
-6. Tap `数据看板`, then pick a month chip, to confirm the remote payload loads and the charts switch to that month.
+4. Open `日志`, write one line in the capture bar, and tap `保存`. The same editor is reachable from `＋` in the tab header and from `工作台` → recent notes.
+5. The note appears in the log list; return to `工作台` and it also appears under recent notes, and the counters leave zero.
+6. Open `预测` and scroll to `数据看板`; the six cards render from local data, or from built-in samples while the device has no records. Tap `说明` on a card to read its explanation.
 
-Expected result: one note today and one in total, the weekly settlement card starts counting it, and the analytics page shows a remote timestamp with ten charts. If the request fails, the page keeps the error message and a retry action.
+Expected result: one note today and one in total, the workbench readings and module status update, and the analytics cards mark themselves as demo data until a real record exists.
 
-The DevEco Previewer can render the pages, but it has no `relationalStore`; record pages show demo content and empty counters there. Use an emulator or a phone to see real data.
+The DevEco Previewer can render the pages, but it has no `relationalStore`; the workbench, drawer and analytics cards fall back to demo content there. Use an emulator or a phone to see real data.
 
 ## Configuration
 
@@ -254,9 +254,9 @@ Worth knowing:
 - Timeouts differ per call: 5 seconds for prompts, 8 for the local mock completion, 20 for model mode.
 - `hdc rport` lasts for the current connection; run it again after an emulator restart.
 
-### Remote analytics data
+### Analytics reference data
 
-The dashboard does not read the local database. Its charts have one source: the static JSON in `docs/mock/` of the public repository. No key is involved, and the page labels the payload as example data.
+The six analytics cards compute from the local database. Only the optional `远端参考` block reads the static JSON in `docs/mock/` of the public repository; no key is involved, and the block is collapsed by default.
 
 | File | Content |
 |---|---|
@@ -267,7 +267,7 @@ Base URLs:
 - Gitee: `https://gitee.com/theangelnextdoor/cogit-lucid-workbench/raw/main/docs/mock/`
 - GitHub: `https://raw.githubusercontent.com/SunshineMahiru/cogit-lucid-workbench/main/docs/mock/`
 
-`RemoteStatsRepository` tries Gitee first and GitHub second, adding a cache-busting `t` parameter. If both fail, the page keeps the error text and a retry action. Switching months filters the monthly detail already loaded; it does not issue a new request.
+`RemoteStatsRepository` tries Gitee first and GitHub second, adding a cache-busting `t` parameter. It feeds one line chart in the reference block and never the six local cards. If both fail, the block keeps the error text and a retry action.
 
 ### Backgrounds and page opacity
 
@@ -283,15 +283,15 @@ Base URLs:
 
 Opacity needs no picture: it lowers the alpha of the page surface itself. The window is created with a clear background colour, so a transparent page reveals what sits behind the window. After a module has its own value, `恢复跟随` hands it back to the global one.
 
-### Home identity
+### Identity card
 
 | Item | Detail |
 |---|---|
-| Entry | `编辑` on the identity band |
+| Entry | `我的` → `编辑` on the identity card |
 | Fields | Nickname up to 12 characters, signature 24, title 8; an empty nickname or title falls back to `记录者` / `未命名` |
 | Avatar | Gallery, camera, or the file picker; centre-cropped to a 320×320 PNG in `${filesDir}/profile`; replacing it deletes the previous file |
 | Storage | Preferences store `cogit_profile`; none of the fields is secret |
-| Refresh | Settings → `数据管理` → `刷新首页数据` re-reads the summary, todo card, and readings |
+| Refresh | The card reloads whenever `我的` becomes active and after the editor returns |
 
 ### Review agent modes
 
@@ -340,7 +340,7 @@ Sealed records are dropped. A plan link that points at a sealed record prints `�
 | Entry | Settings → `数据管理` → `备份并另存` / `恢复备份` |
 | What a backup is | A `cogit-backup-<timestamp>.cogitbackup` file: JSON carrying every table's rows, the identity and avatar, settings, and every page background with its opacity; rows at the `sealed` level are left out, and a restore keeps the sealed rows already on the device |
 | Saving it | A system save dialog opens straight away; pick a folder. Cancel it and the app reports `已生成备份，但未另存` |
-| Restore order | Version and database are validated, the current database is copied to `pre-restore-*.db`, then database, identity, settings and backgrounds come back, and the home page refreshes |
+| Restore order | Version and database are validated, the current database is copied to `pre-restore-*.db`, then database, identity, settings and backgrounds come back, and the open tab refreshes |
 | Left out | The API key. The field is emptied before packing and the restore writes non-secret options only, so enter it again on the new phone |
 
 The same card holds `清空全部数据`: the first tap turns it into `确认清空`, and the second one deletes. It wipes every row in the nineteen tables, settings, identity, background pictures, the exported and backup files inside the sandbox, and the API key; files already saved elsewhere on the phone are left alone.
@@ -354,14 +354,14 @@ cogit-lucid-workbench/
 │   ├── src/main/
 │   │   ├── ets/
 │   │   │   ├── entryability/       app entry, opens the database
-│   │   │   ├── pages/              34 page files; Index.ets holds the route table
-│   │   │   ├── views/              composed home views
-│   │   │   ├── components/         40 reusable pieces
+│   │   │   ├── pages/              32 page files; Index.ets holds the route table and WorkbenchShell.ets the tab shell
+│   │   │   ├── views/              tab views and shared list and analytics bodies
+│   │   │   ├── components/         44 reusable pieces
 │   │   │   │   └── charts/         line, bar, pie wrappers, Canvas heatmap
 │   │   │   ├── navigation/         route names and parameter types
 │   │   │   ├── model/              entity types, enums, factories, demo data
-│   │   │   ├── data/               home aggregation and cross-entity reads
-│   │   │   ├── app/                database health, home and identity refresh buses
+│   │   │   ├── data/               workbench and drawer aggregation, cross-entity reads
+│   │   │   ├── app/                database health, tab/home/identity refresh buses, back guard
 │   │   │   ├── preview/            demo data for the previewer
 │   │   │   ├── profile/            identity store and avatar pipeline
 │   │   │   ├── note/               quick notes, templates, drafts, checks
@@ -391,7 +391,7 @@ cogit-lucid-workbench/
 └── LICENSE                         AGPL-3.0
 ```
 
-A new page touches three places: add the name in `navigation/Routes.ts`, drop the page file into `pages/`, and wire it into `pageMap` in `pages/Index.ets`.
+A new page touches three places: add the name in `navigation/Routes.ts`, drop the page file into `pages/`, and wire it into `pageMap` in `pages/Index.ets`. A new main tab also needs an entry in `navigation/TabItems.ts` and a `TabContent` in `pages/WorkbenchShell.ets`.
 
 ## Tests
 
@@ -402,7 +402,7 @@ Cases live in three places: `entry/src/test` holds local unit tests that run on 
 | Local unit | `src/test/List.test.ets` | 4 | Two prediction form checks, confidence calibration bands, the export level filter |
 | Device · analysis | `src/ohosTest/ets/test/Analysis.test.ets` | 4 | The same four as above, run again on the device |
 | Device · flow | `src/ohosTest/ets/test/UiFlow.test.ets` | 6 | Open the dashboard, switch month, return home, open settings, switch to the model provider, switch back |
-| Node scripts | `.test/check.js` and five siblings | 137 | Date and metric helpers, cost ledger, settings sanitising, tolerant JSON, privacy gate, services, export, review agent fallbacks, plan factories |
+| Node scripts | `.test/check.js`, `service-check.js`, `export-check.js`, `agent-check.js` | 285 | Date and metric helpers, cost ledger, settings sanitising, tolerant JSON, services, export and review agent fallbacks; `plan-check.js` runs the plan factories separately |
 
 Local unit tests:
 
@@ -438,8 +438,6 @@ Two things that trip people up: `hvigorw test` runs on Windows and macOS only, n
 
 | Topic | What it covers | Link |
 |---|---|---|
-| Manual checks | Which screens and behaviours were verified by hand, why they cannot be automated, and when to re-run | [docs/MANUAL_CHECKS.md](./docs/MANUAL_CHECKS.md) |
-| Startup and memory baseline | Method and numbers for cold and warm launch, plus the memory readings | [docs/PERF_BASELINE.md](./docs/PERF_BASELINE.md) |
 | Visual tokens | Locked colour, type, radius, and spacing tokens, plus the per-page checklist and known deviations | [docs/UI_FREEZE.md](./docs/UI_FREEZE.md) |
 | Mock server | Endpoints, addressing, and the previewer versus emulator note | [mock-server/README.md](./mock-server/README.md) |
 | Signing template | Placeholder config for `signing/signing.local.json` | [docs/signing.local.example.json](./docs/signing.local.example.json) |
@@ -455,11 +453,11 @@ Settings → `数据管理` → `备份并另存` produces a `.cogitbackup` file
 **Where does the exported Markdown go?**
 `导出并另存为` opens the system save dialog, and the file lands in whatever folder you pick. Cancel the dialog and it stays in `${filesDir}/exports`, where `分享` can still send it out; the folder keeps the ten newest exports.
 
-**The previewer shows an empty home page or a database error.**
-The DevEco previewer does not provide `relationalStore`. When the store cannot be opened, the home page reads the in-memory preview data and marks the counters as demo values; other data-backed pages have their own fallbacks. Use an emulator or a phone to see real records.
+**The previewer shows demo data or a database error.**
+The DevEco previewer does not provide `relationalStore`. When the store cannot be opened, the workbench, drawer and analytics cards read the in-memory preview data; a device without a working store shows the workbench blocking view instead of writing plaintext. Use an emulator or a phone to see real records.
 
-**The dashboard shows example data.**
-It reads `docs/mock/stats-12m.json` from the public repository, Gitee first and GitHub second, and the header labels the payload as example data. Edit that file to change what the charts show.
+**The analytics cards show example data.**
+The six cards compute from local records; while the device has none they use built-in synthetic samples and label them as demo data. The optional `远端参考` block reads `docs/mock/stats-12m.json` from the public repository, Gitee first and GitHub second, and only feeds its own line chart.
 
 **The emulator cannot reach the mock server.**
 `127.0.0.1` inside the emulator is the emulator itself. Run `hdc rport tcp:4523 tcp:4523` to forward the port; on a phone, put the host address into the base URL in settings instead.
@@ -493,7 +491,7 @@ For anything beyond a small fix, open an issue first so the direction is agreed 
 - A new page touches three places: the name in `navigation/Routes.ts`, the file in `pages/`, and `pageMap` in `pages/Index.ets`.
 - Do not commit real records, screenshots showing a real name or avatar, or `.cogitbackup` files. Demo content belongs in the sample data under `model/`.
 - Signing material, HAPs and logs stay out of commits; `.gitignore` already covers them.
-- Before a pull request, run the rules in `code-linter.json5`, run `assembleHap`, run both suites from the Tests section, and say in the pull request how you verified the change.
+- Before a pull request, run the rules in `code-linter.json5`, run `assembleHap`, run the suites from the Tests section, and say in the pull request how you verified the change.
 
 `main` is the only development branch and Gitee is a mirror. Send pull requests to GitHub; the maintainer syncs them across after merging.
 
