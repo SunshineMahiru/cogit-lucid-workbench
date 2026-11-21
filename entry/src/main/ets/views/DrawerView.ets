@@ -131,6 +131,7 @@ export struct DrawerView {
     const primary = planPreviewStore.primary();
     const nodes: PlanNode[] = primary === null ? [] : planPreviewStore.nodes(primary.id);
     this.openNodeText = String(nodes.filter((node: PlanNode) => node.status === PlanNodeStatus.OPEN).length);
+    this.failed = false;
     this.loaded = true;
   }
 
