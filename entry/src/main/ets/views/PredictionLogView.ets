@@ -52,6 +52,7 @@ export struct PredictionLogView {
   @Local listVersion: number = 0;
   private scroller: Scroller = new Scroller();
   private loadToken: number = 0;
+  private lastPushAt: number = 0;
 
   aboutToAppear(): void {
     this.filter = this.initialFilter;
@@ -122,12 +123,13 @@ export struct PredictionLogView {
       this.items = this.applyQuick(rows);
       this.listVersion += 1;
       this.hasMore = this.quick === 'all' && rows.length >= PAGE_SIZE;
+      // The rows are usable before the summary returns; a slow or failed summary must not blank them.
+      this.hasLoaded = true;
       const summary: PredictionSummary = await this.service.summary();
       if (token !== this.loadToken) {
         return;
       }
       this.summary = summary;
-      this.hasLoaded = true;
     } catch (error) {
       if (token !== this.loadToken) {
         return;
@@ -170,10 +172,10 @@ export struct PredictionLogView {
   }
 
   private selectQuick(quick: PredictionQuickFilter): void {
-    this.quick = this.quick === quick ? 'all' : quick;
-    if (this.quick !== 'all') {
-      this.filter = PredictionStatus.PENDING;
-    }
+    const next: PredictionQuickFilter = this.quick === quick ? 'all' : quick;
+    this.quick = next;
+    // Turning the quick filter off returns to the unfiltered list instead of keeping pending only.
+    this.filter = next === 'all' ? null : PredictionStatus.PENDING;
     this.refresh();
   }
 
@@ -182,6 +184,11 @@ export struct PredictionLogView {
   }
 
   private openDetail(predictionId: string): void {
+    const now = Date.now();
+    if (now - this.lastPushAt < 600) {
+      return;
+    }
+    this.lastPushAt = now;
     const params: PredictionDetailParams = { predictionId: predictionId };
     this.pathStack.pushPathByName(ROUTES.PREDICTION_DETAIL, params, () => {
       this.refresh();
@@ -189,6 +196,11 @@ export struct PredictionLogView {
   }
 
   private openCreate(): void {
+    const now = Date.now();
+    if (now - this.lastPushAt < 600) {
+      return;
+    }
+    this.lastPushAt = now;
     const params: PredictionCreateParams = { sourcePredictionId: null };
     this.pathStack.pushPathByName(ROUTES.PREDICTION_CREATE, params, () => {
       this.refresh();
