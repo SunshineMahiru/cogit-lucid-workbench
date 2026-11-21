@@ -34,6 +34,7 @@ export struct NoteListView {
   @Local isPreview: boolean = false;
   @Local listVersion: number = 0;
   private loadToken: number = 0;
+  private lastPushAt: number = 0;
 
   aboutToAppear(): void {
     this.filter = this.initialFilter;
@@ -152,6 +153,11 @@ export struct NoteListView {
   }
 
   private openEditor(): void {
+    const now = Date.now();
+    if (now - this.lastPushAt < 600) {
+      return;
+    }
+    this.lastPushAt = now;
     const params: NoteEditParams = { templateId: null };
     this.pathStack.pushPathByName(ROUTES.NOTE_EDIT, params, () => {
       this.refresh();
@@ -159,6 +165,11 @@ export struct NoteListView {
   }
 
   private openDetail(noteId: string): void {
+    const now = Date.now();
+    if (now - this.lastPushAt < 600) {
+      return;
+    }
+    this.lastPushAt = now;
     const params: NoteDetailParams = { noteId: noteId };
     this.pathStack.pushPathByName(ROUTES.NOTE_DETAIL, params, () => {
       this.refresh();
