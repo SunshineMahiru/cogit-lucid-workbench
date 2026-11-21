@@ -89,7 +89,7 @@ flowchart TB
 ```
 
 - 页面采用 ArkTS 与状态管理 V2（`@ComponentV2`、`@Local`、`@Param`）；实体模型与服务采用普通 TypeScript。
-- 路由由 `NavPathStack` 承载，30 个路由名集中于 `entry/src/main/ets/navigation/Routes.ts`；新增页面仅需在 `Index.pageMap` 中增加分支。当前含 32 个页面文件与 44 个可复用组件。
+- 路由由 `NavPathStack` 承载，30 个路由名集中于 `entry/src/main/ets/navigation/Routes.ts`；新增页面仅需在 `Index.pageMap` 中增加分支。当前含 32 个页面文件与 46 个可复用组件。
 - `pages/WorkbenchShell.ets` 负责外壳：`Navigation` 包裹 `Tabs`，五个 `TabContent` 无动画切换，返回守卫让工作台先收起面板或退出排序态，再交回系统。
 - `relationalStore` 为唯一事实源并已加密；`Preferences` 保存非敏感设置，模型密钥存放于系统资产库，Markdown 导出由 `fileIo` 写入。
 - 运行时依赖仅 `@ohos/mpchart` 3.1.0-rc.0；图标使用系统字形，未引入图标包。
@@ -356,7 +356,7 @@ cogit-lucid-workbench/
 │   │   │   ├── entryability/       应用入口，同时打开数据库
 │   │   │   ├── pages/              32 个页面文件；Index.ets 承载路由，WorkbenchShell.ets 承载分区壳
 │   │   │   ├── views/              分区视图与共用的列表、看板、统计主体
-│   │   │   ├── components/         44 个可复用组件
+│   │   │   ├── components/         46 个可复用组件
 │   │   │   │   └── charts/         折线、柱状、饼图封装与 Canvas 热力图
 │   │   │   ├── navigation/         路由名与参数类型
 │   │   │   ├── model/              实体类型、枚举、工厂与示例数据

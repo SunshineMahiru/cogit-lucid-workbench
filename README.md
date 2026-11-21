@@ -89,7 +89,7 @@ flowchart TB
 ```
 
 - ArkTS pages with state management V2 (`@ComponentV2`, `@Local`, `@Param`); entity models and services in plain TypeScript.
-- Navigation with `NavPathStack`; 30 route names live in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`. The tree holds 32 page files and 44 reusable components.
+- Navigation with `NavPathStack`; 30 route names live in `entry/src/main/ets/navigation/Routes.ts`, and a new page only adds a branch to `Index.pageMap`. The tree holds 32 page files and 46 reusable components.
 - `pages/WorkbenchShell.ets` owns the shell: `Navigation` wraps `Tabs`, the five `TabContent` blocks switch without animation, and a back guard lets the workbench close its panel or sort mode before the app exits.
 - `relationalStore` is the single source of truth and is encrypted; `Preferences` keeps non-secret options, the model key sits in the system asset service, and `fileIo` writes the Markdown export.
 - `@ohos/mpchart` 3.1.0-rc.0 is the only runtime dependency. Icons come from system glyphs rather than an icon pack.
@@ -356,7 +356,7 @@ cogit-lucid-workbench/
 │   │   │   ├── entryability/       app entry, opens the database
 │   │   │   ├── pages/              32 page files; Index.ets holds the route table and WorkbenchShell.ets the tab shell
 │   │   │   ├── views/              tab views and shared list and analytics bodies
-│   │   │   ├── components/         44 reusable pieces
+│   │   │   ├── components/         46 reusable pieces
 │   │   │   │   └── charts/         line, bar, pie wrappers, Canvas heatmap
 │   │   │   ├── navigation/         route names and parameter types
 │   │   │   ├── model/              entity types, enums, factories, demo data
